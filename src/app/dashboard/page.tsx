@@ -127,12 +127,17 @@ export default function OrganizerDashboard() {
   const [brandSaveToast, setBrandSaveToast] = useState(false);
   const [guestToast, setGuestToast] = useState<string | null>(null);
 
-  const handleApproveGuest = (g: RSVPItem) => {
-    approveWaitlistGuest(g.id);
+  const handleApproveGuest = async (g: RSVPItem) => {
+    // 1. Optimistic instant UI update
+    setRsvps(prev => prev.map(r => r.id === g.id ? { ...r, status: 'confirmed' } : r));
     setGuestToast(`✓ Approved ${g.name}! Digital admission pass unlocked and confirmation email sent.`);
     setTimeout(() => setGuestToast(null), 4000);
 
-    const ev = events.find(e => e.id === g.event_id);
+    // 2. Persist to Supabase and LocalStorage
+    await approveWaitlistGuest(g.id, g.email, g.event_id);
+
+    // 3. Dispatch confirmation email with digital pass
+    const ev = events.find(e => e.id === g.event_id || (g.event_slug && e.slug === g.event_slug));
     if (ev) {
       fetch('/api/email', {
         method: 'POST',
@@ -141,26 +146,44 @@ export default function OrganizerDashboard() {
           type: 'rsvp_confirmed',
           to: g.email,
           guestName: g.name,
-          event: ev
+          rsvp: { ...g, status: 'confirmed' },
+          event: ev,
+          organizer: {
+            name: ev.organizer_name || profile?.name || 'Organizer',
+            brand_color: ev.organizer_brand_color || profile?.brand_color || '#E8621A',
+            logo_url: ev.organizer_logo || profile?.avatar_url,
+            handle: ev.organizer_handle || profile?.handle
+          }
         })
       }).catch(console.warn);
     }
   };
 
-  const handleRejectGuest = (g: RSVPItem) => {
-    rejectWaitlistGuest(g.id);
+  const handleRejectGuest = async (g: RSVPItem) => {
+    // 1. Optimistic instant UI update
+    setRsvps(prev => prev.map(r => r.id === g.id ? { ...r, status: 'cancelled' } : r));
     setGuestToast(`Declined request for ${g.name}.`);
     setTimeout(() => setGuestToast(null), 4000);
+
+    // 2. Persist to Supabase and LocalStorage
+    await rejectWaitlistGuest(g.id, g.email, g.event_id);
   };
 
-  const handleApproveAllWaitlist = () => {
+  const handleApproveAllWaitlist = async () => {
     const pending = rsvps.filter(g => g.status === 'waitlisted');
-    approveAllWaitlist();
+    if (pending.length === 0) return;
+
+    // 1. Optimistic instant UI update
+    setRsvps(prev => prev.map(r => r.status === 'waitlisted' ? { ...r, status: 'confirmed' } : r));
     setGuestToast(`✓ Successfully approved all ${pending.length} waitlisted guests! Passes unlocked.`);
     setTimeout(() => setGuestToast(null), 4000);
 
+    // 2. Batch update in Supabase and LocalStorage
+    await approveAllWaitlist();
+
+    // 3. Dispatch emails to all approved guests
     pending.forEach(g => {
-      const ev = events.find(e => e.id === g.event_id);
+      const ev = events.find(e => e.id === g.event_id || (g.event_slug && e.slug === g.event_slug));
       if (ev) {
         fetch('/api/email', {
           method: 'POST',
@@ -169,7 +192,14 @@ export default function OrganizerDashboard() {
             type: 'rsvp_confirmed',
             to: g.email,
             guestName: g.name,
-            event: ev
+            rsvp: { ...g, status: 'confirmed' },
+            event: ev,
+            organizer: {
+              name: ev.organizer_name || profile?.name || 'Organizer',
+              brand_color: ev.organizer_brand_color || profile?.brand_color || '#E8621A',
+              logo_url: ev.organizer_logo || profile?.avatar_url,
+              handle: ev.organizer_handle || profile?.handle
+            }
           })
         }).catch(console.warn);
       }
@@ -1133,7 +1163,7 @@ export default function OrganizerDashboard() {
                         </tr>
                       ) : (
                         filteredGuests.map(g => {
-                          const ev = events.find(e => e.id === g.event_id);
+                          const ev = events.find(e => e.id === g.event_id || (g.event_slug && e.slug === g.event_slug));
                           return (
                             <tr key={g.id} className="hover:bg-surface-2/60 transition-colors">
                               <td className="p-3.5">

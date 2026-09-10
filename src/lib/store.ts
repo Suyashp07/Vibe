@@ -716,33 +716,80 @@ export const syncRSVPsWithSupabase = async (): Promise<RSVPItem[]> => {
   }
 };
 
-export const updateRSVPStatus = (rsvpId: string, status: 'confirmed' | 'waitlisted' | 'cancelled') => {
-  if (!isClient) return;
-  const all = getRSVPs();
-  const updated = all.map(r => r.id === rsvpId ? { ...r, status } : r);
-  localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(updated));
-  notifyListeners();
-};
+export const updateRSVPStatus = async (
+  rsvpId: string,
+  status: 'confirmed' | 'waitlisted' | 'cancelled',
+  email?: string,
+  eventId?: string
+) => {
+  if (isClient) {
+    const all = getRSVPs();
+    const updated = all.map(r => 
+      (r.id === rsvpId || (email && r.email?.toLowerCase() === email.toLowerCase() && (!eventId || r.event_id === eventId)))
+        ? { ...r, status }
+        : r
+    );
+    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(updated));
+    notifyListeners();
+  }
 
-export const approveWaitlistGuest = (rsvpId: string) => {
-  updateRSVPStatus(rsvpId, 'confirmed');
-};
-
-export const rejectWaitlistGuest = (rsvpId: string) => {
-  updateRSVPStatus(rsvpId, 'cancelled');
-};
-
-export const approveAllWaitlist = (eventId?: string) => {
-  if (!isClient) return;
-  const all = getRSVPs();
-  const updated = all.map(r => {
-    if (r.status === 'waitlisted' && (!eventId || r.event_id === eventId)) {
-      return { ...r, status: 'confirmed' as const };
+  // Persist status change to Supabase database
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/rsvps/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: rsvpId,
+          status,
+          email,
+          event_id: eventId
+        })
+      });
+    } catch (err) {
+      console.warn('Failed to persist RSVP status to Supabase:', err);
     }
-    return r;
-  });
-  localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(updated));
-  notifyListeners();
+  }
+};
+
+export const approveWaitlistGuest = (rsvpId: string, email?: string, eventId?: string) => {
+  return updateRSVPStatus(rsvpId, 'confirmed', email, eventId);
+};
+
+export const rejectWaitlistGuest = (rsvpId: string, email?: string, eventId?: string) => {
+  return updateRSVPStatus(rsvpId, 'cancelled', email, eventId);
+};
+
+export const approveAllWaitlist = async (eventId?: string) => {
+  let waitlistIds: string[] = [];
+  if (isClient) {
+    const all = getRSVPs();
+    const updated = all.map(r => {
+      if (r.status === 'waitlisted' && (!eventId || r.event_id === eventId)) {
+        waitlistIds.push(r.id);
+        return { ...r, status: 'confirmed' as const };
+      }
+      return r;
+    });
+    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(updated));
+    notifyListeners();
+  }
+
+  if (typeof window !== 'undefined' && waitlistIds.length > 0) {
+    try {
+      await fetch('/api/rsvps/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: waitlistIds,
+          status: 'confirmed',
+          event_id: eventId
+        })
+      });
+    } catch (err) {
+      console.warn('Failed to batch approve waitlist in Supabase:', err);
+    }
+  }
 };
 
 export const cancelRSVP = (rsvpId: string) => {
