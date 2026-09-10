@@ -14,7 +14,9 @@ import {
   LogOut,
   ChevronDown,
   Building2,
-  Ticket
+  Ticket,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { syncEventsWithSupabase } from '@/lib/store';
@@ -23,6 +25,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { profile, isLoggedIn, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -31,6 +34,11 @@ export default function Navbar() {
     if (path !== '/' && pathname.startsWith(path)) return true;
     return false;
   };
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -269,8 +277,120 @@ export default function Navbar() {
               </Link>
             </div>
           )}
+
+          {/* Mobile Hamburger Toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl border border-border bg-surface text-ink hover:bg-surface-3 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5 text-accent" /> : <Menu className="w-5 h-5 text-ink" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Dropdown Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-border bg-surface/98 backdrop-blur-xl px-4 py-4 space-y-3 shadow-elevated animate-in slide-in-from-top-2 duration-200">
+          <nav className="space-y-1">
+            <Link
+              href="/discover"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                isNavActive('/discover')
+                  ? 'bg-accent-light text-accent font-bold'
+                  : 'text-ink hover:bg-surface-2'
+              }`}
+            >
+              <Compass className="w-4 h-4 text-accent" />
+              <span>Discover Events</span>
+            </Link>
+
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                isNavActive('/dashboard')
+                  ? 'bg-accent-light text-accent font-bold'
+                  : 'text-ink hover:bg-surface-2'
+              }`}
+            >
+              <Calendar className="w-4 h-4 text-brand-mid" />
+              <span>Organizer Dashboard</span>
+            </Link>
+
+            <Link
+              href="/guest"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                isNavActive('/guest')
+                  ? 'bg-accent-light text-accent font-bold'
+                  : 'text-ink hover:bg-surface-2'
+              }`}
+            >
+              <Ticket className="w-4 h-4 text-ink-secondary" />
+              <span>My RSVPs & Tickets</span>
+            </Link>
+
+            <Link
+              href="/create"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-accent hover:bg-accent-light transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-gold" />
+              <span>Create New Event</span>
+            </Link>
+          </nav>
+
+          {/* Mobile Auth actions */}
+          <div className="pt-2 border-t border-border">
+            {mounted && isLoggedIn && profile ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    {profile.name?.slice(0, 2).toUpperCase() || 'US'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-ink truncate">{profile.name}</p>
+                    <p className="text-[11px] text-ink-muted truncate">{profile.email}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await signOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-1 p-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Exit</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-border bg-surface text-xs font-bold text-ink text-center hover:bg-surface-3 transition-colors"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-accent" />
+                  <span>Sign In</span>
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-brand text-xs font-bold text-white text-center hover:bg-brand-mid transition-colors shadow-xs"
+                >
+                  <span>Sign Up</span>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
