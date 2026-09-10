@@ -156,7 +156,7 @@ export default function RSVPForm({
       });
     }
 
-    // Dispatch background whitelabeled email notification
+    // Dispatch background whitelabeled email notification with digital pass
     fetch('/api/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -164,7 +164,14 @@ export default function RSVPForm({
         type: status === 'waitlisted' ? 'waitlisted' : 'rsvp_confirmed',
         to: email.trim(),
         guestName: name.trim(),
-        event
+        rsvp,
+        event,
+        organizer: {
+          name: event.organizer_name,
+          brand_color: event.organizer_brand_color,
+          logo_url: event.organizer_logo,
+          handle: event.organizer_handle
+        }
       })
     }).catch(err => console.warn('Email notification note:', err));
 
@@ -203,6 +210,10 @@ export default function RSVPForm({
               ? `You've been added to the official waitlist for ${event.title}. When the organizer reviews and accepts your request, your confirmed digital pass with active entry QR code will be emailed to ${submittedRsvp.email}.`
               : (event.rsvp_form_config.confirmation_message || `A pass has been registered for ${submittedRsvp.email}. We will ping you on WhatsApp with access details.`)}
           </p>
+
+          <div className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs text-ink-muted bg-surface-2 py-1 px-3 rounded-full border border-border">
+            <span>✉️ Digital pass emailed to <strong>{submittedRsvp.email}</strong></span>
+          </div>
         </div>
 
         {/* View Digital Pass or Waitlist Receipt Button */}

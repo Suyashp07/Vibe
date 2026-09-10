@@ -44,7 +44,7 @@ import { EventItem, TemplateType, ThemeConfig, RSVPFormConfig, CustomFieldConfig
 import { saveEvent, INITIAL_ORGANIZERS, formatIST } from '@/lib/store';
 import { uploadCoverImage } from '@/lib/supabase';
 import SocialBannerModal, { BannerStyle } from '@/components/banner/SocialBannerModal';
-import { useAuth } from '@/lib/auth';
+import { useAuth, getLocalAuthSession } from '@/lib/auth';
 
 // Standardized Indian Geographic Mapping for Precision Geocoding & Direct Maps
 const INDIAN_DISTRICT_STATE_MAP: Record<string, { district: string; state: string }> = {
@@ -501,6 +501,27 @@ export default function EventWizard() {
     setPublishedEvent(newEvent);
     setIsPublished(true);
     setShowShareModal(true);
+
+    // Dispatch automated confirmation email to organizer's registered email address
+    const targetOrganizerEmail = profile?.email || getLocalAuthSession()?.email;
+    if (targetOrganizerEmail) {
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'event_created',
+          to: targetOrganizerEmail,
+          organizerName: profile?.name || newEvent.organizer_name || 'Organizer',
+          event: newEvent,
+          organizer: {
+            name: newEvent.organizer_name,
+            brand_color: newEvent.organizer_brand_color,
+            logo_url: newEvent.organizer_logo,
+            handle: newEvent.organizer_handle
+          }
+        })
+      }).catch(err => console.warn('Failed to send event creation confirmation email:', err));
+    }
   };
 
   // Template gallery specifications

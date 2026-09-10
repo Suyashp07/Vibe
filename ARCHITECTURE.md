@@ -182,6 +182,50 @@ sequenceDiagram
 
 ---
 
+### Flow 6: How Automated Email Notifications & Digital Passes Work
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User (Organizer or Guest)
+    participant App as Vibe Application
+    participant API as /api/email Route
+    participant EmailEngine as Resend / Email Service
+    participant Inbox as Recipient Inbox
+
+    alt Organizer Creates Event
+        User->>App: Publishes event in Wizard
+        App->>API: POST type: "event_created", event, organizer email
+        API->>EmailEngine: Renders announcement template with dashboard & public links
+        EmailEngine->>Inbox: Delivers "🎉 Your Event is Live" confirmation
+    else Guest Submits RSVP
+        User->>App: Confirms RSVP form submission
+        App->>API: POST type: "rsvp_confirmed", guest, rsvp, event
+        Note over API: Generates deterministic pass serial (VB-DEL-...) & scannable QR image
+        API->>EmailEngine: Renders Apple Wallet boarding pass email with embedded QR
+        EmailEngine->>Inbox: Delivers "🎟️ Your Entry Pass" with QR code & Calendar link
+    end
+```
+
+1. **For Event Organizers**:
+   - As soon as the event is published, an automated confirmation email is dispatched to the organizer's registered email address.
+   - Includes event banner, title, date, time (IST), venue details, public event link, and direct link to their **Organizer Dashboard**.
+   - Includes quick-share shortcuts for WhatsApp broadcasts and Twitter/X posts.
+
+2. **For Attendees / Guests**:
+   - Upon submitting an RSVP, the guest immediately receives an official **Digital Admission Pass** email.
+   - Designed like an **Apple Wallet / Boarding Pass** complete with:
+     - Attendee Name & Ticket Tier
+     - Deterministic Ticket Serial (e.g. `VB-BOM-8201-9X2L`)
+     - **Scannable QR Code Image** that venue staff can scan at the gate for 1-second check-in
+     - Event Date & Time (IST)
+     - Venue Location with Google Maps directions button
+     - 1-Click **Add to Google Calendar** button
+     - Link to open/save the full web pass.
+   - If the event is full, the guest instead receives a **Waitlist Notification Email** detailing their queue position and auto-approval process.
+
+---
+
 ## 4. Security & Best Practices Built-In
 
 1. **Row-Level Security (RLS)**: PostgreSQL guarantees that organizers can only edit or delete their own events and attendees.

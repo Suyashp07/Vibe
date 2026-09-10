@@ -240,6 +240,23 @@ export default function SocialBannerModal({ event, isOpen, onClose }: SocialBann
           </button>
         </div>
 
+        {/* Email Notification Banner */}
+        <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2.5 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-600 font-bold">✓ Event Published</span>
+            <span className="hidden sm:inline text-emerald-600/60">•</span>
+            <span className="truncate">Confirmation email with public and dashboard links dispatched to your registered email.</span>
+          </div>
+          <a
+            href={`/${event.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline shrink-0 ml-2"
+          >
+            Preview Page ↗
+          </a>
+        </div>
+
         {/* Modal Body */}
         <div className="p-4 sm:p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Customizers & Actions */}
