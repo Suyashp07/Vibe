@@ -1,5 +1,6 @@
 import { EventItem } from '@/types';
 import { formatIST, generateGoogleCalendarUrl } from '@/lib/store';
+import nodemailer from 'nodemailer';
 
 export interface EmailSendResult {
   success: boolean;
@@ -84,6 +85,37 @@ export async function sendEmail({
   html: string;
   from?: string;
 }): Promise<EmailSendResult> {
+  // 1. Check for Gmail App Password / SMTP credentials (zero domain needed, sends to ANYONE in the world!)
+  const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').replace(/\s+/g, '');
+
+  if (gmailUser && gmailPass && !gmailPass.includes('your-app-password')) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: gmailUser,
+          pass: gmailPass
+        }
+      });
+
+      const sender = from || `Vibe by Swaniki <${gmailUser}>`;
+      const info = await transporter.sendMail({
+        from: sender,
+        to,
+        subject,
+        html
+      });
+
+      console.log(`✅ [Gmail SMTP Email Sent] ID: ${info.messageId} -> ${to}`);
+      return { success: true, messageId: info.messageId };
+    } catch (smtpErr: any) {
+      console.error('[Gmail SMTP Error]:', smtpErr);
+      // Fall through to Resend if available
+    }
+  }
+
+  // 2. Resend API Engine
   const apiKey = process.env.RESEND_API_KEY;
   // Default to onboarding@resend.dev (supported on all Resend accounts without custom domain verification)
   const defaultFrom = process.env.EMAIL_FROM || 'Vibe by Swaniki <onboarding@resend.dev>';
@@ -95,7 +127,7 @@ export async function sendEmail({
     console.log(`To: ${to}`);
     console.log(`From: ${sender}`);
     console.log(`Subject: "${subject}"`);
-    console.log(`Tip: Add a real RESEND_API_KEY in .env.local to send live emails.`);
+    console.log(`Tip: Add GMAIL_USER + GMAIL_APP_PASSWORD (or RESEND_API_KEY) in .env.local to send live emails.`);
     console.log(`======================================================\n`);
     return { success: true, simulated: true };
   }
@@ -118,7 +150,7 @@ export async function sendEmail({
     if (!res.ok) {
       const errData = await res.json();
       console.warn('[Resend API Error]:', errData);
-      return { success: false, error: JSON.stringify(errData) };
+      return { success: false, error: errData.message || JSON.stringify(errData) };
     }
 
     const data = await res.json();
