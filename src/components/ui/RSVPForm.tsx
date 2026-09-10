@@ -133,6 +133,7 @@ export default function RSVPForm({
 
     const rsvp = addRSVP({
       event_id: event.id,
+      event_slug: event.slug,
       name: name.trim(),
       email: email.trim(),
       phone: fullPhone,

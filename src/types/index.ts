@@ -116,6 +116,7 @@ export interface EventItem {
 export interface RSVPItem {
   id: string;
   event_id: string;
+  event_slug?: string;
   name: string;
   email: string;
   phone: string;

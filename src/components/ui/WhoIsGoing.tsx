@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Users } from 'lucide-react';
-import { getEventRSVPs, subscribeToStore } from '@/lib/store';
+import { getEventRSVPs, subscribeToStore, syncRSVPsWithSupabase } from '@/lib/store';
 import { RSVPItem } from '@/types';
 
 interface WhoIsGoingProps {
@@ -33,6 +33,7 @@ export default function WhoIsGoing({
     const update = () => {
       setRsvps(getEventRSVPs(eventId));
     };
+    syncRSVPsWithSupabase().then(() => update()).catch(() => {});
     const unsubscribe = subscribeToStore(update);
     return () => unsubscribe();
   }, [eventId]);

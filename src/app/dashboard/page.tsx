@@ -44,6 +44,7 @@ import {
   saveEvent,
   deleteEvent,
   syncEventsWithSupabase,
+  syncRSVPsWithSupabase,
   saveOrganizer,
   subscribeToStore,
   INITIAL_ORGANIZERS,
@@ -178,13 +179,17 @@ export default function OrganizerDashboard() {
   const handleManualSync = async () => {
     setIsSyncingWithDb(true);
     try {
-      await syncEventsWithSupabase();
+      await Promise.all([
+        syncEventsWithSupabase(),
+        syncRSVPsWithSupabase()
+      ]);
       setEvents(getEvents());
-      setEventToast('Events successfully synchronized with Supabase.');
+      setRsvps(getRSVPs());
+      setEventToast('Events & RSVPs successfully synchronized with Supabase.');
       setTimeout(() => setEventToast(null), 3500);
     } catch (e) {
       console.error(e);
-      setEventToast('Failed to sync events with Supabase.');
+      setEventToast('Failed to sync data with Supabase.');
       setTimeout(() => setEventToast(null), 3500);
     } finally {
       setIsSyncingWithDb(false);
@@ -203,8 +208,11 @@ export default function OrganizerDashboard() {
     };
     loadData();
 
-    // Auto-sync with Supabase on mount to prune deleted events
-    syncEventsWithSupabase().then(() => {
+    // Auto-sync with Supabase on mount to prune deleted events & load live RSVPs
+    Promise.all([
+      syncEventsWithSupabase(),
+      syncRSVPsWithSupabase()
+    ]).then(() => {
       loadData();
     }).catch(() => {});
 
@@ -370,7 +378,12 @@ export default function OrganizerDashboard() {
 
 
   const myEventIds = new Set(myEvents.map(e => e.id));
-  const myRsvps = rsvps.filter(r => myEventIds.has(r.event_id));
+  const myEventSlugs = new Set(myEvents.map(e => e.slug).filter(Boolean));
+  const myRsvps = rsvps.filter(r => 
+    myEventIds.has(r.event_id) || 
+    myEventSlugs.has(r.event_id) || 
+    (r.event_slug && myEventSlugs.has(r.event_slug))
+  );
 
   const totalRsvps = myRsvps.length;
   const liveCount = myEvents.filter(e => e.status === 'live').length;
@@ -390,10 +403,12 @@ export default function OrganizerDashboard() {
   };
 
   const handleExportCSV = (event?: EventItem) => {
-    const targetRsvps = event ? myRsvps.filter(r => r.event_id === event.id) : myRsvps;
+    const targetRsvps = event 
+      ? myRsvps.filter(r => r.event_id === event.id || r.event_id === event.slug || (r.event_slug && r.event_slug === event.slug)) 
+      : myRsvps;
     const headers = ['Guest Name', 'Email', 'Phone', 'Event Title', 'Status', 'Plus One', 'Dietary', 'Registered At'];
     const rows = targetRsvps.map(r => {
-      const ev = myEvents.find(e => e.id === r.event_id);
+      const ev = myEvents.find(e => e.id === r.event_id || e.slug === r.event_id || (r.event_slug && e.slug === r.event_slug));
       return [
         r.name,
         r.email,
@@ -474,7 +489,7 @@ export default function OrganizerDashboard() {
 
   // Filter guests according to search and filters
   const filteredGuests = myRsvps.filter(r => {
-    const ev = myEvents.find(e => e.id === r.event_id);
+    const ev = myEvents.find(e => e.id === r.event_id || e.slug === r.event_id || (r.event_slug && e.slug === r.event_slug));
     const matchesSearch =
       r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
       r.email.toLowerCase().includes(guestSearch.toLowerCase()) ||
@@ -482,7 +497,7 @@ export default function OrganizerDashboard() {
       (ev?.title || '').toLowerCase().includes(guestSearch.toLowerCase());
 
     if (!matchesSearch) return false;
-    if (guestEventFilter !== 'all' && r.event_id !== guestEventFilter) return false;
+    if (guestEventFilter !== 'all' && r.event_id !== guestEventFilter && r.event_slug !== guestEventFilter) return false;
     if (guestStatusFilter !== 'all' && r.status !== guestStatusFilter) return false;
     return true;
   });
@@ -866,7 +881,7 @@ export default function OrganizerDashboard() {
                   ) : (
                     <AnimatePresence mode="popLayout">
                       {filteredEvents.map(evt => {
-                        const evtRsvps = myRsvps.filter(r => r.event_id === evt.id);
+                        const evtRsvps = myRsvps.filter(r => r.event_id === evt.id || r.event_id === evt.slug || (r.event_slug && r.event_slug === evt.slug));
                         return (
                           <motion.div
                             layout

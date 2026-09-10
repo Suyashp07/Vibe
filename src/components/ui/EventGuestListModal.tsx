@@ -21,6 +21,7 @@ import { EventItem, RSVPItem } from '@/types';
 import { 
   getEventRSVPs, 
   subscribeToStore, 
+  syncRSVPsWithSupabase,
   formatIST, 
   approveWaitlistGuest, 
   rejectWaitlistGuest, 
@@ -56,6 +57,7 @@ export default function EventGuestListModal({
       setRsvps(getEventRSVPs(event.id));
     };
     load();
+    syncRSVPsWithSupabase().then(() => load()).catch(() => {});
     const unsub = subscribeToStore(load);
     return () => unsub();
   }, [event.id]);

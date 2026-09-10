@@ -31,7 +31,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { EventItem } from '@/types';
-import { formatIST, getRSVPsByEvent, subscribeToStore } from '@/lib/store';
+import { formatIST, getRSVPsByEvent, subscribeToStore, syncRSVPsWithSupabase } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import LiveCounter from '@/components/ui/LiveCounter';
 import WhoIsGoing from '@/components/ui/WhoIsGoing';
@@ -43,11 +43,7 @@ import SocialBannerModal from '@/components/banner/SocialBannerModal';
 import FollowButton from '@/components/ui/FollowButton';
 import EventGuestListModal from '@/components/ui/EventGuestListModal';
 
-interface EventTemplateViewProps {
-  event: EventItem;
-}
-
-export default function EventTemplateView({ event }: EventTemplateViewProps) {
+export default function EventTemplateView({ event }: { event: EventItem }) {
   const { profile } = useAuth();
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showGuestListModal, setShowGuestListModal] = useState(false);
@@ -59,8 +55,11 @@ export default function EventTemplateView({ event }: EventTemplateViewProps) {
   const [waitlistCount, setWaitlistCount] = useState<number>(() => {
     return getRSVPsByEvent(event.id).filter(r => r.status === 'waitlisted').length;
   });
+  const [mounted, setMounted] = useState(false);
 
+  // Check if viewing user is the host/owner of this event
   const isOwner = Boolean(
+    mounted &&
     profile && (
       (profile.id && profile.id === event.organizer_id) ||
       (profile.handle && event.organizer_handle && profile.handle.toLowerCase() === event.organizer_handle.toLowerCase()) ||
@@ -69,12 +68,14 @@ export default function EventTemplateView({ event }: EventTemplateViewProps) {
   );
 
   React.useEffect(() => {
+    setMounted(true);
     const update = () => {
       const list = getRSVPsByEvent(event.id);
       setConfirmedCount(list.filter(r => r.status === 'confirmed').length);
       setWaitlistCount(list.filter(r => r.status === 'waitlisted').length);
     };
     update();
+    syncRSVPsWithSupabase().then(() => update()).catch(() => {});
     const unsub = subscribeToStore(update);
     return () => unsub();
   }, [event.id]);

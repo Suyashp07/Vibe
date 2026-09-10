@@ -625,9 +625,9 @@ export const getRSVPs = (): RSVPItem[] => {
   }
 };
 
-export const getEventRSVPs = (eventId: string): RSVPItem[] => {
+export const getEventRSVPs = (eventIdOrSlug: string): RSVPItem[] => {
   const all = getRSVPs();
-  return all.filter(r => r.event_id === eventId);
+  return all.filter(r => r.event_id === eventIdOrSlug || r.event_slug === eventIdOrSlug);
 };
 export const getRSVPsByEvent = getEventRSVPs;
 
@@ -644,23 +644,76 @@ export const addRSVP = (rsvp: Omit<RSVPItem, 'id' | 'created_at'>): RSVPItem => 
     notifyListeners();
   }
 
-  // Supabase PostgreSQL insert
-  const client = getSupabaseClient();
-  if (client) {
-    client.from('rsvps').insert({
-      event_id: rsvp.event_id.startsWith('evt-') ? undefined : rsvp.event_id,
-      name: rsvp.name,
-      email: rsvp.email,
-      phone: rsvp.phone,
-      status: rsvp.status,
-      plus_one_name: rsvp.plus_one_name,
-      custom_responses: rsvp.custom_responses,
-    }).then(({ error }) => {
-      if (error) console.warn('Supabase RSVP insert note:', error);
-    });
+  // Persist to Supabase via server API route
+  if (typeof window !== 'undefined') {
+    fetch('/api/rsvps/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rsvp)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data?.rsvp?.id) {
+          const current = getRSVPs();
+          const mapped = current.map(r => r.id === newRsvp.id ? { ...r, id: data.rsvp.id, event_id: data.rsvp.event_id } : r);
+          localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(mapped));
+          notifyListeners();
+        }
+      })
+      .catch(err => console.warn('Note on /api/rsvps/create:', err));
   }
 
   return newRsvp;
+};
+
+export const syncRSVPsWithSupabase = async (): Promise<RSVPItem[]> => {
+  if (!isClient) return getRSVPs();
+  try {
+    const res = await fetch('/api/rsvps/list', { cache: 'no-store' });
+    if (!res.ok) return getRSVPs();
+    const data = await res.json();
+    if (!data?.rsvps || !Array.isArray(data.rsvps)) return getRSVPs();
+
+    const remoteRsvps: RSVPItem[] = data.rsvps.map((row: any) => ({
+      id: row.id,
+      event_id: row.event_id,
+      event_slug: row.events?.slug || '',
+      name: row.name,
+      email: row.email,
+      phone: row.phone || '',
+      status: row.status || 'confirmed',
+      plus_one_name: row.plus_one_name || undefined,
+      dietary: row.custom_responses?.dietary,
+      tshirt_size: row.custom_responses?.tshirt,
+      custom_responses: row.custom_responses || {},
+      created_at: row.created_at || new Date().toISOString()
+    }));
+
+    // Merge remote RSVPs with any pending local RSVPs without duplicating
+    const local = getRSVPs();
+    const mergedMap = new Map<string, RSVPItem>();
+
+    remoteRsvps.forEach(r => {
+      mergedMap.set(r.id, r);
+    });
+
+    local.forEach(l => {
+      const alreadyExists = remoteRsvps.some(
+        r => r.id === l.id || (r.event_id === l.event_id && r.email?.toLowerCase() === l.email?.toLowerCase())
+      );
+      if (!alreadyExists) {
+        mergedMap.set(l.id, l);
+      }
+    });
+
+    const merged = Array.from(mergedMap.values());
+    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(merged));
+    notifyListeners();
+    return merged;
+  } catch (err) {
+    console.warn('syncRSVPsWithSupabase note:', err);
+    return getRSVPs();
+  }
 };
 
 export const updateRSVPStatus = (rsvpId: string, status: 'confirmed' | 'waitlisted' | 'cancelled') => {
