@@ -62,15 +62,15 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-surface-2/90 border-b border-border/80 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-surface shadow-sm group-hover:bg-accent transition-colors duration-200">
-            <Sparkles className="w-5 h-5 text-gold" />
+        <Link href="/" className="flex items-center gap-2 group shrink-0 py-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand flex items-center justify-center text-surface shadow-sm group-hover:bg-accent transition-colors duration-200 shrink-0">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-gold" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-display font-black text-xl tracking-tight text-brand leading-none">
-              Vibe <span className="font-tagline italic text-accent font-normal text-lg">by Swaniki</span>
+          <div className="flex flex-col justify-center">
+            <span className="font-display font-black text-lg sm:text-xl tracking-tight text-brand leading-tight whitespace-nowrap">
+              Vibe <span className="font-tagline italic text-accent font-normal text-base sm:text-lg">by Swaniki</span>
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-ink-muted leading-tight mt-0.5">
+            <span className="hidden sm:block text-[10px] uppercase font-bold tracking-widest text-ink-muted leading-tight mt-0.5 whitespace-nowrap">
               Whitelabel Events
             </span>
           </div>
@@ -122,18 +122,10 @@ export default function Navbar() {
         </nav>
 
         {/* Right CTA Actions & User Menu */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/discover"
-            className="md:hidden text-ink-secondary hover:text-ink p-2"
-            title="Discover Events"
-          >
-            <Compass className="w-5 h-5" />
-          </Link>
-
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link
             href="/create"
-            className="flex items-center gap-2 bg-gradient-to-r from-accent to-accent-dark text-white text-xs font-bold px-3.5 py-2 rounded-btn shadow-sm hover-lift transition-all border border-accent/20"
+            className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-accent to-accent-dark text-white text-xs font-bold px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-btn shadow-sm hover-lift transition-all border border-accent/20"
           >
             <div className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center">
               <Plus className="w-3 h-3 stroke-[3]" />
@@ -261,7 +253,7 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/login"
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-btn border border-border bg-surface hover:bg-surface-3 text-ink transition-all"
@@ -271,7 +263,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-btn bg-brand hover:bg-brand-mid text-white shadow-xs hover-lift transition-all"
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-btn bg-brand hover:bg-brand-mid text-white shadow-xs hover-lift transition-all"
               >
                 <span>Sign Up</span>
               </Link>

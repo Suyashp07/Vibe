@@ -193,17 +193,17 @@ export default function LandingPage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-border shadow-xs text-xs font-semibold text-ink"
+                className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-surface border border-border shadow-xs text-xs font-semibold text-ink max-w-full"
               >
-                <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
-                <span>India-First Event Experience Platform</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-accent bg-accent-light px-2 py-0.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-accent animate-ping shrink-0" />
+                <span className="truncate">India-First Event Platform</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-accent bg-accent-light px-2 py-0.5 rounded-full shrink-0">
                   Free in v1
                 </span>
               </motion.div>
 
               {/* Headline */}
-              <h1 className="font-display font-black text-5xl sm:text-6xl md:text-7xl text-brand leading-[1.08] tracking-tight">
+              <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-brand leading-[1.12] tracking-tight">
                 Create events that <br className="hidden sm:inline" />
                 <motion.span 
                   className="font-tagline italic text-accent font-normal inline-block"
@@ -240,9 +240,9 @@ export default function LandingPage() {
               </div>
 
               {/* Live proof ticker with dynamic animated counters */}
-              <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-ink-muted border-t border-border/80">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-accent animate-pulse" />
+              <div className="pt-4 flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-ink-muted border-t border-border/80">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Flame className="w-4 h-4 text-accent animate-pulse shrink-0" />
                   <span suppressHydrationWarning>
                     <strong className="text-ink font-black">
                       {mounted ? <AnimatedNumber value={events.length || displayEvents.length} /> : (events.length || displayEvents.length)}
@@ -251,8 +251,8 @@ export default function LandingPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-brand" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Users className="w-4 h-4 text-brand shrink-0" />
                   <span>
                     <strong className="text-ink font-black">
                       {mounted ? <AnimatedNumber value={totalRsvpsCount} /> : `${totalRsvpsCount}+`}
@@ -261,8 +261,8 @@ export default function LandingPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-gold" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Sparkles className="w-4 h-4 text-gold shrink-0" />
                   <span>5 Dynamic Layouts</span>
                 </div>
               </div>
