@@ -466,7 +466,7 @@ export default function RSVPForm({
             {isFull ? 'Waitlist Open' : 'Register to Attend'}
           </span>
           <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-            Free Admission
+            {event.external_price_text || 'Free Admission'}
           </span>
         </div>
         <h3 className={`${headingClass || 'font-display font-black text-2xl mt-1'}`}>
