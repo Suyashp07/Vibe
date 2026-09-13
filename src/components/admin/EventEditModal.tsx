@@ -23,16 +23,16 @@ export default function EventEditModal({
   const [description, setDescription] = useState(event.description || '');
   const [date, setDate] = useState(event.date || '');
   const [time, setTime] = useState(event.time || '');
-  const [venueName, setVenueName] = useState(event.venue_name || '');
-  const [venueAddress, setVenueAddress] = useState(event.venue_address || '');
+  const [venueName, setVenueName] = useState(event.venue_name || event.location_name || '');
+  const [venueAddress, setVenueAddress] = useState(event.venue_address || event.location_address || '');
   const [city, setCity] = useState(event.city || 'Delhi');
   const [priceInr, setPriceInr] = useState(event.price_inr ?? (event.price ?? 0));
   const [ticketType, setTicketType] = useState(event.ticket_type || 'free');
-  const [isExternal, setIsExternal] = useState(Boolean(event.is_external));
-  const [platform, setPlatform] = useState(event.platform || 'vibe');
-  const [ticketLink, setTicketLink] = useState(event.ticket_link || event.external_url || '');
-  const [coverImage, setCoverImage] = useState(event.cover_image || '');
-  const [status, setStatus] = useState(event.status || 'draft');
+  const [isExternal, setIsExternal] = useState(Boolean(event.is_external || event.source_type === 'external' || event.external_ticket_url));
+  const [platform, setPlatform] = useState(event.platform || event.source_platform || 'vibe');
+  const [ticketLink, setTicketLink] = useState(event.ticket_link || event.external_ticket_url || event.external_url || '');
+  const [coverImage, setCoverImage] = useState(event.cover_image || event.cover_image_url || '');
+  const [status, setStatus] = useState(event.status === 'live' || event.status === 'published' ? 'live' : (event.status || 'draft'));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +59,8 @@ export default function EventEditModal({
         ticket_link: ticketLink.trim() || null,
         external_url: ticketLink.trim() || null,
         cover_image: coverImage.trim(),
-        status,
+        cover_image_url: coverImage.trim(),
+        status: status === 'published' ? 'live' : status,
       });
       onClose();
     } catch (err: any) {
@@ -221,7 +222,9 @@ export default function EventEditModal({
                   className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
                 >
                   <option value="draft">Draft (Unpublished)</option>
-                  <option value="published">Published (Live)</option>
+                  <option value="live">Live (Published)</option>
+                  <option value="past">Past / Ended</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
             </div>

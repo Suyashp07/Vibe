@@ -26,7 +26,7 @@ export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'bot_drafts' | 'drafts' | 'published' | 'external' | 'vibe'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'bot_drafts' | 'drafts' | 'live' | 'external' | 'vibe'>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
@@ -49,7 +49,8 @@ export default function AdminEventsPage() {
   }, []);
 
   const handleToggleStatus = async (event: any) => {
-    const newStatus = event.status === 'published' ? 'draft' : 'published';
+    const isLive = event.status === 'live' || event.status === 'published';
+    const newStatus = isLive ? 'draft' : 'live';
     setActionLoading(`status-${event.id}`);
     try {
       const res = await fetch('/api/admin/events', {
@@ -60,7 +61,10 @@ export default function AdminEventsPage() {
           updates: { status: newStatus },
         }),
       });
-      if (!res.ok) throw new Error('Failed to update status');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update status');
+      }
       await fetchEvents();
     } catch (err: any) {
       alert(err.message);
@@ -76,7 +80,10 @@ export default function AdminEventsPage() {
       const res = await fetch(`/api/admin/events?id=${event.id}`, {
         method: 'DELETE',
       });
-      if (!res.ok) throw new Error('Failed to delete event');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete event');
+      }
       await fetchEvents();
     } catch (err: any) {
       alert(err.message);
@@ -96,7 +103,7 @@ export default function AdminEventsPage() {
       }),
     });
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Failed to update event');
     }
     await fetchEvents();
@@ -104,9 +111,10 @@ export default function AdminEventsPage() {
 
   // Filter pipeline
   const filteredEvents = events.filter((e) => {
+    const isLive = e.status === 'live' || e.status === 'published';
     if (activeTab === 'bot_drafts' && !(e.status === 'draft' && e.ai_generated)) return false;
     if (activeTab === 'drafts' && e.status !== 'draft') return false;
-    if (activeTab === 'published' && e.status !== 'published') return false;
+    if (activeTab === 'live' && !isLive) return false;
     if (activeTab === 'external' && !e.is_external) return false;
     if (activeTab === 'vibe' && e.is_external) return false;
 
@@ -115,6 +123,7 @@ export default function AdminEventsPage() {
       return (
         e.title?.toLowerCase().includes(q) ||
         e.venue_name?.toLowerCase().includes(q) ||
+        e.location_name?.toLowerCase().includes(q) ||
         e.city?.toLowerCase().includes(q) ||
         e.slug?.toLowerCase().includes(q) ||
         e.id?.toLowerCase().includes(q)
@@ -126,7 +135,7 @@ export default function AdminEventsPage() {
 
   const botDraftsCount = events.filter((e) => e.status === 'draft' && e.ai_generated).length;
   const draftsCount = events.filter((e) => e.status === 'draft').length;
-  const publishedCount = events.filter((e) => e.status === 'published').length;
+  const liveCount = events.filter((e) => e.status === 'live' || e.status === 'published').length;
   const externalCount = events.filter((e) => e.is_external).length;
 
   return (
@@ -206,14 +215,14 @@ export default function AdminEventsPage() {
             )}
           </button>
           <button
-            onClick={() => setActiveTab('published')}
+            onClick={() => setActiveTab('live')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
-              activeTab === 'published'
+              activeTab === 'live'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            Live ({publishedCount})
+            Live ({liveCount})
           </button>
           <button
             onClick={() => setActiveTab('external')}
@@ -352,16 +361,17 @@ export default function AdminEventsPage() {
                         <button
                           onClick={() => handleToggleStatus(event)}
                           disabled={actionLoading === `status-${event.id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white shadow-sm shadow-emerald-950/40 transition disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white shadow-sm shadow-emerald-950/40 transition disabled:opacity-50 cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Verify & Publish Live</span>
+                          <span>Verify &amp; Publish Live</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleToggleStatus(event)}
                           disabled={actionLoading === `status-${event.id}`}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer"
+                          title="Click to revert to Draft"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                           <span>Live</span>

@@ -69,11 +69,11 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: event.id,
-          updates: { status: 'published' },
+          updates: { status: 'live' },
         }),
       });
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Failed to publish');
       }
       await fetchDashboardData();
@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
         method: 'DELETE',
       });
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Failed to delete');
       }
       await fetchDashboardData();
@@ -114,14 +114,14 @@ export default function AdminDashboardPage() {
       }),
     });
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Failed to save updates');
     }
     await fetchDashboardData();
   };
 
   const drafts = events.filter((e) => e.status === 'draft');
-  const published = events.filter((e) => e.status === 'published');
+  const published = events.filter((e) => e.status === 'live' || e.status === 'published');
   const external = events.filter((e) => e.is_external);
 
   return (

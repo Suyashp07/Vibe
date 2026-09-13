@@ -24,8 +24,12 @@ function getSupabaseAdmin() {
 export async function logAuditEvent(payload: AuditEventPayload): Promise<boolean> {
   try {
     const supabase = getSupabaseAdmin();
+    const isValidUuid =
+      payload.actorId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.actorId);
+
     const { error } = await supabase.from('audit_logs').insert({
-      actor_id: payload.actorId || null,
+      actor_id: isValidUuid ? payload.actorId : null,
       actor_email: payload.actorEmail,
       actor_role: payload.actorRole || 'admin',
       action: payload.action,
