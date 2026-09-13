@@ -10,6 +10,7 @@ import {
 import {
   extractEventFromImage,
   extractEventFromText,
+  scrapeUrlMetadata,
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
 import { nanoid } from 'nanoid';
@@ -193,6 +194,28 @@ export async function POST(req: NextRequest) {
 
       // Extract details via Gemini Vision
       extracted = await extractEventFromImage(buffer, mimeType, message.caption);
+
+      // If caption contains an external URL, scrape it to enrich price and ticketing link
+      if (message.caption) {
+        const captionUrlMatch = message.caption.match(/(https?:\/\/[^\s]+)/i);
+        if (captionUrlMatch) {
+          const captionUrl = captionUrlMatch[1].trim();
+          try {
+            const scraped = await scrapeUrlMetadata(captionUrl);
+            if (scraped.price) {
+              extracted.price_text = scraped.price;
+            }
+            if (!extracted.ticket_url) {
+              extracted.ticket_url = captionUrl;
+            }
+            if (scraped.platform && scraped.platform !== 'telegram') {
+              extracted.source_platform = scraped.platform;
+            }
+          } catch (e) {
+            console.warn('[Telegram Webhook] Scrape caption URL failed:', e);
+          }
+        }
+      }
     }
     // CASE B: Text / Link Provided
     else if (message.text) {
@@ -332,7 +355,7 @@ export async function POST(req: NextRequest) {
 📌 <b>Title:</b> ${extracted.title}
 🗓️ <b>Date:</b> ${dateStr} IST
 📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})
-💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See link' : 'Free Entry')}
+💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}
 🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}
 ${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}
 <i>Review the details above. Tap approve to immediately publish live to Vibe!</i>`;
