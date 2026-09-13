@@ -1,0 +1,396 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  CalendarDays,
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Edit3,
+  Trash2,
+  Eye,
+  Tag,
+  MapPin,
+  Clock,
+  Sparkles,
+  RefreshCw,
+  SlidersHorizontal,
+  ChevronDown
+} from 'lucide-react';
+import EventEditModal from '@/components/admin/EventEditModal';
+
+export default function AdminEventsPage() {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'drafts' | 'published' | 'external' | 'vibe'>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/events');
+      if (!res.ok) throw new Error('Failed to load events');
+      const data = await res.json();
+      setEvents(data.events || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const handleToggleStatus = async (event: any) => {
+    const newStatus = event.status === 'published' ? 'draft' : 'published';
+    setActionLoading(`status-${event.id}`);
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: event.id,
+          updates: { status: newStatus },
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      await fetchEvents();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (event: any) => {
+    if (!confirm(`Are you sure you want to permanently delete "${event.title}"?`)) return;
+    setActionLoading(`del-${event.id}`);
+    try {
+      const res = await fetch(`/api/admin/events?id=${event.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete event');
+      await fetchEvents();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSaveModal = async (updates: Record<string, any>) => {
+    if (!selectedEvent) return;
+    const res = await fetch('/api/admin/events', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: selectedEvent.id,
+        updates,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to update event');
+    }
+    await fetchEvents();
+  };
+
+  // Filter pipeline
+  const filteredEvents = events.filter((e) => {
+    // Tab filter
+    if (activeTab === 'drafts' && e.status !== 'draft') return false;
+    if (activeTab === 'published' && e.status !== 'published') return false;
+    if (activeTab === 'external' && !e.is_external) return false;
+    if (activeTab === 'vibe' && e.is_external) return false;
+
+    // Search query
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        e.title?.toLowerCase().includes(q) ||
+        e.venue_name?.toLowerCase().includes(q) ||
+        e.city?.toLowerCase().includes(q) ||
+        e.slug?.toLowerCase().includes(q) ||
+        e.id?.toLowerCase().includes(q)
+      );
+    }
+
+    return true;
+  });
+
+  const draftsCount = events.filter((e) => e.status === 'draft').length;
+  const publishedCount = events.filter((e) => e.status === 'published').length;
+  const externalCount = events.filter((e) => e.is_external).length;
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-tight font-display">
+            Events Management & Review
+          </h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Publish, curate pricing, override ticket links, or discard drafts
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchEvents}
+            disabled={loading}
+            className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition"
+            title="Refresh list"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <Link
+            href="/create"
+            target="_blank"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8442] text-xs font-semibold text-white shadow-lg shadow-orange-500/20"
+          >
+            + New Event
+          </Link>
+        </div>
+      </div>
+
+      {/* Control Bar: Tabs & Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[#0B0F19] p-2.5 rounded-2xl border border-zinc-800/80">
+        {/* Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
+              activeTab === 'all'
+                ? 'bg-zinc-800 text-white'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            All ({events.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('drafts')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'drafts'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <span>Drafts</span>
+            {draftsCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center">
+                {draftsCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('published')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
+              activeTab === 'published'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Live ({publishedCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('external')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
+              activeTab === 'external'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            External ({externalCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('vibe')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
+              activeTab === 'vibe'
+                ? 'bg-[#E8621A]/20 text-[#FF8442] border border-[#E8621A]/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Native RSVP ({events.length - externalCount})
+          </button>
+        </div>
+
+        {/* Search Field */}
+        <div className="relative w-full md:w-72">
+          <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search title, venue, city..."
+            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8621A]"
+          />
+        </div>
+      </div>
+
+      {/* Events Table */}
+      <div className="rounded-2xl bg-[#0B0F19] border border-zinc-800/90 overflow-hidden">
+        {loading ? (
+          <div className="p-16 text-center text-xs text-zinc-500 font-mono">
+            Loading events repository...
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="p-16 text-center text-xs text-zinc-500">
+            No events match the selected criteria.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-zinc-300">
+              <thead className="bg-zinc-900/60 text-zinc-400 font-mono text-[10px] uppercase border-b border-zinc-800">
+                <tr>
+                  <th className="py-3.5 px-4 font-semibold">Event</th>
+                  <th className="py-3.5 px-4 font-semibold">Schedule & Location</th>
+                  <th className="py-3.5 px-4 font-semibold">Ticketing & Platform</th>
+                  <th className="py-3.5 px-4 font-semibold">Status</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/60">
+                {filteredEvents.map((event) => (
+                  <tr key={event.id} className="hover:bg-zinc-800/30 transition">
+                    {/* Event & Thumbnail */}
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800">
+                          {event.cover_image ? (
+                            <img
+                              src={event.cover_image}
+                              alt={event.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-zinc-700 font-mono">
+                              No Poster
+                            </div>
+                          )}
+                        </div>
+                        <div className="max-w-[240px]">
+                          <div className="font-bold text-white truncate hover:text-[#FF8442]">
+                            {event.title}
+                          </div>
+                          <div className="text-[11px] text-zinc-400 truncate">
+                            /{event.slug}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Schedule & Location */}
+                    <td className="py-3 px-4">
+                      <div className="space-y-1">
+                        <div className="text-zinc-200 font-medium truncate">
+                          {event.date || 'TBA'}
+                        </div>
+                        <div className="text-[11px] text-zinc-400 truncate flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
+                          <span>{event.venue_name || event.city || 'Delhi'}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Ticketing & Platform */}
+                    <td className="py-3 px-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-emerald-400 font-mono">
+                            {event.price_inr ? `₹${event.price_inr}` : 'Free'}
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 font-mono">
+                            {event.ticket_type || 'rsvp'}
+                          </span>
+                        </div>
+                        <div>
+                          {event.is_external ? (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono font-medium">
+                              Redirect: {event.platform || 'external'}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E8621A]/10 text-[#FF8442] border border-[#E8621A]/20 font-mono font-medium">
+                              Direct Vibe RSVP
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Status Toggle */}
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => handleToggleStatus(event)}
+                        disabled={actionLoading === `status-${event.id}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono border transition ${
+                          event.status === 'published'
+                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            event.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'
+                          }`}
+                        />
+                        <span>{event.status === 'published' ? 'Live' : 'Draft'}</span>
+                      </button>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/${event.slug}`}
+                          target="_blank"
+                          title="View Live Page"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+
+                        <button
+                          onClick={() => setSelectedEvent(event)}
+                          title="Edit metadata & pricing"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-[#FF8442] hover:bg-zinc-800 transition"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(event)}
+                          disabled={actionLoading === `del-${event.id}`}
+                          title="Delete event"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Modal */}
+      {selectedEvent && (
+        <EventEditModal
+          event={selectedEvent}
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onSave={handleSaveModal}
+        />
+      )}
+    </div>
+  );
+}

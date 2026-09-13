@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       const messageId = cq.message.message_id;
       const data = cq.data || '';
 
-      if (!isAuthorizedCurator(senderId)) {
+      if (!(await isAuthorizedCurator(senderId))) {
         await answerTelegramCallback(cq.id, 'Unauthorized curator', true);
         return NextResponse.json({ ok: true });
       }
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     const senderId = message.from.id;
 
     // Security Check: Whitelist Authorized Curators
-    if (!isAuthorizedCurator(senderId)) {
+    if (!(await isAuthorizedCurator(senderId))) {
       await sendTelegramMessage(
         chatId,
         '🚫 <b>Access Denied</b>\n\nThis bot is restricted to verified Vibe curators. Your user ID: <code>' +

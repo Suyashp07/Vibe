@@ -16,14 +16,15 @@ import {
   Building2,
   Ticket,
   Menu,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { syncEventsWithSupabase } from '@/lib/store';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { profile, isLoggedIn, signOut } = useAuth();
+  const { profile, isLoggedIn, isStaff, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -186,6 +187,17 @@ export default function Navbar() {
                   </div>
 
                   <div className="py-1">
+                    {isStaff && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#E8621A] hover:bg-[#E8621A]/10 transition-colors font-bold border-b border-border/80"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-[#E8621A]" />
+                        <span>Admin Command Center</span>
+                      </Link>
+                    )}
+
                     <Link
                       href="/dashboard"
                       onClick={() => setDropdownOpen(false)}
@@ -333,6 +345,17 @@ export default function Navbar() {
               <Sparkles className="w-4 h-4 text-gold" />
               <span>Create New Event</span>
             </Link>
+
+            {isStaff && (
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-[#E8621A] bg-[#E8621A]/10 border border-[#E8621A]/20 transition-all"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#E8621A]" />
+                <span>Admin Command Center</span>
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Auth actions */}

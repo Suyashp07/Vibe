@@ -141,10 +141,16 @@ function LoginContent() {
           <Sparkles className="w-6 h-6" />
         </div>
         <h1 className="font-display font-black text-2xl text-ink">
-          {redirectParam === '/create' ? 'Host Sign In Required' : 'Welcome to Vibe'}
+          {redirectParam?.startsWith('/admin')
+            ? 'Staff Sign In Required'
+            : redirectParam === '/create'
+            ? 'Host Sign In Required'
+            : 'Welcome to Vibe'}
         </h1>
         <p className="text-xs text-ink-muted">
-          {redirectParam === '/create'
+          {redirectParam?.startsWith('/admin')
+            ? 'Please sign in with a verified admin or curator account to access the command center.'
+            : redirectParam === '/create'
             ? 'Please sign in with your organizer account to create and publish events.'
             : 'Whitelabel event platform for Indian creators, founders, and curators.'}
         </p>

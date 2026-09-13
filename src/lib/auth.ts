@@ -9,7 +9,7 @@ export interface AuthProfile {
   id: string;
   email: string;
   name: string;
-  role: 'organizer' | 'guest';
+  role: 'super_admin' | 'curator' | 'organizer' | 'guest';
   handle?: string;
   bio?: string;
   avatar_url?: string;
@@ -19,6 +19,9 @@ export interface AuthProfile {
   onboarded?: boolean;
   isDemo?: boolean;
 }
+
+import { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail } from './adminConstants';
+export { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail };
 
 const LOCAL_STORAGE_AUTH_KEY = 'vibe_auth_session';
 
@@ -563,6 +566,11 @@ export const useAuth = () => {
     };
   }, []);
 
+  const isStaff = isStaffRole(profile?.role, profile?.email);
+  const isSuperAdmin =
+    profile?.role === 'super_admin' ||
+    (profile?.email ? ADMIN_EMAILS.includes(profile.email.toLowerCase()) : false);
+
   return {
     user,
     profile,
@@ -570,6 +578,8 @@ export const useAuth = () => {
     isLoggedIn: !!profile,
     isOrganizer: profile?.role === 'organizer',
     isGuest: profile?.role === 'guest',
+    isStaff,
+    isSuperAdmin,
     signOut,
   };
 };
