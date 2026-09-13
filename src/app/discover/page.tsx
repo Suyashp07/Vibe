@@ -47,23 +47,25 @@ export default function DiscoverPage() {
     return () => unsub();
   }, []);
 
-  // Filter pills with Date Polls included
-  const filterPills = ['All', 'Date Polls', 'Mumbai', 'Bengaluru', 'Free', 'Online', 'This Weekend'];
+  // Filter pills with Pune and Date Polls included
+  const filterPills = ['All', 'Pune', 'Mumbai', 'Bengaluru', 'Date Polls', 'Free', 'Online', 'This Weekend'];
 
   const filteredEvents = events.filter((e) => {
     // Search query match
     const matchesSearch =
       e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.location_name.toLowerCase().includes(searchQuery.toLowerCase());
+      (e.tagline && e.tagline.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.city && e.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.location_name && e.location_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.source_platform && e.source_platform.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (!matchesSearch) return false;
 
     // Filter pill matches
     if (activeFilter === 'All') return true;
-    if (activeFilter === 'Mumbai') return e.city.toLowerCase() === 'mumbai';
-    if (activeFilter === 'Bengaluru') return e.city.toLowerCase() === 'bengaluru';
+    if (activeFilter === 'Pune') return e.city?.toLowerCase() === 'pune';
+    if (activeFilter === 'Mumbai') return e.city?.toLowerCase() === 'mumbai';
+    if (activeFilter === 'Bengaluru') return e.city?.toLowerCase() === 'bengaluru';
     if (activeFilter === 'Free') return true; // All v1 events are free
     if (activeFilter === 'Online') return e.event_type === 'online' || e.event_type === 'hybrid';
     if (activeFilter === 'This Weekend') {
@@ -92,7 +94,7 @@ export default function DiscoverPage() {
               Experiences & Gatherings
             </h1>
             <p className="text-xs text-ink-muted mt-1">
-              Live RSVP counts · High-trust communities across Mumbai, Bengaluru, Delhi & Goa
+              Live RSVP counts · Curated communities across Pune, Mumbai, Bengaluru & Goa
             </p>
           </div>
 
