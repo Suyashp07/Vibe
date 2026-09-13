@@ -120,24 +120,19 @@ export async function POST(req: NextRequest) {
     const chatId = message.chat.id;
     const senderId = message.from.id;
 
-    // Security Check: Whitelist Authorized Curators
-    if (!(await isAuthorizedCurator(senderId))) {
-      await sendTelegramMessage(
-        chatId,
-        '🚫 <b>Curator Permission Required</b>\n\n' +
-          'Your Telegram ID (<code>' +
-          senderId +
-          '</code>) is not authorized to ingest events.\n\n' +
-          'Events cannot be created without administrator permission. Please contact a Vibe administrator to have your Telegram ID added in the <b>Admin Command Center → Ingestion & Curators</b>.',
-        { parse_mode: 'HTML' }
-      );
-      return NextResponse.json({ ok: true });
-    }
+    // Check if sender has curator / admin privileges
+    const isCurator = await isAuthorizedCurator(senderId);
 
     // Handle /start or /help command
     const textContent = message.text || message.caption || '';
     if (textContent.startsWith('/start') || textContent.startsWith('/help')) {
-      const welcome = `👋 <b>Welcome to Vibe Ingestion Bot!</b>\n\nI can automatically convert flyers, posters, and links into live events on Vibe.\n\n<b>How to use:</b>\n📸 <b>Send a Poster Image:</b> Forward any event flyer or Instagram screenshot.\n🔗 <b>Send a Link:</b> Paste any Unstop, District, BookMyShow, or Luma URL.\n💬 <b>Send a Text:</b> Forward any WhatsApp event blurb.\n\nGemini AI will extract all venue, date, and ticketing details with 1-tap publishing!`;
+      const welcome = `👋 <b>Welcome to Vibe Event Submission Bot!</b>\n\n` +
+        `Send me any event poster flyer, ticketing link, or message blurb, and I will extract the event details and submit it to Vibe!\n\n` +
+        `<b>How to submit:</b>\n` +
+        `📸 <b>Send a Poster Image:</b> Forward any event flyer or Instagram screenshot.\n` +
+        `🔗 <b>Send a Link:</b> Paste any Unstop, District, BookMyShow, or Luma URL.\n` +
+        `💬 <b>Send a Text:</b> Forward any WhatsApp event blurb.\n\n` +
+        `<i>Your submission will be routed to Vibe administrators for review and published live!</i>`;
       await sendTelegramMessage(chatId, welcome, { parse_mode: 'HTML' });
       return NextResponse.json({ ok: true });
     }
@@ -350,36 +345,45 @@ export async function POST(req: NextRequest) {
     // 4. Send Confirmation Card with Inline Buttons to Telegram
     const appUrl = getAppUrl();
     const adminEventsUrl = `${appUrl}/admin/events`;
-    const previewText = `✨ <b>EVENT EXTRACTED & SUBMITTED!</b> (Confidence: ${confidencePercent}%)
 
-📌 <b>Title:</b> ${extracted.title}
-🏷️ <b>Category:</b> ${detectedCategory}
-🗓️ <b>Date:</b> ${dateStr} IST
-📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})
-💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}
-🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}
-${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}🖼️ <b>Poster:</b> ${isPhoto ? 'Custom Uploaded Flyer' : `${detectedCategory} Curated Background`}
+    let previewText: string;
+    let inlineKeyboard: any[];
 
-🛡️ <b>STATUS: PENDING ADMIN VERIFICATION</b>
-<i>This draft has been routed to the Vibe Admin Command Center. An administrator must verify and approve it before it is published live on Vibe!</i>`;
+    if (isCurator) {
+      previewText = `✨ <b>EVENT EXTRACTED & QUEUED FOR REVIEW!</b> (Confidence: ${confidencePercent}%)\n\n` +
+        `📌 <b>Title:</b> ${extracted.title}\n` +
+        `🏷️ <b>Category:</b> ${detectedCategory}\n` +
+        `🗓️ <b>Date:</b> ${dateStr} IST\n` +
+        `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
+        `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n` +
+        `🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}\n` +
+        (hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : '') +
+        `🖼️ <b>Poster:</b> ${isPhoto ? 'Custom Uploaded Flyer' : `${detectedCategory} Curated Background`}\n\n` +
+        `🛡️ <b>STATUS: PENDING ADMIN VERIFICATION</b>\n` +
+        `<i>This draft has been routed to the Vibe Admin Command Center. Verify and approve it in the admin panel to publish it live!</i>`;
+
+      inlineKeyboard = [
+        [{ text: '🛡️ Review in Admin Command Center ↗', url: adminEventsUrl }],
+        [{ text: '❌ Discard Draft', callback_data: `discard:${savedEvent.id}` }],
+      ];
+    } else {
+      previewText = `🎉 <b>EVENT SUBMITTED FOR REVIEW!</b>\n\n` +
+        `📌 <b>Title:</b> ${extracted.title}\n` +
+        `🗓️ <b>Date:</b> ${dateStr} IST\n` +
+        `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
+        `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n\n` +
+        `🛡️ <b>STATUS: PENDING ADMIN APPROVAL</b>\n` +
+        `<i>Your event has been submitted to the Vibe team! An administrator will review your event and publish it live on Vibe shortly.</i>`;
+
+      inlineKeyboard = [
+        [{ text: '🌐 Browse Live Events ↗', url: `${appUrl}/discover` }],
+      ];
+    }
 
     await sendTelegramMessage(chatId, previewText, {
       parse_mode: 'HTML',
       reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: '🛡️ Review in Admin Command Center ↗',
-              url: adminEventsUrl,
-            },
-          ],
-          [
-            {
-              text: '❌ Discard Draft',
-              callback_data: `discard:${savedEvent.id}`,
-            },
-          ],
-        ],
+        inline_keyboard: inlineKeyboard,
       },
     });
 
