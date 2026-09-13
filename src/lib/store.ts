@@ -497,6 +497,11 @@ export const saveEvent = async (event: EventItem) => {
         rsvp_form_config: event.rsvp_form_config,
         whatsapp_caption: event.whatsapp_caption,
         instagram_caption: event.instagram_caption,
+        source_type: event.source_type || 'native',
+        source_platform: event.source_platform || undefined,
+        external_ticket_url: event.external_ticket_url || undefined,
+        external_price_text: event.external_price_text || undefined,
+        confidence_score: event.confidence_score || undefined,
         updated_at: new Date().toISOString(),
       });
     } catch (e) {

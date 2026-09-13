@@ -109,6 +109,11 @@ export interface EventItem {
   rsvp_form_config: RSVPFormConfig;
   whatsapp_caption?: string;
   instagram_caption?: string;
+  source_type?: 'native' | 'external';
+  source_platform?: 'district' | 'unstop' | 'bookmyshow' | 'insider' | 'luma' | 'telegram' | 'manual' | string;
+  external_ticket_url?: string;
+  external_price_text?: string;
+  confidence_score?: number;
   created_at: string;
   updated_at: string;
 }

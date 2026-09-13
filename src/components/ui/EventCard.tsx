@@ -44,11 +44,21 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${templateBadgeStyles[event.template] || 'bg-white/90 text-brand'}`}>
-            {event.template}
-          </span>
+          {event.source_type === 'external' ? (
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md shadow-sm">
+              {event.source_platform ? `🎟️ ${event.source_platform}` : '🎟️ External'}
+            </span>
+          ) : (
+            <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${templateBadgeStyles[event.template] || 'bg-white/90 text-brand'}`}>
+              {event.template}
+            </span>
+          )}
 
-          {isNearlyFull ? (
+          {event.external_price_text ? (
+            <span className="text-[11px] font-bold bg-white/90 text-brand px-2.5 py-1 rounded-full shadow-sm">
+              {event.external_price_text}
+            </span>
+          ) : isNearlyFull ? (
             <span className="flex items-center gap-1 text-[11px] font-bold bg-accent-light text-accent border border-accent/20 px-2.5 py-1 rounded-full shadow-sm">
               <Flame className="w-3.5 h-3.5 fill-accent" />
               Only {event.capacity! - count} spots left
@@ -103,11 +113,11 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
               />
             ) : (
               <div className="w-6 h-6 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center">
-                {event.organizer_name[0]}
+                {(event.organizer_name || event.source_platform || 'V')[0]?.toUpperCase()}
               </div>
             )}
             <span className="text-xs font-medium text-ink-secondary truncate max-w-[120px]">
-              {event.organizer_name}
+              {event.organizer_name || (event.source_platform ? `Via ${event.source_platform}` : 'Curated by Vibe')}
             </span>
           </div>
 

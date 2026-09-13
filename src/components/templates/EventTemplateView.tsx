@@ -713,6 +713,61 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
                     </div>
                   )}
                 </>
+              ) : event.source_type === 'external' ? (
+                /* External / Ingested Event: Direct Ticketing Card */
+                <div className={`${templateConfig.cardClass} p-6 border ${templateConfig.borderClass} shadow-lg space-y-5`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">
+                      {event.source_platform ? `🎟️ ${event.source_platform.toUpperCase()}` : '🎟️ External Booking'}
+                    </span>
+                    {event.external_price_text && (
+                      <span className="text-sm font-bold text-ink">
+                        {event.external_price_text}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className={`text-xl font-bold ${templateConfig.headingClass}`}>
+                      Ready to Attend?
+                    </h3>
+                    <p className={`text-xs ${templateConfig.textSecondary} mt-1 leading-relaxed`}>
+                      Tickets and registrations for this event are handled on{' '}
+                      <span className="font-semibold text-ink">
+                        {event.source_platform ? event.source_platform.toUpperCase() : 'the official event platform'}
+                      </span>.
+                    </p>
+                  </div>
+
+                  {event.external_ticket_url ? (
+                    <a
+                      href={event.external_ticket_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] ${templateConfig.buttonPrimary}`}
+                    >
+                      <span>Get Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Platform'}</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-surface-2 border border-border text-center text-xs text-ink-secondary">
+                      Registration details provided at the venue.
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs text-ink-muted">
+                    <span>⚡ Curated for Pune</span>
+                    <a
+                      href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${(event.start_at || '').replace(/[-:]/g, '').split('.')[0]}Z/${(event.end_at || '').replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent((event.location_name || '') + ', ' + (event.city || ''))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent hover:underline flex items-center gap-1 font-medium"
+                    >
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      Add to Calendar
+                    </a>
+                  </div>
+                </div>
               ) : (
                 /* Regular Attendee View: RSVP Form */
                 <RSVPForm
