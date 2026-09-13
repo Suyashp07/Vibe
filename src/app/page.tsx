@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
   ArrowRight,
+  ArrowUpRight,
   Palette,
   Share2,
   Calendar,
@@ -86,44 +87,10 @@ export default function LandingPage() {
         setEvents(getEvents());
       }
       setRsvps(getRSVPs());
-    }).catch(() => {});
-
-    // Direct fetch from /api/events/list to guarantee immediate real events loading
-    fetch('/api/events/list')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.events && Array.isArray(data.events) && data.events.length > 0) {
-          const formatted: EventItem[] = data.events.map((row: any) => {
-            const orgProfile = row.profiles || {};
-            return {
-              id: row.id,
-              organizer_id: row.organizer_id || orgProfile.id || 'org-1',
-              organizer_name: orgProfile.name || row.organizer_name || 'Organizer',
-              organizer_handle: orgProfile.handle || row.organizer_handle || 'organizer',
-              organizer_logo: orgProfile.logo_url || row.organizer_logo || '',
-              organizer_brand_color: orgProfile.brand_color || row.organizer_brand_color || '#E8621A',
-              slug: row.slug,
-              title: row.title,
-              tagline: row.tagline || '',
-              description: row.description || '',
-              cover_image_url: row.cover_image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&auto=format&fit=crop&q=80',
-              template: row.template || 'sprint',
-              theme: row.theme || { palette: 'sprint', font: 'Inter', bg_style: 'solid', button_style: 'pill' },
-              sections: row.sections || { speakers: true, agenda: true, gallery: true, faq: true },
-              event_type: row.event_type || 'in-person',
-              location_name: row.location_name || '',
-              location_address: row.location_address || '',
-              city: row.city || 'Mumbai',
-              start_at: row.start_at,
-              end_at: row.end_at,
-              timezone: row.timezone || 'Asia/Kolkata',
-              status: row.status || 'live'
-            };
-          });
-          setEvents(formatted);
-        }
-      })
-      .catch(() => {});
+    }).catch(() => {
+      setEvents(getEvents());
+      setRsvps(getRSVPs());
+    });
 
     const update = () => {
       setEvents(getEvents());
@@ -151,6 +118,13 @@ export default function LandingPage() {
   const meta = TEMPLATE_META[currentTemplate] || TEMPLATE_META.sprint;
   const brandColor = currentEvent?.organizer_brand_color || meta.color;
   const currentEventRsvps = rsvps.filter(r => r.event_id === currentEvent?.id).length;
+
+  const isCurrentExternal = currentEvent?.source_type === 'external';
+  const rawHeroTicketUrl = currentEvent?.external_ticket_url?.trim();
+  const currentTicketUrl = rawHeroTicketUrl
+    ? (rawHeroTicketUrl.startsWith('http') ? rawHeroTicketUrl : `https://${rawHeroTicketUrl}`)
+    : '';
+  const hasHeroExternalLink = Boolean(isCurrentExternal && currentTicketUrl);
 
   const uniqueCities = Array.from(new Set(events.map(e => e.city).filter(Boolean)));
   const citiesText = uniqueCities.length > 0 ? uniqueCities.slice(0, 3).join(' & ') : 'Mumbai & Delhi';
@@ -284,7 +258,13 @@ export default function LandingPage() {
                 className="absolute -top-3.5 -right-2 z-20 hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-border text-[11px] font-bold text-ink shadow-elevated"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-                <span>{currentEventRsvps > 0 ? `${currentEventRsvps} joined live` : 'Active Experience · RSVP Open'}</span>
+                <span>
+                  {hasHeroExternalLink
+                    ? `🎟️ Tickets on ${currentEvent?.source_platform ? currentEvent.source_platform.toUpperCase() : 'Platform'}`
+                    : currentEventRsvps > 0
+                      ? `${currentEventRsvps} joined live`
+                      : 'Active Experience · RSVP Open'}
+                </span>
               </motion.div>
 
               {/* Event Navigation Pills: Displays Real Original Events */}
@@ -330,41 +310,84 @@ export default function LandingPage() {
                     className="w-full"
                   >
                     {/* Event Cover Banner */}
-                    <Link href={`/${currentEvent?.slug}`} className="block relative h-64 sm:h-72 w-full overflow-hidden bg-brand cursor-pointer">
-                      <Image
-                        src={currentEvent?.cover_image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&auto=format&fit=crop&q=80'}
-                        alt={currentEvent?.title || 'Event Cover'}
-                        fill
-                        className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                        priority
-                        unoptimized
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-brand/95 via-brand/45 to-transparent" />
-                      
-                      {/* Top Badges */}
-                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                        <span className={`text-[10px] uppercase font-mono font-bold tracking-wider px-2.5 py-1 rounded-full backdrop-blur-md border shadow-xs ${meta.badgeBg}`}>
-                          Template: {currentEvent?.template?.toUpperCase()}
-                        </span>
-                        <span className="text-[11px] font-semibold text-gold bg-black/50 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-xs flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>Live RSVP</span>
-                        </span>
-                      </div>
+                    {hasHeroExternalLink ? (
+                      <a
+                        href={currentTicketUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block relative h-64 sm:h-72 w-full overflow-hidden bg-brand cursor-pointer"
+                      >
+                        <Image
+                          src={currentEvent?.cover_image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&auto=format&fit=crop&q=80'}
+                          alt={currentEvent?.title || 'Event Cover'}
+                          fill
+                          className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                          priority
+                          unoptimized
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-brand/95 via-brand/45 to-transparent" />
+                        
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 bg-black/70 text-white shadow-xs">
+                            🎟️ {currentEvent?.source_platform ? currentEvent.source_platform.toUpperCase() : 'EXTERNAL'}
+                          </span>
+                          <span className="text-[11px] font-semibold text-white bg-accent px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-xs flex items-center gap-1">
+                            <ArrowUpRight className="w-3 h-3 text-white" />
+                            <span>Official Tickets</span>
+                          </span>
+                        </div>
 
-                      {/* Title & Category in Banner */}
-                      <div className="absolute bottom-4 left-4 right-4 text-white">
-                        <span className="text-[11px] text-white/80 font-medium block uppercase tracking-wider">
-                          {meta.defaultCat}
-                        </span>
-                        <h3 className="font-display font-black text-2xl text-white mt-0.5 leading-tight line-clamp-2">
-                          {currentEvent?.title}
-                        </h3>
-                        <span className="text-[10px] font-mono text-gold-light/90 block mt-1 truncate">
-                          {currentEvent?.tagline || meta.tag}
-                        </span>
-                      </div>
-                    </Link>
+                        {/* Title & Category in Banner */}
+                        <div className="absolute bottom-4 left-4 right-4 text-white">
+                          <span className="text-[11px] text-white/80 font-medium block uppercase tracking-wider">
+                            {currentEvent?.source_platform ? `Curated via ${currentEvent.source_platform}` : meta.defaultCat}
+                          </span>
+                          <h3 className="font-display font-black text-2xl text-white mt-0.5 leading-tight line-clamp-2">
+                            {currentEvent?.title}
+                          </h3>
+                          <span className="text-[10px] font-mono text-gold-light/90 block mt-1 truncate">
+                            {currentEvent?.tagline || meta.tag}
+                          </span>
+                        </div>
+                      </a>
+                    ) : (
+                      <Link href={`/${currentEvent?.slug}`} className="block relative h-64 sm:h-72 w-full overflow-hidden bg-brand cursor-pointer">
+                        <Image
+                          src={currentEvent?.cover_image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&auto=format&fit=crop&q=80'}
+                          alt={currentEvent?.title || 'Event Cover'}
+                          fill
+                          className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                          priority
+                          unoptimized
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-brand/95 via-brand/45 to-transparent" />
+                        
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                          <span className={`text-[10px] uppercase font-mono font-bold tracking-wider px-2.5 py-1 rounded-full backdrop-blur-md border shadow-xs ${meta.badgeBg}`}>
+                            Template: {currentEvent?.template?.toUpperCase()}
+                          </span>
+                          <span className="text-[11px] font-semibold text-gold bg-black/50 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-xs flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>Live RSVP</span>
+                          </span>
+                        </div>
+
+                        {/* Title & Category in Banner */}
+                        <div className="absolute bottom-4 left-4 right-4 text-white">
+                          <span className="text-[11px] text-white/80 font-medium block uppercase tracking-wider">
+                            {meta.defaultCat}
+                          </span>
+                          <h3 className="font-display font-black text-2xl text-white mt-0.5 leading-tight line-clamp-2">
+                            {currentEvent?.title}
+                          </h3>
+                          <span className="text-[10px] font-mono text-gold-light/90 block mt-1 truncate">
+                            {currentEvent?.tagline || meta.tag}
+                          </span>
+                        </div>
+                      </Link>
+                    )}
 
                     {/* Card Details & Live Trigger */}
                     <div className="p-5 space-y-4 bg-surface">
@@ -382,17 +405,33 @@ export default function LandingPage() {
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
                           <span className="text-xs font-bold text-ink">
-                            {currentEventRsvps > 0 ? `${currentEventRsvps} RSVPs verified live` : 'Live RSVP Open'}
+                            {hasHeroExternalLink
+                              ? `Tickets on ${currentEvent?.source_platform ? currentEvent.source_platform.toUpperCase() : 'Official Site'}`
+                              : currentEventRsvps > 0
+                                ? `${currentEventRsvps} RSVPs verified live`
+                                : 'Live RSVP Open'}
                           </span>
                         </div>
 
-                        <Link
-                          href={`/${currentEvent?.slug}`}
-                          className="text-xs font-bold text-accent hover:underline flex items-center gap-1 group"
-                        >
-                          <span>Explore Experience</span>
-                          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                        </Link>
+                        {hasHeroExternalLink ? (
+                          <a
+                            href={currentTicketUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-bold text-accent hover:underline flex items-center gap-1 group"
+                          >
+                            <span>Book on {currentEvent?.source_platform ? currentEvent.source_platform.toUpperCase() : 'Platform'}</span>
+                            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                          </a>
+                        ) : (
+                          <Link
+                            href={`/${currentEvent?.slug}`}
+                            className="text-xs font-bold text-accent hover:underline flex items-center gap-1 group"
+                          >
+                            <span>Explore Experience</span>
+                            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </motion.div>

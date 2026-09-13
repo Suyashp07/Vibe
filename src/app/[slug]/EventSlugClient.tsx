@@ -6,7 +6,7 @@ import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import EventTemplateView from '@/components/templates/EventTemplateView';
 import OrganizerProfileView from '@/components/organizer/OrganizerProfileView';
-import { getEvents, getOrganizerByHandle, subscribeToStore } from '@/lib/store';
+import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase } from '@/lib/store';
 import { EventItem, Profile } from '@/types';
 import { Compass } from 'lucide-react';
 
@@ -52,6 +52,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
     };
 
     resolveSlug();
+    syncEventsWithSupabase().then(() => resolveSlug()).catch(() => {});
     const unsub = subscribeToStore(resolveSlug);
     return () => unsub();
   }, [slug]);

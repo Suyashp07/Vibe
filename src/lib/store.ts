@@ -591,6 +591,11 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
         rsvp_form_config: row.rsvp_form_config || { ask_plus_one: true, ask_dietary: true, waitlist_enabled: true },
         whatsapp_caption: row.whatsapp_caption,
         instagram_caption: row.instagram_caption,
+        source_type: row.source_type || 'native',
+        source_platform: row.source_platform || undefined,
+        external_ticket_url: row.external_ticket_url || undefined,
+        external_price_text: row.external_price_text || undefined,
+        confidence_score: row.confidence_score || undefined,
         created_at: row.created_at,
         updated_at: row.updated_at
       };
