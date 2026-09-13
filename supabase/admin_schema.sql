@@ -12,10 +12,15 @@ ALTER TABLE public.profiles
   ADD CONSTRAINT profiles_role_check 
   CHECK (role IN ('super_admin', 'curator', 'organizer', 'guest'));
 
--- Elevate primary administrator
+-- Elevate primary administrators
 UPDATE public.profiles 
 SET role = 'super_admin' 
-WHERE email IN ('suyashpersonal@gmail.com', 'suyashpandey4002@gmail.com');
+WHERE email IN (
+  'suyashpersonal@gmail.com',
+  'suyashpandey4002@gmail.com',
+  'pandeysuyash100@gmail.com',
+  'suyashpersonal100@gmail.com'
+);
 
 -- 2. CREATE IMMUTABLE AUDIT LOGS TABLE
 CREATE TABLE IF NOT EXISTS public.audit_logs (

@@ -1,6 +1,8 @@
 export const ADMIN_EMAILS: string[] = [
   'suyashpersonal@gmail.com',
   'suyashpandey4002@gmail.com',
+  'pandeysuyash100@gmail.com',
+  'suyashpersonal100@gmail.com',
   ...(process.env.ADMIN_EMAILS
     ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim().toLowerCase())
     : []),
