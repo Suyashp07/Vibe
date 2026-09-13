@@ -20,6 +20,7 @@ export async function GET() {
     const { data: events, error } = await supabase
       .from('events')
       .select('*, profiles:organizer_id(id, name, handle, logo_url, brand_color, email)')
+      .eq('status', 'live')
       .order('created_at', { ascending: false });
 
     if (error) {

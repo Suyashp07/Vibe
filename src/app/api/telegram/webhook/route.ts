@@ -124,9 +124,11 @@ export async function POST(req: NextRequest) {
     if (!(await isAuthorizedCurator(senderId))) {
       await sendTelegramMessage(
         chatId,
-        '🚫 <b>Access Denied</b>\n\nThis bot is restricted to verified Vibe curators. Your user ID: <code>' +
+        '🚫 <b>Curator Permission Required</b>\n\n' +
+          'Your Telegram ID (<code>' +
           senderId +
-          '</code> is not authorized.',
+          '</code>) is not authorized to ingest events.\n\n' +
+          'Events cannot be created without administrator permission. Please contact a Vibe administrator to have your Telegram ID added in the <b>Admin Command Center → Ingestion & Curators</b>.',
         { parse_mode: 'HTML' }
       );
       return NextResponse.json({ ok: true });
@@ -294,8 +296,8 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: 250,
-      is_public: true,
-      status: 'draft',
+      is_public: false, // Strictly private until verified and published by an administrator
+      status: 'draft',  // Strictly draft until verified and published by an administrator
       ai_generated: true,
       source_type: finalSourceType,
       source_platform: finalSourcePlatform,

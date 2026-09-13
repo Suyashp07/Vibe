@@ -44,12 +44,7 @@ export async function isAuthorizedCurator(senderId: string | number): Promise<bo
     console.warn('[Telegram] Dynamic curator check warning:', err);
   }
 
-  // Fallback if no admin ID is configured
-  if (!envAllowed) {
-    console.warn('[Telegram] TELEGRAM_ADMIN_CHAT_ID not configured! All senders accepted.');
-    return true;
-  }
-
+  // 3. Strict Fail-Secure: If not found in env whitelist or database table, strictly deny access
   return false;
 }
 

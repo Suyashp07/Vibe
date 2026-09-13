@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     if (event_slug || (event_id && (event_id.startsWith('evt-') || event_id.length !== 36))) {
       const query = supabase
         .from('events')
-        .select('id, slug, source_type, source_platform, external_ticket_url')
+        .select('id, slug, status, source_type, source_platform, external_ticket_url')
         .limit(1);
       if (event_slug) {
         query.eq('slug', event_slug);
@@ -55,12 +55,22 @@ export async function POST(req: Request) {
     } else if (targetEventId && targetEventId.length === 36) {
       const { data: matched } = await supabase
         .from('events')
-        .select('id, slug, source_type, source_platform, external_ticket_url')
+        .select('id, slug, status, source_type, source_platform, external_ticket_url')
         .eq('id', targetEventId)
         .maybeSingle();
       if (matched) {
         targetEvent = matched;
       }
+    }
+
+    // STRICT RULE: Cannot RSVP to draft/unverified events
+    if (targetEvent?.status === 'draft') {
+      return NextResponse.json(
+        {
+          error: 'This event is currently pending administrator verification and is not open for RSVPs yet.',
+        },
+        { status: 400 }
+      );
     }
 
     // STRICT RULE: RSVPs can ONLY be created for Vibe-specific native platform events

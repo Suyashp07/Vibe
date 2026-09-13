@@ -100,8 +100,9 @@ export default function LandingPage() {
     return () => unsub();
   }, []);
 
-  // Use real original events from the database/store
-  const displayEvents = events.length > 0 ? events : SAMPLE_TEMPLATE_EVENTS;
+  // Use real original events from the database/store, strictly filtering for live events
+  const liveEvents = events.filter((e) => e.status === 'live');
+  const displayEvents = liveEvents.length > 0 ? liveEvents : SAMPLE_TEMPLATE_EVENTS;
 
   // Auto-cycle through events every 4.8 seconds unless user pauses
   useEffect(() => {

@@ -128,12 +128,15 @@ export async function PATCH(req: NextRequest) {
     if (updates.status !== undefined) {
       if (updates.status === 'published' || updates.status === 'live') {
         sanitizedUpdates.status = 'live';
+        sanitizedUpdates.is_public = true;
       } else if (updates.status === 'draft') {
         sanitizedUpdates.status = 'draft';
+        sanitizedUpdates.is_public = false;
       } else if (updates.status === 'past') {
         sanitizedUpdates.status = 'past';
       } else if (updates.status === 'cancelled') {
         sanitizedUpdates.status = 'cancelled';
+        sanitizedUpdates.is_public = false;
       }
     }
 

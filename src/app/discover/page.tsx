@@ -59,6 +59,9 @@ export default function DiscoverPage() {
       (e.location_name && e.location_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (e.source_platform && e.source_platform.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    // Strictly hide unverified drafts from public discovery
+    if (e.status !== 'live') return false;
+
     if (!matchesSearch) return false;
 
     // Filter pill matches
