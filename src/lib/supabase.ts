@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -10,14 +11,14 @@ export const isSupabaseConfigured = (): boolean => {
 let browserClient: SupabaseClient | null = null;
 
 /**
- * Returns a singleton Supabase browser client
+ * Returns a singleton Supabase browser client with automatic cookie management for Next.js
  */
 export const getSupabaseClient = (): SupabaseClient | null => {
   if (typeof window === 'undefined') return null;
   if (!isSupabaseConfigured()) return null;
 
   if (!browserClient && supabaseUrl && supabaseAnonKey) {
-    browserClient = createClient(supabaseUrl, supabaseAnonKey, {
+    browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey, {
       realtime: {
         params: {
           eventsPerSecond: 10,

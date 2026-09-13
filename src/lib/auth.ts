@@ -42,8 +42,16 @@ export const setLocalAuthSession = (profile: AuthProfile | null) => {
   if (typeof window === 'undefined') return;
   if (profile) {
     localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(profile));
+    try {
+      document.cookie = `vibe_auth_role=${encodeURIComponent(profile.role)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `vibe_auth_email=${encodeURIComponent(profile.email)}; path=/; max-age=604800; SameSite=Lax`;
+    } catch {}
   } else {
     localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY);
+    try {
+      document.cookie = 'vibe_auth_role=; path=/; max-age=0; SameSite=Lax';
+      document.cookie = 'vibe_auth_email=; path=/; max-age=0; SameSite=Lax';
+    } catch {}
   }
   // Dispatch storage event so all tabs/components update
   window.dispatchEvent(new Event('vibe_auth_changed'));
@@ -340,11 +348,13 @@ export const signInWithPassword = async (email: string, password: string) => {
   });
 
   if (data?.user) {
+    const cleanEmail = (data.user.email || email).toLowerCase();
+    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
     setLocalAuthSession({
       id: data.user.id,
       email: data.user.email || email,
       name: data.user.user_metadata?.name || email.split('@')[0],
-      role: data.user.user_metadata?.role || 'organizer',
+      role: isSuper ? 'super_admin' : (data.user.user_metadata?.role || 'organizer'),
       isDemo: false,
     });
   }
