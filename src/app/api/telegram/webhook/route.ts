@@ -195,8 +195,11 @@ export async function POST(req: NextRequest) {
         parse_mode: 'HTML',
       });
       extracted = await extractEventFromText(message.text);
-      // Pick suitable cover photo by detected category or platform
-      coverImageUrl = CATEGORY_COVERS[extracted.source_platform] || CATEGORY_COVERS.default;
+      // Pick suitable cover photo by detected category, platform, or scraped OpenGraph image
+      coverImageUrl =
+        extracted.cover_image_url ||
+        CATEGORY_COVERS[extracted.source_platform] ||
+        CATEGORY_COVERS.default;
     } else {
       await sendTelegramMessage(
         chatId,
@@ -205,6 +208,21 @@ export async function POST(req: NextRequest) {
       );
       return NextResponse.json({ ok: true });
     }
+
+    // Validate timestamps safely for PostgreSQL timestamptz
+    let validStartAt = new Date(Date.now() + 86400000).toISOString();
+    try {
+      if (extracted.start_at && !isNaN(new Date(extracted.start_at).getTime())) {
+        validStartAt = new Date(extracted.start_at).toISOString();
+      }
+    } catch {}
+
+    let validEndAt = new Date(new Date(validStartAt).getTime() + 10800000).toISOString();
+    try {
+      if (extracted.end_at && !isNaN(new Date(extracted.end_at).getTime())) {
+        validEndAt = new Date(extracted.end_at).toISOString();
+      }
+    } catch {}
 
     // Ensure valid slug uniqueness
     const finalSlug = `${extracted.suggested_slug}-${nanoid(4)}`;
@@ -217,22 +235,24 @@ export async function POST(req: NextRequest) {
       button_style: 'solid',
     };
 
+    const detectedCity = extracted.city || 'Pune';
+
     // 3. Insert into Supabase `public.events` as draft
     const insertPayload = {
       slug: finalSlug,
       title: extracted.title || 'Untitled Event',
-      tagline: extracted.tagline || 'Experience the vibe in Pune',
+      tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
       description: extracted.description || '',
       cover_image_url: coverImageUrl,
       template: extracted.template || 'grove',
       theme: themeConfig,
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
-      location_name: extracted.venue_name || 'Pune Venue',
-      location_address: extracted.location_address || 'Pune, Maharashtra',
-      city: extracted.city || 'Pune',
-      start_at: extracted.start_at || new Date(Date.now() + 86400000).toISOString(),
-      end_at: extracted.end_at || new Date(Date.now() + 86400000 + 10800000).toISOString(),
+      location_name: extracted.venue_name || `${detectedCity} Venue`,
+      location_address: extracted.location_address || `${detectedCity}, India`,
+      city: detectedCity,
+      start_at: validStartAt,
+      end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: 250,
       is_public: true,
