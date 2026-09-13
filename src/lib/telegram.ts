@@ -18,7 +18,11 @@ export function isAuthorizedCurator(senderId: string | number): boolean {
     return true;
   }
   const idStr = String(senderId).trim();
-  const allowedList = allowed.split(',').map((id) => id.trim());
+  const allowedList = allowed
+    .replace(/['"\r\n]/g, '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
   return allowedList.includes(idStr);
 }
 
