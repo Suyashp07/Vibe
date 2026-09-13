@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   MapPin,
   Compass,
@@ -37,6 +38,11 @@ export default function LocationModal({
   const [isLocating, setIsLocating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeCity, setActiveCity] = useState<string>('All India');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +52,7 @@ export default function LocationModal({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSelect = (city: string, coords?: { lat: number; lng: number } | null) => {
     setUserLocation(city, coords);
@@ -99,9 +105,17 @@ export default function LocationModal({
       )
     : [];
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-[#0D121F] border border-zinc-800 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden my-6 text-white">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="bg-[#0D121F] border border-zinc-800 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden my-auto text-white relative z-10 animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="relative p-6 pb-4 border-b border-zinc-800/80 bg-[#090D17]">
           <button
@@ -272,6 +286,7 @@ export default function LocationModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

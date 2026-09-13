@@ -92,8 +92,9 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-surface-2/90 border-b border-border/80 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+    <>
+      <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-surface-2/90 border-b border-border/80 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
         {/* Brand Logo & Location Pill */}
         <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
           <Link href="/" className="flex items-center gap-2 group shrink-0 py-1">
@@ -468,13 +469,14 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
-      {/* Intelligent Location Selector & First-Time Visitor Demand Modal */}
-      <LocationModal
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-        onSelectCity={(city) => setActiveCity(city)}
-      />
     </header>
+
+    {/* Intelligent Location Selector & First-Time Visitor Demand Modal */}
+    <LocationModal
+      isOpen={locationModalOpen}
+      onClose={() => setLocationModalOpen(false)}
+      onSelectCity={(city) => setActiveCity(city)}
+    />
+  </>
   );
 }
