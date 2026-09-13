@@ -243,9 +243,13 @@ export async function POST(req: NextRequest) {
     const detectedCity = extracted.city || 'Pune';
 
     // Determine whether this is a native Vibe event or an external aggregated event
+    const rawTicketUrl = extracted.ticket_url?.trim();
+    const normalizedTicketUrl = rawTicketUrl
+      ? (rawTicketUrl.startsWith('http://') || rawTicketUrl.startsWith('https://') ? rawTicketUrl : `https://${rawTicketUrl}`)
+      : undefined;
+
     const hasExternalUrl = Boolean(
-      extracted.ticket_url &&
-      (extracted.ticket_url.startsWith('http://') || extracted.ticket_url.startsWith('https://')) &&
+      normalizedTicketUrl &&
       extracted.source_platform &&
       extracted.source_platform.toLowerCase() !== 'vibe' &&
       extracted.source_platform.toLowerCase() !== 'telegram'
@@ -253,7 +257,7 @@ export async function POST(req: NextRequest) {
 
     const finalSourceType: 'native' | 'external' = hasExternalUrl ? 'external' : 'native';
     const finalSourcePlatform = hasExternalUrl ? extracted.source_platform : undefined;
-    const finalTicketUrl = hasExternalUrl ? extracted.ticket_url : undefined;
+    const finalTicketUrl = hasExternalUrl ? normalizedTicketUrl : undefined;
 
     // 3. Insert into Supabase `public.events` as draft
     const insertPayload = {
