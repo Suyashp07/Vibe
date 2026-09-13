@@ -2,6 +2,22 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { nanoid } from 'nanoid';
 import { TemplateType } from '@/types';
 
+export type EventCategory =
+  | 'tech'
+  | 'music'
+  | 'comedy'
+  | 'nightlife'
+  | 'workshop'
+  | 'art'
+  | 'fitness'
+  | 'wellness'
+  | 'culinary'
+  | 'poetry'
+  | 'festival'
+  | 'gaming'
+  | 'theatre'
+  | 'social';
+
 export interface ExtractedEventData {
   title: string;
   tagline: string;
@@ -14,6 +30,7 @@ export interface ExtractedEventData {
   ticket_url?: string;
   price_text?: string;
   source_platform: string;
+  category?: EventCategory;
   template: TemplateType;
   confidence_score: number;
   cover_image_url?: string;
@@ -47,6 +64,110 @@ function generateSlug(title: string): string {
 
 function capitalizeWords(str: string): string {
   return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Hand-curated editorial Unsplash photography for Indian & global events by category
+ */
+export const CATEGORY_COVERS: Record<string, string[]> = {
+  tech: [
+    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80',
+  ],
+  music: [
+    'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1200&auto=format&fit=crop&q=80',
+  ],
+  comedy: [
+    'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=1200&auto=format&fit=crop&q=80',
+  ],
+  nightlife: [
+    'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&auto=format&fit=crop&q=80',
+  ],
+  workshop: [
+    'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1460518451282-72992a605fe6?w=1200&auto=format&fit=crop&q=80',
+  ],
+  art: [
+    'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=1200&auto=format&fit=crop&q=80',
+  ],
+  fitness: [
+    'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&auto=format&fit=crop&q=80',
+  ],
+  wellness: [
+    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=1200&auto=format&fit=crop&q=80',
+  ],
+  culinary: [
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80',
+  ],
+  poetry: [
+    'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=1200&auto=format&fit=crop&q=80',
+  ],
+  festival: [
+    'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1200&auto=format&fit=crop&q=80',
+  ],
+  gaming: [
+    'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&auto=format&fit=crop&q=80',
+  ],
+  theatre: [
+    'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?w=1200&auto=format&fit=crop&q=80',
+  ],
+  social: [
+    'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&auto=format&fit=crop&q=80',
+  ],
+  default: [
+    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&auto=format&fit=crop&q=80',
+  ],
+};
+
+export function detectCategoryFromText(text: string): EventCategory {
+  const lower = text.toLowerCase();
+  if (lower.match(/\b(yoga|meditation|breathwork|healing|pranayama|mindfulness|pilates)\b/)) return 'wellness';
+  if (lower.match(/\b(hackathon|code|coding|developer|ai|pitch|founder|demo day|web3|crypto|software|startup|tech)\b/)) return 'tech';
+  if (lower.match(/\b(comedy|standup|stand-up|open mic|comic|laugh|roast)\b/)) return 'comedy';
+  if (lower.match(/\b(concert|band|gig|dj|music|acoustic|live music|techno|sufi|singing)\b/)) return 'music';
+  if (lower.match(/\b(club|nightclub|party|cocktail|pub crawl|dj night|bar night|afterparty)\b/)) return 'nightlife';
+  if (lower.match(/\b(workshop|masterclass|pottery|craft|origami|baking|cooking class|diy)\b/)) return 'workshop';
+  if (lower.match(/\b(poetry|shayari|ghazal|spoken word|storytelling|kavi|book club|literature)\b/)) return 'poetry';
+  if (lower.match(/\b(art|painting|canvas|gallery|sculpture|sketching|exhibition)\b/)) return 'art';
+  if (lower.match(/\b(marathon|run|running|cycl|5k|10k|football|cricket|badminton|fitness|workout)\b/)) return 'fitness';
+  if (lower.match(/\b(garba|dandiya|diwali|navratri|holi|festival|carnival|mela)\b/)) return 'festival';
+  if (lower.match(/\b(chess|board game|boardgame|catan|poker|trivia|quiz|esports|bgmi)\b/)) return 'gaming';
+  if (lower.match(/\b(theatre|theater|play|drama|natak|monologue|acting)\b/)) return 'theatre';
+  if (lower.match(/\b(food walk|tasting|supper club|brunch|dining|coffee brewing|cocktail making)\b/)) return 'culinary';
+  return 'social';
+}
+
+export function getCategoryCover(category?: string, seedText?: string): string {
+  let cat = category?.toLowerCase();
+  if (!cat || !CATEGORY_COVERS[cat]) {
+    cat = seedText ? detectCategoryFromText(seedText) : 'default';
+  }
+  const list = CATEGORY_COVERS[cat] || CATEGORY_COVERS.default;
+  if (!seedText) return list[0];
+  let hash = 0;
+  for (let i = 0; i < seedText.length; i++) {
+    hash = (hash << 5) - hash + seedText.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % list.length;
+  return list[index];
 }
 
 /**
@@ -259,17 +380,19 @@ CRITICAL EXTRACTION RULES:
    - Extract the EXACT ticket pricing stated in the context or visible on the poster (e.g. "Free", "Free Entry", "₹0 onwards", "₹450 onwards", "₹699 onwards").
    - If NO price or entry fee is mentioned anywhere in the context or image, set "price_text" to null.
    - NEVER make up, guess, or invent numbers! Do not output placeholder numbers.
-5. PERFORMERS & HIGHLIGHTS: In the description, clearly highlight all featured artists, panelists, DJs, and activities.
-6. TICKETING & PLATFORM (STRICT ANTI-HALLUCINATION RULE):
+5. CATEGORY: Classify the event into one of: "tech", "music", "comedy", "nightlife", "workshop", "art", "fitness", "wellness", "culinary", "poetry", "festival", "gaming", "theatre", "social".
+6. PERFORMERS & HIGHLIGHTS: In the description, clearly highlight all featured artists, panelists, DJs, and activities.
+7. TICKETING & PLATFORM (STRICT ANTI-HALLUCINATION RULE):
    - "ticket_url": MUST BE null unless an actual "http://" or "https://" URL is visibly printed on the flyer or explicitly provided in the message. NEVER invent or guess a fake URL!
    - "source_platform": MUST BE "vibe" unless an external ticketing service (District, Unstop, BookMyShow, Luma, Paytm Insider) is explicitly mentioned. Events created via posters or WhatsApp messages are created directly for Vibe!
-7. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
+8. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
 
 JSON Schema:
 {
   "title": "Exact event title (Capitalized)",
   "tagline": "Punchy 8-12 word tagline for the event card",
   "description": "2-3 paragraphs describing what attendees can expect, who is performing/speaking, and the vibe.",
+  "category": "tech" | "music" | "comedy" | "nightlife" | "workshop" | "art" | "fitness" | "wellness" | "culinary" | "poetry" | "festival" | "gaming" | "theatre" | "social",
   "venue_name": "Exact venue or museum or auditorium name",
   "location_address": "Street / Area, City, State",
   "city": "Exact city name",
@@ -321,8 +444,11 @@ export async function extractEventFromImage(
       const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(cleaned);
 
+      const category = parsed.category || detectCategoryFromText(`${parsed.title || ''} ${parsed.description || ''}`);
+
       return {
         ...parsed,
+        category,
         suggested_slug: generateSlug(parsed.title || 'event'),
         confidence_score: parsed.confidence_score || 0.95,
       };
@@ -334,6 +460,7 @@ export async function extractEventFromImage(
 
   // Fallback if all AI models fail
   console.error('[AI Extractor Image] All candidate models failed, using fallback:', lastError);
+  const fallbackCategory = detectCategoryFromText(caption || '');
   return {
     title: caption ? caption.slice(0, 50) : 'Live Experience',
     tagline: 'Experience the vibe in town',
@@ -345,6 +472,7 @@ export async function extractEventFromImage(
     end_at: new Date(Date.now() + 86400000 + 10800000).toISOString(),
     price_text: 'Free Entry',
     source_platform: 'vibe',
+    category: fallbackCategory,
     template: 'ember',
     confidence_score: 0.7,
     faq: [{ q: 'How do I attend?', a: 'Check venue and ticketing instructions.' }],
@@ -400,13 +528,20 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
       const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(cleaned);
 
+      const category = parsed.category || detectCategoryFromText(`${parsed.title || ''} ${parsed.description || ''} ${text}`);
+      const finalCover =
+        extractedCover ||
+        parsed.cover_image_url ||
+        getCategoryCover(category, parsed.title || text);
+
       return {
         ...parsed,
+        category,
         ticket_url: targetUrl || parsed.ticket_url,
         // Deterministic price from scraped metadata takes precedence over AI guess
         price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
         source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
-        cover_image_url: extractedCover || parsed.cover_image_url,
+        cover_image_url: finalCover,
         suggested_slug: generateSlug(parsed.title || 'event'),
         confidence_score: parsed.confidence_score || 0.90,
       };
@@ -419,10 +554,14 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
   // Fallback if all AI models fail
   console.error('[AI Extractor Text] All candidate models failed, using fallback:', lastError);
   const fallbackTitle = text.slice(0, 50).trim() || 'Curated Gathering';
+  const fallbackCat = detectCategoryFromText(`${fallbackTitle} ${text}`);
+  const fallbackCover = extractedCover || getCategoryCover(fallbackCat, fallbackTitle);
+
   return {
     title: fallbackTitle,
     tagline: 'Exciting weekend plan',
     description: text,
+    category: fallbackCat,
     venue_name: 'City Venue',
     location_address: 'City Center',
     city: 'Pune',
@@ -431,7 +570,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     ticket_url: targetUrl,
     price_text: scrapedPrice || (targetUrl ? 'See booking page' : 'Free Entry'),
     source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : 'vibe',
-    cover_image_url: extractedCover,
+    cover_image_url: fallbackCover,
     template: 'grove',
     confidence_score: 0.75,
     faq: [{ q: 'Where do I register?', a: 'Via the official booking link.' }],

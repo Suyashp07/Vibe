@@ -11,6 +11,8 @@ import {
   extractEventFromImage,
   extractEventFromText,
   scrapeUrlMetadata,
+  getCategoryCover,
+  detectCategoryFromText,
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
 import { nanoid } from 'nanoid';
@@ -30,16 +32,6 @@ function getAppUrl(): string {
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://vibe-seven-pied.vercel.app')
   );
 }
-
-// Fallback high-res cover photos by category if image upload is unavailable
-const CATEGORY_COVERS: Record<string, string> = {
-  music: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80',
-  comedy: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?auto=format&fit=crop&w=1200&q=80',
-  tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-  nightlife: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80',
-  workshop: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1200&q=80',
-  default: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
-};
 
 export async function GET() {
   return NextResponse.json({
@@ -150,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseAdmin();
     let extracted: ExtractedEventData;
-    let coverImageUrl = CATEGORY_COVERS.default;
+    let coverImageUrl = getCategoryCover('default');
 
     const isPhoto = Boolean(message.photo && message.photo.length > 0);
     const isImageDoc = Boolean(message.document && message.document.mime_type?.startsWith('image/'));
@@ -223,11 +215,13 @@ export async function POST(req: NextRequest) {
         parse_mode: 'HTML',
       });
       extracted = await extractEventFromText(message.text);
-      // Pick suitable cover photo by detected category, platform, or scraped OpenGraph image
+      // Pick suitable cover photo:
+      // 1. Scraped OpenGraph image if user provided an event link
+      // 2. Curated editorial high-res photography matching event category & title
+      const finalCategory = extracted.category || detectCategoryFromText(`${extracted.title} ${message.text}`);
       coverImageUrl =
         extracted.cover_image_url ||
-        CATEGORY_COVERS[extracted.source_platform] ||
-        CATEGORY_COVERS.default;
+        getCategoryCover(finalCategory, extracted.title);
     } else {
       await sendTelegramMessage(
         chatId,
@@ -349,15 +343,19 @@ export async function POST(req: NextRequest) {
 
     const confidencePercent = Math.round((extracted.confidence_score || 0.9) * 100);
 
+    const detectedCategory = (extracted.category || detectCategoryFromText(extracted.title)).toUpperCase();
+
     // 4. Send Confirmation Card with Inline Buttons to Telegram
     const previewText = `✨ <b>EVENT EXTRACTED!</b> (Confidence: ${confidencePercent}%)
 
 📌 <b>Title:</b> ${extracted.title}
+🏷️ <b>Category:</b> ${detectedCategory}
 🗓️ <b>Date:</b> ${dateStr} IST
 📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})
 💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}
 🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}
-${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}
+${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}🖼️ <b>Poster:</b> ${isPhoto ? 'Custom Uploaded Flyer' : `${detectedCategory} Curated Background`}
+
 <i>Review the details above. Tap approve to immediately publish live to Vibe!</i>`;
 
     await sendTelegramMessage(chatId, previewText, {
