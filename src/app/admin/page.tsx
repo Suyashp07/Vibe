@@ -265,9 +265,15 @@ export default function AdminDashboardPage() {
                   )}
 
                   {/* Badge overlays */}
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+                    {draft.ai_generated && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-950/90 backdrop-blur-md text-purple-300 border border-purple-500/40 font-bold font-mono flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-purple-400" />
+                        <span>Bot Ingested</span>
+                      </span>
+                    )}
                     <span className="text-[10px] px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-amber-300 border border-amber-500/30 font-semibold uppercase font-mono">
-                      Draft
+                      Needs Verification
                     </span>
                     {draft.is_external ? (
                       <span className="text-[10px] px-2 py-0.5 rounded-md bg-cyan-950/80 backdrop-blur-md text-cyan-300 border border-cyan-500/30 font-semibold font-mono">
@@ -329,10 +335,10 @@ export default function AdminDashboardPage() {
                     <button
                       onClick={() => handlePublish(draft)}
                       disabled={actionLoading === `pub-${draft.id}`}
-                      className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-900/30 transition disabled:opacity-50"
+                      className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-900/30 transition disabled:opacity-50"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{actionLoading === `pub-${draft.id}` ? 'Publishing...' : 'Approve & Live'}</span>
+                      <span>{actionLoading === `pub-${draft.id}` ? 'Publishing...' : 'Verify & Publish Live'}</span>
                     </button>
                   </div>
                 </div>

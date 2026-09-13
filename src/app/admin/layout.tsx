@@ -48,6 +48,12 @@ const NAV_ITEMS = [
     badge: null,
   },
   {
+    label: 'Accounts & Users',
+    href: '/admin/users',
+    icon: UserCheck,
+    badge: 'RBAC',
+  },
+  {
     label: 'Audit Trail',
     href: '/admin/audit-logs',
     icon: ShieldAlert,

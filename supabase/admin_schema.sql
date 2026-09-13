@@ -116,3 +116,17 @@ CREATE POLICY "Admins and Curators have full write on events"
       WHERE profiles.id = auth.uid() AND profiles.role IN ('super_admin', 'curator')
     )
   );
+
+-- 5. PROFILES RLS WRITE POLICY FOR SUPER ADMINS
+DROP POLICY IF EXISTS "Super admins can manage all profiles" ON public.profiles;
+CREATE POLICY "Super admins can manage all profiles"
+  ON public.profiles
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() AND profiles.role = 'super_admin'
+    )
+  );
+

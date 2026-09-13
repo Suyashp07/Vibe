@@ -26,7 +26,7 @@ export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'drafts' | 'published' | 'external' | 'vibe'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'bot_drafts' | 'drafts' | 'published' | 'external' | 'vibe'>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
@@ -104,13 +104,12 @@ export default function AdminEventsPage() {
 
   // Filter pipeline
   const filteredEvents = events.filter((e) => {
-    // Tab filter
+    if (activeTab === 'bot_drafts' && !(e.status === 'draft' && e.ai_generated)) return false;
     if (activeTab === 'drafts' && e.status !== 'draft') return false;
     if (activeTab === 'published' && e.status !== 'published') return false;
     if (activeTab === 'external' && !e.is_external) return false;
     if (activeTab === 'vibe' && e.is_external) return false;
 
-    // Search query
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
@@ -125,6 +124,7 @@ export default function AdminEventsPage() {
     return true;
   });
 
+  const botDraftsCount = events.filter((e) => e.status === 'draft' && e.ai_generated).length;
   const draftsCount = events.filter((e) => e.status === 'draft').length;
   const publishedCount = events.filter((e) => e.status === 'published').length;
   const externalCount = events.filter((e) => e.is_external).length;
@@ -138,7 +138,7 @@ export default function AdminEventsPage() {
             Events Management & Review
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Publish, curate pricing, override ticket links, or discard drafts
+            Admin verification queue, metadata overrides, pricing curation & publishing
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -175,6 +175,22 @@ export default function AdminEventsPage() {
             All ({events.length})
           </button>
           <button
+            onClick={() => setActiveTab('bot_drafts')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'bot_drafts'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span>Bot Ingestions</span>
+            {botDraftsCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {botDraftsCount}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('drafts')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 flex items-center gap-1.5 ${
               activeTab === 'drafts'
@@ -182,7 +198,7 @@ export default function AdminEventsPage() {
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <span>Drafts</span>
+            <span>All Drafts</span>
             {draftsCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center">
                 {draftsCount}
@@ -282,6 +298,12 @@ export default function AdminEventsPage() {
                           <div className="text-[11px] text-zinc-400 truncate">
                             /{event.slug}
                           </div>
+                          {event.ai_generated && event.status === 'draft' && (
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-semibold mt-1">
+                              <Sparkles className="w-3 h-3 text-purple-400" />
+                              <span>Bot Ingested • Verify</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -324,24 +346,27 @@ export default function AdminEventsPage() {
                       </div>
                     </td>
 
-                    {/* Status Toggle */}
+                    {/* Status Toggle / Verify Action */}
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleToggleStatus(event)}
-                        disabled={actionLoading === `status-${event.id}`}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono border transition ${
-                          event.status === 'published'
-                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            event.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'
-                          }`}
-                        />
-                        <span>{event.status === 'published' ? 'Live' : 'Draft'}</span>
-                      </button>
+                      {event.status === 'draft' ? (
+                        <button
+                          onClick={() => handleToggleStatus(event)}
+                          disabled={actionLoading === `status-${event.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white shadow-sm shadow-emerald-950/40 transition disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Verify & Publish Live</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleStatus(event)}
+                          disabled={actionLoading === `status-${event.id}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span>Live</span>
+                        </button>
+                      )}
                     </td>
 
                     {/* Actions */}

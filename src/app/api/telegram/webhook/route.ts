@@ -346,7 +346,9 @@ export async function POST(req: NextRequest) {
     const detectedCategory = (extracted.category || detectCategoryFromText(extracted.title)).toUpperCase();
 
     // 4. Send Confirmation Card with Inline Buttons to Telegram
-    const previewText = `✨ <b>EVENT EXTRACTED!</b> (Confidence: ${confidencePercent}%)
+    const appUrl = getAppUrl();
+    const adminEventsUrl = `${appUrl}/admin/events`;
+    const previewText = `✨ <b>EVENT EXTRACTED & SUBMITTED!</b> (Confidence: ${confidencePercent}%)
 
 📌 <b>Title:</b> ${extracted.title}
 🏷️ <b>Category:</b> ${detectedCategory}
@@ -356,7 +358,8 @@ export async function POST(req: NextRequest) {
 🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}
 ${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}🖼️ <b>Poster:</b> ${isPhoto ? 'Custom Uploaded Flyer' : `${detectedCategory} Curated Background`}
 
-<i>Review the details above. Tap approve to immediately publish live to Vibe!</i>`;
+🛡️ <b>STATUS: PENDING ADMIN VERIFICATION</b>
+<i>This draft has been routed to the Vibe Admin Command Center. An administrator must verify and approve it before it is published live on Vibe!</i>`;
 
     await sendTelegramMessage(chatId, previewText, {
       parse_mode: 'HTML',
@@ -364,8 +367,8 @@ ${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}🖼️ <b>Poste
         inline_keyboard: [
           [
             {
-              text: '🚀 Approve & Publish Live',
-              callback_data: `publish:${savedEvent.id}`,
+              text: '🛡️ Review in Admin Command Center ↗',
+              url: adminEventsUrl,
             },
           ],
           [
