@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Calendar, Users, Flame } from 'lucide-react';
+import { MapPin, Calendar, Users, Flame, ArrowUpRight } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST, getEventRSVPs } from '@/lib/store';
 
@@ -26,11 +26,15 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
     ember: 'bg-amber-50 text-amber-900 border-amber-200',
   };
 
-  return (
-    <Link
-      href={`/${event.slug}`}
-      className="group block bg-surface rounded-2xl border border-border overflow-hidden hover-lift transition-all duration-200 shadow-card flex flex-col h-full"
-    >
+  const isExternal = event.source_type === 'external';
+  const rawTicketUrl = event.external_ticket_url?.trim();
+  const normalizedTicketUrl = rawTicketUrl
+    ? (rawTicketUrl.startsWith('http://') || rawTicketUrl.startsWith('https://') ? rawTicketUrl : `https://${rawTicketUrl}`)
+    : '';
+  const hasExternalLink = Boolean(isExternal && normalizedTicketUrl);
+
+  const cardContent = (
+    <>
       {/* Cover Image */}
       <div className="relative h-48 w-full overflow-hidden bg-surface-3">
         <Image
@@ -44,9 +48,10 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-          {event.source_type === 'external' ? (
-            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md shadow-sm">
-              {event.source_platform ? `🎟️ ${event.source_platform}` : '🎟️ External'}
+          {isExternal ? (
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/25 bg-black/75 text-white backdrop-blur-md shadow-sm inline-flex items-center gap-1">
+              <span>🎟️ {event.source_platform ? event.source_platform.toUpperCase() : 'EXTERNAL'}</span>
+              <ArrowUpRight className="w-3 h-3 text-white/80" />
             </span>
           ) : (
             <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${templateBadgeStyles[event.template] || 'bg-white/90 text-brand'}`}>
@@ -55,8 +60,12 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
           )}
 
           {event.external_price_text ? (
-            <span className="text-[11px] font-bold bg-white/90 text-brand px-2.5 py-1 rounded-full shadow-sm">
+            <span className="text-[11px] font-bold bg-white/95 text-brand px-2.5 py-1 rounded-full shadow-sm">
               {event.external_price_text}
+            </span>
+          ) : isExternal ? (
+            <span className="text-[11px] font-bold bg-white/95 text-brand px-2.5 py-1 rounded-full shadow-sm">
+              Official Site ↗
             </span>
           ) : isNearlyFull ? (
             <span className="flex items-center gap-1 text-[11px] font-bold bg-accent-light text-accent border border-accent/20 px-2.5 py-1 rounded-full shadow-sm">
@@ -100,7 +109,7 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
           </p>
         </div>
 
-        {/* Organizer & Live Hype Pill */}
+        {/* Organizer & Action */}
         <div className="pt-4 mt-4 border-t border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             {event.organizer_logo ? (
@@ -121,11 +130,40 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
             </span>
           </div>
 
-          <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
-            View details →
-          </span>
+          {hasExternalLink ? (
+            <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+              Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Partner'}
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </span>
+          ) : (
+            <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
+              RSVP on Vibe →
+            </span>
+          )}
         </div>
       </div>
+    </>
+  );
+
+  if (hasExternalLink) {
+    return (
+      <a
+        href={normalizedTicketUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group block bg-surface rounded-2xl border border-border overflow-hidden hover-lift transition-all duration-200 shadow-card flex flex-col h-full cursor-pointer"
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      href={`/${event.slug}`}
+      className="group block bg-surface rounded-2xl border border-border overflow-hidden hover-lift transition-all duration-200 shadow-card flex flex-col h-full"
+    >
+      {cardContent}
     </Link>
   );
 }

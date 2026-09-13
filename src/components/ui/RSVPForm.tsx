@@ -73,6 +73,36 @@ export default function RSVPForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRsvp, setSubmittedRsvp] = useState<RSVPItem | null>(null);
+
+  // Strict Rule: RSVPs can ONLY be created for Vibe-specific native events
+  if (event.source_type === 'external') {
+    return (
+      <div className={`p-6 rounded-2xl border ${borderClass || 'border-border'} ${cardClass || 'bg-surface'} text-center space-y-4`}>
+        <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent">
+          {event.source_platform ? `🎟️ ${event.source_platform.toUpperCase()}` : 'External Event'}
+        </span>
+        <h3 className={`text-lg font-bold ${headingClass || 'text-ink'}`}>
+          RSVPs Handled on Partner Platform
+        </h3>
+        <p className={`text-xs ${textSecondary || 'text-ink-secondary'} leading-relaxed`}>
+          Registrations for this experience are exclusively managed on{' '}
+          <span className="font-semibold text-ink">
+            {event.source_platform ? event.source_platform.toUpperCase() : 'the official platform'}
+          </span>.
+        </p>
+        {event.external_ticket_url && (
+          <a
+            href={event.external_ticket_url.startsWith('http') ? event.external_ticket_url : `https://${event.external_ticket_url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-sm w-full shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] ${buttonPrimary || 'bg-accent text-white'}`}
+          >
+            <span>Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'} ↗</span>
+          </a>
+        )}
+      </div>
+    );
+  }
   const [showPassModal, setShowPassModal] = useState(false);
 
   // Pre-fill user details and check for existing RSVP

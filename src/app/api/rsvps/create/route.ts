@@ -32,12 +32,16 @@ export async function POST(req: Request) {
       auth: { persistSession: false }
     });
 
-    // 1. Resolve real event UUID from Supabase
+    // 1. Resolve real event UUID and verify platform source from Supabase
     let targetEventId = event_id;
+    let targetEvent: any = null;
 
     // If event_id is a slug, dummy ID, or if we have event_slug, query Supabase events table
     if (event_slug || (event_id && (event_id.startsWith('evt-') || event_id.length !== 36))) {
-      const query = supabase.from('events').select('id, slug').limit(1);
+      const query = supabase
+        .from('events')
+        .select('id, slug, source_type, source_platform, external_ticket_url')
+        .limit(1);
       if (event_slug) {
         query.eq('slug', event_slug);
       } else {
@@ -45,8 +49,29 @@ export async function POST(req: Request) {
       }
       const { data: matchedEvents } = await query;
       if (matchedEvents && matchedEvents.length > 0) {
-        targetEventId = matchedEvents[0].id;
+        targetEvent = matchedEvents[0];
+        targetEventId = targetEvent.id;
       }
+    } else if (targetEventId && targetEventId.length === 36) {
+      const { data: matched } = await supabase
+        .from('events')
+        .select('id, slug, source_type, source_platform, external_ticket_url')
+        .eq('id', targetEventId)
+        .maybeSingle();
+      if (matched) {
+        targetEvent = matched;
+      }
+    }
+
+    // STRICT RULE: RSVPs can ONLY be created for Vibe-specific native platform events
+    if (targetEvent?.source_type === 'external') {
+      return NextResponse.json(
+        {
+          error: `RSVPs for this event cannot be created on Vibe. Please register directly on ${targetEvent.source_platform ? targetEvent.source_platform.toUpperCase() : 'the official platform'}.`,
+          redirect_url: targetEvent.external_ticket_url || null
+        },
+        { status: 400 }
+      );
     }
 
     // 2. Insert into public.rsvps

@@ -380,11 +380,18 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
                 <span>{event.location_name} · {event.city}</span>
               </div>
 
-              <LiveCounter
-                eventId={event.id}
-                capacity={event.capacity}
-                className="bg-white/15 text-white border-white/25 backdrop-blur-md"
-              />
+              {event.source_type === 'external' ? (
+                <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border ${templateConfig.metaPill}`}>
+                  <ExternalLink className="w-4 h-4 text-amber-300" />
+                  <span>Listed on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Platform'}</span>
+                </div>
+              ) : (
+                <LiveCounter
+                  eventId={event.id}
+                  capacity={event.capacity}
+                  className="bg-white/15 text-white border-white/25 backdrop-blur-md"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -599,8 +606,73 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
           {/* Right Column: RSVP Form / Host Control & Attendees */}
           <div className="lg:col-span-5 space-y-6">
             <div className="space-y-6">
-              {/* Host Control Center Card */}
-              {isOwner ? (
+              {/* Right Column: RSVP Form / Host Control / External Ticketing */}
+              {event.source_type === 'external' ? (
+                /* External / Ingested Event: Direct Ticketing Card */
+                <div className={`${templateConfig.cardClass} p-6 sm:p-8 border ${templateConfig.borderClass} shadow-xl space-y-6 relative overflow-hidden`}>
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1.5"
+                    style={{ backgroundColor: templateConfig.accentColor }}
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-accent/15 text-accent border border-accent/30 flex items-center gap-1.5">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      {event.source_platform ? `🎟️ ${event.source_platform.toUpperCase()}` : '🎟️ EXTERNAL BOOKING'}
+                    </span>
+                    {event.external_price_text ? (
+                      <span className="text-sm font-bold text-ink">
+                        {event.external_price_text}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold text-ink-muted">
+                        Official Ticketing
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className={`text-2xl font-black ${templateConfig.headingClass}`}>
+                      Book Official Tickets
+                    </h3>
+                    <p className={`text-xs sm:text-sm ${templateConfig.textSecondary} mt-2 leading-relaxed`}>
+                      RSVPs and registrations for this event are handled exclusively on{' '}
+                      <span className="font-bold text-ink">
+                        {event.source_platform ? event.source_platform.toUpperCase() : 'the official event platform'}
+                      </span>. Click below to secure your entry directly on their website.
+                    </p>
+                  </div>
+
+                  {event.external_ticket_url ? (
+                    <a
+                      href={event.external_ticket_url.startsWith('http') ? event.external_ticket_url : `https://${event.external_ticket_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full py-4 px-6 rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] ${templateConfig.buttonPrimary}`}
+                    >
+                      <span>Get Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'}</span>
+                      <ArrowUpRight className="w-5 h-5" />
+                    </a>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-surface-2 border border-border text-center text-xs font-medium text-ink-secondary">
+                      Online ticketing link not provided. Inquire directly at the venue.
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-border/60 flex items-center justify-between text-xs text-ink-muted">
+                    <span>⚡ Official Redirect</span>
+                    <a
+                      href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${(event.start_at || '').replace(/[-:]/g, '').split('.')[0]}Z/${(event.end_at || '').replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent((event.description || '') + (event.external_ticket_url ? `\n\nOfficial Tickets: ${event.external_ticket_url}` : ''))}&location=${encodeURIComponent((event.location_name || '') + ', ' + (event.city || ''))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      Add to Calendar
+                    </a>
+                  </div>
+                </div>
+              ) : isOwner ? (
                 <>
                   <div className={`${templateConfig.cardClass} space-y-5 relative overflow-hidden`}>
                     <div
@@ -713,63 +785,8 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
                     </div>
                   )}
                 </>
-              ) : event.source_type === 'external' ? (
-                /* External / Ingested Event: Direct Ticketing Card */
-                <div className={`${templateConfig.cardClass} p-6 border ${templateConfig.borderClass} shadow-lg space-y-5`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">
-                      {event.source_platform ? `🎟️ ${event.source_platform.toUpperCase()}` : '🎟️ External Booking'}
-                    </span>
-                    {event.external_price_text && (
-                      <span className="text-sm font-bold text-ink">
-                        {event.external_price_text}
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    <h3 className={`text-xl font-bold ${templateConfig.headingClass}`}>
-                      Ready to Attend?
-                    </h3>
-                    <p className={`text-xs ${templateConfig.textSecondary} mt-1 leading-relaxed`}>
-                      Tickets and registrations for this event are handled on{' '}
-                      <span className="font-semibold text-ink">
-                        {event.source_platform ? event.source_platform.toUpperCase() : 'the official event platform'}
-                      </span>.
-                    </p>
-                  </div>
-
-                  {event.external_ticket_url ? (
-                    <a
-                      href={event.external_ticket_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] ${templateConfig.buttonPrimary}`}
-                    >
-                      <span>Get Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Platform'}</span>
-                      <ArrowUpRight className="w-4 h-4" />
-                    </a>
-                  ) : (
-                    <div className="p-3 rounded-xl bg-surface-2 border border-border text-center text-xs text-ink-secondary">
-                      Registration details provided at the venue.
-                    </div>
-                  )}
-
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs text-ink-muted">
-                    <span>⚡ Curated for Pune</span>
-                    <a
-                      href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${(event.start_at || '').replace(/[-:]/g, '').split('.')[0]}Z/${(event.end_at || '').replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent((event.location_name || '') + ', ' + (event.city || ''))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-accent hover:underline flex items-center gap-1 font-medium"
-                    >
-                      <CalendarIcon className="w-3.5 h-3.5" />
-                      Add to Calendar
-                    </a>
-                  </div>
-                </div>
               ) : (
-                /* Regular Attendee View: RSVP Form */
+                /* Regular Native Attendee View: RSVP Form */
                 <RSVPForm
                   event={event}
                   cardClass={templateConfig.cardClass}
@@ -783,18 +800,20 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
                 />
               )}
 
-              {/* Who's Going Avatar Grid */}
-              <div className={templateConfig.cardClass}>
-                <WhoIsGoing
-                  eventId={event.id}
-                  isOwner={isOwner}
-                  innerCardClass={templateConfig.innerCardClass}
-                  textSecondary={templateConfig.textSecondary}
-                  textMuted={templateConfig.textMuted}
-                  borderClass={templateConfig.borderClass}
-                  accentColor={templateConfig.accentColor}
-                />
-              </div>
+              {/* Who's Going Avatar Grid (Only for Native Vibe events) */}
+              {event.source_type !== 'external' && (
+                <div className={templateConfig.cardClass}>
+                  <WhoIsGoing
+                    eventId={event.id}
+                    isOwner={isOwner}
+                    innerCardClass={templateConfig.innerCardClass}
+                    textSecondary={templateConfig.textSecondary}
+                    textMuted={templateConfig.textMuted}
+                    borderClass={templateConfig.borderClass}
+                    accentColor={templateConfig.accentColor}
+                  />
+                </div>
+              )}
 
               {/* Host & Community Card */}
               <div className={`${templateConfig.cardClass} space-y-3.5`}>

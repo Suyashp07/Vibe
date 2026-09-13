@@ -15,6 +15,21 @@ export default function StatusBanner({
   confirmedRsvpCount = 0,
   isUserWaitlisted = false
 }: StatusBannerProps) {
+  // 0. If external event, tickets are handled on the partner platform
+  if (event.source_type === 'external') {
+    return (
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/20 border border-accent/40 text-white text-xs font-bold shadow-xs backdrop-blur-md">
+        <span>🎟️ Official Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Platform'}</span>
+        {event.external_price_text && (
+          <>
+            <span className="opacity-40">·</span>
+            <span className="text-amber-300">{event.external_price_text}</span>
+          </>
+        )}
+      </div>
+    );
+  }
+
   // 1. Check if current user is on waitlist
   if (isUserWaitlisted) {
     return (
