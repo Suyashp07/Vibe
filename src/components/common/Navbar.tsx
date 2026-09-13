@@ -17,10 +17,13 @@ import {
   Ticket,
   Menu,
   X,
-  ShieldCheck
+  ShieldCheck,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { syncEventsWithSupabase } from '@/lib/store';
+import LocationModal from '@/components/location/LocationModal';
+import { getUserCity, isFirstTimeLocationVisitor } from '@/lib/location';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -28,6 +31,8 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [activeCity, setActiveCity] = useState<string>('All India');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const isNavActive = (path: string) => {
@@ -45,8 +50,35 @@ export default function Navbar() {
     setMounted(true);
     // Global two-way sync: automatically reconciles events and prunes deleted rows from Supabase
     syncEventsWithSupabase().catch(() => {});
+
+    // Initial location check
+    const stored = getUserCity();
+    if (stored) {
+      setActiveCity(stored);
+    }
+
+    // Auto-prompt location selection on first visit
+    if (isFirstTimeLocationVisitor()) {
+      const timer = setTimeout(() => {
+        setLocationModalOpen(true);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
+  // Listen for global location updates
+  useEffect(() => {
+    const handleLoc = (e: Event) => {
+      const custom = e as CustomEvent<{ city?: string }>;
+      if (custom.detail?.city) {
+        setActiveCity(custom.detail.city);
+      } else {
+        setActiveCity(getUserCity() || 'All India');
+      }
+    };
+    window.addEventListener('vibe:location_changed', handleLoc);
+    return () => window.removeEventListener('vibe:location_changed', handleLoc);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -61,21 +93,35 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-surface-2/90 border-b border-border/80 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 group shrink-0 py-1">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand flex items-center justify-center text-surface shadow-sm group-hover:bg-accent transition-colors duration-200 shrink-0">
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-gold" />
-          </div>
-          <div className="flex flex-col justify-center">
-            <span className="font-display font-black text-lg sm:text-xl tracking-tight text-brand leading-tight whitespace-nowrap">
-              Vibe <span className="font-tagline italic text-accent font-normal text-base sm:text-lg">by Swaniki</span>
-            </span>
-            <span className="hidden sm:block text-[10px] uppercase font-bold tracking-widest text-ink-muted leading-tight mt-0.5 whitespace-nowrap">
-              Whitelabel Events
-            </span>
-          </div>
-        </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+        {/* Brand Logo & Location Pill */}
+        <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
+          <Link href="/" className="flex items-center gap-2 group shrink-0 py-1">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand flex items-center justify-center text-surface shadow-sm group-hover:bg-accent transition-colors duration-200 shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-gold" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <span className="font-display font-black text-lg sm:text-xl tracking-tight text-brand leading-tight whitespace-nowrap">
+                Vibe <span className="font-tagline italic text-accent font-normal text-base sm:text-lg">by Swaniki</span>
+              </span>
+              <span className="hidden sm:block text-[10px] uppercase font-bold tracking-widest text-ink-muted leading-tight mt-0.5 whitespace-nowrap">
+                Whitelabel Events
+              </span>
+            </div>
+          </Link>
+
+          {/* Location Selector Pill */}
+          <button
+            type="button"
+            onClick={() => setLocationModalOpen(true)}
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-surface-3/90 hover:bg-surface-3 border border-border text-[11px] sm:text-xs font-semibold text-ink transition-all shadow-xs hover:border-accent/40 group shrink-0"
+            title="Choose city or detect GPS location"
+          >
+            <MapPin className="w-3.5 h-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
+            <span className="max-w-[70px] sm:max-w-[110px] truncate">{activeCity}</span>
+            <ChevronDown className="w-3 h-3 text-ink-muted shrink-0" />
+          </button>
+        </div>
 
         {/* Center Nav Links */}
         <nav className="hidden md:flex items-center gap-1 bg-surface-3/60 p-1 rounded-full border border-border">
@@ -297,6 +343,22 @@ export default function Navbar() {
       {/* Mobile Navigation Dropdown Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-surface/98 backdrop-blur-xl px-4 py-4 space-y-3 shadow-elevated animate-in slide-in-from-top-2 duration-200">
+          {/* Mobile City Selector */}
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setLocationModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-3/80 border border-border text-xs font-bold text-ink hover:bg-surface-3 transition-colors mb-2"
+          >
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-accent" />
+              <span>Location: <span className="text-accent">{activeCity}</span></span>
+            </div>
+            <span className="text-[11px] text-accent underline">Change</span>
+          </button>
+
           <nav className="space-y-1">
             <Link
               href="/discover"
@@ -406,6 +468,13 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Intelligent Location Selector & First-Time Visitor Demand Modal */}
+      <LocationModal
+        isOpen={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        onSelectCity={(city) => setActiveCity(city)}
+      />
     </header>
   );
 }

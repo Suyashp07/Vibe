@@ -2,21 +2,52 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, MapPin, Map, Grid, Filter, Sparkles, Compass, ArrowDown, RefreshCw, Vote, ArrowRight, CheckCircle2 } from 'lucide-react';
+import {
+  Search,
+  MapPin,
+  Sparkles,
+  Compass,
+  ArrowDown,
+  RefreshCw,
+  Vote,
+  ArrowRight,
+  SlidersHorizontal,
+  Navigation
+} from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import EventCard from '@/components/ui/EventCard';
-import { INITIAL_EVENTS, getEvents, syncEventsWithSupabase, getDatePolls, syncDatePollsWithSupabase, subscribeToStore } from '@/lib/store';
+import LocationModal from '@/components/location/LocationModal';
+import {
+  getUserCity,
+  getUserCoords,
+  getCityCoordinates,
+  calculateDistanceKm,
+  setUserLocation
+} from '@/lib/location';
+import {
+  getEvents,
+  syncEventsWithSupabase,
+  getDatePolls,
+  syncDatePollsWithSupabase,
+  subscribeToStore
+} from '@/lib/store';
 import { EventItem, DatePoll } from '@/types';
+
+interface EventWithDistance extends EventItem {
+  distanceKm?: number | null;
+}
 
 export default function DiscoverPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [polls, setPolls] = useState<DatePoll[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('All');
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [visibleCount, setVisibleCount] = useState<number>(6);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [userCity, setUserCity] = useState<string>('All India');
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -34,10 +65,12 @@ export default function DiscoverPage() {
     setPolls(getDatePolls());
 
     // Reconcile with live Supabase database on mount
-    Promise.all([syncEventsWithSupabase(), syncDatePollsWithSupabase()]).then(() => {
-      setEvents(getEvents());
-      setPolls(getDatePolls());
-    }).catch(() => {});
+    Promise.all([syncEventsWithSupabase(), syncDatePollsWithSupabase()])
+      .then(() => {
+        setEvents(getEvents());
+        setPolls(getDatePolls());
+      })
+      .catch(() => {});
 
     const update = () => {
       setEvents(getEvents());
@@ -47,37 +80,119 @@ export default function DiscoverPage() {
     return () => unsub();
   }, []);
 
-  // Filter pills with Pune and Date Polls included
-  const filterPills = ['All', 'Pune', 'Mumbai', 'Bengaluru', 'Date Polls', 'Free', 'Online', 'This Weekend'];
+  // Listen for user location changes
+  useEffect(() => {
+    const syncLocation = () => {
+      const city = getUserCity() || 'All India';
+      setUserCity(city);
+      const coords = getUserCoords() || (city !== 'All India' ? getCityCoordinates(city) : null);
+      setUserCoords(coords);
+    };
 
-  const filteredEvents = events.filter((e) => {
-    // Search query match
-    const matchesSearch =
-      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (e.tagline && e.tagline.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (e.city && e.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (e.location_name && e.location_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (e.source_platform && e.source_platform.toLowerCase().includes(searchQuery.toLowerCase()));
+    syncLocation();
+    window.addEventListener('vibe:location_changed', syncLocation);
+    return () => window.removeEventListener('vibe:location_changed', syncLocation);
+  }, []);
 
-    // Strictly hide unverified drafts from public discovery
-    if (e.status !== 'live') return false;
-
-    if (!matchesSearch) return false;
-
-    // Filter pill matches
-    if (activeFilter === 'All') return true;
-    if (activeFilter === 'Pune') return e.city?.toLowerCase() === 'pune';
-    if (activeFilter === 'Mumbai') return e.city?.toLowerCase() === 'mumbai';
-    if (activeFilter === 'Bengaluru') return e.city?.toLowerCase() === 'bengaluru';
-    if (activeFilter === 'Free') return true; // All v1 events are free
-    if (activeFilter === 'Online') return e.event_type === 'online' || e.event_type === 'hybrid';
-    if (activeFilter === 'This Weekend') {
-      const eventDate = new Date(e.start_at);
-      const day = eventDate.getDay();
-      return day === 0 || day === 6 || (eventDate.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000);
+  // Calculate proximity distance for each event
+  const eventsWithDistance: EventWithDistance[] = events.map((e) => {
+    if (!userCoords || userCity === 'All India') {
+      return { ...e, distanceKm: null };
     }
-    return true;
+
+    let eventLat = e.location_lat;
+    let eventLng = e.location_lng;
+
+    if (!eventLat || !eventLng) {
+      const resolved = getCityCoordinates(e.city);
+      if (resolved) {
+        eventLat = resolved.lat;
+        eventLng = resolved.lng;
+      }
+    }
+
+    if (eventLat && eventLng) {
+      const dist = calculateDistanceKm(userCoords.lat, userCoords.lng, eventLat, eventLng);
+      return { ...e, distanceKm: dist };
+    }
+
+    // Direct city name match fallback
+    if (e.city?.toLowerCase() === userCity.toLowerCase()) {
+      return { ...e, distanceKm: 0 };
+    }
+
+    return { ...e, distanceKm: null };
   });
+
+  // Dynamic filter pills matching location
+  const filterPills = [
+    'All',
+    ...(userCity && userCity !== 'All India' && !['Pune', 'Mumbai', 'Bengaluru'].includes(userCity)
+      ? [userCity]
+      : []),
+    'Pune',
+    'Mumbai',
+    'Bengaluru',
+    'Date Polls',
+    'Free',
+    'Online',
+    'This Weekend',
+  ];
+
+  const filteredEvents = eventsWithDistance
+    .filter((e) => {
+      // Strictly hide unverified drafts from public discovery
+      if (e.status !== 'live') return false;
+
+      // Search query match
+      const matchesSearch =
+        !searchQuery ||
+        e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (e.tagline && e.tagline.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (e.city && e.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (e.location_name && e.location_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (e.source_platform && e.source_platform.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (!matchesSearch) return false;
+
+      // Filter pill matches
+      if (activeFilter === 'All') return true;
+      if (activeFilter === userCity) return e.city?.toLowerCase() === userCity.toLowerCase();
+      if (activeFilter === 'Pune') return e.city?.toLowerCase() === 'pune';
+      if (activeFilter === 'Mumbai') return e.city?.toLowerCase() === 'mumbai';
+      if (activeFilter === 'Bengaluru') return e.city?.toLowerCase() === 'bengaluru';
+      if (activeFilter === 'Free') return true; // All v1 events are free
+      if (activeFilter === 'Online') return e.event_type === 'online' || e.event_type === 'hybrid';
+      if (activeFilter === 'This Weekend') {
+        const eventDate = new Date(e.start_at);
+        const day = eventDate.getDay();
+        return (
+          day === 0 ||
+          day === 6 ||
+          eventDate.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      // Proximity ranking: events closest to user appear first!
+      const aDist = typeof a.distanceKm === 'number' ? a.distanceKm : null;
+      const bDist = typeof b.distanceKm === 'number' ? b.distanceKm : null;
+
+      if (userCity !== 'All India' && (aDist !== null || bDist !== null)) {
+        if (aDist !== null && bDist !== null) {
+          if (aDist !== bDist) {
+            return aDist - bDist;
+          }
+        } else if (aDist !== null) {
+          return -1;
+        } else if (bDist !== null) {
+          return 1;
+        }
+      }
+      // Fallback: Chronological ordering
+      return new Date(a.start_at).getTime() - new Date(b.start_at).getTime();
+    });
 
   const displayedEvents = filteredEvents.slice(0, visibleCount);
 
@@ -86,23 +201,37 @@ export default function DiscoverPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-        {/* Header Title & View Toggle */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        {/* Header Title & Proximity Bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent mb-1">
               <Compass className="w-3.5 h-3.5" />
-              <span>India Discover Feed</span>
+              <span>Proximity & Discovery Feed</span>
             </div>
             <h1 className="font-display font-black text-3xl sm:text-4xl text-brand">
               Experiences & Gatherings
             </h1>
             <p className="text-xs text-ink-muted mt-1">
-              Live RSVP counts · Curated communities across Pune, Mumbai, Bengaluru & Goa
+              Curated communities, intimate dinners, hacker summits & cultural meetups
             </p>
           </div>
 
-          {/* Map vs Grid Toggle Button + Sync Feed */}
-          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+          {/* Action buttons: Location Selector & Sync Feed */}
+          <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
+            <button
+              onClick={() => setLocationModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-surface border border-border text-ink hover:bg-surface-3 transition-all shadow-xs hover:border-accent/40 group"
+              title="Change your location preference"
+            >
+              <MapPin className="w-3.5 h-3.5 text-accent animate-pulse" />
+              <span>
+                Near: <strong className="text-accent">{userCity}</strong>
+              </span>
+              <span className="text-[11px] text-ink-muted group-hover:text-ink underline ml-1">
+                Change
+              </span>
+            </button>
+
             <button
               onClick={handleSync}
               disabled={isSyncing}
@@ -112,35 +241,32 @@ export default function DiscoverPage() {
               <RefreshCw className={`w-3.5 h-3.5 text-accent ${isSyncing ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Feed'}</span>
             </button>
-
-            <div className="flex items-center gap-1 bg-surface rounded-xl p-1 border border-border shadow-sm flex-1 sm:flex-none">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-brand text-white shadow-sm'
-                    : 'text-ink-secondary hover:text-ink hover:bg-surface-3'
-                }`}
-              >
-                <Grid className="w-3.5 h-3.5" />
-                <span>Grid</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('map')}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === 'map'
-                    ? 'bg-brand text-white shadow-sm'
-                    : 'text-ink-secondary hover:text-ink hover:bg-surface-3'
-                }`}
-              >
-                <Map className="w-3.5 h-3.5 text-accent" />
-                <span>Map View</span>
-              </button>
-            </div>
           </div>
-
         </div>
+
+        {/* Proximity notice strip if active city is set */}
+        {userCity !== 'All India' && (
+          <div className="mb-6 px-4 py-3 rounded-2xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center shrink-0">
+                <Navigation className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-xs font-medium text-ink">
+                Events are dynamically sorted by distance from <strong>{userCity}</strong>. Closest gatherings appear at the top.
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setUserLocation('All India');
+                setUserCity('All India');
+                setUserCoords(null);
+              }}
+              className="text-xs font-bold text-accent hover:underline shrink-0"
+            >
+              Show all India (Clear proximity)
+            </button>
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="relative mb-6">
@@ -170,31 +296,6 @@ export default function DiscoverPage() {
             </button>
           ))}
         </div>
-
-        {/* View Mode: Map View */}
-        {viewMode === 'map' ? (
-          <div className="space-y-6 mb-8">
-            <div className="bg-surface rounded-2xl p-4 border border-border shadow-card">
-              <div className="rounded-xl overflow-hidden border border-border h-[460px] w-full relative bg-surface-3">
-                <iframe
-                  title="Events Map"
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  scrolling="no"
-                  marginHeight={0}
-                  marginWidth={0}
-                  src="https://maps.google.com/maps?q=India%20Mumbai%20Bengaluru%20Delhi&t=&z=5&ie=UTF8&iwloc=&output=embed"
-                  className="w-full h-full"
-                />
-              </div>
-            </div>
-
-            <div className="text-xs text-ink-muted">
-              Showing active pinpoints across hubs. Click an event card below to view details and RSVP:
-            </div>
-          </div>
-        ) : null}
 
         {/* Community Date Polls Highlight Strip (shown when browsing All) */}
         {activeFilter === 'All' && polls.length > 0 && !searchQuery && (
@@ -319,19 +420,21 @@ export default function DiscoverPage() {
           /* Events Grid (3-col desktop, 1-col mobile) */
           filteredEvents.length === 0 ? (
             <div className="bg-surface rounded-2xl p-12 border border-border text-center space-y-3 shadow-card">
-              <p className="font-display font-bold text-xl text-ink">No events match your search</p>
+              <p className="font-display font-bold text-xl text-ink">No events match your search or proximity</p>
               <p className="text-xs text-ink-muted max-w-sm mx-auto">
-                Try searching for a different city or term, or create your own experience!
+                Try expanding your search or select a different city to discover more gatherings!
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center justify-center gap-3">
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setActiveFilter('All');
+                    setUserLocation('All India');
+                    setUserCity('All India');
                   }}
                   className="text-xs text-accent font-bold underline"
                 >
-                  Clear filters
+                  View All India Events
                 </button>
               </div>
             </div>
@@ -339,7 +442,11 @@ export default function DiscoverPage() {
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    distanceKm={event.distanceKm}
+                  />
                 ))}
               </div>
 
@@ -347,7 +454,7 @@ export default function DiscoverPage() {
               {filteredEvents.length > visibleCount && (
                 <div className="flex justify-center pt-4">
                   <button
-                    onClick={() => setVisibleCount(prev => prev + 3)}
+                    onClick={() => setVisibleCount((prev) => prev + 3)}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-btn bg-surface hover:bg-surface-3 border border-border text-ink text-xs font-bold transition-all shadow-xs hover-lift"
                   >
                     <ArrowDown className="w-4 h-4 text-accent" />
@@ -359,6 +466,13 @@ export default function DiscoverPage() {
           )
         )}
       </main>
+
+      {/* Location Selection Modal (can be triggered directly from Discover) */}
+      <LocationModal
+        isOpen={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        onSelectCity={(city) => setUserCity(city)}
+      />
 
       <Footer />
     </div>

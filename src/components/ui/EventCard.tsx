@@ -10,9 +10,10 @@ import { formatIST, getEventRSVPs } from '@/lib/store';
 interface EventCardProps {
   event: EventItem;
   showStatus?: boolean;
+  distanceKm?: number | null;
 }
 
-export default function EventCard({ event, showStatus = true }: EventCardProps) {
+export default function EventCard({ event, showStatus = true, distanceKm }: EventCardProps) {
   const rsvps = getEventRSVPs(event.id);
   const count = rsvps.length;
   const isNearlyFull = event.capacity && (event.capacity - count) <= 8 && (event.capacity - count) > 0;
@@ -86,6 +87,11 @@ export default function EventCard({ event, showStatus = true }: EventCardProps) 
             <MapPin className="w-3.5 h-3.5 text-accent" />
             {event.city} · {event.event_type}
           </span>
+          {typeof distanceKm === 'number' && (
+            <span className="bg-brand/85 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-amber-300 border border-amber-400/30 shadow-xs">
+              {distanceKm < 1 ? '< 1 km away' : `${Math.round(distanceKm)} km away`}
+            </span>
+          )}
         </div>
       </div>
 
