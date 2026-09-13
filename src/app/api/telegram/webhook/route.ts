@@ -151,15 +151,20 @@ export async function POST(req: NextRequest) {
     let extracted: ExtractedEventData;
     let coverImageUrl = CATEGORY_COVERS.default;
 
-    // CASE A: Flyer Image Provided
-    if (message.photo && message.photo.length > 0) {
+    const isPhoto = Boolean(message.photo && message.photo.length > 0);
+    const isImageDoc = Boolean(message.document && message.document.mime_type?.startsWith('image/'));
+
+    // CASE A: Flyer Image Provided (as Photo or Document file)
+    if (isPhoto || isImageDoc) {
       await sendTelegramMessage(chatId, '🔍 <i>Analyzing event poster with Gemini Vision...</i>', {
         parse_mode: 'HTML',
       });
 
-      // Get highest resolution photo
-      const highestResPhoto = message.photo[message.photo.length - 1];
-      const { buffer, mimeType } = await downloadTelegramFileBuffer(highestResPhoto.file_id);
+      const fileId = isPhoto
+        ? message.photo[message.photo.length - 1].file_id
+        : message.document.file_id;
+
+      const { buffer, mimeType } = await downloadTelegramFileBuffer(fileId);
 
       // Attempt upload to Supabase Storage bucket 'event-covers'
       try {

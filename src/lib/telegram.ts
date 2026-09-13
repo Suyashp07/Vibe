@@ -152,10 +152,25 @@ export async function downloadTelegramFileBuffer(fileId: string): Promise<{
   const arrayBuffer = await fileRes.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const contentType = fileRes.headers.get('content-type') || 'image/jpeg';
+  let mimeType = 'image/jpeg';
+  const lowerUrl = downloadUrl.toLowerCase();
+  if (lowerUrl.endsWith('.png')) {
+    mimeType = 'image/png';
+  } else if (lowerUrl.endsWith('.webp')) {
+    mimeType = 'image/webp';
+  } else if (lowerUrl.endsWith('.gif')) {
+    mimeType = 'image/gif';
+  } else if (buffer.length > 4) {
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+      mimeType = 'image/png';
+    } else if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+      mimeType = 'image/jpeg';
+    }
+  }
+
   return {
     buffer,
-    mimeType: contentType,
+    mimeType,
     downloadUrl,
   };
 }
