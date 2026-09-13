@@ -64,15 +64,17 @@ CREATE TABLE IF NOT EXISTS public.telegram_curators (
   telegram_user_id bigint UNIQUE NOT NULL,
   name text NOT NULL,
   username text,
+  role text NOT NULL DEFAULT 'curator',
   is_active boolean NOT NULL DEFAULT true,
   notes text,
+  added_by text DEFAULT 'system',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 -- Seed initial curator from environment (Suyash)
-INSERT INTO public.telegram_curators (telegram_user_id, name, username, is_active, notes)
-VALUES (1728340363, 'Suyash Pandey (Primary)', 'Suyashp07', true, 'Primary administrator')
+INSERT INTO public.telegram_curators (telegram_user_id, name, username, role, is_active, notes)
+VALUES (1728340363, 'Suyash Pandey (Primary)', 'Suyashp07', 'super_admin', true, 'Primary administrator')
 ON CONFLICT (telegram_user_id) DO NOTHING;
 
 -- Enable Row Level Security

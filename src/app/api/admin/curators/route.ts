@@ -36,7 +36,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ curators: curators || [] });
+    const formatted = (curators || []).map((c) => ({
+      ...c,
+      chat_id: String(c.telegram_user_id || c.chat_id || ''),
+    }));
+
+    return NextResponse.json({ curators: formatted });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -59,8 +64,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { chat_id, username, name, role = 'curator', notes } = body;
 
-    if (!chat_id) {
-      return NextResponse.json({ error: 'Missing Telegram chat_id' }, { status: 400 });
+    if (!chat_id || isNaN(Number(chat_id))) {
+      return NextResponse.json({ error: 'Valid numeric Telegram chat_id required' }, { status: 400 });
     }
 
     const supabase = getAdminClient();
@@ -68,16 +73,16 @@ export async function POST(req: NextRequest) {
       .from('telegram_curators')
       .upsert(
         {
-          chat_id: String(chat_id).trim(),
+          telegram_user_id: Number(chat_id),
           username: username ? username.replace('@', '').trim() : null,
-          name: name ? name.trim() : null,
+          name: name ? name.trim() : 'Curator',
           role,
-          status: 'active',
+          is_active: true,
           notes: notes ? notes.trim() : null,
           added_by: auth.user.email,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'chat_id' }
+        { onConflict: 'telegram_user_id' }
       )
       .select()
       .single();
@@ -96,7 +101,10 @@ export async function POST(req: NextRequest) {
       metadata: { username, name, role, notes },
     });
 
-    return NextResponse.json({ success: true, curator: inserted });
+    return NextResponse.json({
+      success: true,
+      curator: { ...inserted, chat_id: String(inserted?.telegram_user_id) },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -124,10 +132,15 @@ export async function DELETE(req: NextRequest) {
     }
 
     const supabase = getAdminClient();
-    const { error } = await supabase
-      .from('telegram_curators')
-      .delete()
-      .eq('chat_id', chatId);
+    const numId = Number(chatId);
+    let query = supabase.from('telegram_curators').delete();
+    if (!isNaN(numId)) {
+      query = query.eq('telegram_user_id', numId);
+    } else {
+      query = query.eq('id', chatId);
+    }
+
+    const { error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
