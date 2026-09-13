@@ -158,7 +158,10 @@ CRITICAL EXTRACTION RULES:
 3. DATE & TIME: Read the exact date (e.g. "Sat, 26 Sept", "17 Oct") and start time (e.g. "3:00 PM", "5:30 PM"). Calculate the exact ISO timestamp with timezone +05:30 (e.g. "${currentYear}-09-26T15:00:00+05:30").
 4. PRICE: Extract exact ticket pricing stated on the flyer (e.g. "₹0 onwards", "Free", "₹199 onwards", "₹499 per head").
 5. PERFORMERS & HIGHLIGHTS: In the description, clearly highlight all featured artists, panelists, DJs, and activities visible on the poster.
-6. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
+6. TICKETING & PLATFORM (STRICT ANTI-HALLUCINATION RULE):
+   - "ticket_url": MUST BE null unless an actual "http://" or "https://" URL is visibly printed on the flyer or explicitly written in the message. NEVER invent or guess a fake URL!
+   - "source_platform": MUST BE "vibe" unless an external ticketing service (District, Unstop, BookMyShow, Luma, Insider) is explicitly mentioned. Events created via posters or WhatsApp messages are created directly for Vibe!
+7. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
 
 JSON Schema:
 {
@@ -170,9 +173,9 @@ JSON Schema:
   "city": "Exact city name from poster",
   "start_at": "YYYY-MM-DDTHH:mm:ss+05:30",
   "end_at": "YYYY-MM-DDTHH:mm:ss+05:30",
-  "ticket_url": "Direct ticketing / registration URL if found or null",
+  "ticket_url": null,
   "price_text": "e.g. Free, ₹299 onwards, ₹500 entry, etc.",
-  "source_platform": "district" | "unstop" | "bookmyshow" | "insider" | "luma" | "instagram" | "telegram",
+  "source_platform": "vibe" | "district" | "unstop" | "bookmyshow" | "insider" | "luma",
   "template": "grove" | "sprint" | "bloom" | "vertex" | "ember",
   "confidence_score": 0.95,
   "faq": [

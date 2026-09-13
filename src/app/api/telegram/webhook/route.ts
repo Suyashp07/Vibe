@@ -242,6 +242,19 @@ export async function POST(req: NextRequest) {
 
     const detectedCity = extracted.city || 'Pune';
 
+    // Determine whether this is a native Vibe event or an external aggregated event
+    const hasExternalUrl = Boolean(
+      extracted.ticket_url &&
+      (extracted.ticket_url.startsWith('http://') || extracted.ticket_url.startsWith('https://')) &&
+      extracted.source_platform &&
+      extracted.source_platform.toLowerCase() !== 'vibe' &&
+      extracted.source_platform.toLowerCase() !== 'telegram'
+    );
+
+    const finalSourceType: 'native' | 'external' = hasExternalUrl ? 'external' : 'native';
+    const finalSourcePlatform = hasExternalUrl ? extracted.source_platform : undefined;
+    const finalTicketUrl = hasExternalUrl ? extracted.ticket_url : undefined;
+
     // 3. Insert into Supabase `public.events` as draft
     const insertPayload = {
       slug: finalSlug,
@@ -263,18 +276,20 @@ export async function POST(req: NextRequest) {
       is_public: true,
       status: 'draft',
       ai_generated: true,
-      source_type: 'external',
-      source_platform: extracted.source_platform || 'telegram',
-      external_ticket_url: extracted.ticket_url || undefined,
-      external_price_text: extracted.price_text || 'Registration on entry',
+      source_type: finalSourceType,
+      source_platform: finalSourcePlatform,
+      external_ticket_url: finalTicketUrl,
+      external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
       confidence_score: extracted.confidence_score || 0.9,
       faq: extracted.faq || [],
       rsvp_form_config: {
-        ask_plus_one: false,
+        ask_plus_one: true,
         ask_dietary: false,
         ask_tshirt: false,
-        waitlist_enabled: false,
-        confirmation_message: 'Redirecting to ticketing platform',
+        waitlist_enabled: true,
+        confirmation_message: hasExternalUrl
+          ? 'Redirecting to ticketing platform'
+          : 'Your spot is confirmed! Present your pass with QR code at the entrance.',
       },
     };
 
@@ -312,10 +327,10 @@ export async function POST(req: NextRequest) {
 
 📌 <b>Title:</b> ${extracted.title}
 🗓️ <b>Date:</b> ${dateStr} IST
-📍 <b>Venue:</b> ${extracted.venue_name}
-💰 <b>Price:</b> ${extracted.price_text || 'Free'}
-🎟️ <b>Platform:</b> ${extracted.source_platform.toUpperCase()}
-${extracted.ticket_url ? `🔗 <b>Link:</b> ${extracted.ticket_url}\n` : ''}
+📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})
+💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See link' : 'Free Entry')}
+🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}
+${hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : ''}
 <i>Review the details above. Tap approve to immediately publish live to Vibe!</i>`;
 
     await sendTelegramMessage(chatId, previewText, {
