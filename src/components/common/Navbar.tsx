@@ -40,22 +40,47 @@ export default function Navbar() {
   const [activeCity, setActiveCity] = useState<string>('All India');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-detect and handle OAuth return code (?code=...) on ANY page!
+  // Auto-close auth modal if user is logged in
+  useEffect(() => {
+    if (isLoggedIn && authModalOpen) {
+      setAuthModalOpen(false);
+    }
+  }, [isLoggedIn, authModalOpen]);
+
+  // Auto-detect and handle OAuth return (?code=... or #access_token=...) on ANY page!
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-    if (!code) return;
+    const hasHash = window.location.hash.includes('access_token');
+    if (!code && !hasHash) return;
 
     const client = getSupabaseClient();
     if (!client) return;
 
-    client.auth.exchangeCodeForSession(code).then(async ({ data, error }) => {
-      if (!error && data?.session?.user) {
-        const user = data.session.user;
+    const resolveSession = async () => {
+      let user: any = null;
+      if (code) {
+        try {
+          const { data, error } = await client.auth.exchangeCodeForSession(code);
+          if (!error && data?.session?.user) {
+            user = data.session.user;
+          }
+        } catch (e) {
+          console.warn('exchangeCode error:', e);
+        }
+      }
+      if (!user) {
+        const { data } = await client.auth.getSession();
+        if (data?.session?.user) {
+          user = data.session.user;
+        }
+      }
+
+      if (user) {
         const meta = user.user_metadata || {};
-        const storedRole = sessionStorage.getItem('vibe_oauth_role') as 'organizer' | 'guest' | null;
-        const storedNext = sessionStorage.getItem('vibe_oauth_next');
+        const storedRole = (sessionStorage.getItem('vibe_oauth_role') || document.cookie.match(/vibe_oauth_role=([^;]+)/)?.[1]) as 'organizer' | 'guest' | null;
+        const storedNext = sessionStorage.getItem('vibe_oauth_next') || document.cookie.match(/vibe_oauth_next=([^;]+)/)?.[1];
         sessionStorage.removeItem('vibe_oauth_role');
         sessionStorage.removeItem('vibe_oauth_next');
 
@@ -84,14 +109,15 @@ export default function Navbar() {
         };
 
         setLocalAuthSession(updatedProfile);
+        setAuthModalOpen(false);
 
         // Redirect to intended destination
-        const destination = storedNext || (assignedRole === 'guest' ? '/guest' : '/dashboard');
+        const destination = storedNext ? decodeURIComponent(storedNext) : (assignedRole === 'guest' ? '/guest' : '/dashboard');
         router.replace(destination);
       }
-    }).catch((err) => {
-      console.warn('OAuth code exchange error:', err);
-    });
+    };
+
+    resolveSession();
   }, [router]);
 
   const isNavActive = (path: string) => {

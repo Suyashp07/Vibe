@@ -525,16 +525,20 @@ export const signInWithGoogle = async (
   }
 
   const redirectDestination = nextUrl || (role === 'guest' ? '/guest' : '/dashboard');
-  const redirectTo = typeof window !== 'undefined'
-    ? `${window.location.origin}/auth/callback?role=${role}&next=${encodeURIComponent(redirectDestination)}`
-    : undefined;
 
   if (typeof window !== 'undefined') {
     try {
       sessionStorage.setItem('vibe_oauth_role', role);
       sessionStorage.setItem('vibe_oauth_next', redirectDestination);
+      document.cookie = `vibe_oauth_role=${encodeURIComponent(role)}; path=/; max-age=3600; SameSite=Lax`;
+      document.cookie = `vibe_oauth_next=${encodeURIComponent(redirectDestination)}; path=/; max-age=3600; SameSite=Lax`;
     } catch {}
   }
+
+  // Clean callback URL matching Supabase URL configuration without query string mismatch
+  const redirectTo = typeof window !== 'undefined'
+    ? `${window.location.origin}/auth/callback`
+    : undefined;
 
   const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
