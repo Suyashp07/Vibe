@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sparkles,
   Calendar,
@@ -20,14 +20,16 @@ import {
   ShieldCheck,
   MapPin
 } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth, setLocalAuthSession, AuthProfile } from '@/lib/auth';
 import { syncEventsWithSupabase } from '@/lib/store';
+import { getSupabaseClient } from '@/lib/supabase';
 import LocationModal from '@/components/location/LocationModal';
 import AuthModal from '@/components/auth/AuthModal';
 import { getUserCity, isFirstTimeLocationVisitor } from '@/lib/location';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { profile, isLoggedIn, isStaff, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,6 +39,60 @@ export default function Navbar() {
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeCity, setActiveCity] = useState<string>('All India');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-detect and handle OAuth return code (?code=...) on ANY page!
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code) return;
+
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    client.auth.exchangeCodeForSession(code).then(async ({ data, error }) => {
+      if (!error && data?.session?.user) {
+        const user = data.session.user;
+        const meta = user.user_metadata || {};
+        const storedRole = sessionStorage.getItem('vibe_oauth_role') as 'organizer' | 'guest' | null;
+        const storedNext = sessionStorage.getItem('vibe_oauth_next');
+        sessionStorage.removeItem('vibe_oauth_role');
+        sessionStorage.removeItem('vibe_oauth_next');
+
+        let dbProf: any = null;
+        try {
+          const { data: prof } = await client
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          dbProf = prof;
+        } catch {}
+
+        const assignedRole = dbProf?.role || meta.role || storedRole || 'organizer';
+        const updatedProfile: AuthProfile = {
+          id: user.id,
+          email: user.email || '',
+          name: dbProf?.name || meta.full_name || meta.name || user.email?.split('@')[0] || 'User',
+          role: assignedRole,
+          handle: dbProf?.handle || meta.handle || user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+          avatar_url: dbProf?.logo_url || dbProf?.avatar_url || meta.avatar_url || meta.picture,
+          brand_color: '#0A0A0A',
+          brand_font: 'Inter',
+          onboarded: dbProf?.onboarded !== undefined ? dbProf.onboarded : (assignedRole === 'guest' || Boolean(dbProf?.handle)),
+          isDemo: false,
+        };
+
+        setLocalAuthSession(updatedProfile);
+
+        // Redirect to intended destination
+        const destination = storedNext || (assignedRole === 'guest' ? '/guest' : '/dashboard');
+        router.replace(destination);
+      }
+    }).catch((err) => {
+      console.warn('OAuth code exchange error:', err);
+    });
+  }, [router]);
 
   const isNavActive = (path: string) => {
     if (path === '/' && pathname === '/') return true;
