@@ -524,7 +524,7 @@ export const signInWithGoogle = async (
     return { data: null, error: { message: 'Supabase client is not configured.' } };
   }
 
-  const redirectDestination = nextUrl || (role === 'guest' ? '/guest' : '/dashboard');
+  const redirectDestination = nextUrl || '/dashboard';
 
   if (typeof window !== 'undefined') {
     try {
@@ -710,8 +710,8 @@ export const useAuth = () => {
     profile,
     loading,
     isLoggedIn: !!profile,
-    isOrganizer: profile?.role === 'organizer',
-    isGuest: profile?.role === 'guest',
+    isOrganizer: !!profile,
+    isGuest: false,
     isStaff,
     isSuperAdmin,
     signOut,

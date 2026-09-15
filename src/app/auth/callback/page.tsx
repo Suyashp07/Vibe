@@ -27,7 +27,7 @@ function CallbackHandler() {
       }
 
       if (!next) {
-        next = role === 'guest' ? '/guest' : '/dashboard';
+        next = '/dashboard';
       }
 
       const code = searchParams.get('code');
@@ -71,7 +71,7 @@ function CallbackHandler() {
 
           const assignedRole = isSuper
             ? 'super_admin'
-            : (dbProf?.role || meta.role || role);
+            : (dbProf?.role || meta.role || 'organizer');
 
           const profile: AuthProfile = {
             id: user.id,

@@ -112,7 +112,7 @@ export default function Navbar() {
         setAuthModalOpen(false);
 
         // Redirect to intended destination
-        const destination = storedNext ? decodeURIComponent(storedNext) : (assignedRole === 'guest' ? '/guest' : '/dashboard');
+        const destination = storedNext ? decodeURIComponent(storedNext) : '/dashboard';
         router.replace(destination);
       }
     };
@@ -303,18 +303,9 @@ export default function Navbar() {
                   <div className="px-4 py-2.5 border-b border-border">
                     <p className="text-xs font-bold text-ink truncate">{profile.name}</p>
                     <p className="text-[11px] text-ink-muted truncate">{profile.email}</p>
-                    <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent-light/60 text-accent font-semibold">
-                      {profile.role === 'organizer' ? (
-                        <>
-                          <Building2 className="w-3 h-3" />
-                          <span>Host Account</span>
-                        </>
-                      ) : (
-                        <>
-                          <Ticket className="w-3 h-3" />
-                          <span>Guest Account</span>
-                        </>
-                      )}
+                    <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-3 text-ink font-semibold">
+                      <Sparkles className="w-3 h-3 text-blue-600" />
+                      <span>Vibe Member</span>
                     </div>
                   </div>
 
@@ -323,10 +314,10 @@ export default function Navbar() {
                       <Link
                         href="/admin"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#E8621A] hover:bg-[#E8621A]/10 transition-colors font-bold border-b border-border/80"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0A0A0A] hover:bg-surface-2 transition-colors font-bold border-b border-border/80"
                       >
-                        <ShieldCheck className="w-4 h-4 text-[#E8621A]" />
-                        <span>Admin Command Center</span>
+                        <ShieldCheck className="w-4 h-4 text-blue-600" />
+                        <span>Admin Queue Workstation</span>
                       </Link>
                     )}
 
@@ -336,30 +327,17 @@ export default function Navbar() {
                       className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
                     >
                       <Calendar className="w-4 h-4 text-brand-mid" />
-                      <span>Organizer Command</span>
+                      <span>Host Dashboard</span>
                     </Link>
 
-                    {profile.role === 'organizer' && (
-                      <>
-                        <Link
-                          href={`/${profile.handle || 'swaniki'}`}
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
-                        >
-                          <Building2 className="w-4 h-4 text-accent" />
-                          <span>My Public Page (/{profile.handle || 'swaniki'})</span>
-                        </Link>
-
-                        <Link
-                          href="/onboarding"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
-                        >
-                          <Sparkles className="w-4 h-4 text-gold" />
-                          <span>Brand Preset & Logo</span>
-                        </Link>
-                      </>
-                    )}
+                    <Link
+                      href="/create"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
+                    >
+                      <Plus className="w-4 h-4 text-accent" />
+                      <span>Create New Event</span>
+                    </Link>
 
                     <Link
                       href="/guest"
