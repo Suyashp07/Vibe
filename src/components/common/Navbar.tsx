@@ -5,40 +5,84 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Sparkles,
-  Calendar,
+  Search,
+  MapPin,
+  ChevronDown,
   Plus,
+  Ticket,
   Compass,
+  Calendar,
   User,
   LogIn,
   LogOut,
-  ChevronDown,
-  Building2,
-  Ticket,
-  Menu,
-  X,
   ShieldCheck,
-  MapPin
+  Sparkles,
+  LayoutDashboard,
+  Layers,
+  Music,
+  Smile,
+  Laptop,
+  GraduationCap,
+  Users,
+  Utensils
 } from 'lucide-react';
 import { useAuth, setLocalAuthSession, AuthProfile } from '@/lib/auth';
-import { syncEventsWithSupabase } from '@/lib/store';
+import { syncEventsWithSupabase, getRSVPs } from '@/lib/store';
 import { getSupabaseClient } from '@/lib/supabase';
 import LocationModal from '@/components/location/LocationModal';
 import AuthModal from '@/components/auth/AuthModal';
-import { getUserCity, isFirstTimeLocationVisitor } from '@/lib/location';
+import { getUserCity } from '@/lib/location';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, isLoggedIn, isStaff, signOut } = useAuth();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeCity, setActiveCity] = useState<string>('All India');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [confirmedPassCount, setConfirmedPassCount] = useState(0);
+
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const city = getUserCity() || 'All India';
+    setActiveCity(city);
+
+    // Calculate user's active confirmed passes count for webapp badge
+    const updatePasses = () => {
+      try {
+        const passes = getRSVPs();
+        const active = passes.filter((p) => p.status === 'confirmed').length;
+        setConfirmedPassCount(active);
+      } catch {}
+    };
+
+    updatePasses();
+
+    const handleCityChange = () => {
+      setActiveCity(getUserCity() || 'All India');
+    };
+
+    window.addEventListener('vibe:location_changed', handleCityChange);
+    return () => window.removeEventListener('vibe:location_changed', handleCityChange);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Auto-close auth modal if user is logged in
   useEffect(() => {
@@ -47,522 +91,357 @@ export default function Navbar() {
     }
   }, [isLoggedIn, authModalOpen]);
 
-  // Auto-detect and handle OAuth return (?code=... or #access_token=...) on ANY page!
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const hasHash = window.location.hash.includes('access_token');
-    if (!code && !hasHash) return;
-
-    const client = getSupabaseClient();
-    if (!client) return;
-
-    const resolveSession = async () => {
-      let user: any = null;
-      if (code) {
-        try {
-          const { data, error } = await client.auth.exchangeCodeForSession(code);
-          if (!error && data?.session?.user) {
-            user = data.session.user;
-          }
-        } catch (e) {
-          console.warn('exchangeCode error:', e);
-        }
-      }
-      if (!user) {
-        const { data } = await client.auth.getSession();
-        if (data?.session?.user) {
-          user = data.session.user;
-        }
-      }
-
-      if (user) {
-        const meta = user.user_metadata || {};
-        const storedRole = (sessionStorage.getItem('vibe_oauth_role') || document.cookie.match(/vibe_oauth_role=([^;]+)/)?.[1]) as 'organizer' | 'guest' | null;
-        const storedNext = sessionStorage.getItem('vibe_oauth_next') || document.cookie.match(/vibe_oauth_next=([^;]+)/)?.[1];
-        sessionStorage.removeItem('vibe_oauth_role');
-        sessionStorage.removeItem('vibe_oauth_next');
-
-        let dbProf: any = null;
-        try {
-          const { data: prof } = await client
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          dbProf = prof;
-        } catch {}
-
-        const assignedRole = dbProf?.role || meta.role || storedRole || 'organizer';
-        const updatedProfile: AuthProfile = {
-          id: user.id,
-          email: user.email || '',
-          name: dbProf?.name || meta.full_name || meta.name || user.email?.split('@')[0] || 'User',
-          role: assignedRole,
-          handle: dbProf?.handle || meta.handle || user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-          avatar_url: dbProf?.logo_url || dbProf?.avatar_url || meta.avatar_url || meta.picture,
-          brand_color: '#0A0A0A',
-          brand_font: 'Inter',
-          onboarded: dbProf?.onboarded !== undefined ? dbProf.onboarded : (assignedRole === 'guest' || Boolean(dbProf?.handle)),
-          isDemo: false,
-        };
-
-        setLocalAuthSession(updatedProfile);
-        setAuthModalOpen(false);
-
-        // Redirect to intended destination
-        const destination = storedNext ? decodeURIComponent(storedNext) : '/dashboard';
-        router.replace(destination);
-      }
-    };
-
-    resolveSession();
-  }, [router]);
-
-  const isNavActive = (path: string) => {
-    if (path === '/' && pathname === '/') return true;
-    if (path !== '/' && pathname.startsWith(path)) return true;
-    return false;
+  // Handle global search submission
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/discover?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/discover');
+    }
   };
 
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+  const isNavActive = (path: string) => {
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
+  };
 
-  useEffect(() => {
-    setMounted(true);
-    // Global two-way sync: automatically reconciles events and prunes deleted rows from Supabase
-    syncEventsWithSupabase().catch(() => {});
-
-    // Initial location check
-    const stored = getUserCity();
-    if (stored) {
-      setActiveCity(stored);
-    }
-
-    // Auto-prompt location selection on first visit
-    if (isFirstTimeLocationVisitor()) {
-      const timer = setTimeout(() => {
-        setLocationModalOpen(true);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  // Listen for global location updates
-  useEffect(() => {
-    const handleLoc = (e: Event) => {
-      const custom = e as CustomEvent<{ city?: string }>;
-      if (custom.detail?.city) {
-        setActiveCity(custom.detail.city);
-      } else {
-        setActiveCity(getUserCity() || 'All India');
-      }
-    };
-    window.addEventListener('vibe:location_changed', handleLoc);
-    return () => window.removeEventListener('vibe:location_changed', handleLoc);
-  }, []);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const firstName = profile?.name ? profile.name.split(' ')[0] : 'Guest';
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-surface-2/90 border-b border-border/80 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-        {/* Brand Logo & Location Pill */}
-        <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
-          <Link href="/" className="flex items-center gap-2 group shrink-0 py-1">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand flex items-center justify-center text-surface shadow-sm group-hover:bg-accent transition-colors duration-200 shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-gold" />
+      <header className="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] shadow-xs">
+        {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
+            {/* Left: Brand Logo */}
+            <div className="flex items-center gap-3 shrink-0">
+              <Link href="/" className="flex items-center gap-2 group">
+                <div className="w-8 h-8 rounded-xl bg-[#0A0A0A] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5 leading-none">
+                    <span className="font-bold text-lg text-[#0F172A] tracking-tight">Vibe</span>
+                    <span className="text-[10px] font-bold text-[#E8621A] tracking-wider uppercase">
+                      by swaniki
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-[#64748B] tracking-tight hidden sm:block">
+                    Live Events & Experiences
+                  </span>
+                </div>
+              </Link>
             </div>
-            <div className="flex flex-col justify-center">
-              <span className="font-display font-black text-lg sm:text-xl tracking-tight text-brand leading-tight whitespace-nowrap">
-                Vibe <span className="font-tagline italic text-accent font-normal text-base sm:text-lg">by Swaniki</span>
-              </span>
-              <span className="hidden sm:block text-[10px] uppercase font-bold tracking-widest text-ink-muted leading-tight mt-0.5 whitespace-nowrap">
-                Whitelabel Events
-              </span>
-            </div>
-          </Link>
 
-          {/* Location Selector Pill */}
-          <button
-            type="button"
-            onClick={() => setLocationModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-surface-3/90 hover:bg-surface-3 border border-border text-[11px] sm:text-xs font-semibold text-ink transition-all shadow-xs hover:border-accent/40 group shrink-0"
-            title="Choose city or detect GPS location"
-          >
-            <MapPin className="w-3.5 h-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
-            <span className="max-w-[70px] sm:max-w-[110px] truncate">{activeCity}</span>
-            <ChevronDown className="w-3 h-3 text-ink-muted shrink-0" />
-          </button>
-        </div>
+            {/* Center: Global Search Bar (BookMyShow style) */}
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex-1 max-w-xl mx-2 hidden sm:block relative"
+            >
+              <div className="relative flex items-center w-full">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                <input
+                  type="text"
+                  placeholder="Search for events, plays, concerts, workshops, and venues..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] focus:bg-white transition-all text-[#0F172A] placeholder:text-[#94A3B8]"
+                />
+              </div>
+            </form>
 
-        {/* Center Nav Links */}
-        <nav className="hidden md:flex items-center gap-1 bg-surface-3/60 p-1 rounded-full border border-border">
-          <Link
-            href="/discover"
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              isNavActive('/discover')
-                ? 'bg-surface text-brand shadow-sm font-semibold'
-                : 'text-ink-secondary hover:text-ink hover:bg-surface/50'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <Compass className="w-4 h-4 text-accent" />
-              Discover
-            </span>
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              isNavActive('/dashboard')
-                ? 'bg-surface text-brand shadow-sm font-semibold'
-                : 'text-ink-secondary hover:text-ink hover:bg-surface/50'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-brand-mid" />
-              Organizer
-            </span>
-          </Link>
-
-          <Link
-            href="/guest"
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              isNavActive('/guest')
-                ? 'bg-surface text-brand shadow-sm font-semibold'
-                : 'text-ink-secondary hover:text-ink hover:bg-surface/50'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <Ticket className="w-4 h-4 text-ink-secondary" />
-              My RSVPs
-            </span>
-          </Link>
-        </nav>
-
-        {/* Right CTA Actions & User Menu */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Link
-            href="/create"
-            className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-accent to-accent-dark text-white text-xs font-bold px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-btn shadow-sm hover-lift transition-all border border-accent/20"
-          >
-            <div className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center">
-              <Plus className="w-3 h-3 stroke-[3]" />
-            </div>
-            <span className="hidden sm:inline">Create Event</span>
-            <span className="sm:hidden">Host</span>
-            <span className="hidden sm:inline-block text-[9px] font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-              Free
-            </span>
-          </Link>
-
-          {/* User Auth State */}
-          {mounted && isLoggedIn && profile ? (
-            <div className="relative" ref={dropdownRef}>
+            {/* Right: City Selector & User Menu & Host Action */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Location Picker (MakeMyTrip / BookMyShow City dropdown) */}
               <button
                 type="button"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 p-1 pl-2 rounded-full border border-border bg-surface hover:bg-surface-3 transition-colors"
+                onClick={() => setLocationModalOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-xs font-semibold text-[#0F172A] transition-colors cursor-pointer"
+                title="Change city location"
               >
-                <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold overflow-hidden shadow-xs">
-                  {profile.avatar_url ? (
-                    <Image
-                      src={profile.avatar_url}
-                      alt={profile.name}
-                      width={28}
-                      height={28}
-                      className="object-cover w-full h-full"
-                    />
-                  ) : (
-                    <span>{profile.name?.slice(0, 2).toUpperCase() || 'US'}</span>
-                  )}
-                </div>
-                <span className="text-xs font-semibold text-ink hidden lg:inline-block max-w-[100px] truncate">
-                  {profile.name}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-ink-muted mr-1" />
+                <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
+                <span className="max-w-[80px] sm:max-w-[120px] truncate">{activeCity}</span>
+                <ChevronDown className="w-3 h-3 text-[#94A3B8] shrink-0" />
               </button>
 
-              {/* Profile Dropdown */}
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-surface border border-border shadow-elevated py-2 z-50 animate-in fade-in zoom-in-95">
-                  <div className="px-4 py-2.5 border-b border-border">
-                    <p className="text-xs font-bold text-ink truncate">{profile.name}</p>
-                    <p className="text-[11px] text-ink-muted truncate">{profile.email}</p>
-                    <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-3 text-ink font-semibold">
-                      <Sparkles className="w-3 h-3 text-blue-600" />
-                      <span>Vibe Member</span>
+              {/* Host / Create Event CTA (MakeMyTrip "List Your Event" button) */}
+              <Link
+                href="/create"
+                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>List Event</span>
+              </Link>
+
+              {/* User Auth Profile (Hi, Guest / Hi, Name) */}
+              {mounted && isLoggedIn && profile ? (
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 p-1.5 pl-2 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold overflow-hidden">
+                      {profile.avatar_url ? (
+                        <Image
+                          src={profile.avatar_url}
+                          alt={profile.name}
+                          width={28}
+                          height={28}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <span>{profile.name?.slice(0, 2).toUpperCase() || 'US'}</span>
+                      )}
                     </div>
-                  </div>
+                    <span className="text-xs font-semibold text-[#0F172A] hidden sm:inline-block max-w-[100px] truncate">
+                      Hi, {firstName}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8]" />
+                  </button>
 
-                  <div className="py-1">
-                    {isStaff && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0A0A0A] hover:bg-surface-2 transition-colors font-bold border-b border-border/80"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-blue-600" />
-                        <span>Admin Queue Workstation</span>
-                      </Link>
-                    )}
+                  {/* Dropdown Menu */}
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-[#E2E8F0] shadow-lg py-2 z-50 animate-in fade-in zoom-in-95">
+                      <div className="px-4 py-2.5 border-b border-[#F1F5F9]">
+                        <p className="text-xs font-bold text-[#0F172A] truncate">{profile.name}</p>
+                        <p className="text-[11px] text-[#64748B] truncate">{profile.email}</p>
+                      </div>
 
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
-                    >
-                      <Calendar className="w-4 h-4 text-brand-mid" />
-                      <span>Host Dashboard</span>
-                    </Link>
+                      <div className="py-1">
+                        <Link
+                          href="/dashboard?tab=passes"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0F172A] hover:bg-[#F8FAFC] transition-colors font-medium"
+                        >
+                          <Ticket className="w-4 h-4 text-[#E8621A]" />
+                          <div className="flex items-center justify-between w-full">
+                            <span>My Passes & Bookings</span>
+                            {confirmedPassCount > 0 && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                {confirmedPassCount}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
 
-                    <Link
-                      href="/create"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
-                    >
-                      <Plus className="w-4 h-4 text-accent" />
-                      <span>Create New Event</span>
-                    </Link>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0F172A] hover:bg-[#F8FAFC] transition-colors font-medium"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-[#64748B]" />
+                          <span>Host Dashboard</span>
+                        </Link>
 
-                    <Link
-                      href="/guest"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
-                    >
-                      <Ticket className="w-4 h-4 text-accent" />
-                      <span>My RSVPs & Tickets</span>
-                    </Link>
+                        <Link
+                          href="/create"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0F172A] hover:bg-[#F8FAFC] transition-colors font-medium"
+                        >
+                          <Plus className="w-4 h-4 text-[#64748B]" />
+                          <span>Create New Event</span>
+                        </Link>
 
-                    <Link
-                      href="/create"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-ink hover:bg-surface-2 transition-colors font-medium"
-                    >
-                      <Plus className="w-4 h-4 text-emerald-600" />
-                      <span>Create New Event</span>
-                    </Link>
-                  </div>
+                        {isStaff && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0F172A] hover:bg-[#F8FAFC] transition-colors font-bold border-t border-[#F1F5F9]"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-blue-600" />
+                            <span>Admin Queue Workstation</span>
+                          </Link>
+                        )}
+                      </div>
 
-                  <div className="border-t border-border pt-1 mt-1">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await signOut();
-                        setDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors font-semibold text-left"
-                    >
-                      <LogOut className="w-4 h-4 text-red-500" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
+                      <div className="pt-1 border-t border-[#F1F5F9]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            signOut();
+                          }}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-red-600 hover:bg-red-50 w-full transition-colors font-medium cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthModalMode('signin');
+                      setAuthModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] transition-colors cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5 text-[#64748B]" />
+                    <span>Hi, Sign In</span>
+                  </button>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="hidden sm:flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthModalMode('signin');
-                  setAuthModalOpen(true);
-                }}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-btn border border-border bg-surface hover:bg-surface-3 text-ink transition-all cursor-pointer shadow-xs"
-              >
-                <LogIn className="w-3.5 h-3.5 text-accent" />
-                <span>Sign In</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthModalMode('signup');
-                  setAuthModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-btn bg-brand hover:bg-brand-mid text-white shadow-xs hover-lift transition-all cursor-pointer"
-              >
-                <span>Sign Up</span>
-              </button>
-            </div>
-          )}
-
-          {/* Mobile Hamburger Toggle */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl border border-border bg-surface text-ink hover:bg-surface-3 transition-colors"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5 text-accent" /> : <Menu className="w-5 h-5 text-ink" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Navigation Dropdown Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-surface/98 backdrop-blur-xl px-4 py-4 space-y-3 shadow-elevated animate-in slide-in-from-top-2 duration-200">
-          {/* Mobile City Selector */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              setLocationModalOpen(true);
-            }}
-            className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-3/80 border border-border text-xs font-bold text-ink hover:bg-surface-3 transition-colors mb-2"
-          >
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-accent" />
-              <span>Location: <span className="text-accent">{activeCity}</span></span>
-            </div>
-            <span className="text-[11px] text-accent underline">Change</span>
-          </button>
-
-          <nav className="space-y-1">
-            <Link
-              href="/discover"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isNavActive('/discover')
-                  ? 'bg-accent-light text-accent font-bold'
-                  : 'text-ink hover:bg-surface-2'
-              }`}
-            >
-              <Compass className="w-4 h-4 text-accent" />
-              <span>Discover Events</span>
-            </Link>
-
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isNavActive('/dashboard')
-                  ? 'bg-accent-light text-accent font-bold'
-                  : 'text-ink hover:bg-surface-2'
-              }`}
-            >
-              <Calendar className="w-4 h-4 text-brand-mid" />
-              <span>Organizer Dashboard</span>
-            </Link>
-
-            <Link
-              href="/guest"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isNavActive('/guest')
-                  ? 'bg-accent-light text-accent font-bold'
-                  : 'text-ink hover:bg-surface-2'
-              }`}
-            >
-              <Ticket className="w-4 h-4 text-ink-secondary" />
-              <span>My RSVPs & Tickets</span>
-            </Link>
-
-            <Link
-              href="/create"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-accent hover:bg-accent-light transition-all"
-            >
-              <Sparkles className="w-4 h-4 text-gold" />
-              <span>Create New Event</span>
-            </Link>
-
-            {isStaff && (
-              <Link
-                href="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-[#E8621A] bg-[#E8621A]/10 border border-[#E8621A]/20 transition-all"
-              >
-                <ShieldCheck className="w-4 h-4 text-[#E8621A]" />
-                <span>Admin Command Center</span>
-              </Link>
-            )}
-          </nav>
-
-          {/* Mobile Auth actions */}
-          <div className="pt-2 border-t border-border">
-            {mounted && isLoggedIn && profile ? (
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {profile.name?.slice(0, 2).toUpperCase() || 'US'}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-ink truncate">{profile.name}</p>
-                    <p className="text-[11px] text-ink-muted truncate">{profile.email}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await signOut();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-1 p-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors font-semibold"
-                  title="Sign Out"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Exit</span>
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setAuthModalMode('signin');
-                    setAuthModalOpen(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-border bg-surface text-xs font-bold text-ink text-center hover:bg-surface-3 transition-colors cursor-pointer"
-                >
-                  <LogIn className="w-3.5 h-3.5 text-accent" />
-                  <span>Sign In</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setAuthModalMode('signup');
-                    setAuthModalOpen(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-brand text-xs font-bold text-white text-center hover:bg-brand-mid transition-colors shadow-xs cursor-pointer"
-                >
-                  <span>Sign Up</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
-      )}
-    </header>
 
-    {/* Clean District Auth Modal */}
-    <AuthModal
-      isOpen={authModalOpen}
-      onClose={() => setAuthModalOpen(false)}
-      defaultMode={authModalMode}
-    />
+        {/* Tier 2: Category & Service Sub-Navbar (BookMyShow / MakeMyTrip style) */}
+        <div className="hidden md:block bg-[#F8FAFC] border-t border-[#F1F5F9]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-10 text-xs">
+              {/* Left: Category Pills */}
+              <div className="flex items-center gap-5 overflow-x-auto scrollbar-none py-1">
+                <Link
+                  href="/discover"
+                  className={`font-medium transition-colors hover:text-[#0F172A] whitespace-nowrap ${
+                    pathname === '/discover' && !pathname.includes('category')
+                      ? 'text-[#0F172A] font-bold'
+                      : 'text-[#64748B]'
+                  }`}
+                >
+                  Explore All
+                </Link>
+                <Link
+                  href="/discover?category=Music+%26+Concerts"
+                  className="text-[#64748B] hover:text-[#0F172A] font-medium transition-colors whitespace-nowrap"
+                >
+                  Music & Concerts
+                </Link>
+                <Link
+                  href="/discover?category=Comedy+%26+Standup"
+                  className="text-[#64748B] hover:text-[#0F172A] font-medium transition-colors whitespace-nowrap"
+                >
+                  Comedy & Standup
+                </Link>
+                <Link
+                  href="/discover?category=Founders+%26+Startups"
+                  className="text-[#64748B] hover:text-[#0F172A] font-medium transition-colors whitespace-nowrap"
+                >
+                  Founders & Tech
+                </Link>
+                <Link
+                  href="/discover?category=Workshops+%26+Masterclasses"
+                  className="text-[#64748B] hover:text-[#0F172A] font-medium transition-colors whitespace-nowrap"
+                >
+                  Workshops
+                </Link>
+                <Link
+                  href="/discover?category=Social+%26+Mixers"
+                  className="text-[#64748B] hover:text-[#0F172A] font-medium transition-colors whitespace-nowrap"
+                >
+                  Social & Mixers
+                </Link>
+                <Link
+                  href="/discover?category=Private+Salons+%26+Dinners"
+                  className="text-[#64748B] hover:text-[#0F172A] font-medium transition-colors whitespace-nowrap"
+                >
+                  Dining & Salons
+                </Link>
+              </div>
 
-    {/* Intelligent Location Selector & First-Time Visitor Demand Modal */}
-    <LocationModal
-      isOpen={locationModalOpen}
-      onClose={() => setLocationModalOpen(false)}
-      onSelectCity={(city) => setActiveCity(city)}
-    />
-  </>
+              {/* Right: Quick Links */}
+              <div className="flex items-center gap-4 text-[#64748B] font-medium shrink-0 pl-4 border-l border-[#E2E8F0]">
+                <Link
+                  href="/dashboard?tab=passes"
+                  className="hover:text-[#0F172A] transition-colors flex items-center gap-1"
+                >
+                  <Ticket className="w-3.5 h-3.5 text-[#E8621A]" />
+                  <span>My Passes</span>
+                </Link>
+                <Link href="/dashboard" className="hover:text-[#0F172A] transition-colors">
+                  Host Dashboard
+                </Link>
+                {isStaff && (
+                  <Link href="/admin" className="text-blue-600 font-bold hover:underline">
+                    Admin Queue
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile WebApp Fixed Bottom Navigation Bar (MakeMyTrip & BookMyShow PWA style) */}
+      <nav
+        aria-label="Mobile Web App Navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] px-3 py-1.5 flex items-center justify-around shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)]"
+      >
+        <Link
+          href="/"
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
+            pathname === '/' ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
+          }`}
+        >
+          <Compass className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Explore</span>
+        </Link>
+
+        <Link
+          href="/discover"
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
+            pathname.startsWith('/discover') ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Search</span>
+        </Link>
+
+        {/* Floating Center Create Button */}
+        <Link
+          href="/create"
+          className="flex flex-col items-center -mt-4 group"
+          title="Host or Create Event"
+        >
+          <div className="w-11 h-11 rounded-full bg-[#0F172A] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform border-2 border-white">
+            <Plus className="w-5 h-5 stroke-[2.5]" />
+          </div>
+          <span className="text-[10px] font-bold text-[#0F172A] mt-0.5">Host</span>
+        </Link>
+
+        <Link
+          href="/dashboard?tab=passes"
+          className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
+            pathname.includes('guest') || (pathname === '/dashboard' && confirmedPassCount > 0)
+              ? 'text-[#0F172A] font-bold'
+              : 'text-[#64748B]'
+          }`}
+        >
+          <div className="relative">
+            <Ticket className="w-5 h-5" />
+            {confirmedPassCount > 0 && (
+              <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-[#E8621A] text-white text-[9px] font-bold flex items-center justify-center">
+                {confirmedPassCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] tracking-tight">Passes</span>
+        </Link>
+
+        <Link
+          href="/dashboard"
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
+            pathname === '/dashboard' ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Dashboard</span>
+        </Link>
+      </nav>
+
+      {/* Modals */}
+      <LocationModal isOpen={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode={authModalMode}
+      />
+    </>
   );
 }

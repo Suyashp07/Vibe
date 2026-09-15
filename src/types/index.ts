@@ -117,6 +117,7 @@ export interface EventItem {
   source_platform?: 'district' | 'unstop' | 'bookmyshow' | 'insider' | 'luma' | 'telegram' | 'manual' | string;
   external_ticket_url?: string;
   external_price_text?: string;
+  category?: string;
   confidence_score?: number;
   created_at: string;
   updated_at: string;
