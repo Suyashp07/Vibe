@@ -1,98 +1,259 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
-  CalendarDays,
-  Sparkles,
-  Users,
-  ShieldCheck,
-  AlertCircle,
   CheckCircle2,
+  XCircle,
+  X,
   ExternalLink,
-  Edit3,
-  Trash2,
+  Plus,
+  LogOut,
+  Loader2,
   RefreshCw,
   Search,
-  Plus,
-  Link2,
-  ListFilter,
-  ArrowUpRight,
+  AlertTriangle,
+  Calendar,
   Clock,
   MapPin,
-  Tag,
+  Upload,
+  Wand2,
+  Link2,
+  List,
+  Archive,
+  Trash2,
+  Edit3,
+  Eye,
   Check,
-  X,
-  Loader2,
-  AlertTriangle
+  Tag,
+  ShieldCheck,
+  Copy,
+  ChevronRight,
+  Layers
 } from 'lucide-react';
-import EventEditModal from '@/components/admin/EventEditModal';
-import { formatIST } from '@/lib/store';
 import { areDuplicates } from '@/lib/aggregation/dedup';
+import { useAuth } from '@/lib/auth';
+
+interface AdminEvent {
+  id: string;
+  title: string;
+  name?: string;
+  tagline?: string;
+  description?: string;
+  start_at?: string;
+  end_at?: string;
+  date?: string;
+  time?: string;
+  city?: string;
+  location_name?: string;
+  venue_name?: string;
+  location_address?: string;
+  venue_address?: string;
+  cover_image?: string;
+  cover_image_url?: string;
+  image_url?: string;
+  status: string;
+  is_public?: boolean;
+  is_external?: boolean;
+  source_platform?: string;
+  source_type?: string;
+  external_ticket_url?: string;
+  ticket_link?: string;
+  price_inr?: number;
+  external_price_text?: string;
+  price_text?: string;
+  category?: string;
+  slug?: string;
+  created_at?: string;
+  profiles?: {
+    id: string;
+    name?: string;
+    email?: string;
+    handle?: string;
+    logo_url?: string;
+  } | null;
+}
+
+const CATEGORIES = [
+  'Tech & AI',
+  'Music & Concerts',
+  'Comedy & Standup',
+  'Social & Mixers',
+  'Design & Creative',
+  'Wellness & Fitness',
+  'Culture & Baithak',
+  'Food & Drinks',
+  'Other'
+];
 
 export default function AdminDashboardPage() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const router = useRouter();
+  const { profile, isStaff, signOut } = useAuth();
+
+  const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [savingAction, setSavingAction] = useState<string | null>(null);
 
-  // Filter & Search
-  const [activeTab, setActiveTab] = useState<'review' | 'live' | 'external' | 'bot' | 'all'>('review');
+  // Tabs: Review (draft), Live (published), Rejected (cancelled), External, All
+  const [statusFilter, setStatusFilter] = useState<'REVIEW' | 'LIVE' | 'REJECTED' | 'EXTERNAL' | 'ALL'>('REVIEW');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Bulk Selection
+  const [selectedEvent, setSelectedEvent] = useState<AdminEvent | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulking, setBulking] = useState<string | null>(null);
 
-  // URL Import Modal
+  // Modals
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const [importingUrl, setImportingUrl] = useState(false);
+  const [addingUrl, setAddingUrl] = useState(false);
   const [urlResult, setUrlResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  // Listing Crawl Modal
   const [showListingModal, setShowListingModal] = useState(false);
   const [listingUrl, setListingUrl] = useState('');
-  const [crawlingListing, setCrawlingListing] = useState(false);
-  const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([]);
+  const [listingMax, setListingMax] = useState(15);
+  const [importingListing, setImportingListing] = useState(false);
   const [listingResult, setListingResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const fetchDashboardData = async () => {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    time: '18:00',
+    city: 'Mumbai',
+    venue_name: '',
+    category: 'Tech & AI',
+    price_text: 'Free Entry',
+    cover_image_url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
+    external_ticket_url: '',
+    status: 'live',
+  });
+
+  const fetchEvents = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [eventsRes, logsRes] = await Promise.all([
-        fetch('/api/admin/events'),
-        fetch('/api/admin/audit-logs?limit=5'),
-      ]);
-
-      if (!eventsRes.ok) {
-        throw new Error(`Failed to load events (${eventsRes.status})`);
+      const res = await fetch('/api/admin/events');
+      if (res.status === 401) {
+        router.push('/login?next=/admin');
+        return;
       }
+      if (!res.ok) {
+        throw new Error(`Failed to load events (${res.status})`);
+      }
+      const data = await res.json();
+      const rawEvents: AdminEvent[] = data.events || [];
+      setEvents(rawEvents);
 
-      const eventsData = await eventsRes.json();
-      setEvents(eventsData.events || []);
-
-      if (logsRes.ok) {
-        const logsData = await logsRes.json();
-        setAuditLogs(logsData.logs || []);
+      // Keep selected event synced if still present
+      if (selectedEvent) {
+        const matched = rawEvents.find((e) => e.id === selectedEvent.id);
+        if (matched) setSelectedEvent(matched);
       }
     } catch (err: any) {
-      setError(err.message || 'Error fetching dashboard data');
+      console.error('Error loading admin events:', err);
+      setError(err.message || 'Failed to fetch events');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchEvents();
   }, []);
 
-  // 1-Click Approve (Publish Live)
-  const handleApprove = async (event: any) => {
-    setActionLoading(`pub-${event.id}`);
+  // Compute status counts
+  const counts = useMemo(() => {
+    let pending = 0;
+    let live = 0;
+    let rejected = 0;
+    let external = 0;
+    events.forEach((ev) => {
+      const st = (ev.status || '').toLowerCase();
+      if (st === 'draft' || st === 'review') pending++;
+      else if (st === 'live' || st === 'published') live++;
+      else if (st === 'cancelled' || st === 'rejected') rejected++;
+
+      if (ev.is_external || ev.source_type === 'external' || ev.external_ticket_url) {
+        external++;
+      }
+    });
+    return { pending, live, rejected, external, total: events.length };
+  }, [events]);
+
+  // Duplicate Finder
+  const findDuplicateMatch = (event: AdminEvent): AdminEvent | undefined => {
+    return events.find((other) => {
+      if (other.id === event.id) return false;
+      return areDuplicates(
+        {
+          name: event.title || event.name || '',
+          date: event.date || (event.start_at ? event.start_at.split('T')[0] : null),
+          venue: event.venue_name || event.location_name || event.city
+        },
+        {
+          name: other.title || other.name || '',
+          date: other.date || (other.start_at ? other.start_at.split('T')[0] : null),
+          venue: other.venue_name || other.location_name || other.city
+        }
+      );
+    });
+  };
+
+  // Filtered Events
+  const filteredEvents = useMemo(() => {
+    return events
+      .filter((ev) => {
+        const st = (ev.status || '').toLowerCase();
+        if (statusFilter === 'REVIEW') return st === 'draft' || st === 'review';
+        if (statusFilter === 'LIVE') return st === 'live' || st === 'published';
+        if (statusFilter === 'REJECTED') return st === 'cancelled' || st === 'rejected';
+        if (statusFilter === 'EXTERNAL') return ev.is_external || ev.source_type === 'external' || Boolean(ev.external_ticket_url);
+        return true;
+      })
+      .filter((ev) => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        return (
+          (ev.title || '').toLowerCase().includes(q) ||
+          (ev.city || '').toLowerCase().includes(q) ||
+          (ev.venue_name || ev.location_name || '').toLowerCase().includes(q) ||
+          (ev.category || '').toLowerCase().includes(q) ||
+          (ev.source_platform || '').toLowerCase().includes(q)
+        );
+      });
+  }, [events, statusFilter, searchQuery]);
+
+  // Selection handlers
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const visibleIds = filteredEvents.map((e) => e.id);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = visibleIds.length > 0 && visibleIds.every((id) => next.has(id));
+      if (allSelected) {
+        visibleIds.forEach((id) => next.delete(id));
+      } else {
+        visibleIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  // 1-Click Approve
+  const handleApprove = async (event: AdminEvent, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSavingAction(`approve-${event.id}`);
     try {
       const res = await fetch('/api/admin/events', {
         method: 'PATCH',
@@ -102,679 +263,1321 @@ export default function AdminDashboardPage() {
           updates: { status: 'live', is_public: true },
         }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to approve event');
+      if (!res.ok) throw new Error('Failed to approve event');
+      await fetchEvents();
+      if (selectedEvent?.id === event.id) {
+        setSelectedEvent((prev) => (prev ? { ...prev, status: 'live', is_public: true } : null));
       }
-      await fetchDashboardData();
     } catch (err: any) {
       alert(`Approval error: ${err.message}`);
     } finally {
-      setActionLoading(null);
+      setSavingAction(null);
     }
   };
 
-  // 1-Click Discard / Reject
-  const handleDiscard = async (event: any) => {
-    if (!confirm(`Are you sure you want to discard "${event.title}"?`)) return;
-    setActionLoading(`del-${event.id}`);
+  // 1-Click Reject
+  const handleReject = async (event: AdminEvent, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSavingAction(`reject-${event.id}`);
     try {
-      const res = await fetch(`/api/admin/events?id=${event.id}`, {
-        method: 'DELETE',
+      const res = await fetch('/api/admin/events', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: event.id,
+          updates: { status: 'cancelled', is_public: false },
+        }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to delete');
+      if (!res.ok) throw new Error('Failed to reject event');
+      await fetchEvents();
+      if (selectedEvent?.id === event.id) {
+        setSelectedEvent((prev) => (prev ? { ...prev, status: 'cancelled', is_public: false } : null));
       }
-      await fetchDashboardData();
     } catch (err: any) {
-      alert(`Discard error: ${err.message}`);
+      alert(`Reject error: ${err.message}`);
     } finally {
-      setActionLoading(null);
+      setSavingAction(null);
     }
   };
 
-  // Bulk Approve Selected
-  const handleBulkApprove = async () => {
-    if (selectedIds.size === 0) return;
-    if (!confirm(`Approve and publish all ${selectedIds.size} selected events?`)) return;
-
-    setActionLoading('bulk-approve');
+  // Delete Permanently
+  const handleDeletePermanently = async (id: string) => {
+    if (!confirm('Permanently delete this event from the database? This cannot be undone.')) return;
+    setSavingAction(`delete-${id}`);
     try {
-      for (const id of Array.from(selectedIds)) {
-        await fetch('/api/admin/events', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id,
-            updates: { status: 'live', is_public: true },
-          }),
-        });
+      const res = await fetch(`/api/admin/events?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete event');
+      if (selectedEvent?.id === id) setSelectedEvent(null);
+      await fetchEvents();
+    } catch (err: any) {
+      alert(`Delete error: ${err.message}`);
+    } finally {
+      setSavingAction(null);
+    }
+  };
+
+  // Save Inline Edits in Inspector
+  const handleSaveInspectorEdits = async () => {
+    if (!selectedEvent) return;
+    setSavingAction('saving-edits');
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedEvent.id,
+          updates: {
+            title: selectedEvent.title,
+            date: selectedEvent.date,
+            time: selectedEvent.time,
+            city: selectedEvent.city,
+            venue_name: selectedEvent.venue_name,
+            location_name: selectedEvent.venue_name,
+            venue_address: selectedEvent.venue_address,
+            location_address: selectedEvent.venue_address,
+            category: selectedEvent.category,
+            price_text: selectedEvent.price_text || selectedEvent.external_price_text,
+            external_price_text: selectedEvent.price_text || selectedEvent.external_price_text,
+            external_ticket_url: selectedEvent.external_ticket_url || selectedEvent.ticket_link,
+            description: selectedEvent.description,
+            cover_image_url: selectedEvent.cover_image_url || selectedEvent.cover_image,
+          },
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save changes');
+      await fetchEvents();
+      alert('Event changes saved successfully.');
+    } catch (err: any) {
+      alert(`Save error: ${err.message}`);
+    } finally {
+      setSavingAction(null);
+    }
+  };
+
+  // Bulk Actions
+  const handleBulkAction = async (action: 'approve' | 'reject' | 'delete') => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (action === 'delete' && !confirm(`Permanently delete ${ids.length} selected event(s)?`)) return;
+
+    setBulking(action);
+    try {
+      if (action === 'approve') {
+        for (const id of ids) {
+          await fetch('/api/admin/events', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, updates: { status: 'live', is_public: true } }),
+          });
+        }
+      } else if (action === 'reject') {
+        for (const id of ids) {
+          await fetch('/api/admin/events', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, updates: { status: 'cancelled', is_public: false } }),
+          });
+        }
+      } else if (action === 'delete') {
+        for (const id of ids) {
+          await fetch(`/api/admin/events?id=${id}`, { method: 'DELETE' });
+        }
       }
       setSelectedIds(new Set());
-      await fetchDashboardData();
+      await fetchEvents();
+    } catch (err: any) {
+      alert(`Bulk action error: ${err.message}`);
     } finally {
-      setActionLoading(null);
+      setBulking(null);
     }
   };
 
-  // Bulk Discard Selected
-  const handleBulkDiscard = async () => {
-    if (selectedIds.size === 0) return;
-    if (!confirm(`Permanently discard all ${selectedIds.size} selected events?`)) return;
-
-    setActionLoading('bulk-discard');
-    try {
-      for (const id of Array.from(selectedIds)) {
-        await fetch(`/api/admin/events?id=${id}`, { method: 'DELETE' });
-      }
-      setSelectedIds(new Set());
-      await fetchDashboardData();
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Import single URL
-  const handleImportUrl = async (e: React.FormEvent) => {
+  // Add Event by URL (Batch up to 8)
+  const handleAddByUrl = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!urlInput.trim()) return;
+    const urls = urlInput
+      .split('\n')
+      .map((u) => u.trim())
+      .filter(Boolean);
 
-    setImportingUrl(true);
+    if (urls.length === 0) {
+      setUrlResult({ ok: false, message: 'Please enter at least one URL.' });
+      return;
+    }
+    const invalid = urls.find((u) => !/^https?:\/\//i.test(u));
+    if (invalid) {
+      setUrlResult({ ok: false, message: `Invalid link (must start with http:// or https://): ${invalid}` });
+      return;
+    }
+
+    setAddingUrl(true);
     setUrlResult(null);
 
-    try {
-      const res = await fetch('/api/admin/events/from-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlInput.trim() }),
-      });
+    let created = 0;
+    let duplicates = 0;
+    let failed = 0;
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Extraction failed');
+    for (const u of urls.slice(0, 8)) {
+      try {
+        const res = await fetch('/api/admin/events/from-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: u }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (data.isDuplicate) duplicates++;
+          else created++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
 
-      setUrlResult({
-        ok: true,
-        message: data.duplicateWarning
-          ? `Ingested successfully! ${data.duplicateWarning}`
-          : 'Event extracted and added to Review Queue!',
-      });
-      setUrlInput('');
-      await fetchDashboardData();
-    } catch (err: any) {
-      setUrlResult({ ok: false, message: err.message || 'Failed to ingest URL' });
-    } finally {
-      setImportingUrl(false);
+    setAddingUrl(false);
+    setUrlResult({
+      ok: failed === 0,
+      message: `Ingested ${created} new event(s), flagged ${duplicates} duplicate(s), ${failed} failed.`,
+    });
+    if (created > 0 || duplicates > 0) {
+      await fetchEvents();
     }
   };
 
-  // Crawl Listing Page
-  const handleCrawlListing = async (e: React.FormEvent) => {
+  // Import Listing Page
+  const handleImportListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!listingUrl.trim()) return;
+    const url = listingUrl.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      setListingResult({ ok: false, message: 'Enter a valid listing URL starting with http:// or https://' });
+      return;
+    }
 
-    setCrawlingListing(true);
+    setImportingListing(true);
     setListingResult(null);
-    setDiscoveredLinks([]);
-
     try {
       const res = await fetch('/api/admin/events/import-listing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingUrl: listingUrl.trim(), max: 15 }),
+        body: JSON.stringify({ url, max: listingMax }),
       });
-
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Crawl failed');
-
-      setDiscoveredLinks(data.links || []);
-      setListingResult({
-        ok: true,
-        message: `Discovered ${data.found} deep-links on ${data.platform}! Click any link to ingest below.`,
-      });
+      if (!res.ok) {
+        setListingResult({ ok: false, message: data.error || 'Import listing failed.' });
+      } else {
+        setListingResult({
+          ok: true,
+          message: `Discovered ${data.totalDiscovered || 0} events. Queued for review in the Pending tab!`,
+        });
+        await fetchEvents();
+      }
     } catch (err: any) {
-      setListingResult({ ok: false, message: err.message || 'Failed to crawl listing' });
+      setListingResult({ ok: false, message: err.message || 'Import error' });
     } finally {
-      setCrawlingListing(false);
+      setImportingListing(false);
     }
   };
 
-  // Counts
-  const pendingCount = events.filter((e) => e.status !== 'live').length;
-  const liveCount = events.filter((e) => e.status === 'live').length;
-  const externalCount = events.filter((e) => e.source_type === 'external').length;
-  const botCount = events.filter((e) => e.ai_generated).length;
+  // Manual Quick Create
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingAction('creating-event');
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createForm),
+      });
+      if (res.ok) {
+        setShowCreateModal(false);
+        setCreateForm({
+          title: '',
+          description: '',
+          date: new Date().toISOString().split('T')[0],
+          time: '18:00',
+          city: 'Mumbai',
+          venue_name: '',
+          category: 'Tech & AI',
+          price_text: 'Free Entry',
+          cover_image_url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
+          external_ticket_url: '',
+          status: 'live',
+        });
+        await fetchEvents();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to create event');
+      }
+    } catch (err: any) {
+      alert(`Create event error: ${err.message}`);
+    } finally {
+      setSavingAction(null);
+    }
+  };
 
-  // Filtered Events
-  const filteredEvents = events.filter((e) => {
-    const matchesSearch =
-      !searchQuery ||
-      e.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.location_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.source_platform?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    if (activeTab === 'review') return e.status !== 'live';
-    if (activeTab === 'live') return e.status === 'live';
-    if (activeTab === 'external') return e.source_type === 'external';
-    if (activeTab === 'bot') return e.ai_generated;
-    return true;
-  });
+  const STATUS_TABS = [
+    { id: 'REVIEW', label: 'Review Queue', count: counts.pending, alert: counts.pending > 0 },
+    { id: 'LIVE', label: 'Live Published', count: counts.live },
+    { id: 'REJECTED', label: 'Rejected', count: counts.rejected },
+    { id: 'EXTERNAL', label: 'External Aggregated', count: counts.external },
+    { id: 'ALL', label: 'All Events', count: counts.total },
+  ] as const;
 
   return (
-    <div className="space-y-6">
-      {/* Top Header & Ingestion Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent mb-1">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>High-Efficiency Ingestion & Curation</span>
+    <div className="min-h-screen bg-white text-[#0A0A0A] flex flex-col font-sans selection:bg-[#0A0A0A] selection:text-white">
+      {/* Top Header */}
+      <header className="border-b border-[#E2E8F0] bg-white sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="font-black text-base tracking-tight text-[#0A0A0A] hover:opacity-80 transition-opacity">
+              VIBE
+            </Link>
+            <span className="text-[#94A3B8] text-sm">/</span>
+            <div className="flex items-center gap-1.5 bg-[#F1F5F9] px-2.5 py-1 rounded-full text-xs font-semibold text-[#0A0A0A]">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>Admin Queue</span>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-brand font-sans tracking-tight">
-            Event Command Workstation
-          </h1>
-          <p className="text-xs text-ink-muted mt-0.5">
-            Review incoming drafts, crawl BookMyShow / Eventbrite, and approve events with 1 click.
-          </p>
-        </div>
 
-        {/* Quick Ingest Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setShowUrlModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand hover:bg-accent text-white text-xs font-bold transition shadow-xs"
-          >
-            <Link2 className="w-3.5 h-3.5" />
-            <span>+ Ingest by URL</span>
-          </button>
-
-          <button
-            onClick={() => setShowListingModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface border border-border hover:bg-surface-3 text-ink text-xs font-bold transition shadow-xs"
-          >
-            <ListFilter className="w-3.5 h-3.5 text-accent" />
-            <span>Crawl Listing Page</span>
-          </button>
-
-          <button
-            onClick={fetchDashboardData}
-            disabled={loading}
-            className="p-2 rounded-xl border border-border bg-surface hover:bg-surface-3 text-ink-secondary hover:text-ink transition"
-            title="Refresh database"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Counters */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <button
-          onClick={() => setActiveTab('review')}
-          className={`p-4 rounded-2xl border text-left transition ${
-            activeTab === 'review'
-              ? 'bg-orange-500/10 border-orange-500 text-orange-950 shadow-xs'
-              : 'bg-surface border-border hover:bg-surface-3'
-          }`}
-        >
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Review Queue</div>
-          <div className="text-2xl font-black text-accent mt-1">{pendingCount}</div>
-          <div className="text-[10px] text-ink-muted">Awaiting publication</div>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('live')}
-          className={`p-4 rounded-2xl border text-left transition ${
-            activeTab === 'live'
-              ? 'bg-emerald-500/10 border-emerald-500 text-emerald-950 shadow-xs'
-              : 'bg-surface border-border hover:bg-surface-3'
-          }`}
-        >
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Live Published</div>
-          <div className="text-2xl font-black text-emerald-600 mt-1">{liveCount}</div>
-          <div className="text-[10px] text-ink-muted">Visible on discovery feed</div>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('external')}
-          className={`p-4 rounded-2xl border text-left transition ${
-            activeTab === 'external'
-              ? 'bg-sky-500/10 border-sky-500 text-sky-950 shadow-xs'
-              : 'bg-surface border-border hover:bg-surface-3'
-          }`}
-        >
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Aggregated Feeds</div>
-          <div className="text-2xl font-black text-sky-600 mt-1">{externalCount}</div>
-          <div className="text-[10px] text-ink-muted">BookMyShow / District</div>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`p-4 rounded-2xl border text-left transition ${
-            activeTab === 'all'
-              ? 'bg-zinc-800 text-white shadow-xs'
-              : 'bg-surface border-border hover:bg-surface-3'
-          }`}
-        >
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Total Platform</div>
-          <div className="text-2xl font-black text-ink mt-1">{events.length}</div>
-          <div className="text-[10px] text-ink-muted">Database event rows</div>
-        </button>
-      </div>
-
-      {/* Filter & Bulk Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface p-3 rounded-2xl border border-border shadow-xs">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search events by title, venue, city, or platform..."
-            className="w-full text-xs font-medium pl-9 pr-3 py-2 rounded-xl bg-surface-2 border border-border focus:outline-none focus:border-brand transition"
-          />
-        </div>
-
-        {/* Bulk Action Buttons if items selected */}
-        {selectedIds.size > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-ink px-2">
-              {selectedIds.size} selected
-            </span>
             <button
-              onClick={handleBulkApprove}
-              disabled={actionLoading === 'bulk-approve'}
-              className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition flex items-center gap-1 shadow-xs"
+              onClick={() => setShowUrlModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#0A0A0A] text-[#0A0A0A] text-xs font-semibold rounded-full hover:bg-[#F8FAFC] transition-colors"
             >
-              <Check className="w-3.5 h-3.5" />
-              <span>Bulk Publish</span>
+              <Link2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Add by URL</span>
             </button>
             <button
-              onClick={handleBulkDiscard}
-              disabled={actionLoading === 'bulk-discard'}
-              className="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition flex items-center gap-1 shadow-xs"
+              onClick={() => setShowListingModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#0A0A0A] text-[#0A0A0A] text-xs font-semibold rounded-full hover:bg-[#F8FAFC] transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Bulk Discard</span>
+              <List className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Import Listing</span>
             </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0A0A0A] text-white text-xs font-semibold rounded-full hover:bg-[#262626] transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Event</span>
+            </button>
+            <Link
+              href="/"
+              target="_blank"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E8F0] text-[#64748B] text-xs font-medium rounded-full hover:border-[#0A0A0A] hover:text-[#0A0A0A] transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span className="hidden sm:inline">Live Site</span>
+            </Link>
           </div>
-        )}
-      </div>
-
-      {/* Main Events List */}
-      {loading ? (
-        <div className="p-12 text-center bg-surface rounded-2xl border border-border">
-          <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mb-2" />
-          <div className="text-xs text-ink-muted">Syncing with Supabase events table...</div>
         </div>
-      ) : filteredEvents.length === 0 ? (
-        <div className="p-12 text-center bg-surface rounded-2xl border border-border space-y-2">
-          <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-          <div className="text-sm font-bold text-ink">Review Queue is Clean!</div>
-          <div className="text-xs text-ink-muted max-w-sm mx-auto">
-            All events have been reviewed. Paste a BookMyShow or Eventbrite link using &quot;+ Ingest by URL&quot; to crawl new events.
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredEvents.map((evt) => {
-            const isLive = evt.status === 'live';
-            const isSelected = selectedIds.has(evt.id);
+      </header>
 
-            // Duplicate detection: check against other events in list
-            const duplicateMatch = events.find((other) => {
-              if (other.id === evt.id) return false;
-              return areDuplicates(
-                { name: evt.title, date: evt.start_at, venue: evt.location_name },
-                { name: other.title, date: other.start_at, venue: other.location_name }
+      {/* Main Container */}
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col">
+        {/* Navigation & Controls Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {STATUS_TABS.map((tab) => {
+              const active = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setStatusFilter(tab.id);
+                    setSelectedEvent(null);
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all ${
+                    active ? 'bg-[#0A0A0A] text-white' : 'text-[#64748B] hover:text-[#0A0A0A] hover:bg-[#F8FAFC]'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                      active ? 'bg-white/20 text-white' : 'bg-[#F1F5F9] text-[#475569]'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
               );
-            });
+            })}
+          </div>
 
-            return (
-              <div
-                key={evt.id}
-                className={`p-4 rounded-2xl bg-surface border transition shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                  !isLive
-                    ? 'border-orange-500/40 bg-orange-50/20'
-                    : 'border-border hover:border-border-strong'
-                }`}
-              >
-                {/* Left: Checkbox + Poster + Info */}
-                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => {
-                      const next = new Set(selectedIds);
-                      if (e.target.checked) next.add(evt.id);
-                      else next.delete(evt.id);
-                      setSelectedIds(next);
-                    }}
-                    className="mt-1 sm:mt-0 w-4 h-4 rounded text-brand focus:ring-0 cursor-pointer"
-                  />
+          {/* Search & Refresh */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" />
+              <input
+                type="text"
+                placeholder="Search events, venues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-full focus:outline-none focus:border-[#0A0A0A] transition-colors placeholder:text-[#94A3B8]"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0A0A0A]">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={fetchEvents}
+              disabled={loading}
+              title="Refresh queue"
+              className="p-2 border border-[#E2E8F0] rounded-full text-[#64748B] hover:text-[#0A0A0A] hover:border-[#0A0A0A] transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+        </div>
 
-                  {/* Thumbnail */}
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-surface-3 border border-border shrink-0">
-                    {evt.cover_image_url ? (
-                      <Image
-                        src={evt.cover_image_url}
-                        alt={evt.title}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-[10px] text-ink-muted">
-                        No image
-                      </div>
-                    )}
-                  </div>
+        {/* Master-Detail Two-Pane Workstation */}
+        <div className="flex-1 flex gap-6 items-start">
+          {/* Left Pane: Queue List */}
+          <div className={`flex flex-col gap-2 ${selectedEvent ? 'hidden lg:flex lg:w-[420px] lg:shrink-0' : 'w-full'}`}>
+            {loading ? (
+              <div className="py-24 flex flex-col items-center justify-center gap-3 text-[#94A3B8]">
+                <Loader2 className="w-6 h-6 animate-spin text-[#0A0A0A]" />
+                <span className="text-xs font-medium">Loading event queue...</span>
+              </div>
+            ) : filteredEvents.length === 0 ? (
+              <div className="py-24 border border-dashed border-[#E2E8F0] rounded-2xl flex flex-col items-center justify-center text-center p-6">
+                <Layers className="w-8 h-8 text-[#CBD5E1] mb-2" />
+                <p className="text-sm font-semibold text-[#0A0A0A]">No events in this view</p>
+                <p className="text-xs text-[#64748B] mt-1 max-w-xs">
+                  {statusFilter === 'REVIEW'
+                    ? 'Great job! The review queue is currently clear.'
+                    : 'Try selecting another status tab or importing new links.'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Select All Bar */}
+                <div className="flex items-center justify-between px-2 py-1 select-none">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={filteredEvents.length > 0 && filteredEvents.every((e) => selectedIds.has(e.id))}
+                      onChange={toggleSelectAll}
+                      className="accent-[#0A0A0A] w-3.5 h-3.5 rounded cursor-pointer"
+                    />
+                    <span className="text-[11px] font-medium text-[#64748B]">
+                      Select all · {filteredEvents.length} shown
+                    </span>
+                  </label>
+                  <span className="text-[10px] text-[#94A3B8]">Sorted by recent</span>
+                </div>
 
-                  {/* Details */}
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
-                          isLive
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-orange-100 text-orange-800 animate-pulse'
+                {/* Queue Cards */}
+                <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+                  {filteredEvents.map((event) => {
+                    const isSelected = selectedEvent?.id === event.id;
+                    const isChecked = selectedIds.has(event.id);
+                    const duplicate = findDuplicateMatch(event);
+                    const isPending = (event.status || '').toLowerCase() === 'draft' || (event.status || '').toLowerCase() === 'review';
+                    const isLive = (event.status || '').toLowerCase() === 'live' || (event.status || '').toLowerCase() === 'published';
+                    const isRejected = (event.status || '').toLowerCase() === 'cancelled' || (event.status || '').toLowerCase() === 'rejected';
+
+                    const coverImg = event.cover_image_url || event.cover_image || event.image_url;
+
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() => setSelectedEvent(event)}
+                        className={`group relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-[#0A0A0A] bg-[#F8FAFC] shadow-sm'
+                            : 'border-[#E2E8F0] bg-white hover:border-[#0A0A0A]'
                         }`}
                       >
-                        {isLive ? 'Live' : 'Draft / Review'}
-                      </span>
+                        {/* Multi-select Checkbox */}
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSelect(event.id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="accent-[#0A0A0A] w-4 h-4 shrink-0 rounded cursor-pointer"
+                        />
 
-                      {evt.source_platform && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
-                          {evt.source_platform.toUpperCase()}
-                        </span>
-                      )}
+                        {/* Poster Thumbnail */}
+                        <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-[#F1F5F9] relative border border-[#E2E8F0]">
+                          {coverImg ? (
+                            <Image
+                              src={coverImg}
+                              alt={event.title || ''}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-[#94A3B8]">
+                              NO IMG
+                            </div>
+                          )}
+                        </div>
 
-                      {duplicateMatch && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-amber-600" />
-                          <span>Duplicate of &ldquo;{duplicateMatch.title.slice(0, 24)}...&rdquo;</span>
-                        </span>
-                      )}
-                    </div>
+                        {/* Card Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-xs truncate leading-tight text-[#0A0A0A]">
+                              {event.title || event.name || 'Untitled Event'}
+                            </h3>
+                          </div>
 
-                    <h3 className="text-sm font-bold text-ink truncate font-sans">
-                      <Link href={`/${evt.slug}`} target="_blank" className="hover:text-accent transition">
-                        {evt.title}
-                      </Link>
-                    </h3>
+                          <p className="text-[11px] text-[#64748B] truncate mt-0.5">
+                            {event.date || 'TBA'} {event.time ? `· ${event.time}` : ''}
+                            {event.venue_name || event.city ? ` · ${event.venue_name || event.city}` : ''}
+                          </p>
 
-                    <div className="flex items-center gap-3 text-xs text-ink-muted flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <CalendarDays className="w-3.5 h-3.5 text-accent" />
-                        <span>{formatIST(evt.start_at)}</span>
-                      </span>
+                          {/* Badges Bar */}
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            {event.source_platform && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F1F5F9] text-[#475569]">
+                                {event.source_platform}
+                              </span>
+                            )}
+                            {event.category && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[#F1F5F9] text-[#64748B]">
+                                {event.category}
+                              </span>
+                            )}
+                            {duplicate && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                Dup: {duplicate.title.slice(0, 14)}...
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-accent" />
-                        <span>{evt.location_name || evt.city}</span>
-                      </span>
+                        {/* Status & 1-Click Action Buttons */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isPending && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => handleApprove(event, e)}
+                                disabled={savingAction === `approve-${event.id}`}
+                                title="1-Click Approve (Publish Live)"
+                                className="p-1.5 rounded-full hover:bg-green-50 text-[#94A3B8] hover:text-green-600 transition-colors"
+                              >
+                                {savingAction === `approve-${event.id}` ? (
+                                  <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                                ) : (
+                                  <CheckCircle2 className="w-4 h-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => handleReject(event, e)}
+                                disabled={savingAction === `reject-${event.id}`}
+                                title="1-Click Reject"
+                                className="p-1.5 rounded-full hover:bg-red-50 text-[#94A3B8] hover:text-red-500 transition-colors"
+                              >
+                                {savingAction === `reject-${event.id}` ? (
+                                  <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                ) : (
+                                  <XCircle className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                          )}
 
-                      {evt.external_price_text && (
-                        <span className="font-semibold text-ink">
-                          {evt.external_price_text}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                          {isLive && (
+                            <span className="px-2 py-0.5 text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 rounded-full">
+                              Live
+                            </span>
+                          )}
+
+                          {isRejected && (
+                            <span className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 rounded-full">
+                              Rejected
+                            </span>
+                          )}
+
+                          <ChevronRight className="w-3.5 h-3.5 text-[#CBD5E1] group-hover:text-[#0A0A0A] transition-colors" />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              </>
+            )}
+          </div>
 
-                {/* Right: Actions */}
-                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  {evt.external_ticket_url && (
-                    <a
-                      href={evt.external_ticket_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-xl border border-border hover:bg-surface-3 text-ink-muted hover:text-ink transition"
-                      title="Open source ticketing URL"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-
-                  <button
-                    onClick={() => setSelectedEvent(evt)}
-                    className="px-3 py-1.5 rounded-xl border border-border hover:bg-surface-3 text-xs font-semibold text-ink transition flex items-center gap-1"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-
-                  {!isLive ? (
-                    <button
-                      onClick={() => handleApprove(evt)}
-                      disabled={actionLoading === `pub-${evt.id}`}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1"
-                    >
-                      {actionLoading === `pub-${evt.id}` ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Check className="w-3.5 h-3.5" />
-                      )}
-                      <span>Approve Live</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleDiscard(evt)}
-                      disabled={actionLoading === `del-${evt.id}`}
-                      className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
-                      title="Discard event"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-
-                  {!isLive && (
-                    <button
-                      onClick={() => handleDiscard(evt)}
-                      disabled={actionLoading === `del-${evt.id}`}
-                      className="p-2 rounded-xl text-ink-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      title="Reject and discard"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+          {/* Right Pane: Detail Panel Inspector */}
+          <div
+            className={`flex-1 min-w-0 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm ${
+              selectedEvent ? 'block' : 'hidden lg:flex lg:flex-col lg:items-center lg:justify-center lg:py-32'
+            }`}
+          >
+            {selectedEvent ? (
+              <DetailInspector
+                event={selectedEvent}
+                duplicate={findDuplicateMatch(selectedEvent)}
+                savingAction={savingAction}
+                onClose={() => setSelectedEvent(null)}
+                onSave={handleSaveInspectorEdits}
+                onApprove={() => handleApprove(selectedEvent)}
+                onReject={() => handleReject(selectedEvent)}
+                onDelete={() => handleDeletePermanently(selectedEvent.id)}
+                onChange={(field, value) => {
+                  setSelectedEvent((prev) => (prev ? { ...prev, [field]: value } : null));
+                }}
+              />
+            ) : (
+              <div className="text-center p-6 text-[#94A3B8]">
+                <Layers className="w-10 h-10 mx-auto text-[#E2E8F0] mb-3" />
+                <h3 className="text-sm font-bold text-[#0A0A0A]">No Event Selected</h3>
+                <p className="text-xs text-[#64748B] mt-1 max-w-xs mx-auto">
+                  Click any card in the queue to inspect details, preview posters, check duplicates, and edit inline.
+                </p>
               </div>
-            );
-          })}
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-2.5 bg-[#0A0A0A] text-white rounded-full shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 border border-[#262626]">
+          <span className="text-xs font-bold whitespace-nowrap">{selectedIds.size} selected</span>
+          <div className="w-px h-4 bg-white/20" />
+          <button
+            onClick={() => handleBulkAction('approve')}
+            disabled={!!bulking}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-full transition-colors disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Approve All</span>
+          </button>
+          <button
+            onClick={() => handleBulkAction('reject')}
+            disabled={!!bulking}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-full transition-colors disabled:opacity-50"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            <span>Reject All</span>
+          </button>
+          <button
+            onClick={() => handleBulkAction('delete')}
+            disabled={!!bulking}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#262626] hover:bg-[#333333] text-white text-xs font-medium rounded-full transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete</span>
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            title="Clear selection"
+            className="p-1 text-white/60 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          {bulking && (
+            <span className="text-[10px] text-white/70 flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Processing...
+            </span>
+          )}
         </div>
       )}
 
-      {/* MODAL 1: Ingest Single URL */}
+      {/* Modal: Add Event by URL */}
       {showUrlModal && (
-        <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-elevated p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-accent" />
-                <h3 className="text-sm font-bold text-ink">Ingest Event from URL</h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg border border-[#E2E8F0] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-sm text-[#0A0A0A]">Add Event by URL</h2>
+                <p className="text-[11px] text-[#64748B]">Batch ingest up to 8 links at once</p>
               </div>
-              <button onClick={() => setShowUrlModal(false)} className="text-ink-muted hover:text-ink">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => {
+                  setShowUrlModal(false);
+                  setUrlResult(null);
+                  setUrlInput('');
+                }}
+                className="text-[#94A3B8] hover:text-[#0A0A0A]"
+              >
+                <XCircle className="w-5 h-5" />
               </button>
             </div>
-
-            <form onSubmit={handleImportUrl} className="space-y-4">
+            <form onSubmit={handleAddByUrl} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-ink mb-1">
-                  Event Link (BookMyShow, District, Eventbrite, Luma)
-                </label>
-                <input
-                  type="url"
+                <p className="text-xs text-[#64748B] mb-2 leading-relaxed">
+                  Paste event links from BookMyShow, Luma, District, etc. (one per line). AI will scrape full details, posters, and queue them for review.
+                </p>
+                <textarea
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
-                  placeholder="https://in.bookmyshow.com/events/... or https://district.in/events/..."
-                  className="w-full text-xs px-3 py-2.5 rounded-xl border border-border bg-surface-2 focus:outline-none"
-                  required
+                  rows={5}
+                  placeholder={'https://in.bookmyshow.com/events/...\nhttps://lu.ma/...\nhttps://www.district.in/events/...'}
+                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] font-mono transition-colors placeholder:text-[#94A3B8]"
                 />
               </div>
 
               {urlResult && (
                 <div
-                  className={`p-3 rounded-xl text-xs font-medium ${
-                    urlResult.ok
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'bg-red-50 text-red-800 border border-red-200'
+                  className={`flex items-start gap-2 p-3 rounded-xl text-xs whitespace-pre-wrap ${
+                    urlResult.ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
                   }`}
                 >
-                  {urlResult.message}
+                  {urlResult.ok ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />}
+                  <span>{urlResult.message}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowUrlModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-ink hover:bg-surface-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={importingUrl}
-                  className="px-4 py-2 rounded-xl bg-brand text-white text-xs font-bold hover:bg-accent transition flex items-center gap-1.5"
-                >
-                  {importingUrl ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Extracting with Jina + Gemini...</span>
-                    </>
-                  ) : (
-                    <span>Extract & Ingest</span>
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={addingUrl || !urlInput.trim()}
+                className="w-full py-2.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-[#262626] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {addingUrl ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Extracting & Queueing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>Ingest URLs to Review Queue</span>
+                  </>
+                )}
+              </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* MODAL 2: Listing Page Crawler */}
+      {/* Modal: Import Event Listing */}
       {showListingModal && (
-        <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-elevated p-6 space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <ListFilter className="w-4 h-4 text-accent" />
-                <h3 className="text-sm font-bold text-ink">Crawl Event Listing Page</h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg border border-[#E2E8F0] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-sm text-[#0A0A0A]">Import Event Listing</h2>
+                <p className="text-[11px] text-[#64748B]">Batch harvest city explore pages</p>
               </div>
-              <button onClick={() => setShowListingModal(false)} className="text-ink-muted hover:text-ink">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => {
+                  setShowListingModal(false);
+                  setListingResult(null);
+                  setListingUrl('');
+                }}
+                className="text-[#94A3B8] hover:text-[#0A0A0A]"
+              >
+                <XCircle className="w-5 h-5" />
               </button>
             </div>
-
-            <form onSubmit={handleCrawlListing} className="space-y-4">
+            <form onSubmit={handleImportListing} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-ink mb-1">
-                  Listing Page URL
-                </label>
+                <p className="text-xs text-[#64748B] mb-2 leading-relaxed">
+                  Paste a BookMyShow or District explore page (e.g.{' '}
+                  <span className="font-mono text-[#0A0A0A]">https://in.bookmyshow.com/explore/events-mumbai</span>). All child event links will be scraped and queued.
+                </p>
                 <input
                   type="url"
                   value={listingUrl}
                   onChange={(e) => setListingUrl(e.target.value)}
-                  placeholder="e.g. https://www.eventbrite.com/d/india--pune/all-events/"
-                  className="w-full text-xs px-3 py-2.5 rounded-xl border border-border bg-surface-2 focus:outline-none"
-                  required
+                  placeholder="https://in.bookmyshow.com/explore/events-mumbai"
+                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] font-mono transition-colors placeholder:text-[#94A3B8]"
                 />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-[#64748B] shrink-0">Max events:</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={25}
+                  value={listingMax}
+                  onChange={(e) => setListingMax(Math.max(1, Number(e.target.value) || 15))}
+                  className="w-20 px-3 py-1.5 text-xs border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0A0A0A]"
+                />
+                <span className="text-[10px] text-[#94A3B8]">Limit batch size to prevent rate-limits</span>
               </div>
 
               {listingResult && (
                 <div
-                  className={`p-3 rounded-xl text-xs font-medium ${
-                    listingResult.ok
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'bg-red-50 text-red-800 border border-red-200'
+                  className={`flex items-start gap-2 p-3 rounded-xl text-xs whitespace-pre-wrap ${
+                    listingResult.ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
                   }`}
                 >
-                  {listingResult.message}
+                  {listingResult.ok ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />}
+                  <span>{listingResult.message}</span>
                 </div>
               )}
 
-              {/* Discovered Deep Links List */}
-              {discoveredLinks.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-border">
-                  <div className="text-xs font-bold text-ink">
-                    Discovered Links ({discoveredLinks.length}):
-                  </div>
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                    {discoveredLinks.map((link, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2 rounded-lg bg-surface-2 border border-border text-xs flex items-center justify-between gap-2"
-                      >
-                        <span className="truncate text-ink-muted font-mono">{link}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUrlInput(link);
-                            setShowUrlModal(true);
-                            setShowListingModal(false);
-                          }}
-                          className="px-2 py-1 rounded bg-brand text-white text-[10px] font-bold hover:bg-accent shrink-0"
-                        >
-                          Ingest
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowListingModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-ink hover:bg-surface-2"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  disabled={crawlingListing}
-                  className="px-4 py-2 rounded-xl bg-brand text-white text-xs font-bold hover:bg-accent transition flex items-center gap-1.5"
-                >
-                  {crawlingListing ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Crawling with Jina Reader...</span>
-                    </>
-                  ) : (
-                    <span>Start Crawl</span>
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={importingListing || !listingUrl.trim()}
+                className="w-full py-2.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-[#262626] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {importingListing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Scraping Listing Page...</span>
+                  </>
+                ) : (
+                  <>
+                    <List className="w-3.5 h-3.5" />
+                    <span>Harvest Listing to Queue</span>
+                  </>
+                )}
+              </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
-      {selectedEvent && (
-        <EventEditModal
-          event={selectedEvent}
-          isOpen={true}
-          onClose={() => setSelectedEvent(null)}
-          onSave={async (fields) => {
-            const res = await fetch('/api/admin/events', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id: selectedEvent.id, updates: fields }),
-            });
-            if (res.ok) {
-              setSelectedEvent(null);
-              await fetchDashboardData();
-            }
-          }}
-        />
+      {/* Modal: Manual Create Event */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg border border-[#E2E8F0] shadow-xl overflow-y-auto max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <h2 className="font-bold text-sm text-[#0A0A0A]">Create Event Manually</h2>
+              <button onClick={() => setShowCreateModal(false)} className="text-[#94A3B8] hover:text-[#0A0A0A]">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateEvent} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1">Event Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, title: e.target.value }))}
+                  placeholder="e.g. Pune Tech Founders Mixer"
+                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={createForm.date}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, date: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Time</label>
+                  <input
+                    type="time"
+                    value={createForm.time}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, time: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">City</label>
+                  <input
+                    type="text"
+                    value={createForm.city}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, city: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Venue Name</label>
+                  <input
+                    type="text"
+                    value={createForm.venue_name}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, venue_name: e.target.value }))}
+                    placeholder="WeWork / Cafe"
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Category</label>
+                  <select
+                    value={createForm.category}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, category: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Price</label>
+                  <input
+                    type="text"
+                    value={createForm.price_text}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, price_text: e.target.value }))}
+                    placeholder="Free Entry or ₹499"
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1">Cover Image URL</label>
+                <input
+                  type="url"
+                  value={createForm.cover_image_url}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, cover_image_url: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1">External Ticket URL (Optional)</label>
+                <input
+                  type="url"
+                  value={createForm.external_ticket_url}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, external_ticket_url: e.target.value }))}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1">Description</label>
+                <textarea
+                  rows={3}
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+                  placeholder="Event overview..."
+                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingAction === 'creating-event'}
+                className="w-full py-2.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-[#262626] transition-colors disabled:opacity-50"
+              >
+                {savingAction === 'creating-event' ? 'Creating...' : 'Create & Publish Event'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
+
+// Detail Inspector Component (Right-Hand Pane)
+function DetailInspector({
+  event,
+  duplicate,
+  savingAction,
+  onClose,
+  onSave,
+  onApprove,
+  onReject,
+  onDelete,
+  onChange,
+}: {
+  event: AdminEvent;
+  duplicate?: AdminEvent;
+  savingAction: string | null;
+  onClose: () => void;
+  onSave: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+  onDelete: () => void;
+  onChange: (field: string, value: any) => void;
+}) {
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [refetchUrl, setRefetchUrl] = useState(event.external_ticket_url || event.ticket_link || '');
+  const [refetching, setRefetching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const coverImg = event.cover_image_url || event.cover_image || event.image_url;
+  const isPending = (event.status || '').toLowerCase() === 'draft' || (event.status || '').toLowerCase() === 'review';
+
+  // Handle local file upload
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const result = uploadEvent.target?.result as string;
+        if (result) {
+          onChange('cover_image_url', result);
+          onChange('cover_image', result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Rescan from URL
+  const handleRescan = async () => {
+    if (!refetchUrl.trim()) return;
+    setRefetching(true);
+    try {
+      const res = await fetch('/api/admin/events/from-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: refetchUrl.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.extracted) {
+        if (data.extracted.title) onChange('title', data.extracted.title);
+        if (data.extracted.city) onChange('city', data.extracted.city);
+        if (data.extracted.venue_name) onChange('venue_name', data.extracted.venue_name);
+        if (data.extracted.cover_image_url) onChange('cover_image_url', data.extracted.cover_image_url);
+        if (data.extracted.description) onChange('description', data.extracted.description);
+        if (data.extracted.price_text) onChange('price_text', data.extracted.price_text);
+        alert('Refreshed fields from URL.');
+      } else {
+        alert(data.error || 'Rescan failed');
+      }
+    } catch (err: any) {
+      alert(`Rescan error: ${err.message}`);
+    } finally {
+      setRefetching(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full space-y-5">
+      {/* Header Bar */}
+      <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+        <div className="min-w-0">
+          <h2 className="font-black text-base text-[#0A0A0A] truncate max-w-md">
+            {event.title || event.name || 'Untitled Event'}
+          </h2>
+          <div className="flex items-center gap-2 mt-1">
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                (event.status || '').toLowerCase() === 'live' || (event.status || '').toLowerCase() === 'published'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : (event.status || '').toLowerCase() === 'cancelled'
+                  ? 'bg-red-50 text-red-700 border border-red-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}
+            >
+              {event.status || 'Draft'}
+            </span>
+            {event.source_platform && (
+              <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-full font-medium">
+                {event.source_platform}
+              </span>
+            )}
+            {event.slug && (
+              <Link
+                href={`/${event.slug}`}
+                target="_blank"
+                className="text-[10px] text-[#2563EB] hover:underline flex items-center gap-0.5"
+              >
+                <span>View Live</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Top Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {isPending && (
+            <>
+              <button
+                onClick={onApprove}
+                disabled={savingAction === `approve-${event.id}`}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-[#262626] transition-colors disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Approve</span>
+              </button>
+              <button
+                onClick={onReject}
+                disabled={savingAction === `reject-${event.id}`}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 border border-[#E2E8F0] text-[#64748B] text-xs font-medium rounded-full hover:border-red-300 hover:text-red-500 transition-colors disabled:opacity-50"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>Reject</span>
+              </button>
+            </>
+          )}
+          <button onClick={onClose} title="Close inspector" className="p-1 text-[#94A3B8] hover:text-[#0A0A0A]">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Duplicate Alert Banner */}
+      {duplicate && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-800">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">Potential Duplicate Detected</p>
+            <p className="text-[11px] mt-0.5">
+              Matches existing event <span className="font-semibold">"{duplicate.title}"</span> scheduled for{' '}
+              {duplicate.date || 'same date'} at {duplicate.venue_name || duplicate.city}.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Poster Section */}
+      <div className="flex items-start gap-4">
+        <div className="w-24 h-32 shrink-0 rounded-xl overflow-hidden bg-[#F1F5F9] border border-[#E2E8F0] relative">
+          {coverImg ? (
+            <Image src={coverImg} alt={event.title || ''} fill unoptimized className="object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-center text-[10px] text-[#94A3B8] p-2">
+              No Poster
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <label
+              htmlFor="inspector-poster-upload"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E8F0] rounded-full text-xs font-semibold text-[#0A0A0A] cursor-pointer hover:border-[#0A0A0A] transition-colors"
+            >
+              <Upload className="w-3 h-3" />
+              <span>{coverImg ? 'Replace Poster' : 'Upload Poster'}</span>
+            </label>
+            <input
+              id="inspector-poster-upload"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowLinkInput((p) => !p)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E8F0] rounded-full text-xs font-semibold text-[#0A0A0A] hover:border-[#0A0A0A] transition-colors"
+            >
+              <Link2 className="w-3 h-3" />
+              <span>Link URL</span>
+            </button>
+
+            {coverImg && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange('cover_image_url', null);
+                  onChange('cover_image', null);
+                }}
+                className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+
+          {showLinkInput && (
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://... image link"
+                className="flex-1 px-3 py-1.5 text-xs border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0A0A0A]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (linkUrl.trim()) {
+                    onChange('cover_image_url', linkUrl.trim());
+                    setShowLinkInput(false);
+                    setLinkUrl('');
+                  }
+                }}
+                className="px-3 py-1.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-lg hover:bg-[#262626]"
+              >
+                Set
+              </button>
+            </div>
+          )}
+
+          <p className="text-[10px] text-[#94A3B8]">
+            Poster displays on public event pages and discovery feeds. 1200x800 recommended.
+          </p>
+        </div>
+      </div>
+
+      {/* Re-scan from URL Box */}
+      <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-2">
+        <p className="text-xs font-bold text-[#475569] flex items-center gap-1.5">
+          <Wand2 className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Auto-fill / Refresh from URL</span>
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={refetchUrl}
+            onChange={(e) => setRefetchUrl(e.target.value)}
+            placeholder="https://in.bookmyshow.com/... or https://lu.ma/..."
+            className="flex-1 min-w-0 px-3 py-1.5 text-xs border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0A0A0A] font-mono"
+          />
+          <button
+            type="button"
+            onClick={handleRescan}
+            disabled={refetching || !refetchUrl.trim()}
+            className="shrink-0 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          >
+            {refetching ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            <span>{refetching ? 'Scanning...' : 'Update'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Editable Fields */}
+      <div className="space-y-3 max-h-[calc(100vh-420px)] overflow-y-auto pr-1">
+        <div>
+          <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Event Title</label>
+          <input
+            type="text"
+            value={event.title || event.name || ''}
+            onChange={(e) => onChange('title', e.target.value)}
+            className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Date</label>
+            <input
+              type="date"
+              value={event.date || ''}
+              onChange={(e) => onChange('date', e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Time</label>
+            <input
+              type="time"
+              value={event.time || ''}
+              onChange={(e) => onChange('time', e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">City</label>
+            <input
+              type="text"
+              value={event.city || ''}
+              onChange={(e) => onChange('city', e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Category</label>
+            <select
+              value={event.category || 'Tech & AI'}
+              onChange={(e) => onChange('category', e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Venue Name</label>
+          <input
+            type="text"
+            value={event.venue_name || event.location_name || ''}
+            onChange={(e) => onChange('venue_name', e.target.value)}
+            className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Price</label>
+            <input
+              type="text"
+              value={event.price_text || event.external_price_text || ''}
+              onChange={(e) => onChange('price_text', e.target.value)}
+              placeholder="Free Entry or ₹499"
+              className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">External Ticket URL</label>
+            <input
+              type="url"
+              value={event.external_ticket_url || event.ticket_link || ''}
+              onChange={(e) => onChange('external_ticket_url', e.target.value)}
+              placeholder="https://..."
+              className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Description</label>
+          <textarea
+            rows={4}
+            value={event.description || ''}
+            onChange={(e) => onChange('description', e.target.value)}
+            className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] resize-y"
+          />
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-xs text-red-600 hover:text-red-700 font-medium px-2 py-1 flex items-center gap-1"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Delete</span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={savingAction === 'saving-edits'}
+            className="px-4 py-2 border border-[#0A0A0A] text-[#0A0A0A] text-xs font-bold rounded-full hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+          >
+            {savingAction === 'saving-edits' ? 'Saving...' : 'Save Changes'}
+          </button>
+          {isPending && (
+            <button
+              type="button"
+              onClick={onApprove}
+              disabled={savingAction === `approve-${event.id}`}
+              className="px-4 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-[#262626] transition-colors disabled:opacity-50"
+            >
+              Approve & Publish
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

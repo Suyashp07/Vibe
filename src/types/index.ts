@@ -110,6 +110,7 @@ export interface EventItem {
   whatsapp_caption?: string;
   instagram_caption?: string;
   source_type?: 'native' | 'external';
+  is_external?: boolean;
   source_platform?: 'district' | 'unstop' | 'bookmyshow' | 'insider' | 'luma' | 'telegram' | 'manual' | string;
   external_ticket_url?: string;
   external_price_text?: string;
@@ -124,6 +125,8 @@ export interface RSVPItem {
   event_slug?: string;
   name: string;
   email: string;
+  guest_name?: string;
+  guest_email?: string;
   phone: string;
   status: 'confirmed' | 'waitlisted' | 'cancelled';
   plus_one_name?: string;
