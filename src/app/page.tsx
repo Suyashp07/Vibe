@@ -65,12 +65,20 @@ function LandingPageContent() {
       setRsvps(getRSVPs());
     });
 
+    const handleLocationChange = () => {
+      setSelectedCity(getUserCity() || 'All India');
+    };
+    window.addEventListener('vibe:location_changed', handleLocationChange);
+
     const update = () => {
       setEvents(getEvents());
       setRsvps(getRSVPs());
     };
     const unsub = subscribeToStore(update);
-    return () => unsub();
+    return () => {
+      unsub();
+      window.removeEventListener('vibe:location_changed', handleLocationChange);
+    };
   }, []);
 
   // Filter events by live status, public visibility, selected city, and search query
@@ -117,39 +125,6 @@ function LandingPageContent() {
     <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar />
 
-      {/* Clean District Search & City Filter Bar — No marketing hero fluff */}
-      <section className="pt-6 pb-4 border-b border-border bg-surface">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          {/* Search Bar */}
-          <div className="relative max-w-2xl mx-auto">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by event title, venue, or neighborhood..."
-              className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-border rounded-xl text-xs text-ink placeholder:text-ink-muted focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink transition-colors shadow-xs"
-            />
-            <Search className="w-4 h-4 text-ink-muted absolute left-3.5 top-3.5 pointer-events-none" />
-          </div>
-
-          {/* City Pills */}
-          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1 scrollbar-none max-w-2xl mx-auto">
-            {FEATURED_CITIES.map((city) => (
-              <button
-                key={city}
-                onClick={() => setSelectedCity(city)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-                  selectedCity.toLowerCase() === city.toLowerCase()
-                    ? 'bg-brand text-white shadow-xs'
-                    : 'bg-surface-3 text-ink-muted hover:text-ink border border-border/80'
-                }`}
-              >
-                {city}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
 
 
       {/* Live Events Grid */}

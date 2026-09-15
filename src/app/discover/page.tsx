@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
   MapPin,
@@ -12,59 +13,76 @@ import {
   Vote,
   ArrowRight,
   SlidersHorizontal,
-  Navigation
+  X,
+  Calendar,
+  Check
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import EventCard from '@/components/ui/EventCard';
-import LocationModal from '@/components/location/LocationModal';
 import {
   getUserCity,
   getUserCoords,
   getCityCoordinates,
   calculateDistanceKm,
-  setUserLocation
 } from '@/lib/location';
 import {
   getEvents,
   syncEventsWithSupabase,
   getDatePolls,
   syncDatePollsWithSupabase,
-  subscribeToStore
+  subscribeToStore,
 } from '@/lib/store';
 import { EventItem, DatePoll } from '@/types';
 
-interface EventWithDistance extends EventItem {
-  distanceKm?: number | null;
-}
+// Categories matching BookMyShow and Navbar
+const CATEGORY_CHIPS = [
+  'All',
+  'Music Shows',
+  'Comedy Shows',
+  'Founders & Tech',
+  'Workshops',
+  'Social Mixers',
+  'Dining & Salons',
+  'Date Polls',
+];
 
-export default function DiscoverPage() {
+function DiscoverContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL search params sync
+  const queryParam = searchParams.get('q') || searchParams.get('search') || '';
+  const categoryParam = searchParams.get('category') || '';
+
   const [events, setEvents] = useState<EventItem[]>([]);
   const [polls, setPolls] = useState<DatePoll[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string>('All');
-  const [visibleCount, setVisibleCount] = useState<number>(6);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [visibleCount, setVisibleCount] = useState<number>(9);
   const [userCity, setUserCity] = useState<string>('All India');
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      await Promise.all([syncEventsWithSupabase(), syncDatePollsWithSupabase()]);
-      setEvents(getEvents());
-      setPolls(getDatePolls());
-    } finally {
-      setIsSyncing(false);
+  // Sync category param from Navbar
+  useEffect(() => {
+    if (!categoryParam) {
+      setActiveCategory('All');
+      return;
     }
-  };
+    const catLower = categoryParam.toLowerCase();
+    if (catLower.includes('music')) setActiveCategory('Music Shows');
+    else if (catLower.includes('comedy')) setActiveCategory('Comedy Shows');
+    else if (catLower.includes('founder') || catLower.includes('tech') || catLower.includes('startup')) setActiveCategory('Founders & Tech');
+    else if (catLower.includes('workshop')) setActiveCategory('Workshops');
+    else if (catLower.includes('social') || catLower.includes('mixer')) setActiveCategory('Social Mixers');
+    else if (catLower.includes('dining') || catLower.includes('salon')) setActiveCategory('Dining & Salons');
+    else setActiveCategory(categoryParam);
+  }, [categoryParam]);
 
+  // Sync events & location
   useEffect(() => {
     setEvents(getEvents());
     setPolls(getDatePolls());
 
-    // Reconcile with live Supabase database on mount
     Promise.all([syncEventsWithSupabase(), syncDatePollsWithSupabase()])
       .then(() => {
         setEvents(getEvents());
@@ -80,13 +98,11 @@ export default function DiscoverPage() {
     return () => unsub();
   }, []);
 
-  // Listen for user location changes
+  // Listen for user location changes from Navbar
   useEffect(() => {
     const syncLocation = () => {
       const city = getUserCity() || 'All India';
       setUserCity(city);
-      const coords = getUserCoords() || (city !== 'All India' ? getCityCoordinates(city) : null);
-      setUserCoords(coords);
     };
 
     syncLocation();
@@ -94,251 +110,147 @@ export default function DiscoverPage() {
     return () => window.removeEventListener('vibe:location_changed', syncLocation);
   }, []);
 
-  // Calculate proximity distance for each event
-  const eventsWithDistance: EventWithDistance[] = events.map((e) => {
-    if (!userCoords || userCity === 'All India') {
-      return { ...e, distanceKm: null };
-    }
+  // Filter events by live status, selected city, category, and search query from Navbar
+  const filteredEvents = useMemo(() => {
+    return events
+      .filter((e) => {
+        // Only public live events
+        if (e.status !== 'live' || e.is_public === false) return false;
 
-    let eventLat = e.location_lat;
-    let eventLng = e.location_lng;
-
-    if (!eventLat || !eventLng) {
-      const resolved = getCityCoordinates(e.city);
-      if (resolved) {
-        eventLat = resolved.lat;
-        eventLng = resolved.lng;
-      }
-    }
-
-    if (eventLat && eventLng) {
-      const dist = calculateDistanceKm(userCoords.lat, userCoords.lng, eventLat, eventLng);
-      return { ...e, distanceKm: dist };
-    }
-
-    // Direct city name match fallback
-    if (e.city?.toLowerCase() === userCity.toLowerCase()) {
-      return { ...e, distanceKm: 0 };
-    }
-
-    return { ...e, distanceKm: null };
-  });
-
-  // Dynamic filter pills matching location
-  const filterPills = [
-    'All',
-    ...(userCity && userCity !== 'All India' && !['Pune', 'Mumbai', 'Bengaluru'].includes(userCity)
-      ? [userCity]
-      : []),
-    'Pune',
-    'Mumbai',
-    'Bengaluru',
-    'Date Polls',
-    'Free',
-    'Online',
-    'This Weekend',
-  ];
-
-  const filteredEvents = eventsWithDistance
-    .filter((e) => {
-      // Strictly hide unverified drafts and private events from public discovery
-      if (e.status !== 'live' || e.is_public === false) return false;
-
-      // Search query match
-      const matchesSearch =
-        !searchQuery ||
-        e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (e.tagline && e.tagline.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (e.city && e.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (e.location_name && e.location_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (e.source_platform && e.source_platform.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      if (!matchesSearch) return false;
-
-      // Filter pill matches
-      if (activeFilter === 'All') return true;
-      if (activeFilter === userCity) return e.city?.toLowerCase() === userCity.toLowerCase();
-      if (activeFilter === 'Pune') return e.city?.toLowerCase() === 'pune';
-      if (activeFilter === 'Mumbai') return e.city?.toLowerCase() === 'mumbai';
-      if (activeFilter === 'Bengaluru') return e.city?.toLowerCase() === 'bengaluru';
-      if (activeFilter === 'Free') return true; // All v1 events are free
-      if (activeFilter === 'Online') return e.event_type === 'online' || e.event_type === 'hybrid';
-      if (activeFilter === 'This Weekend') {
-        const eventDate = new Date(e.start_at);
-        const day = eventDate.getDay();
-        return (
-          day === 0 ||
-          day === 6 ||
-          eventDate.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000
-        );
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      // Proximity ranking: events closest to user appear first!
-      const aDist = typeof a.distanceKm === 'number' ? a.distanceKm : null;
-      const bDist = typeof b.distanceKm === 'number' ? b.distanceKm : null;
-
-      if (userCity !== 'All India' && (aDist !== null || bDist !== null)) {
-        if (aDist !== null && bDist !== null) {
-          if (aDist !== bDist) {
-            return aDist - bDist;
-          }
-        } else if (aDist !== null) {
-          return -1;
-        } else if (bDist !== null) {
-          return 1;
+        // City filter from Navbar
+        if (userCity && userCity !== 'All India') {
+          const c = userCity.toLowerCase();
+          const matchCity =
+            e.city?.toLowerCase().includes(c) ||
+            e.location_name?.toLowerCase().includes(c) ||
+            e.location_address?.toLowerCase().includes(c);
+          if (!matchCity) return false;
         }
-      }
-      // Fallback: Chronological ordering
-      return new Date(a.start_at).getTime() - new Date(b.start_at).getTime();
-    });
+
+        // Global Navbar Search filter (?q=...)
+        if (queryParam.trim()) {
+          const q = queryParam.toLowerCase().trim();
+          const matchSearch =
+            e.title.toLowerCase().includes(q) ||
+            (e.tagline && e.tagline.toLowerCase().includes(q)) ||
+            (e.description && e.description.toLowerCase().includes(q)) ||
+            (e.city && e.city.toLowerCase().includes(q)) ||
+            (e.location_name && e.location_name.toLowerCase().includes(q)) ||
+            (e.organizer_name && e.organizer_name.toLowerCase().includes(q));
+          if (!matchSearch) return false;
+        }
+
+        // Category matching
+        if (activeCategory && activeCategory !== 'All' && activeCategory !== 'Date Polls') {
+          const cat = activeCategory.toLowerCase();
+          const text = `${e.title} ${e.tagline || ''} ${e.description || ''} ${(e as any).category || ''}`.toLowerCase();
+
+          if (cat.includes('music')) {
+            return text.includes('music') || text.includes('concert') || text.includes('sitar') || text.includes('acoustic') || text.includes('poetry');
+          }
+          if (cat.includes('comedy')) {
+            return text.includes('comedy') || text.includes('standup') || text.includes('stand-up') || text.includes('open mic');
+          }
+          if (cat.includes('founder') || cat.includes('tech')) {
+            return text.includes('founder') || text.includes('tech') || text.includes('startup') || text.includes('ai') || text.includes('summit');
+          }
+          if (cat.includes('workshop')) {
+            return text.includes('workshop') || text.includes('masterclass') || text.includes('learn') || text.includes('design');
+          }
+          if (cat.includes('social')) {
+            return text.includes('social') || text.includes('mixer') || text.includes('meetup') || text.includes('gathering');
+          }
+          if (cat.includes('dining')) {
+            return text.includes('dinner') || text.includes('dining') || text.includes('salon') || text.includes('culinary');
+          }
+        }
+
+        return true;
+      })
+      .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
+  }, [events, userCity, queryParam, activeCategory]);
 
   const displayedEvents = filteredEvents.slice(0, visibleCount);
 
+  // Clear search query
+  const handleClearSearch = () => {
+    router.push('/discover');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-surface-2">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-        {/* Header Title & Proximity Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent mb-1">
-              <Compass className="w-3.5 h-3.5" />
-              <span>Proximity & Discovery Feed</span>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 w-full">
+        {/* BookMyShow Style Header: Clean Title + Category Filter Strip */}
+        <div className="border-b border-[#E2E8F0] pb-5 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
+                {userCity && userCity !== 'All India'
+                  ? `Events In ${userCity}`
+                  : 'Explore Events'}
+              </h1>
+              <p className="text-xs text-[#64748B] mt-0.5 font-medium">
+                {filteredEvents.length} {filteredEvents.length === 1 ? 'experience available' : 'experiences available'}
+                {queryParam && ` matching "${queryParam}"`}
+              </p>
             </div>
-            <h1 className="font-display font-black text-3xl sm:text-4xl text-brand">
-              Experiences & Gatherings
-            </h1>
-            <p className="text-xs text-ink-muted mt-1">
-              Curated communities, intimate dinners, hacker summits & cultural meetups
-            </p>
-          </div>
 
-          {/* Action buttons: Location Selector & Sync Feed */}
-          <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
-            <button
-              onClick={() => setLocationModalOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-surface border border-border text-ink hover:bg-surface-3 transition-all shadow-xs hover:border-accent/40 group"
-              title="Change your location preference"
-            >
-              <MapPin className="w-3.5 h-3.5 text-accent animate-pulse" />
-              <span>
-                Near: <strong className="text-accent">{userCity}</strong>
-              </span>
-              <span className="text-[11px] text-ink-muted group-hover:text-ink underline ml-1">
-                Change
-              </span>
-            </button>
-
-            <button
-              onClick={handleSync}
-              disabled={isSyncing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-ink hover:bg-surface-3 transition-all shadow-xs"
-              title="Refresh feed with latest live events from Supabase"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-accent ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync Feed'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Proximity notice strip if active city is set */}
-        {userCity !== 'All India' && (
-          <div className="mb-6 px-4 py-3 rounded-2xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center shrink-0">
-                <Navigation className="w-3.5 h-3.5" />
-              </span>
-              <span className="text-xs font-medium text-ink">
-                Events are dynamically sorted by distance from <strong>{userCity}</strong>. Closest gatherings appear at the top.
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                setUserLocation('All India');
-                setUserCity('All India');
-                setUserCoords(null);
-              }}
-              className="text-xs font-bold text-accent hover:underline shrink-0"
-            >
-              Show all India (Clear proximity)
-            </button>
-          </div>
-        )}
-
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="w-5 h-5 text-ink-muted absolute left-4 top-3.5" />
-          <input
-            type="text"
-            placeholder="Search by event title, host, city, or neighborhood (e.g. Bandra, Indiranagar, Hauz Khas)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm font-medium pl-12 pr-4 py-3 rounded-2xl bg-surface border border-border shadow-sm focus:border-accent focus:outline-none transition-colors"
-          />
-        </div>
-
-        {/* Filter Pills Row */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
-          {filterPills.map((pill) => (
-            <button
-              key={pill}
-              onClick={() => setActiveFilter(pill)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                activeFilter === pill
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'bg-surface text-ink-secondary border border-border hover:bg-surface-3 hover:text-ink'
-              }`}
-            >
-              {pill}
-            </button>
-          ))}
-        </div>
-
-        {/* Community Date Polls Highlight Strip (shown when browsing All) */}
-        {activeFilter === 'All' && polls.length > 0 && !searchQuery && (
-          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Vote className="w-5 h-5" />
-              </span>
-              <div>
-                <span className="text-xs font-bold text-ink block">
-                  Community Date Polling is Active ({polls.length} open {polls.length === 1 ? 'poll' : 'polls'})
-                </span>
-                <span className="text-[11px] text-ink-muted">
-                  Help local hosts select dates for upcoming meetups, hacker summits, and curated dinners.
+            {/* Active search chip with 1-click clear */}
+            {queryParam && (
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0F172A] text-white">
+                  <span>Search: "{queryParam}"</span>
+                  <button
+                    onClick={handleClearSearch}
+                    className="hover:text-amber-400 cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </span>
               </div>
-            </div>
-
-            <button
-              onClick={() => setActiveFilter('Date Polls')}
-              className="px-4 py-2 rounded-xl bg-surface hover:bg-surface-2 border border-border text-xs font-bold text-accent shadow-xs transition-all shrink-0 hover-lift"
-            >
-              Vote on Dates →
-            </button>
+            )}
           </div>
-        )}
+
+          {/* BookMyShow Category Pill Filter Strip */}
+          <div className="flex items-center gap-2 overflow-x-auto pt-4 pb-1 scrollbar-none">
+            {CATEGORY_CHIPS.map((chip) => {
+              const active = activeCategory === chip;
+              return (
+                <button
+                  key={chip}
+                  onClick={() => setActiveCategory(chip)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    active
+                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      : 'bg-white text-[#64748B] border border-[#E2E8F0] hover:text-[#0F172A] hover:border-[#CBD5E1]'
+                  }`}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Active Filter: Date Polls View */}
-        {activeFilter === 'Date Polls' ? (
+        {activeCategory === 'Date Polls' ? (
           <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">
-                All Active Date Polls ({polls.length})
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <span className="text-xs font-black uppercase tracking-wider text-[#E8621A]">
+                Community Date Polls ({polls.length})
               </span>
-              <span className="text-xs text-ink-muted">Live votes updated in real-time</span>
+              <span className="text-xs text-[#64748B]">Live community votes</span>
             </div>
 
             {polls.length === 0 ? (
-              <div className="bg-surface rounded-2xl p-12 border border-border text-center space-y-3 shadow-card">
-                <Vote className="w-8 h-8 text-accent mx-auto" />
-                <p className="font-display font-bold text-xl text-ink">No active date polls right now</p>
-                <p className="text-xs text-ink-muted max-w-sm mx-auto">
-                  Organizers can spin up community date polls from their dashboard to gather votes before publishing an event.
+              <div className="bg-white rounded-3xl p-12 border border-[#E2E8F0] text-center space-y-3 shadow-xs">
+                <Vote className="w-8 h-8 text-[#E8621A] mx-auto" />
+                <p className="font-bold text-lg text-[#0F172A]">No active date polls right now</p>
+                <p className="text-xs text-[#64748B] max-w-sm mx-auto">
+                  Organizers can launch community date polls to gather votes before publishing gatherings.
                 </p>
               </div>
             ) : (
@@ -353,41 +265,41 @@ export default function DiscoverPage() {
                   return (
                     <div
                       key={poll.id}
-                      className="bg-surface rounded-2xl p-6 border border-border shadow-card hover:shadow-elevated transition-all flex flex-col justify-between space-y-4"
+                      className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-accent bg-accent-light px-2.5 py-0.5 rounded-full">
+                          <span className="text-[10px] uppercase font-black tracking-wider text-[#E8621A] bg-[#E8621A]/10 px-2.5 py-0.5 rounded-full">
                             Community Poll
                           </span>
-                          <span className="text-xs font-semibold text-ink-muted">
+                          <span className="text-xs font-semibold text-[#64748B]">
                             {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
                           </span>
                         </div>
 
-                        <h3 className="font-display font-bold text-lg text-ink hover:text-accent transition-colors">
+                        <h3 className="font-bold text-lg text-[#0F172A] hover:text-[#E8621A] transition-colors">
                           <Link href={`/poll/${poll.slug}`}>{poll.title}</Link>
                         </h3>
 
                         {poll.description && (
-                          <p className="text-xs text-ink-secondary line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
                             {poll.description}
                           </p>
                         )}
 
-                        <div className="space-y-1.5 pt-2 border-t border-border">
+                        <div className="space-y-1.5 pt-2 border-t border-[#F1F5F9]">
                           {poll.options.slice(0, 3).map((opt) => {
                             const pct = totalVotes > 0 ? Math.round((opt.votes.length / totalVotes) * 100) : 0;
                             const isLeading = totalVotes > 0 && opt.votes.length === topOpt?.votes.length;
                             return (
                               <div key={opt.id} className="text-xs">
                                 <div className="flex items-center justify-between text-[11px] mb-0.5">
-                                  <span className="font-medium text-ink truncate">{opt.date_label}</span>
-                                  <span className="font-mono text-ink-muted">{pct}%</span>
+                                  <span className="font-medium text-[#0F172A] truncate">{opt.date_label}</span>
+                                  <span className="font-mono text-[#64748B]">{pct}%</span>
                                 </div>
-                                <div className="h-1.5 w-full bg-surface-3 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-full bg-[#F1F5F9] rounded-full overflow-hidden">
                                   <div
-                                    className={`h-full rounded-full ${isLeading ? 'bg-accent' : 'bg-ink-muted/30'}`}
+                                    className={`h-full rounded-full ${isLeading ? 'bg-[#E8621A]' : 'bg-slate-300'}`}
                                     style={{ width: `${pct}%` }}
                                   />
                                 </div>
@@ -397,14 +309,14 @@ export default function DiscoverPage() {
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
-                        <span className="text-[11px] text-ink-muted">
-                          by <strong className="text-ink">{poll.organizer_name}</strong>
+                      <div className="pt-3 border-t border-[#F1F5F9] flex items-center justify-between gap-2">
+                        <span className="text-[11px] text-[#64748B]">
+                          by <strong className="text-[#0F172A]">{poll.organizer_name}</strong>
                         </span>
 
                         <Link
                           href={`/poll/${poll.slug}`}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-accent hover:bg-accent-dark text-white text-xs font-bold transition-all shadow-xs hover-lift"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                         >
                           <span>Cast Vote</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -417,24 +329,25 @@ export default function DiscoverPage() {
             )}
           </div>
         ) : (
-          /* Events Grid (3-col desktop, 1-col mobile) */
+          /* Events Grid */
           filteredEvents.length === 0 ? (
-            <div className="bg-surface rounded-2xl p-12 border border-border text-center space-y-3 shadow-card">
-              <p className="font-display font-bold text-xl text-ink">No events match your search or proximity</p>
-              <p className="text-xs text-ink-muted max-w-sm mx-auto">
-                Try expanding your search or select a different city to discover more gatherings!
+            <div className="bg-white rounded-3xl p-12 border border-dashed border-[#E2E8F0] text-center space-y-3">
+              <Calendar className="w-10 h-10 text-[#94A3B8] mx-auto" />
+              <p className="font-bold text-lg text-[#0F172A]">No events found</p>
+              <p className="text-xs text-[#64748B] max-w-sm mx-auto">
+                {userCity !== 'All India'
+                  ? `There are no scheduled events in ${userCity} matching this filter yet.`
+                  : 'Try selecting another category or clear your search query to see more events.'}
               </p>
-              <div className="pt-2 flex items-center justify-center gap-3">
+              <div className="pt-3 flex items-center justify-center gap-3">
                 <button
                   onClick={() => {
-                    setSearchQuery('');
-                    setActiveFilter('All');
-                    setUserLocation('All India');
-                    setUserCity('All India');
+                    setActiveCategory('All');
+                    router.push('/discover');
                   }}
-                  className="text-xs text-accent font-bold underline"
+                  className="px-4 py-2 bg-[#0F172A] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer hover:bg-[#1E293B]"
                 >
-                  View All India Events
+                  View All Events
                 </button>
               </div>
             </div>
@@ -445,7 +358,6 @@ export default function DiscoverPage() {
                   <EventCard
                     key={event.id}
                     event={event}
-                    distanceKm={event.distanceKm}
                   />
                 ))}
               </div>
@@ -454,11 +366,11 @@ export default function DiscoverPage() {
               {filteredEvents.length > visibleCount && (
                 <div className="flex justify-center pt-4">
                   <button
-                    onClick={() => setVisibleCount((prev) => prev + 3)}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-btn bg-surface hover:bg-surface-3 border border-border text-ink text-xs font-bold transition-all shadow-xs hover-lift"
+                    onClick={() => setVisibleCount((prev) => prev + 6)}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
-                    <ArrowDown className="w-4 h-4 text-accent" />
-                    <span>Load More Experiences</span>
+                    <ArrowDown className="w-4 h-4 text-[#E8621A]" />
+                    <span>Load More Events</span>
                   </button>
                 </div>
               )}
@@ -467,14 +379,24 @@ export default function DiscoverPage() {
         )}
       </main>
 
-      {/* Location Selection Modal (can be triggered directly from Discover) */}
-      <LocationModal
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-        onSelectCity={(city) => setUserCity(city)}
-      />
-
       <Footer />
     </div>
+  );
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <RefreshCw className="w-6 h-6 animate-spin text-[#0F172A]" />
+            <p className="text-xs font-bold text-[#64748B]">Loading events...</p>
+          </div>
+        </div>
+      }
+    >
+      <DiscoverContent />
+    </Suspense>
   );
 }
