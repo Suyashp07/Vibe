@@ -158,8 +158,11 @@ export default function RSVPForm({
     }
 
     // OTP Verified! Finalize RSVP
-    const fullPhone = phone.startsWith('+91') ? phone : `+91${phone.replace(/\D/g, '')}`;
-    const status = isFull && event.rsvp_form_config.waitlist_enabled ? 'waitlisted' : 'confirmed';
+    const fullPhone = phone ? (phone.startsWith('+91') ? phone : `+91${phone.replace(/\D/g, '')}`) : '';
+    const isApprovalRequired = Boolean(event.rsvp_form_config?.approval_required);
+    const status = isApprovalRequired
+      ? 'waitlisted'
+      : (isFull && event.rsvp_form_config.waitlist_enabled ? 'waitlisted' : 'confirmed');
 
     const rsvp = addRSVP({
       event_id: event.id,
@@ -230,14 +233,16 @@ export default function RSVPForm({
 
         <div>
           <span className={`text-xs uppercase font-bold tracking-widest px-2.5 py-1 rounded-full ${isWaitlist ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-200'}`}>
-            {isWaitlist ? 'Waitlist Position Reserved' : 'RSVP Confirmed'}
+            {isWaitlist ? (event.rsvp_form_config?.approval_required ? 'Request Under Host Review' : 'Waitlist Position Reserved') : 'RSVP Confirmed'}
           </span>
           <h3 className={`${headingClass || 'font-display font-black text-2xl mt-2'}`}>
-            {isWaitlist ? 'You are on the waitlist' : `See you there, ${submittedRsvp.name.split(' ')[0]}!`}
+            {isWaitlist ? (event.rsvp_form_config?.approval_required ? 'Invite Request Received' : 'You are on the waitlist') : `See you there, ${submittedRsvp.name.split(' ')[0]}!`}
           </h3>
           <p className={`text-sm mt-1.5 max-w-md mx-auto leading-relaxed ${textSecondary || 'text-ink-secondary'}`}>
             {isWaitlist
-              ? `You've been added to the official waitlist for ${event.title}. When the organizer reviews and accepts your request, your confirmed digital pass with active entry QR code will be emailed to ${submittedRsvp.email}.`
+              ? (event.rsvp_form_config?.approval_required
+                  ? `Your invite request for ${event.title} has been submitted. The host will inspect and confirm attendees personally. Once approved, your confirmed pass with entry pass will be emailed to ${submittedRsvp.email}.`
+                  : `You've been added to the official waitlist for ${event.title}. When the organizer reviews and accepts your request, your confirmed digital pass with active entry QR code will be emailed to ${submittedRsvp.email}.`)
               : (event.rsvp_form_config.confirmation_message || `A pass has been registered for ${submittedRsvp.email}. We will ping you on WhatsApp with access details.`)}
           </p>
 
@@ -527,7 +532,7 @@ export default function RSVPForm({
         {/* Indian Phone with +91 Prefix */}
         <div>
           <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
-            WhatsApp Phone Number *
+            WhatsApp Phone Number {event.rsvp_form_config.ask_phone === false ? '(Optional)' : '*'}
           </label>
           <div className="relative flex">
             <span className={`inline-flex items-center gap-1 px-3 rounded-l-xl border border-r-0 ${borderClass || 'border-border'} ${innerCardClass || 'bg-surface-3 text-ink'} text-xs font-semibold`}>
@@ -536,7 +541,7 @@ export default function RSVPForm({
             </span>
             <input
               type="tel"
-              required
+              required={event.rsvp_form_config.ask_phone !== false}
               maxLength={10}
               placeholder="98200 12345"
               value={phone}
@@ -648,6 +653,23 @@ export default function RSVPForm({
           </div>
         ))}
 
+        {/* Host Custom Questions */}
+        {event.rsvp_form_config.custom_questions?.map((question, qIdx) => (
+          <div key={`cq-${qIdx}`}>
+            <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
+              {question} *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Your answer"
+              value={customAnswers[question] || ''}
+              onChange={(e) => setCustomAnswers({ ...customAnswers, [question]: e.target.value })}
+              className={`w-full text-sm px-3.5 py-2.5 rounded-xl border ${borderClass || 'border-border'} ${innerCardClass || 'bg-surface-2 text-ink'} focus:border-accent focus:outline-none transition-colors`}
+            />
+          </div>
+        ))}
+
         {/* Submit Button */}
         <button
           type="submit"
@@ -661,7 +683,11 @@ export default function RSVPForm({
             </span>
           ) : (
             <>
-              <span>{isFull ? 'Verify Email & Join Waitlist' : 'Continue to Email OTP Verification'}</span>
+              <span>
+                {event.rsvp_form_config?.approval_required
+                  ? 'Request Invite & Verify Email'
+                  : (isFull ? 'Verify Email & Join Waitlist' : 'Continue to Email OTP Verification')}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}

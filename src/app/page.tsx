@@ -73,8 +73,8 @@ function LandingPageContent() {
     return () => unsub();
   }, []);
 
-  // Filter events by live status, selected city, and search query
-  const liveEvents = events.filter((e) => e.status === 'live');
+  // Filter events by live status, public visibility, selected city, and search query
+  const liveEvents = events.filter((e) => e.status === 'live' && e.is_public !== false);
   const sourceEvents = liveEvents.length > 0 ? liveEvents : SAMPLE_TEMPLATE_EVENTS;
 
   const filteredEvents = sourceEvents.filter((ev) => {

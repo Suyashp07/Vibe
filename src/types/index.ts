@@ -59,9 +59,12 @@ export interface RSVPFormConfig {
   ask_plus_one: boolean;
   ask_dietary: boolean;
   ask_tshirt: boolean;
+  ask_phone?: boolean;
   waitlist_enabled: boolean;
+  approval_required?: boolean;
   confirmation_message: string;
   custom_fields?: CustomFieldConfig[];
+  custom_questions?: string[];
 }
 
 export interface FAQItem {

@@ -141,8 +141,8 @@ export default function DiscoverPage() {
 
   const filteredEvents = eventsWithDistance
     .filter((e) => {
-      // Strictly hide unverified drafts from public discovery
-      if (e.status !== 'live') return false;
+      // Strictly hide unverified drafts and private events from public discovery
+      if (e.status !== 'live' || e.is_public === false) return false;
 
       // Search query match
       const matchesSearch =
