@@ -17,7 +17,11 @@ import {
   ArrowLeft,
   AlertCircle,
   Ticket,
-  Clock
+  Clock,
+  Users,
+  Utensils,
+  Shirt,
+  HelpCircle
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
 import { addRSVP, generateGoogleCalendarUrl, downloadICS, getEventRSVPs } from '@/lib/store';
@@ -247,7 +251,8 @@ export default function RSVPForm({
           </p>
 
           <div className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs text-ink-muted bg-surface-2 py-1 px-3 rounded-full border border-border">
-            <span>✉️ Digital pass emailed to <strong>{submittedRsvp.email}</strong></span>
+            <Mail className="w-3.5 h-3.5 text-ink-muted shrink-0" />
+            <span>Digital pass emailed to <strong>{submittedRsvp.email}</strong></span>
           </div>
         </div>
 
@@ -263,12 +268,12 @@ export default function RSVPForm({
             {isWaitlist ? (
               <>
                 <Clock className="w-4 h-4 text-amber-200" />
-                <span>View Waitlist Queue Receipt ⏳</span>
+                <span>View Waitlist Queue Receipt</span>
               </>
             ) : (
               <>
                 <Ticket className="w-4 h-4 text-gold" />
-                <span>View Digital Admission Pass 🎟️</span>
+                <span>View Digital Admission Pass</span>
               </>
             )}
           </button>
@@ -532,12 +537,12 @@ export default function RSVPForm({
         {/* Indian Phone with +91 Prefix */}
         <div>
           <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
+            <Phone className="w-3 h-3 inline mr-1 text-ink-muted" />
             WhatsApp Phone Number {event.rsvp_form_config.ask_phone === false ? '(Optional)' : '*'}
           </label>
           <div className="relative flex">
-            <span className={`inline-flex items-center gap-1 px-3 rounded-l-xl border border-r-0 ${borderClass || 'border-border'} ${innerCardClass || 'bg-surface-3 text-ink'} text-xs font-semibold`}>
-              <span>🇮🇳</span>
-              <span>+91</span>
+            <span className={`inline-flex items-center px-3 rounded-l-xl border border-r-0 ${borderClass || 'border-border'} ${innerCardClass || 'bg-surface-3 text-ink'} text-xs font-semibold text-ink-secondary`}>
+              +91
             </span>
             <input
               type="tel"
@@ -550,7 +555,7 @@ export default function RSVPForm({
             />
           </div>
           <p className={`text-[11px] mt-1 ${textMuted || 'text-ink-muted'}`}>
-            Stored unverified in v1 • Used for WhatsApp pass & directions.
+            Used for WhatsApp pass & directions.
           </p>
         </div>
 
@@ -564,7 +569,10 @@ export default function RSVPForm({
                 onChange={(e) => setHasPlusOne(e.target.checked)}
                 className="w-4 h-4 rounded text-accent focus:ring-accent"
               />
-              <span className={textSecondary || 'text-ink'}>Will you be bringing a +1 guest?</span>
+              <span className={textSecondary || 'text-ink'}>
+                <Users className="w-3.5 h-3.5 inline mr-1 text-ink-muted" />
+                Will you be bringing a +1 guest?
+              </span>
             </label>
 
             {hasPlusOne && (
@@ -586,6 +594,7 @@ export default function RSVPForm({
         {event.rsvp_form_config.ask_dietary && (
           <div>
             <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
+              <Utensils className="w-3 h-3 inline mr-1 text-ink-muted" />
               Dietary Preference
             </label>
             <select
@@ -605,6 +614,7 @@ export default function RSVPForm({
         {event.rsvp_form_config.ask_tshirt && (
           <div>
             <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
+              <Shirt className="w-3 h-3 inline mr-1 text-ink-muted" />
               T-Shirt Size
             </label>
             <select
@@ -626,6 +636,7 @@ export default function RSVPForm({
         {event.rsvp_form_config.custom_fields?.map((field) => (
           <div key={field.id}>
             <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
+              <HelpCircle className="w-3 h-3 inline mr-1 text-ink-muted" />
               {field.label} {field.required && '*'}
             </label>
             {field.type === 'dropdown' && field.options ? (
@@ -657,6 +668,7 @@ export default function RSVPForm({
         {event.rsvp_form_config.custom_questions?.map((question, qIdx) => (
           <div key={`cq-${qIdx}`}>
             <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${textSecondary || 'text-ink-secondary'}`}>
+              <HelpCircle className="w-3 h-3 inline mr-1 text-accent" />
               {question} *
             </label>
             <input

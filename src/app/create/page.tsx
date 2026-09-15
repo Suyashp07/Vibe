@@ -3,29 +3,37 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, ArrowRight, ShieldCheck, Compass, Sparkles, LogIn } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Wand2,
+  PenLine,
+  CheckCircle2,
+  Sparkles,
+  ShieldCheck,
+  LogIn
+} from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import SingleStepCreateForm from '@/components/events/SingleStepCreateForm';
 import { useAuth, signInWithGoogle } from '@/lib/auth';
 
-export default function CreateEventPage() {
+export default function CreateEventHubPage() {
   const router = useRouter();
-  const { isLoggedIn, loading, profile } = useAuth();
+  const { isLoggedIn, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-8 h-8 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
     );
   }
 
-  // Guard: If not logged in, show a clean, elegant sign-in frame (one single frame, no host/guest division)
+  // Guard: If not logged in, show clean authentication prompt
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
@@ -34,15 +42,15 @@ export default function CreateEventPage() {
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
           <div className="w-full bg-white rounded-2xl p-8 border border-[#E2E8F0] shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95">
             <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0A0A0A] mx-auto flex items-center justify-center shadow-xs">
-              <Sparkles className="w-6 h-6" />
+              <Sparkles className="w-6 h-6 text-[#0A0A0A]" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="font-sans font-black text-2xl text-[#0A0A0A]">
+              <h1 className="font-sans font-bold text-2xl text-[#0A0A0A]">
                 Sign in to Create Event
               </h1>
               <p className="text-xs text-[#64748B] max-w-sm mx-auto leading-relaxed">
-                Sign in or create an account to publish your gathering and start collecting RSVPs in seconds.
+                Sign in to publish your gathering, manage private guest lists, and collect attendee RSVPs.
               </p>
             </div>
 
@@ -50,7 +58,7 @@ export default function CreateEventPage() {
             <button
               onClick={() => signInWithGoogle('organizer', '/create')}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0A0A0A]"
+              className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0A0A0A] cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -77,7 +85,7 @@ export default function CreateEventPage() {
             <div className="grid grid-cols-2 gap-2 pt-2">
               <Link
                 href="/login?redirect=/create"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] font-bold text-xs transition-all hover:border-[#0A0A0A]"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] font-semibold text-xs transition-all hover:border-[#0A0A0A]"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -85,7 +93,7 @@ export default function CreateEventPage() {
 
               <Link
                 href="/signup?redirect=/create"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0A0A0A] hover:bg-[#262626] text-white font-bold text-xs transition-all shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0A0A0A] hover:bg-[#262626] text-white font-semibold text-xs transition-all shadow-xs"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -93,7 +101,7 @@ export default function CreateEventPage() {
             </div>
 
             <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
-              <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Free to host • Instant publishing</span>
             </div>
           </div>
@@ -104,13 +112,124 @@ export default function CreateEventPage() {
     );
   }
 
-  // Once authenticated, immediately render the single-step create form without asking again!
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0A0A0A]">
       <Navbar />
-      <main className="flex-1">
-        <SingleStepCreateForm />
+
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 w-full">
+        {/* Navigation Breadcrumb */}
+        <div className="mb-8">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0A0A0A] font-medium transition-colors mb-3"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Dashboard</span>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
+            Create an Event
+          </h1>
+          <p className="text-sm text-[#64748B] mt-1.5">
+            Select how you would like to set up and structure your gathering.
+          </p>
+        </div>
+
+        {/* Dual Option Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Card 1: Create with AI */}
+          <Link
+            href="/create/ai"
+            className="group relative flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#0F172A] hover:shadow-md transition-all text-left"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center border border-[#E2E8F0] group-hover:bg-[#0F172A] group-hover:text-white transition-colors">
+                  <Wand2 className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-semibold text-[#475569] bg-[#F1F5F9] px-2.5 py-1 rounded-full border border-[#E2E8F0]">
+                  AI Assisted
+                </span>
+              </div>
+
+              <div>
+                <h2 className="text-lg font-bold text-[#0F172A] tracking-tight group-hover:text-[#0F172A]">
+                  Auto-Create with AI
+                </h2>
+                <p className="text-xs sm:text-sm text-[#64748B] mt-2 leading-relaxed">
+                  Provide an event flyer image, paste an existing event URL, or write raw text notes. AI will extract and structure all details in seconds.
+                </p>
+              </div>
+
+              <div className="pt-2 space-y-2 border-t border-[#F1F5F9]">
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Poster & flyer OCR vision extraction</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>BookMyShow, Luma & District link scraper</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Auto-fills venue, date, time & description</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-4 border-t border-[#F1F5F9] flex items-center justify-between text-xs font-semibold text-[#0F172A]">
+              <span>Continue with AI</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Card 2: Manual Creation */}
+          <Link
+            href="/create/manual"
+            className="group relative flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#0F172A] hover:shadow-md transition-all text-left"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center border border-[#E2E8F0] group-hover:bg-[#0F172A] group-hover:text-white transition-colors">
+                  <PenLine className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-semibold text-[#475569] bg-[#F1F5F9] px-2.5 py-1 rounded-full border border-[#E2E8F0]">
+                  Full Control
+                </span>
+              </div>
+
+              <div>
+                <h2 className="text-lg font-bold text-[#0F172A] tracking-tight group-hover:text-[#0F172A]">
+                  Manual Event Setup
+                </h2>
+                <p className="text-xs sm:text-sm text-[#64748B] mt-2 leading-relaxed">
+                  Enter event details, venue location, schedule, ticketing, and guest registration requirements with complete manual precision.
+                </p>
+              </div>
+
+              <div className="pt-2 space-y-2 border-t border-[#F1F5F9]">
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Interactive Google Map venue preview</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Public discovery or private personal invite</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Custom question builder & pass controls</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-4 border-t border-[#F1F5F9] flex items-center justify-between text-xs font-semibold text-[#0F172A]">
+              <span>Continue Manually</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+        </div>
       </main>
+
       <Footer />
     </div>
   );

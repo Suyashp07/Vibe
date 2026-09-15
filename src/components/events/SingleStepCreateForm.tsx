@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Sparkles,
   ArrowLeft,
   Upload,
   Calendar,
@@ -19,7 +18,6 @@ import {
   AlertCircle,
   ImageIcon,
   Loader2,
-  ArrowUpRight,
   ShieldCheck,
   Lock,
   Eye,
@@ -29,15 +27,19 @@ import {
   ExternalLink,
   HelpCircle,
   Check,
-  Sliders,
-  FileText
+  Mail,
+  Phone,
+  Utensils,
+  Shirt,
+  Sparkles,
+  Layers
 } from 'lucide-react';
 import { EventItem } from '@/types';
 import { saveEvent } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { POPULAR_CITIES, INDIAN_CITIES } from '@/lib/location';
 
-// Curated high-res dynamic themes for instant AI cover generation
+// Curated high-res dynamic themes for instant cover selection
 const CATEGORY_PRESETS: Record<string, string[]> = {
   'Tech & AI': [
     'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
@@ -55,7 +57,6 @@ const CATEGORY_PRESETS: Record<string, string[]> = {
   'Music & Concerts': [
     'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80',
   ],
   'Comedy & Standup': [
     'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=1200&auto=format&fit=crop&q=80',
@@ -63,7 +64,6 @@ const CATEGORY_PRESETS: Record<string, string[]> = {
   ],
   'Nightlife & Parties': [
     'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&auto=format&fit=crop&q=80',
   ],
   'Social & Mixers': [
     'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1200&auto=format&fit=crop&q=80',
@@ -71,7 +71,6 @@ const CATEGORY_PRESETS: Record<string, string[]> = {
   ],
   'Food & Drinks': [
     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80',
   ],
   'Wellness & Fitness': [
     'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&auto=format&fit=crop&q=80',
@@ -79,15 +78,12 @@ const CATEGORY_PRESETS: Record<string, string[]> = {
   ],
   'Culture & Baithak': [
     'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1200&auto=format&fit=crop&q=80',
   ],
   'Gaming & Esports': [
     'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&auto=format&fit=crop&q=80',
   ],
   'Art & Exhibitions': [
     'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1508997449629-303059a039c0?w=1200&auto=format&fit=crop&q=80',
   ],
   'Workshops & Masterclasses': [
     'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&auto=format&fit=crop&q=80',
@@ -122,16 +118,17 @@ const CATEGORIES = [
   'Other',
 ];
 
-export default function SingleStepCreateForm() {
+interface SingleStepCreateFormProps {
+  mode?: 'ai' | 'manual';
+}
+
+export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCreateFormProps) {
   const router = useRouter();
   const { profile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const aiPosterInputRef = useRef<HTMLInputElement>(null);
 
-  // Creation Mode: 'ai' vs 'manual'
-  const [creationMode, setCreationMode] = useState<'manual' | 'ai'>('manual');
-
-  // AI Extraction Input State (Mode 1)
+  // AI Extraction Input State
   const [aiUrl, setAiUrl] = useState('');
   const [aiText, setAiText] = useState('');
   const [aiPosterBase64, setAiPosterBase64] = useState<string | null>(null);
@@ -144,7 +141,7 @@ export default function SingleStepCreateForm() {
   const [tagline, setTagline] = useState('');
   const [category, setCategory] = useState('Tech & AI');
 
-  // Privacy: Public vs Private / Invite Only
+  // Privacy: Public vs Private / Personal Invite Only
   const [isPublic, setIsPublic] = useState(true);
 
   // Date & Time
@@ -176,29 +173,34 @@ export default function SingleStepCreateForm() {
 
   // Admission / Ticketing / Capacity (Initial capacity = 0)
   const [ticketingMode, setTicketingMode] = useState<'native' | 'external'>('native');
-  const [capacity, setCapacity] = useState('0'); // Set initial capacity to 0 as requested
+  const [capacity, setCapacity] = useState('0'); // Initial capacity initialized to 0
   const [priceInr, setPriceInr] = useState('0');
   const [externalUrl, setExternalUrl] = useState('');
-  const [externalPrice, setExternalPrice] = useState('₹499');
+  const [externalPrice, setExternalPrice] = useState('Free');
 
-  // RSVP Controls
-  const [approvalMode, setApprovalMode] = useState<'auto' | 'inspection'>('auto'); // auto-accept vs inspection
-  const [askPhone, setAskPhone] = useState(false);
-  const [askPlusOne, setAskPlusOne] = useState(true);
+  // RSVP Form & Pass Controls (The Restored Original Pass Builder)
+  const [approvalMode, setApprovalMode] = useState<'instant' | 'inspection'>('instant');
+  const [askPhone, setAskPhone] = useState(true);
+  const [askPlusOne, setAskPlusOne] = useState(false);
+  const [askDietary, setAskDietary] = useState(false);
+  const [askTshirt, setAskTshirt] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState(
+    'Your admission pass is confirmed! Check your email and WhatsApp for event check-in details.'
+  );
 
-  // Custom Questions
+  // Custom Registration Questions Proliferator
   const [customQuestions, setCustomQuestions] = useState<string[]>([]);
   const [newQuestionInput, setNewQuestionInput] = useState('');
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Mode 1: AI Auto-Extractor Handler
-  const handleAiExtract = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // AI Extraction Handler
+  const handleExtractWithAI = async () => {
     if (!aiUrl.trim() && !aiPosterBase64 && !aiText.trim()) {
-      setErrorMsg('Please paste an event link, upload a poster flyer, or write notes.');
+      setErrorMsg('Please provide a poster image, an event URL, or notes to extract details.');
       return;
     }
 
@@ -217,43 +219,44 @@ export default function SingleStepCreateForm() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'AI could not extract event details.');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to extract event data.');
       }
 
-      const ev = data.event;
-      if (ev.title) setTitle(ev.title);
-      if (ev.tagline) setTagline(ev.tagline);
-      if (ev.description) setDescription(ev.description);
-      if (ev.date) setDate(ev.date);
-      if (ev.time) setStartTime(ev.time);
-      if (ev.city) setCity(ev.city);
-      if (ev.venue_name) setVenueName(ev.venue_name);
-      if (ev.category && CATEGORIES.includes(ev.category)) setCategory(ev.category);
-      if (ev.is_online) setEventType('online');
-      if (ev.external_ticket_url) {
-        setExternalUrl(ev.external_ticket_url);
+      const { event } = await res.json();
+      if (!event) throw new Error('No structured details found.');
+
+      if (event.title) setTitle(event.title);
+      if (event.tagline) setTagline(event.tagline);
+      if (event.description) setDescription(event.description);
+      if (event.date) setDate(event.date);
+      if (event.time) setStartTime(event.time);
+      if (event.city) setCity(event.city);
+      if (event.venue_name) setVenueName(event.venue_name);
+      if (event.category && CATEGORIES.includes(event.category)) setCategory(event.category);
+      if (event.is_online) setEventType('online');
+      if (event.external_ticket_url) {
         setTicketingMode('external');
+        setExternalUrl(event.external_ticket_url);
+        if (event.price_text) setExternalPrice(event.price_text);
       }
-      if (ev.price_text) setExternalPrice(ev.price_text);
 
-      // If poster was uploaded for extraction, also set it as cover!
       if (aiPosterBase64) {
         setCoverUrl(aiPosterBase64);
         setBannerOption('upload');
       }
 
-      setAiSuccessMsg('✨ AI successfully extracted your event! Details are populated below.');
-      setCreationMode('manual'); // Transition to review & fine-tune form
+      setAiSuccessMsg('Event details extracted successfully. Please review the details below.');
     } catch (err: any) {
-      setErrorMsg(err.message || 'AI extraction failed. Please try manual entry.');
+      console.error('Extraction error:', err);
+      setErrorMsg(err.message || 'AI extraction failed. Please enter details manually.');
     } finally {
       setIsExtractingAi(false);
     }
   };
 
-  // AI Description Polish (Fixed to work 100% reliably)
+  // AI Description Polish
   const handleEnhanceWithAI = async () => {
     if (!title.trim()) {
       setErrorMsg('Please enter an event title before generating or polishing description.');
@@ -286,12 +289,11 @@ export default function SingleStepCreateForm() {
           setTimeout(() => setPolishSuccess(false), 3000);
         }
       } else {
-        throw new Error('Could not polish with AI');
+        throw new Error('Could not polish description');
       }
     } catch {
-      // Intelligent fallback
       setDescription(
-        `Join us for ${title} in ${city}. An intimate, thoughtfully curated gathering bringing together curious minds and passionate people for great conversations and memorable experiences. Space is limited, so reserve your spot early!`
+        `Join us for ${title} in ${city}. An intimate, thoughtfully curated gathering bringing together curious minds and passionate people for great conversations and memorable experiences. Space is limited, so reserve your spot early.`
       );
       setPolishSuccess(true);
       setTimeout(() => setPolishSuccess(false), 3000);
@@ -300,7 +302,7 @@ export default function SingleStepCreateForm() {
     }
   };
 
-  // Upload poster from system
+  // File Upload Handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, forAiExtract: boolean = false) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -320,26 +322,27 @@ export default function SingleStepCreateForm() {
     }
   };
 
-  // AI-generated cover pick based on category
+  // Curated preset cover pick
   const handleGenerateAiCover = () => {
     const pool = CATEGORY_PRESETS[category] || CATEGORY_PRESETS['Tech & AI'];
     const randomPick = pool[Math.floor(Math.random() * pool.length)];
     setCoverUrl(randomPick);
   };
 
-  // Add custom question
+  // Add Custom Question (Proliferator)
   const handleAddQuestion = () => {
     if (!newQuestionInput.trim()) return;
     setCustomQuestions((prev) => [...prev, newQuestionInput.trim()]);
     setNewQuestionInput('');
+    setIsAddingQuestion(false);
   };
 
-  // Remove custom question
+  // Remove Custom Question
   const handleRemoveQuestion = (index: number) => {
     setCustomQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Submit Handler
+  // Form Submit Handler
   const handleSubmit = async (publishLive: boolean = true) => {
     setErrorMsg(null);
 
@@ -352,10 +355,13 @@ export default function SingleStepCreateForm() {
     setIsSubmitting(true);
 
     try {
-      const slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '') + '-' + Math.random().toString(36).substring(2, 7);
+      const slug =
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)+/g, '') +
+        '-' +
+        Math.random().toString(36).substring(2, 7);
 
       const startDateTime = `${date}T${startTime}:00+05:30`;
       const endDateTime = `${date}T${endTime}:00+05:30`;
@@ -363,13 +369,13 @@ export default function SingleStepCreateForm() {
       const newEvent: EventItem = {
         id: `evt-${Date.now()}`,
         organizer_id: profile?.id || 'org-local',
-        organizer_name: profile?.name || 'Vibe Host',
+        organizer_name: profile?.name || 'Event Host',
         organizer_handle: profile?.handle || 'host',
         organizer_logo: profile?.avatar_url,
         slug,
         title: title.trim(),
         tagline: tagline.trim() || 'Join us for a curated experience',
-        description: description.trim() || 'Join us for this special gathering.',
+        description: description.trim() || 'Join us for this gathering.',
         cover_image_url: coverUrl,
         template: 'grove',
         theme: {
@@ -386,7 +392,10 @@ export default function SingleStepCreateForm() {
         },
         event_type: eventType,
         location_name: eventType === 'online' ? 'Online Event' : (venueName.trim() || city),
-        location_address: eventType === 'online' ? (onlineUrl.trim() || 'Virtual Link Provided Upon RSVP') : `${venueName || city}, India`,
+        location_address:
+          eventType === 'online'
+            ? onlineUrl.trim() || 'Virtual Link Provided Upon RSVP'
+            : `${venueName || city}, India`,
         city: eventType === 'online' ? 'Online' : city,
         start_at: startDateTime,
         end_at: endDateTime,
@@ -394,25 +403,39 @@ export default function SingleStepCreateForm() {
         capacity: Number(capacity) || 0, // 0 denotes unlimited
         is_public: isPublic, // Public vs Private
         status: publishLive ? 'live' : 'draft',
-        ai_generated: true,
+        ai_generated: mode === 'ai',
         source_type: ticketingMode === 'external' ? 'external' : 'native',
         is_external: ticketingMode === 'external',
         external_ticket_url: ticketingMode === 'external' ? externalUrl.trim() : undefined,
-        external_price_text: ticketingMode === 'external' ? externalPrice.trim() : (Number(priceInr) > 0 ? `₹${priceInr}` : 'Free Entry'),
+        external_price_text:
+          ticketingMode === 'external'
+            ? externalPrice.trim()
+            : Number(priceInr) > 0
+            ? `₹${priceInr}`
+            : 'Free Entry',
         faq: [
-          { q: 'What is the entry policy?', a: isPublic ? 'Open registration via Vibe.' : 'This is a private, invite-only gathering.' },
-          { q: 'Is registration required?', a: 'Yes, please RSVP in advance to secure your spot.' },
+          {
+            q: 'What is the entry policy?',
+            a: isPublic
+              ? 'Open registration via Vibe.'
+              : 'This is a private, personal invite gathering.',
+          },
+          {
+            q: 'Is registration required?',
+            a: 'Yes, please RSVP in advance to secure your entry pass.',
+          },
         ],
         rsvp_form_config: {
           ask_plus_one: askPlusOne,
-          ask_dietary: false,
-          ask_tshirt: false,
+          ask_dietary: askDietary,
+          ask_tshirt: askTshirt,
           ask_phone: askPhone,
           waitlist_enabled: approvalMode === 'inspection',
           approval_required: approvalMode === 'inspection',
-          confirmation_message: approvalMode === 'inspection'
-            ? 'Your RSVP has been received! The host will review and confirm your invite shortly.'
-            : 'You are in! Your spot is confirmed.',
+          confirmation_message:
+            approvalMode === 'inspection'
+              ? 'Your RSVP request has been received. The host will review and confirm your invite pass shortly.'
+              : confirmationMessage.trim() || 'Your pass is confirmed. See you there.',
           custom_questions: customQuestions,
         },
         created_at: new Date().toISOString(),
@@ -430,289 +453,274 @@ export default function SingleStepCreateForm() {
   };
 
   // Google Maps Location Query for embed
-  const mapSearchQuery = (venueName ? `${venueName}, ` : '') + (eventType === 'online' ? 'Online' : city);
+  const mapSearchQuery =
+    (venueName ? `${venueName}, ` : '') + (eventType === 'online' ? 'Online' : city);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
       {/* Navigation & Header */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0A0A0A] mb-3 transition-colors font-semibold"
+          href="/create"
+          className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0F172A] mb-3 transition-colors font-medium"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Dashboard</span>
+          <span>Back to Creation Options</span>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="font-black text-2xl sm:text-3xl text-[#0A0A0A] tracking-tight">Create an Event</h1>
+            <h1 className="font-bold text-2xl sm:text-3xl text-[#0F172A] tracking-tight">
+              {mode === 'ai' ? 'Auto-Create Event with AI' : 'Manual Event Setup'}
+            </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-              Publish gatherings, manage private invites, structure tickets, and accept attendees.
+              {mode === 'ai'
+                ? 'Provide a flyer poster, event link, or notes to automatically extract and structure your gathering.'
+                : 'Configure your gathering details, location, schedule, ticketing, and guest pass settings.'}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Two Creation Modes Switcher */}
-      <div className="p-1.5 bg-[#F1F5F9] rounded-2xl flex items-center gap-2 mb-8 border border-[#E2E8F0]">
-        <button
-          type="button"
-          onClick={() => setCreationMode('ai')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-            creationMode === 'ai'
-              ? 'bg-white text-[#0A0A0A] shadow-sm'
-              : 'text-[#64748B] hover:text-[#0A0A0A]'
-          }`}
-        >
-          <Wand2 className="w-4 h-4 text-indigo-600" />
-          <span>✨ Auto-Create with AI</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold">Fast</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCreationMode('manual')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-            creationMode === 'manual'
-              ? 'bg-white text-[#0A0A0A] shadow-sm'
-              : 'text-[#64748B] hover:text-[#0A0A0A]'
-          }`}
-        >
-          <FileText className="w-4 h-4 text-[#0A0A0A]" />
-          <span>✍️ Manually Fill Details</span>
-        </button>
-      </div>
-
-      {/* Mode 1: AI Extractor Card */}
-      {creationMode === 'ai' && (
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-white border border-indigo-200/80 mb-8 space-y-4 shadow-sm animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            <h2 className="font-bold text-sm text-[#0A0A0A]">AI Event Auto-Generator</h2>
+      {/* AI Extraction Workstation (Shown only when mode is 'ai') */}
+      {mode === 'ai' && (
+        <div className="bg-white rounded-2xl p-6 sm:p-7 border border-[#E2E8F0] shadow-sm mb-8 space-y-5">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#F1F5F9]">
+            <Wand2 className="w-4 h-4 text-[#0F172A]" />
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              AI Event Extraction
+            </h2>
           </div>
-          <p className="text-xs text-[#64748B] leading-relaxed">
-            Provide an event link (BookMyShow, Luma, District), upload a flyer/poster screenshot, or write raw notes. AI will extract and structure the whole form for you in seconds.
-          </p>
 
-          <form onSubmit={handleAiExtract} className="space-y-3 pt-1">
-            {/* Input 1: Event Link */}
+          <div className="space-y-4">
+            {/* Event URL */}
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1">
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
                 Event Link / URL (Optional)
               </label>
-              <input
-                type="url"
-                value={aiUrl}
-                onChange={(e) => setAiUrl(e.target.value)}
-                placeholder="https://in.bookmyshow.com/... or https://lu.ma/..."
-                className="w-full px-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-indigo-600 bg-white"
-              />
-            </div>
-
-            {/* Input 2: Poster / Flyer Upload for OCR */}
-            <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1">
-                Or Upload Event Poster / Flyer (AI Vision OCR)
-              </label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => aiPosterInputRef.current?.click()}
-                  className="px-3.5 py-2 border border-[#E2E8F0] rounded-xl bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0A0A0A] flex items-center gap-2 transition-colors"
-                >
-                  <Upload className="w-3.5 h-3.5 text-[#64748B]" />
-                  <span>{aiPosterName ? 'Replace Flyer' : 'Upload Flyer Image'}</span>
-                </button>
+              <div className="relative">
+                <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
-                  ref={aiPosterInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, true)}
-                  className="hidden"
+                  type="url"
+                  placeholder="https://in.bookmyshow.com/... or https://lu.ma/..."
+                  value={aiUrl}
+                  onChange={(e) => setAiUrl(e.target.value)}
+                  className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors placeholder:text-[#94A3B8]"
                 />
-                {aiPosterName && (
-                  <span className="text-xs text-green-700 font-medium truncate max-w-xs">
-                    ✓ {aiPosterName}
-                  </span>
-                )}
               </div>
             </div>
 
-            {/* Input 3: Raw Notes Prompt */}
+            {/* Poster / Flyer Upload */}
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1">
-                Or Raw Event Notes / Prompt
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Event Poster or Flyer (AI Vision OCR)
+              </label>
+              <input
+                ref={aiPosterInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFileUpload(e, true)}
+              />
+              <button
+                type="button"
+                onClick={() => aiPosterInputRef.current?.click()}
+                className="w-full py-4 px-4 border border-dashed border-[#CBD5E1] hover:border-[#0F172A] rounded-xl bg-[#F8FAFC] text-xs font-medium text-[#475569] hover:text-[#0F172A] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Upload className="w-4 h-4 text-[#64748B]" />
+                <span>
+                  {aiPosterName ? `Attached: ${aiPosterName}` : 'Upload Poster Image (JPEG / PNG)'}
+                </span>
+              </button>
+            </div>
+
+            {/* Raw Notes / Prompt */}
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Raw Event Notes / Prompt
               </label>
               <textarea
-                rows={2}
+                rows={3}
+                placeholder="Paste event notes, description, or speaker details..."
                 value={aiText}
                 onChange={(e) => setAiText(e.target.value)}
-                placeholder="e.g. Subko Sub-Club coffee cupping session this Saturday at 5pm in Subko Bandra. Free entry for coffee nerds."
-                className="w-full px-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-indigo-600 bg-white resize-none"
+                className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors resize-none placeholder:text-[#94A3B8]"
               />
             </div>
 
+            {/* Scan Button */}
             <button
-              type="submit"
-              disabled={isExtractingAi || (!aiUrl.trim() && !aiPosterBase64 && !aiText.trim())}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+              type="button"
+              onClick={handleExtractWithAI}
+              disabled={isExtractingAi}
+              className="w-full py-3 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
             >
               {isExtractingAi ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Scanning & Extracting with AI...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Analyzing & Extracting Details...</span>
                 </>
               ) : (
                 <>
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>⚡ Scan & Auto-Fill Form</span>
+                  <Wand2 className="w-4 h-4 text-white" />
+                  <span>Extract & Fill Details</span>
                 </>
               )}
             </button>
-          </form>
+          </div>
         </div>
       )}
 
       {/* Notifications */}
-      {aiSuccessMsg && (
-        <div className="mb-6 p-3.5 rounded-xl bg-green-50 border border-green-200 text-xs text-green-800 flex items-start gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-          <span>{aiSuccessMsg}</span>
-        </div>
-      )}
-
       {errorMsg && (
-        <div className="mb-6 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Main Creation Form */}
-      <div className="space-y-8">
-        {/* Section 1: Public vs Private / Secret Invite Feature */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-              Event Privacy Setting
-            </label>
-            <span className="text-[11px] text-[#64748B]">Control who can discover this event</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setIsPublic(true)}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                isPublic
-                  ? 'border-[#0A0A0A] bg-[#F8FAFC] ring-1 ring-[#0A0A0A]'
-                  : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
-              }`}
-            >
-              <Globe className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-xs text-[#0A0A0A]">🌐 Public Event</p>
-                <p className="text-[11px] text-[#64748B] mt-0.5">
-                  Listed on Vibe discovery feed. Searchable by everyone in your city.
-                </p>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsPublic(false)}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                !isPublic
-                  ? 'border-[#0A0A0A] bg-[#F8FAFC] ring-1 ring-[#0A0A0A]'
-                  : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
-              }`}
-            >
-              <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-xs text-[#0A0A0A]">🔒 Private Event (Invite Only)</p>
-                <p className="text-[11px] text-[#64748B] mt-0.5">
-                  Unlisted from discovery feed. Accessible strictly via direct secret link.
-                </p>
-              </div>
-            </button>
-          </div>
+      {aiSuccessMsg && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>{aiSuccessMsg}</span>
         </div>
+      )}
 
-        {/* Section 2: Essential Details */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-4">
-          <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-            1. Event Overview
-          </h2>
+      {/* Main Creation Form */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(true);
+        }}
+        className="space-y-6"
+      >
+        {/* 1. General Information & Privacy */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              1. General Information
+            </h2>
+            <span className="text-[11px] text-[#64748B]">Required</span>
+          </div>
 
+          {/* Visibility: Public vs Private */}
           <div>
-            <label className="block text-xs font-bold text-[#475569] mb-1.5">
-              Event Title <span className="text-red-500">*</span>
+            <label className="block text-xs font-semibold text-[#475569] mb-2">
+              Event Visibility
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPublic(true)}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                  isPublic
+                    ? 'border-[#0F172A] bg-[#F8FAFC] ring-1 ring-[#0F172A]'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    isPublic ? 'bg-[#0F172A] text-white' : 'bg-[#F1F5F9] text-[#64748B]'
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#0F172A]">Public Event</div>
+                  <div className="text-[11px] text-[#64748B] mt-0.5 leading-snug">
+                    Listed on discovery feed. Visible to attendees in your city.
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPublic(false)}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                  !isPublic
+                    ? 'border-[#0F172A] bg-[#F8FAFC] ring-1 ring-[#0F172A]'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    !isPublic ? 'bg-[#0F172A] text-white' : 'bg-[#F1F5F9] text-[#64748B]'
+                  }`}
+                >
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#0F172A]">Private Event (Invite Only)</div>
+                  <div className="text-[11px] text-[#64748B] mt-0.5 leading-snug">
+                    Unlisted from public feeds. Accessible strictly via secret direct link.
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+              Event Title *
             </label>
             <input
               type="text"
               required
+              placeholder="e.g. Mumbai Design & Chai Mixer"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Subko Sunset Cupping & Chai Salon"
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors font-medium placeholder:text-[#94A3B8]"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#475569] mb-1.5">
-              Short Tagline / Catchphrase
-            </label>
-            <input
-              type="text"
-              value={tagline}
-              onChange={(e) => setTagline(e.target.value)}
-              placeholder="e.g. Intimate conversations on typography, taste, and craft."
-              className="w-full px-3.5 py-2 text-xs bg-white border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
-            />
-          </div>
+          {/* Tagline & Category */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Tagline / Pitch
+              </label>
+              <input
+                type="text"
+                placeholder="A sharp 8-12 word description of the vibe"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors placeholder:text-[#94A3B8]"
+              />
+            </div>
 
-          {/* 16 Modern Categories */}
-          <div>
-            <label className="block text-xs font-bold text-[#475569] mb-1.5">
-              Category
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((cat) => {
-                const active = category === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => {
-                      setCategory(cat);
-                      if (bannerOption === 'ai') {
-                        const pool = CATEGORY_PRESETS[cat] || CATEGORY_PRESETS['Tech & AI'];
-                        setCoverUrl(pool[0]);
-                      }
-                    }}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                      active
-                        ? 'bg-[#0A0A0A] text-white'
-                        : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
-                    }`}
-                  >
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors cursor-pointer"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
                     {cat}
-                  </button>
-                );
-              })}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
 
-        {/* Section 3: Date & Time */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-4">
-          <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-            2. Date & Timing
-          </h2>
+        {/* 2. Date & Schedule */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              2. Date & Schedule
+            </h2>
+            <span className="text-[11px] text-[#64748B]">Indian Standard Time (IST)</span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1.5">Date</label>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Event Date
+              </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
@@ -720,13 +728,15 @@ export default function SingleStepCreateForm() {
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1.5">Start Time (IST)</label>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Start Time
+              </label>
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
@@ -734,38 +744,41 @@ export default function SingleStepCreateForm() {
                   required
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1.5">End Time (IST)</label>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                End Time
+              </label>
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
                   type="time"
+                  required
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Section 4: Location & Live In-place Google Maps */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-              3. Location & Google Map
+        {/* 3. Location & Live Google Map */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              3. Location & Venue
             </h2>
-            <div className="flex gap-1 p-0.5 bg-[#F1F5F9] rounded-lg text-xs font-semibold">
+            <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={() => setEventType('in-person')}
-                className={`px-3 py-1 rounded-md transition-all ${
-                  eventType === 'in-person' ? 'bg-white shadow-xs text-[#0A0A0A]' : 'text-[#64748B]'
+                className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                  eventType === 'in-person' ? 'bg-white text-[#0F172A] shadow-xs' : 'text-[#64748B]'
                 }`}
               >
                 In-Person
@@ -773,8 +786,8 @@ export default function SingleStepCreateForm() {
               <button
                 type="button"
                 onClick={() => setEventType('online')}
-                className={`px-3 py-1 rounded-md transition-all ${
-                  eventType === 'online' ? 'bg-white shadow-xs text-[#0A0A0A]' : 'text-[#64748B]'
+                className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                  eventType === 'online' ? 'bg-white text-[#0F172A] shadow-xs' : 'text-[#64748B]'
                 }`}
               >
                 Online
@@ -786,11 +799,11 @@ export default function SingleStepCreateForm() {
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1.5">City</label>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1.5">City</label>
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] bg-white"
+                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white"
                   >
                     {POPULAR_CITIES.map((c) => (
                       <option key={c.name} value={c.name}>
@@ -798,7 +811,10 @@ export default function SingleStepCreateForm() {
                       </option>
                     ))}
                     {Object.values(INDIAN_CITIES)
-                      .filter((c, idx, arr) => !c.popular && arr.findIndex((s) => s.name === c.name) === idx)
+                      .filter(
+                        (c, idx, arr) =>
+                          !c.popular && arr.findIndex((s) => s.name === c.name) === idx
+                      )
                       .map((c) => (
                         <option key={c.name} value={c.name}>
                           {c.name}
@@ -808,477 +824,619 @@ export default function SingleStepCreateForm() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                  <label className="block text-xs font-semibold text-[#475569] mb-1.5">
                     Venue Name & Area
                   </label>
                   <input
                     type="text"
+                    placeholder="e.g. Subko Bandra or WeWork Galaxy"
                     value={venueName}
                     onChange={(e) => setVenueName(e.target.value)}
-                    placeholder="e.g. Subko Craftery, Bandra West"
-                    className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                    className="w-full px-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white placeholder:text-[#94A3B8]"
                   />
                 </div>
               </div>
 
-              {/* In-place Live Google Map Interaction */}
-              <div className="pt-2 border-t border-[#F1F5F9] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-[#64748B] flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-red-500" />
-                    Live Google Map Preview
-                  </span>
+              {/* In-Place Live Google Map Embed */}
+              <div className="mt-3 rounded-xl border border-[#E2E8F0] overflow-hidden bg-[#F8FAFC]">
+                <div className="px-3.5 py-2 bg-white border-b border-[#E2E8F0] flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs text-[#475569] font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-[#0F172A]" />
+                    <span>Map Location: {mapSearchQuery}</span>
+                  </div>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearchQuery)}`}
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      mapSearchQuery
+                    )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F172A] hover:underline"
                   >
                     <span>Open in Google Maps</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-
-                <div className="w-full h-44 rounded-xl overflow-hidden border border-[#E2E8F0] bg-[#F1F5F9] relative">
+                <div className="h-44 w-full bg-[#E2E8F0] relative">
                   <iframe
-                    title="Venue Google Map"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(mapSearchQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                    className="w-full h-full border-0"
-                    loading="lazy"
+                    title="Venue Location Preview"
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    scrolling="no"
+                    marginHeight={0}
+                    marginWidth={0}
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                      mapSearchQuery
+                    )}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                    className="border-0 w-full h-full"
                   />
                 </div>
               </div>
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1.5">
-                Meeting / Livestream URL
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Virtual Meeting URL
               </label>
-              <input
-                type="url"
-                value={onlineUrl}
-                onChange={(e) => setOnlineUrl(e.target.value)}
-                placeholder="https://zoom.us/j/... or Google Meet link"
-                className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
-              />
-              <p className="text-[11px] text-[#94A3B8] mt-1">
-                Virtual links can be hidden until the guest&apos;s RSVP is confirmed.
-              </p>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                <input
+                  type="url"
+                  placeholder="https://meet.google.com/... or https://zoom.us/..."
+                  value={onlineUrl}
+                  onChange={(e) => setOnlineUrl(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white placeholder:text-[#94A3B8]"
+                />
+              </div>
             </div>
           )}
         </div>
 
-        {/* Section 5: Banner / Poster (3 Options) */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-              4. Event Banner / Poster
+        {/* 4. Description & Polish with AI */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              4. Event Description
             </h2>
-            <div className="flex gap-1 p-0.5 bg-[#F1F5F9] rounded-lg text-xs font-semibold">
+            <button
+              type="button"
+              onClick={handleEnhanceWithAI}
+              disabled={isEnhancing}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isEnhancing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0F172A]" />
+                  <span>Polishing...</span>
+                </>
+              ) : polishSuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Updated!</span>
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-3.5 h-3.5 text-[#0F172A]" />
+                  <span>Polish with AI</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <textarea
+            rows={5}
+            placeholder="Write details about the gathering, agenda, schedule, and who should attend..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors leading-relaxed placeholder:text-[#94A3B8]"
+          />
+        </div>
+
+        {/* 5. Cover Image Banner */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              5. Cover Image
+            </h2>
+            <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={() => setBannerOption('upload')}
-                className={`px-3 py-1 rounded-md transition-all ${
-                  bannerOption === 'upload' ? 'bg-white shadow-xs text-[#0A0A0A]' : 'text-[#64748B]'
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  bannerOption === 'upload' ? 'bg-white text-[#0F172A] shadow-xs' : 'text-[#64748B]'
                 }`}
               >
-                Upload File
+                <Upload className="w-3 h-3" />
+                <span>Upload</span>
               </button>
               <button
                 type="button"
                 onClick={() => setBannerOption('link')}
-                className={`px-3 py-1 rounded-md transition-all ${
-                  bannerOption === 'link' ? 'bg-white shadow-xs text-[#0A0A0A]' : 'text-[#64748B]'
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  bannerOption === 'link' ? 'bg-white text-[#0F172A] shadow-xs' : 'text-[#64748B]'
                 }`}
               >
-                Image Link
+                <Link2 className="w-3 h-3" />
+                <span>URL</span>
               </button>
               <button
                 type="button"
                 onClick={() => setBannerOption('ai')}
-                className={`px-3 py-1 rounded-md transition-all ${
-                  bannerOption === 'ai' ? 'bg-white shadow-xs text-[#0A0A0A]' : 'text-[#64748B]'
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  bannerOption === 'ai' ? 'bg-white text-[#0F172A] shadow-xs' : 'text-[#64748B]'
                 }`}
               >
-                ✨ AI Themes
+                <ImageIcon className="w-3 h-3" />
+                <span>Presets</span>
               </button>
             </div>
           </div>
 
-          {/* Option 1: Upload from System */}
           {bannerOption === 'upload' && (
-            <div className="p-4 border border-dashed border-[#CBD5E1] rounded-xl bg-[#F8FAFC] text-center space-y-2">
-              <Upload className="w-6 h-6 text-[#94A3B8] mx-auto" />
-              <div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-white border border-[#E2E8F0] text-xs font-bold rounded-lg text-[#0A0A0A] hover:bg-[#F1F5F9] transition-colors"
-                >
-                  Choose Image from Computer
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, false)}
-                  className="hidden"
-                />
-              </div>
-              <p className="text-[10px] text-[#94A3B8]">Recommended size: 1200x675 (16:9). JPG, PNG, WEBP.</p>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFileUpload(e, false)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-4 px-4 border border-dashed border-[#CBD5E1] hover:border-[#0F172A] rounded-xl bg-[#F8FAFC] text-xs font-medium text-[#475569] hover:text-[#0F172A] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Upload className="w-4 h-4 text-[#64748B]" />
+                <span>Choose Image from Computer (JPEG, PNG, WebP)</span>
+              </button>
             </div>
           )}
 
-          {/* Option 2: Put an Image Link */}
           {bannerOption === 'link' && (
             <div className="flex gap-2">
               <input
                 type="url"
+                placeholder="https://images.unsplash.com/..."
                 value={customLinkInput}
                 onChange={(e) => setCustomLinkInput(e.target.value)}
-                placeholder="https://images.unsplash.com/... or any direct poster URL"
-                className="flex-1 px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+                className="flex-1 px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white placeholder:text-[#94A3B8]"
               />
               <button
                 type="button"
                 onClick={() => {
                   if (customLinkInput.trim()) {
                     setCoverUrl(customLinkInput.trim());
+                    setCustomLinkInput('');
                   }
                 }}
-                className="px-4 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-xl hover:bg-[#262626]"
+                className="px-3.5 py-2 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold cursor-pointer"
               >
-                Apply Link
+                Set URL
               </button>
             </div>
           )}
 
-          {/* Option 3: Inbuilt AI-Generated Theme Cover */}
           {bannerOption === 'ai' && (
-            <div className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-semibold text-[#0A0A0A]">
-                  AI Theme Curated for {category}
-                </span>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="text-xs text-[#475569]">
+                Theme preset curated for <strong>{category}</strong>.
               </div>
               <button
                 type="button"
                 onClick={handleGenerateAiCover}
-                className="px-3 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-bold hover:bg-[#F1F5F9] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white hover:bg-[#F1F5F9] text-xs font-semibold text-[#0F172A] cursor-pointer"
               >
-                🎲 Shuffle AI Photo
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Shuffle Preset</span>
               </button>
             </div>
           )}
 
-          {/* Live Cover Preview */}
-          <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-[#F1F5F9]">
+          {/* Cover Preview */}
+          <div className="relative w-full h-44 rounded-xl overflow-hidden border border-[#E2E8F0] bg-[#F1F5F9]">
             <Image
               src={coverUrl}
-              alt="Cover Preview"
+              alt="Event cover banner"
               fill
-              unoptimized
               className="object-cover"
+              unoptimized
             />
-            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-              Poster Preview
-            </div>
           </div>
         </div>
 
-        {/* Section 6: Description & Polish with AI */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-              5. Description
-            </h2>
-            <button
-              type="button"
-              onClick={handleEnhanceWithAI}
-              disabled={isEnhancing}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold rounded-full transition-all shadow-xs disabled:opacity-50"
-            >
-              {isEnhancing ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Polishing...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>✨ Polish with AI</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {polishSuccess && (
-            <p className="text-xs text-green-700 font-semibold animate-in fade-in">
-              ✓ Description polished and updated with AI!
-            </p>
-          )}
-
-          <textarea
-            rows={5}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell guests what to expect, who will be there, and what they should bring..."
-            className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] resize-y"
-          />
-        </div>
-
-        {/* Section 7: Admission, Pricing & Capacity (Initial Capacity = 0) */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-4">
-          <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-            6. Admission, Capacity & Tickets
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* 6. Attendee Registration & Passes (Restored Original Pass Builder) */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
             <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1.5">
-                Event Capacity (Spots)
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
-              />
-              <p className="text-[10px] text-[#94A3B8] mt-1">
-                Set to 0 for unlimited attendance, or enter maximum spots.
+              <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+                6. Attendee Registration & Passes
+              </h2>
+              <p className="text-[11px] text-[#64748B] mt-0.5">
+                Configure admission passes, guest approval rules, and questions.
               </p>
             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1.5">
-                Ticket Type
-              </label>
-              <select
-                value={ticketingMode}
-                onChange={(e) => setTicketingMode(e.target.value as any)}
-                className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] bg-white"
-              >
-                <option value="native">Free RSVP on Vibe</option>
-                <option value="external">Paid / External Ticket Portal</option>
-              </select>
-            </div>
           </div>
 
-          {ticketingMode === 'external' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#F1F5F9]">
-              <div>
-                <label className="block text-xs font-bold text-[#475569] mb-1.5">
-                  External Ticket Link
-                </label>
-                <input
-                  type="url"
-                  value={externalUrl}
-                  onChange={(e) => setExternalUrl(e.target.value)}
-                  placeholder="https://in.bookmyshow.com/... or Razorpay / Luma link"
-                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] mb-1.5">
-                  Display Price Text
-                </label>
-                <input
-                  type="text"
-                  value={externalPrice}
-                  onChange={(e) => setExternalPrice(e.target.value)}
-                  placeholder="e.g. ₹499 on BookMyShow"
-                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] flex items-center justify-between">
-              <span className="text-xs text-[#64748B]">Native Ticket Price:</span>
-              <span className="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
-                Free Entry
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Section 8: RSVP Controls & Custom Questions */}
-        <div className="p-5 bg-white border border-[#E2E8F0] rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider">
-              7. RSVP Rights & Attendee Controls
-            </h2>
-            <Sliders className="w-4 h-4 text-[#64748B]" />
-          </div>
-
-          {/* Auto Acceptance vs Inspection */}
+          {/* Approval Mode */}
           <div>
-            <label className="block text-xs font-bold text-[#475569] mb-1.5">
-              RSVP Acceptance Right
+            <label className="block text-xs font-semibold text-[#475569] mb-2">
+              Pass Issuance Policy
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setApprovalMode('auto')}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  approvalMode === 'auto'
-                    ? 'border-[#0A0A0A] bg-[#F8FAFC] ring-1 ring-[#0A0A0A]'
-                    : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
+              <label
+                className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
+                  approvalMode === 'instant'
+                    ? 'border-[#0F172A] bg-[#F8FAFC] ring-1 ring-[#0F172A]'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
                 }`}
               >
-                <p className="font-bold text-xs text-[#0A0A0A]">⚡ Instant Auto-Acceptance</p>
-                <p className="text-[11px] text-[#64748B] mt-0.5">
-                  Guest RSVP is immediately confirmed upon form submission.
-                </p>
-              </button>
+                <input
+                  type="radio"
+                  name="approvalMode"
+                  value="instant"
+                  checked={approvalMode === 'instant'}
+                  onChange={() => setApprovalMode('instant')}
+                  className="mt-0.5 text-[#0F172A] focus:ring-[#0F172A]"
+                />
+                <div>
+                  <div className="text-xs font-bold text-[#0F172A]">Instant Pass Issuance</div>
+                  <div className="text-[11px] text-[#64748B] mt-0.5 leading-snug">
+                    Attendees instantly receive confirmed digital passes with QR codes upon RSVP.
+                  </div>
+                </div>
+              </label>
 
-              <button
-                type="button"
-                onClick={() => setApprovalMode('inspection')}
-                className={`p-3 rounded-xl border text-left transition-all ${
+              <label
+                className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
                   approvalMode === 'inspection'
-                    ? 'border-[#0A0A0A] bg-[#F8FAFC] ring-1 ring-[#0A0A0A]'
-                    : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
+                    ? 'border-[#0F172A] bg-[#F8FAFC] ring-1 ring-[#0F172A]'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
                 }`}
               >
-                <p className="font-bold text-xs text-[#0A0A0A]">🛡️ Host Inspection Required</p>
-                <p className="text-[11px] text-[#64748B] mt-0.5">
-                  Guest is placed on review list. Host accepts/rejects each guest in dashboard.
-                </p>
-              </button>
+                <input
+                  type="radio"
+                  name="approvalMode"
+                  value="inspection"
+                  checked={approvalMode === 'inspection'}
+                  onChange={() => setApprovalMode('inspection')}
+                  className="mt-0.5 text-[#0F172A] focus:ring-[#0F172A]"
+                />
+                <div>
+                  <div className="text-xs font-bold text-[#0F172A]">Host Approval Required</div>
+                  <div className="text-[11px] text-[#64748B] mt-0.5 leading-snug">
+                    RSVP requests are placed on waitlist. Passes are issued only after host approval.
+                  </div>
+                </div>
+              </label>
             </div>
           </div>
 
-          {/* Demands / Checkbox Toggles */}
-          <div className="pt-2 border-t border-[#F1F5F9] space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={true}
-                disabled
-                className="accent-[#0A0A0A] w-4 h-4 rounded"
-              />
-              <span className="text-xs font-semibold text-[#0A0A0A]">
-                Demand Email Address (Always Required for Tickets)
-              </span>
-            </label>
+          {/* Standard Attendee Questions with Icons */}
+          <div className="space-y-2.5 pt-2">
+            <span className="text-xs font-semibold text-[#475569] block">
+              Standard Attendee Requirements
+            </span>
 
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+            {/* Email - Always Mandatory */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]">
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-[#64748B]" />
+                <div>
+                  <span className="text-xs font-semibold text-[#0F172A] block">
+                    Attendee Email Address
+                  </span>
+                  <span className="text-[11px] text-[#64748B]">
+                    Mandatory for digital pass delivery & verification
+                  </span>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Required</span>
+            </div>
+
+            {/* WhatsApp Phone */}
+            <label className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] cursor-pointer transition-colors">
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-[#64748B]" />
+                <div>
+                  <span className="text-xs font-semibold text-[#0F172A] block">
+                    Require WhatsApp Phone Number
+                  </span>
+                  <span className="text-[11px] text-[#64748B]">
+                    Used for door coordination & event updates
+                  </span>
+                </div>
+              </div>
               <input
                 type="checkbox"
                 checked={askPhone}
                 onChange={(e) => setAskPhone(e.target.checked)}
-                className="accent-[#0A0A0A] w-4 h-4 rounded"
+                className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A]"
               />
-              <span className="text-xs font-semibold text-[#475569]">
-                Demand Phone Number / WhatsApp
-              </span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+            {/* Plus One Guest */}
+            <label className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] cursor-pointer transition-colors">
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4 text-[#64748B]" />
+                <div>
+                  <span className="text-xs font-semibold text-[#0F172A] block">
+                    Allow +1 Guest Name
+                  </span>
+                  <span className="text-[11px] text-[#64748B]">
+                    Permits guests to register an accompanying friend
+                  </span>
+                </div>
+              </div>
               <input
                 type="checkbox"
                 checked={askPlusOne}
                 onChange={(e) => setAskPlusOne(e.target.checked)}
-                className="accent-[#0A0A0A] w-4 h-4 rounded"
+                className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A]"
               />
-              <span className="text-xs font-semibold text-[#475569]">
-                Allow +1 Guest RSVPs
-              </span>
+            </label>
+
+            {/* Dietary Preference */}
+            <label className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] cursor-pointer transition-colors">
+              <div className="flex items-center gap-2.5">
+                <Utensils className="w-4 h-4 text-[#64748B]" />
+                <div>
+                  <span className="text-xs font-semibold text-[#0F172A] block">
+                    Ask Dietary Preferences
+                  </span>
+                  <span className="text-[11px] text-[#64748B]">
+                    Vegetarian, Vegan, Jain friendly preferences
+                  </span>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={askDietary}
+                onChange={(e) => setAskDietary(e.target.checked)}
+                className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A]"
+              />
+            </label>
+
+            {/* Merch / T-Shirt Size */}
+            <label className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] cursor-pointer transition-colors">
+              <div className="flex items-center gap-2.5">
+                <Shirt className="w-4 h-4 text-[#64748B]" />
+                <div>
+                  <span className="text-xs font-semibold text-[#0F172A] block">
+                    Ask Merch / T-Shirt Size
+                  </span>
+                  <span className="text-[11px] text-[#64748B]">
+                    For runs, tournaments, and retreats
+                  </span>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={askTshirt}
+                onChange={(e) => setAskTshirt(e.target.checked)}
+                className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A]"
+              />
             </label>
           </div>
 
-          {/* Custom Questions Section */}
-          <div className="pt-3 border-t border-[#F1F5F9] space-y-3">
-            <div>
-              <label className="block text-xs font-bold text-[#475569] mb-1">
-                Custom RSVP Questions
-              </label>
-              <p className="text-[11px] text-[#94A3B8] mb-2">
-                Ask attendees questions of your choice (e.g. LinkedIn link, company, dietary needs).
-              </p>
-            </div>
-
-            {/* List of active custom questions */}
-            {customQuestions.length > 0 && (
-              <div className="space-y-2">
-                {customQuestions.map((q, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]"
-                  >
-                    <span className="text-xs font-medium text-[#0A0A0A]">
-                      {idx + 1}. {q}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveQuestion(idx)}
-                      className="p-1 text-[#94A3B8] hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add new question input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newQuestionInput}
-                onChange={(e) => setNewQuestionInput(e.target.value)}
-                placeholder="Type a custom question (e.g. What is your LinkedIn profile?)"
-                className="flex-1 px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddQuestion();
-                  }
-                }}
-              />
+          {/* Custom Questions Proliferator */}
+          <div className="pt-4 border-t border-[#F1F5F9] space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#475569]">
+                Custom Attendee Questions
+              </span>
               <button
                 type="button"
-                onClick={handleAddQuestion}
-                className="px-3.5 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-xl hover:bg-[#262626] transition-colors flex items-center gap-1 shrink-0"
+                onClick={() => setIsAddingQuestion(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0F172A] hover:underline cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
+                <span>Add Question</span>
               </button>
             </div>
+
+            {/* Render dynamically added custom questions */}
+            {customQuestions.map((q, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]"
+              >
+                <div className="flex items-center gap-2 text-xs font-medium text-[#0F172A]">
+                  <HelpCircle className="w-4 h-4 text-[#64748B] shrink-0" />
+                  <span>{q}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveQuestion(idx)}
+                  className="p-1 rounded text-[#94A3B8] hover:text-red-600 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+
+            {/* Input to add a new question */}
+            {isAddingQuestion && (
+              <div className="flex gap-2 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                <input
+                  type="text"
+                  placeholder="e.g. LinkedIn / Twitter profile or company name"
+                  value={newQuestionInput}
+                  onChange={(e) => setNewQuestionInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddQuestion();
+                    }
+                  }}
+                  className="flex-1 px-3 py-1.5 text-xs border border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#0F172A] bg-white placeholder:text-[#94A3B8]"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleAddQuestion}
+                  className="px-3 py-1.5 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold cursor-pointer"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingQuestion(false);
+                    setNewQuestionInput('');
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#64748B] hover:text-[#0F172A] cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Pass Confirmation Message */}
+          <div className="pt-4 border-t border-[#F1F5F9]">
+            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+              Pass Confirmation Message
+            </label>
+            <textarea
+              rows={2}
+              value={confirmationMessage}
+              onChange={(e) => setConfirmationMessage(e.target.value)}
+              placeholder="Instructions shown to guests on their digital pass receipt..."
+              className="w-full px-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white resize-none placeholder:text-[#94A3B8]"
+            />
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="pt-4 border-t border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* 7. Capacity & Ticketing */}
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight">
+              7. Capacity & Ticketing
+            </h2>
+            <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-[#E2E8F0]">
+              <button
+                type="button"
+                onClick={() => setTicketingMode('native')}
+                className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                  ticketingMode === 'native' ? 'bg-white text-[#0F172A] shadow-xs' : 'text-[#64748B]'
+                }`}
+              >
+                Native Vibe RSVP
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketingMode('external')}
+                className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                  ticketingMode === 'external'
+                    ? 'bg-white text-[#0F172A] shadow-xs'
+                    : 'text-[#64748B]'
+                }`}
+              >
+                External Ticketing
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Maximum Capacity
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white"
+              />
+              <p className="text-[11px] text-[#94A3B8] mt-1">Set to 0 for unlimited capacity.</p>
+            </div>
+
+            {ticketingMode === 'native' ? (
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                  Ticket Price (INR)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#64748B]">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0 for Free"
+                    value={priceInr}
+                    onChange={(e) => setPriceInr(e.target.value)}
+                    className="w-full pl-8 pr-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white"
+                  />
+                </div>
+                <p className="text-[11px] text-[#94A3B8] mt-1">
+                  Enter 0 for complimentary free admission.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                  Ticket Price Text
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. ₹499 or Starting at ₹999"
+                  value={externalPrice}
+                  onChange={(e) => setExternalPrice(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white placeholder:text-[#94A3B8]"
+                />
+              </div>
+            )}
+          </div>
+
+          {ticketingMode === 'external' && (
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                External Ticketing URL *
+              </label>
+              <div className="relative">
+                <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                <input
+                  type="url"
+                  required
+                  placeholder="https://in.bookmyshow.com/... or https://insider.in/..."
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  className="w-full pl-10 pr-3.5 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white placeholder:text-[#94A3B8]"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={() => handleSubmit(false)}
             disabled={isSubmitting}
-            className="w-full sm:w-auto px-5 py-2.5 border border-[#E2E8F0] text-[#0A0A0A] text-xs font-bold rounded-full hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition-colors cursor-pointer disabled:opacity-50"
           >
-            Save as Draft
+            Save Draft
           </button>
 
           <button
-            type="button"
-            onClick={() => handleSubmit(true)}
+            type="submit"
             disabled={isSubmitting}
-            className="w-full sm:w-auto px-8 py-2.5 bg-[#0A0A0A] hover:bg-[#262626] text-white text-xs font-bold rounded-full transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+            className="px-6 py-2.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Publishing Event...</span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                <span>Publishing...</span>
               </>
             ) : (
               <span>Publish Event Live</span>
             )}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
