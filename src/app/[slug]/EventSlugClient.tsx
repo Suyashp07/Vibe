@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import EventTemplateView from '@/components/templates/EventTemplateView';
+import UnifiedEventDetailView from '@/components/events/UnifiedEventDetailView';
 import OrganizerProfileView from '@/components/organizer/OrganizerProfileView';
 import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase } from '@/lib/store';
 import { EventItem, Profile } from '@/types';
@@ -237,7 +237,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
           </div>
         )}
         <Navbar />
-        <EventTemplateView event={event} />
+        <UnifiedEventDetailView event={event} />
         <Footer />
       </div>
     );

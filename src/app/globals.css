@@ -3,25 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --brand: #1A1A2E;
-  --brand-mid: #16213E;
-  --brand-deep: #0F3460;
+  --brand: #0A0A0A;
+  --brand-mid: #171717;
+  --brand-deep: #000000;
   --accent: #E8621A;
-  --accent-dark: #D45510;
-  --accent-light: #FEF0E7;
-  --gold: #C9A84C;
-  --gold-light: #FDF6E7;
-  --ink: #0F0F0F;
-  --ink-secondary: #4B4B4B;
-  --ink-muted: #8A8A8A;
+  --accent-dark: #C84E0E;
+  --accent-light: #FFF1E8;
+  --gold: #D97706;
+  --gold-light: #FEF3C7;
+  --ink: #0A0A0A;
+  --ink-secondary: #525252;
+  --ink-muted: #737373;
   --surface: #FFFFFF;
-  --surface-2: #F9F7F4;
-  --surface-3: #F0EDE8;
-  --border: #E8E4DF;
-  --border-strong: #C8C4BF;
-  --success: #1A7A4A;
-  --success-bg: #E8F5EE;
-  --warning: #B45309;
+  --surface-2: #F8FAFC;
+  --surface-3: #F1F5F9;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --success: #16A34A;
+  --success-bg: #DCFCE7;
+  --warning: #D97706;
   --warning-bg: #FEF3C7;
 }
 
