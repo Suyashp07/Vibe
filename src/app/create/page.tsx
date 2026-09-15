@@ -146,21 +146,25 @@ export default function CreateEventHubPage() {
                 <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center border border-[#E2E8F0] group-hover:bg-[#0F172A] group-hover:text-white transition-colors">
                   <Wand2 className="w-5 h-5" />
                 </div>
-                <span className="text-[11px] font-semibold text-[#475569] bg-[#F1F5F9] px-2.5 py-1 rounded-full border border-[#E2E8F0]">
-                  AI Assisted
+                <span className="text-[11px] font-semibold text-[#0F172A] bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                  1-Click Instant
                 </span>
               </div>
 
               <div>
                 <h2 className="text-lg font-bold text-[#0F172A] tracking-tight group-hover:text-[#0F172A]">
-                  Auto-Create with AI
+                  1-Click Event Creation (Bot Engine)
                 </h2>
                 <p className="text-xs sm:text-sm text-[#64748B] mt-2 leading-relaxed">
-                  Provide an event flyer image, paste an existing event URL, or write raw text notes. AI will extract and structure all details in seconds.
+                  Bypass the bot and create an event in one click without filling forms. Provide a poster flyer, link, or notes and AI publishes your live gathering instantly.
                 </p>
               </div>
 
               <div className="pt-2 space-y-2 border-t border-[#F1F5F9]">
+                <div className="flex items-center gap-2 text-xs text-[#475569]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Single-click live publishing — zero form filling</span>
+                </div>
                 <div className="flex items-center gap-2 text-xs text-[#475569]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>Poster & flyer OCR vision extraction</span>
@@ -169,15 +173,11 @@ export default function CreateEventHubPage() {
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>BookMyShow, Luma & District link scraper</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Auto-fills venue, date, time & description</span>
-                </div>
               </div>
             </div>
 
             <div className="mt-8 pt-4 border-t border-[#F1F5F9] flex items-center justify-between text-xs font-semibold text-[#0F172A]">
-              <span>Continue with AI</span>
+              <span>Create in 1-Click</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
