@@ -334,36 +334,102 @@ export const createGuestAccountFromRsvp = (email: string, name: string, phone?: 
 export const signInWithMagicLink = sendEmailOtp;
 
 /**
- * Sign in with Email and Password
+ * Sign in with Email and Password (Host or Guest)
  */
-export const signInWithPassword = async (email: string, password: string) => {
+export const signInWithPassword = async (
+  email: string,
+  password: string,
+  intendedRole?: 'organizer' | 'guest'
+) => {
   const client = getSupabaseClient();
+  const cleanEmail = email.trim().toLowerCase();
+
   if (!client) {
-    return { data: null, error: { message: 'Supabase client is not configured.' } };
+    // Local fallback if Supabase not configured
+    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+    const profile: AuthProfile = {
+      id: `usr-${Date.now()}`,
+      email: cleanEmail,
+      name: cleanEmail.split('@')[0],
+      role: isSuper ? 'super_admin' : (intendedRole || 'organizer'),
+      handle: cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+      brand_color: '#0A0A0A',
+      brand_font: 'Inter',
+      onboarded: true,
+      isDemo: true,
+    };
+    setLocalAuthSession(profile);
+    return { data: { user: { id: profile.id, email: cleanEmail } }, error: null };
   }
 
   const { data, error } = await client.auth.signInWithPassword({
-    email,
+    email: cleanEmail,
     password,
   });
 
-  if (data?.user) {
-    const cleanEmail = (data.user.email || email).toLowerCase();
-    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
-    setLocalAuthSession({
-      id: data.user.id,
-      email: data.user.email || email,
-      name: data.user.user_metadata?.name || email.split('@')[0],
-      role: isSuper ? 'super_admin' : (data.user.user_metadata?.role || 'organizer'),
-      isDemo: false,
-    });
+  if (error) {
+    return { data: null, error };
   }
 
-  return { data, error };
+  if (data?.user) {
+    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+    let dbProfile: any = null;
+    try {
+      const { data: prof } = await client
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      dbProfile = prof;
+    } catch {}
+
+    const meta = data.user.user_metadata || {};
+    const assignedRole = isSuper
+      ? 'super_admin'
+      : (dbProfile?.role || meta.role || intendedRole || 'organizer');
+
+    const profile: AuthProfile = {
+      id: data.user.id,
+      email: data.user.email || cleanEmail,
+      name: dbProfile?.name || meta.name || cleanEmail.split('@')[0],
+      role: assignedRole as any,
+      handle: dbProfile?.handle || meta.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+      avatar_url: dbProfile?.logo_url || dbProfile?.avatar_url || meta.avatar_url,
+      bio: dbProfile?.bio || meta.bio,
+      brand_color: dbProfile?.brand_color || meta.brand_color || '#0A0A0A',
+      brand_font: 'Inter',
+      phone: dbProfile?.phone || meta.phone,
+      onboarded: dbProfile?.onboarded !== undefined ? dbProfile.onboarded : (assignedRole === 'guest' || Boolean(dbProfile?.handle)),
+      isDemo: false,
+    };
+
+    setLocalAuthSession(profile);
+
+    if (!dbProfile) {
+      try {
+        await client.from('profiles').upsert({
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          role: profile.role,
+          handle: profile.handle,
+          brand_color: profile.brand_color,
+          brand_font: 'Inter',
+          onboarded: profile.onboarded,
+        });
+      } catch {}
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('vibe_auth_changed'));
+    }
+  }
+
+  return { data, error: null };
 };
 
 /**
- * Sign up with Email and Password
+ * Sign up with Email and Password (Host or Guest)
  */
 export const signUpWithPassword = async (
   email: string,
@@ -373,18 +439,33 @@ export const signUpWithPassword = async (
   handle?: string
 ) => {
   const client = getSupabaseClient();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = name.trim();
+  const cleanHandle = (handle || cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_')).slice(0, 30);
+
   if (!client) {
-    return { data: null, error: { message: 'Supabase client is not configured.' } };
+    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+    const profile: AuthProfile = {
+      id: `usr-${Date.now()}`,
+      email: cleanEmail,
+      name: cleanName,
+      role: isSuper ? 'super_admin' : role,
+      handle: cleanHandle,
+      brand_color: '#0A0A0A',
+      brand_font: 'Inter',
+      onboarded: role === 'guest',
+      isDemo: true,
+    };
+    setLocalAuthSession(profile);
+    return { data: { user: { id: profile.id, email: cleanEmail } }, error: null };
   }
 
-  const cleanHandle = handle?.trim().toLowerCase() || email.split('@')[0].replace(/[^a-z0-9_]/g, '_');
-
   const { data, error } = await client.auth.signUp({
-    email,
+    email: cleanEmail,
     password,
     options: {
       data: {
-        name,
+        name: cleanName,
         role,
         handle: cleanHandle,
       },
@@ -396,15 +477,16 @@ export const signUpWithPassword = async (
   }
 
   if (data?.user) {
+    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
     const profile: AuthProfile = {
       id: data.user.id,
-      email: data.user.email || email,
-      name,
-      role,
+      email: data.user.email || cleanEmail,
+      name: cleanName,
+      role: isSuper ? 'super_admin' : role,
       handle: cleanHandle,
-      brand_color: '#E8621A',
-      brand_font: 'Playfair Display',
-      onboarded: false,
+      brand_color: '#0A0A0A',
+      brand_font: 'Inter',
+      onboarded: role === 'guest',
       isDemo: false,
     };
     setLocalAuthSession(profile);
@@ -417,8 +499,8 @@ export const signUpWithPassword = async (
         role: profile.role,
         handle: profile.handle,
         brand_color: profile.brand_color,
-        brand_font: profile.brand_font,
-        onboarded: false,
+        brand_font: 'Inter',
+        onboarded: profile.onboarded,
       });
     } catch {}
 
@@ -428,6 +510,44 @@ export const signUpWithPassword = async (
   }
 
   return { data, error: null };
+};
+
+/**
+ * Sign in with Google OAuth (supports both Host and Guest roles)
+ */
+export const signInWithGoogle = async (
+  role: 'organizer' | 'guest' = 'organizer',
+  nextUrl?: string
+) => {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase client is not configured.' } };
+  }
+
+  const redirectDestination = nextUrl || (role === 'guest' ? '/guest' : '/dashboard');
+  const redirectTo = typeof window !== 'undefined'
+    ? `${window.location.origin}/auth/callback?role=${role}&next=${encodeURIComponent(redirectDestination)}`
+    : undefined;
+
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem('vibe_oauth_role', role);
+      sessionStorage.setItem('vibe_oauth_next', redirectDestination);
+    } catch {}
+  }
+
+  const { data, error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account',
+      },
+    },
+  });
+
+  return { data, error };
 };
 
 /**

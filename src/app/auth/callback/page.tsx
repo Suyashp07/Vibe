@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
-import { setLocalAuthSession, AuthProfile } from '@/lib/auth';
+import { setLocalAuthSession, AuthProfile, ADMIN_EMAILS } from '@/lib/auth';
 import { Sparkles } from 'lucide-react';
 
 function CallbackHandler() {
@@ -14,101 +14,97 @@ function CallbackHandler() {
   useEffect(() => {
     const handleAuth = async () => {
       const client = getSupabaseClient();
-      const role = (searchParams.get('role') as 'organizer' | 'guest') || 'organizer';
-      const next = searchParams.get('next') || (role === 'guest' ? '/guest' : '/dashboard');
+      let role = (searchParams.get('role') as 'organizer' | 'guest') || 'organizer';
+      let next = searchParams.get('next');
+
+      if (typeof window !== 'undefined') {
+        const storedRole = sessionStorage.getItem('vibe_oauth_role') as 'organizer' | 'guest' | null;
+        const storedNext = sessionStorage.getItem('vibe_oauth_next');
+        if (storedRole) role = storedRole;
+        if (!next && storedNext) next = storedNext;
+        sessionStorage.removeItem('vibe_oauth_role');
+        sessionStorage.removeItem('vibe_oauth_next');
+      }
+
+      if (!next) {
+        next = role === 'guest' ? '/guest' : '/dashboard';
+      }
+
       const code = searchParams.get('code');
 
       if (client) {
         // 1. If code in query params, exchange for session directly in the browser!
+        let user: any = null;
         if (code) {
           try {
             const { data, error } = await client.auth.exchangeCodeForSession(code);
             if (!error && data?.user) {
-              const meta = data.user.user_metadata || {};
-              let profile: AuthProfile = {
-                id: data.user.id,
-                email: data.user.email || '',
-                name: meta.name || data.user.email?.split('@')[0] || 'User',
-                role: meta.role || role,
-                handle: meta.handle || data.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-                brand_color: meta.brand_color || '#E8621A',
-                brand_font: meta.brand_font || 'Playfair Display',
-                avatar_url: meta.avatar_url,
-                onboarded: Boolean(meta.onboarded),
-                isDemo: false
-              };
-
-              try {
-                const { data: dbProf } = await client
-                  .from('profiles')
-                  .select('*')
-                  .eq('id', data.user.id)
-                  .single();
-                if (dbProf) {
-                  profile = {
-                    ...profile,
-                    name: dbProf.name || profile.name,
-                    role: dbProf.role || profile.role,
-                    handle: dbProf.handle || profile.handle,
-                    bio: dbProf.bio || profile.bio,
-                    avatar_url: dbProf.logo_url || dbProf.avatar_url || profile.avatar_url,
-                    brand_color: dbProf.brand_color || profile.brand_color,
-                    brand_font: dbProf.brand_font || profile.brand_font,
-                    phone: dbProf.phone || profile.phone,
-                    onboarded: dbProf.onboarded !== undefined ? dbProf.onboarded : profile.onboarded,
-                  };
-                }
-              } catch {}
-
-              setLocalAuthSession(profile);
-              router.replace(next);
-              return;
+              user = data.user;
             }
           } catch (e) {
             console.warn('Code exchange error:', e);
           }
         }
 
-        // 2. Check if session already established (e.g. hash token #access_token)
-        const { data } = await client.auth.getSession();
-        if (data?.session?.user) {
-          const meta = data.session.user.user_metadata || {};
-          let profile: AuthProfile = {
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            name: meta.name || data.session.user.email?.split('@')[0] || 'User',
-            role: meta.role || role,
-            handle: meta.handle || data.session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-            brand_color: meta.brand_color || '#E8621A',
-            brand_font: meta.brand_font || 'Playfair Display',
-            avatar_url: meta.avatar_url,
-            onboarded: Boolean(meta.onboarded),
+        // 2. Check if session already established
+        if (!user) {
+          const { data } = await client.auth.getSession();
+          if (data?.session?.user) {
+            user = data.session.user;
+          }
+        }
+
+        if (user) {
+          const meta = user.user_metadata || {};
+          const cleanEmail = (user.email || '').toLowerCase();
+          const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+
+          let dbProf: any = null;
+          try {
+            const { data } = await client
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single();
+            dbProf = data;
+          } catch {}
+
+          const assignedRole = isSuper
+            ? 'super_admin'
+            : (dbProf?.role || meta.role || role);
+
+          const profile: AuthProfile = {
+            id: user.id,
+            email: cleanEmail,
+            name: dbProf?.name || meta.full_name || meta.name || cleanEmail.split('@')[0] || 'User',
+            role: assignedRole as any,
+            handle: dbProf?.handle || meta.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+            bio: dbProf?.bio || meta.bio,
+            avatar_url: dbProf?.logo_url || dbProf?.avatar_url || meta.avatar_url || meta.picture,
+            brand_color: dbProf?.brand_color || meta.brand_color || '#0A0A0A',
+            brand_font: 'Inter',
+            phone: dbProf?.phone || meta.phone,
+            onboarded: dbProf?.onboarded !== undefined ? dbProf.onboarded : (assignedRole === 'guest' || Boolean(dbProf?.handle)),
             isDemo: false
           };
 
+          setLocalAuthSession(profile);
+
+          // Ensure upserted in Supabase
           try {
-            const { data: dbProf } = await client
-              .from('profiles')
-              .select('*')
-              .eq('id', data.session.user.id)
-              .single();
-            if (dbProf) {
-              profile = {
-                ...profile,
-                name: dbProf.name || profile.name,
-                role: dbProf.role || profile.role,
-                handle: dbProf.handle || profile.handle,
-                bio: dbProf.bio || profile.bio,
-                avatar_url: dbProf.logo_url || dbProf.avatar_url || profile.avatar_url,
-                brand_color: dbProf.brand_color || profile.brand_color,
-                brand_font: dbProf.brand_font || profile.brand_font,
-                phone: dbProf.phone || profile.phone,
-                onboarded: dbProf.onboarded !== undefined ? dbProf.onboarded : profile.onboarded,
-              };
-            }
+            await client.from('profiles').upsert({
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              role: profile.role,
+              handle: profile.handle,
+              avatar_url: profile.avatar_url,
+              brand_color: profile.brand_color,
+              brand_font: 'Inter',
+              onboarded: profile.onboarded,
+            });
           } catch {}
 
-          setLocalAuthSession(profile);
           router.replace(next);
           return;
         }

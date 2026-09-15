@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { syncEventsWithSupabase } from '@/lib/store';
 import LocationModal from '@/components/location/LocationModal';
+import AuthModal from '@/components/auth/AuthModal';
 import { getUserCity, isFirstTimeLocationVisitor } from '@/lib/location';
 
 export default function Navbar() {
@@ -32,6 +33,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeCity, setActiveCity] = useState<string>('All India');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -313,19 +316,27 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-btn border border-border bg-surface hover:bg-surface-3 text-ink transition-all"
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalMode('signin');
+                  setAuthModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-btn border border-border bg-surface hover:bg-surface-3 text-ink transition-all cursor-pointer shadow-xs"
               >
                 <LogIn className="w-3.5 h-3.5 text-accent" />
                 <span>Sign In</span>
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-btn bg-brand hover:bg-brand-mid text-white shadow-xs hover-lift transition-all"
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalMode('signup');
+                  setAuthModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-btn bg-brand hover:bg-brand-mid text-white shadow-xs hover-lift transition-all cursor-pointer"
               >
                 <span>Sign Up</span>
-              </Link>
+              </button>
             </div>
           )}
 
@@ -449,27 +460,42 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 pt-1">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-border bg-surface text-xs font-bold text-ink text-center hover:bg-surface-3 transition-colors"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setAuthModalMode('signin');
+                    setAuthModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-border bg-surface text-xs font-bold text-ink text-center hover:bg-surface-3 transition-colors cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5 text-accent" />
                   <span>Sign In</span>
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-brand text-xs font-bold text-white text-center hover:bg-brand-mid transition-colors shadow-xs"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setAuthModalMode('signup');
+                    setAuthModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-brand text-xs font-bold text-white text-center hover:bg-brand-mid transition-colors shadow-xs cursor-pointer"
                 >
                   <span>Sign Up</span>
-                </Link>
+                </button>
               </div>
             )}
           </div>
         </div>
       )}
     </header>
+
+    {/* Clean District Auth Modal */}
+    <AuthModal
+      isOpen={authModalOpen}
+      onClose={() => setAuthModalOpen(false)}
+      defaultMode={authModalMode}
+    />
 
     {/* Intelligent Location Selector & First-Time Visitor Demand Modal */}
     <LocationModal
