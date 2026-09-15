@@ -117,79 +117,40 @@ function LandingPageContent() {
     <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar />
 
-      {/* Hero Section — District Minimalist */}
-      <section className="relative pt-12 pb-14 sm:pt-16 sm:pb-20 border-b border-border bg-surface">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-3 border border-border text-xs font-semibold text-ink">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span>Curated Event Discovery & Hosting</span>
-            <span className="text-[10px] font-mono uppercase bg-brand text-white px-2 py-0.5 rounded-full">
-              District Edition
-            </span>
+      {/* Clean District Search & City Filter Bar — No marketing hero fluff */}
+      <section className="pt-6 pb-4 border-b border-border bg-surface">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mx-auto">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by event title, venue, or neighborhood..."
+              className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-border rounded-xl text-xs text-ink placeholder:text-ink-muted focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink transition-colors shadow-xs"
+            />
+            <Search className="w-4 h-4 text-ink-muted absolute left-3.5 top-3.5 pointer-events-none" />
           </div>
 
-          {/* Heading */}
-          <h1 className="font-sans font-black text-4xl sm:text-6xl md:text-7xl text-ink tracking-tight max-w-4xl mx-auto leading-[1.1]">
-            Discover and host gatherings that <span className="text-brand">matter</span>.
-          </h1>
-
-          {/* Subheading */}
-          <p className="font-sans text-sm sm:text-base text-ink-muted max-w-2xl mx-auto leading-relaxed">
-            From underground mixers to creator summits. Publish in a single step with 1-click WhatsApp sharing, or RSVP to events in your city.
-          </p>
-
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Link
-              href="/create"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-brand hover:bg-brand-mid text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02]"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Host an Event — 1 Step</span>
-            </Link>
-
-            <Link
-              href="/discover"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-surface hover:bg-surface-3 border border-border text-ink font-bold text-xs shadow-xs transition-all hover:scale-[1.02]"
-            >
-              <Compass className="w-4 h-4 text-accent" />
-              <span>Explore Near Me</span>
-            </Link>
-          </div>
-
-          {/* Search & City Filter Bar */}
-          <div className="pt-6 max-w-2xl mx-auto space-y-3">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by event title, venue, or neighborhood..."
-                className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-border rounded-xl text-xs text-ink placeholder:text-ink-muted focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink transition-colors shadow-xs"
-              />
-              <Search className="w-4 h-4 text-ink-muted absolute left-3.5 top-3.5 pointer-events-none" />
-            </div>
-
-            {/* City Pills */}
-            <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
-              {FEATURED_CITIES.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => setSelectedCity(city)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                    selectedCity.toLowerCase() === city.toLowerCase()
-                      ? 'bg-brand text-white shadow-xs'
-                      : 'bg-surface-3 text-ink-muted hover:text-ink border border-border/80'
-                  }`}
-                >
-                  {city}
-                </button>
-              ))}
-            </div>
+          {/* City Pills */}
+          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1 scrollbar-none max-w-2xl mx-auto">
+            {FEATURED_CITIES.map((city) => (
+              <button
+                key={city}
+                onClick={() => setSelectedCity(city)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                  selectedCity.toLowerCase() === city.toLowerCase()
+                    ? 'bg-brand text-white shadow-xs'
+                    : 'bg-surface-3 text-ink-muted hover:text-ink border border-border/80'
+                }`}
+              >
+                {city}
+              </button>
+            ))}
           </div>
         </div>
       </section>
+
 
       {/* Live Events Grid */}
       <section className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
