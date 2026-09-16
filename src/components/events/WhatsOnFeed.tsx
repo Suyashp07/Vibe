@@ -549,18 +549,18 @@ export default function WhatsOnFeed() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. ALL THE TAGS IN ONE CLEAN HORIZONTAL PLANE (NO CARD! DIRECTLY ON CANVAS)*/}
+      {/* 2. TAGS & FILTERS — EXPLICITLY MENTIONED (NO HORIZONTAL SCROLL, NO CARDS) */}
       {/* ========================================================================= */}
-      <div className="space-y-3 pt-2 border-b border-[#E2E8F0] pb-6">
-        {/* Category Filters Row */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="space-y-4 pt-2 border-b border-[#E2E8F0] pb-6">
+        {/* Category Filter Pills (Explicitly Mentioned, Flex-Wrap) */}
+        <div className="flex flex-wrap items-center gap-2">
           {CATEGORY_FILTERS.map((cat) => {
             const active = categoryFilter === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-4 py-2 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-4 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                   active
                     ? 'bg-[#0F172A] text-white shadow-xs'
                     : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
@@ -572,20 +572,56 @@ export default function WhatsOnFeed() {
           })}
         </div>
 
-        {/* Mood Tags Strip + Distance Selector + Reset in one clean horizontal line */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          {/* Mood Tags */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
-            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider shrink-0 mr-1">
-              MOOD:
+        {/* Distance Filter Row (Explicitly Mentioned) */}
+        <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+            <Navigation className="w-3.5 h-3.5 rotate-45" />
+            <span>DISTANCE</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {DISTANCE_OPTIONS.map((dist) => {
+              const active = distanceFilter === dist;
+              return (
+                <button
+                  key={dist}
+                  onClick={() => setDistanceFilter(dist)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                    active
+                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                  }`}
+                >
+                  {dist}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mood Tags (Explicitly Mentioned, All Visible, Flex-Wrap, No Cards!) */}
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+              MOOD
             </span>
+            <button
+              onClick={handleResetMyView}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset my view</span>
+            </button>
+          </div>
+
+          {/* All 23 Mood Tags explicitly mentioned in flex-wrap */}
+          <div className="flex flex-wrap items-center gap-2">
             {MOOD_TAGS.map((tag) => {
               const active = selectedMoods.includes(tag);
               return (
                 <button
                   key={tag}
                   onClick={() => handleToggleMood(tag)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                     active
                       ? 'bg-[#0F172A] text-white shadow-xs'
                       : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
@@ -597,34 +633,9 @@ export default function WhatsOnFeed() {
             })}
           </div>
 
-          {/* Right: Distance Selector + Reset */}
-          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            <div className="flex items-center gap-1 border border-[#E2E8F0] rounded-full p-0.5 bg-white shadow-2xs">
-              <Navigation className="w-3 h-3 text-[#64748B] ml-2 rotate-45" />
-              {DISTANCE_OPTIONS.map((dist) => (
-                <button
-                  key={dist}
-                  onClick={() => setDistanceFilter(dist)}
-                  className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
-                    distanceFilter === dist
-                      ? 'bg-[#0F172A] text-white'
-                      : 'text-[#64748B] hover:text-[#0F172A]'
-                  }`}
-                >
-                  {dist}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleResetMyView}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] rounded-full transition-colors cursor-pointer border border-[#E2E8F0] shadow-2xs"
-              title="Reset my view"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          </div>
+          <p className="text-xs text-[#94A3B8] pt-0.5">
+            Your filter choices are saved automatically as your default view.
+          </p>
         </div>
       </div>
 
