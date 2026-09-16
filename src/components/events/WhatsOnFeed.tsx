@@ -198,13 +198,13 @@ export default function WhatsOnFeed() {
     return () => window.removeEventListener('vibe:location_changed', syncLocation);
   }, []);
 
-  // Calculate distance for each event
+  // Calculate distance for each event from active location
   const eventsWithDistance: EventWithDistance[] = useMemo(() => {
-    return events.map((e) => {
-      if (!userCoords || userCity === 'All India') {
-        return { ...e, distanceKm: null };
-      }
+    const effectiveCoords =
+      userCoords ||
+      (userCity && userCity !== 'All India' ? getCityCoordinates(userCity) : null);
 
+    return events.map((e) => {
       let eventLat = e.location_lat;
       let eventLng = e.location_lng;
 
@@ -216,12 +216,17 @@ export default function WhatsOnFeed() {
         }
       }
 
-      if (eventLat && eventLng) {
-        const dist = calculateDistanceKm(userCoords.lat, userCoords.lng, eventLat, eventLng);
+      if (effectiveCoords && eventLat && eventLng) {
+        const dist = calculateDistanceKm(
+          effectiveCoords.lat,
+          effectiveCoords.lng,
+          eventLat,
+          eventLng
+        );
         return { ...e, distanceKm: dist };
       }
 
-      if (e.city?.toLowerCase() === userCity.toLowerCase()) {
+      if (userCity && userCity !== 'All India' && e.city?.toLowerCase() === userCity.toLowerCase()) {
         return { ...e, distanceKm: 0 };
       }
 
@@ -391,7 +396,20 @@ export default function WhatsOnFeed() {
 
         return true;
       })
-      .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
+      .sort((a, b) => {
+        // Sort in ASCENDING order of proximity from location (nearest first)
+        const distA = typeof a.distanceKm === 'number' ? a.distanceKm : Infinity;
+        const distB = typeof b.distanceKm === 'number' ? b.distanceKm : Infinity;
+
+        if (distA !== distB) {
+          return distA - distB;
+        }
+
+        // Secondary sort: chronological event start date
+        const timeA = a.start_at ? new Date(a.start_at).getTime() : 0;
+        const timeB = b.start_at ? new Date(b.start_at).getTime() : 0;
+        return timeA - timeB;
+      });
   }, [eventsWithDistance, searchQuery, categoryFilter, distanceFilter, selectedMoods]);
 
   return (
@@ -622,9 +640,28 @@ export default function WhatsOnFeed() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. BELOW: ALL EVENTS LISTED IN GRID (With 3D Perspective Spring Reveal)    */}
+      {/* 2. BELOW: ALL EVENTS LISTED IN GRID (Ascending order of proximity)         */}
       {/* ========================================================================= */}
-      <div className="pt-2">
+      <div className="pt-2 space-y-4">
+        {filteredEvents.length > 0 && (
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-2">
+              <Navigation className="w-4 h-4 text-[#E8621A] rotate-45" />
+              <h3 className="text-base sm:text-lg font-bold text-[#0F172A]">
+                {userCity && userCity !== 'All India' ? `Events Near ${userCity}` : 'Events Near You'}
+              </h3>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B]">
+                {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'}
+              </span>
+            </div>
+
+            <span className="text-xs font-medium text-[#64748B] hidden sm:inline-flex items-center gap-1.5 bg-[#F8FAFC] px-3 py-1 rounded-full border border-[#E2E8F0]">
+              <span>Sorted by proximity</span>
+              <span className="text-[#0F172A] font-bold">(nearest first)</span>
+            </span>
+          </div>
+        )}
+
         {filteredEvents.length === 0 ? (
           <div className="p-12 text-center bg-[#F8FAFC] rounded-3xl border border-dashed border-[#E2E8F0] space-y-3">
             <Calendar className="w-10 h-10 text-[#94A3B8] mx-auto" />
