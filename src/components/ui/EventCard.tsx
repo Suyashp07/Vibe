@@ -18,15 +18,6 @@ export default function EventCard({ event, showStatus = true, distanceKm }: Even
   const count = rsvps.length;
   const isNearlyFull = event.capacity && (event.capacity - count) <= 8 && (event.capacity - count) > 0;
 
-  // Template tag styling
-  const templateBadgeStyles: Record<string, string> = {
-    grove: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    sprint: 'bg-orange-50 text-orange-800 border-orange-200',
-    bloom: 'bg-rose-50 text-rose-800 border-rose-200',
-    vertex: 'bg-slate-100 text-slate-800 border-slate-300',
-    ember: 'bg-amber-50 text-amber-900 border-amber-200',
-  };
-
   const isExternal = event.source_type === 'external';
   const rawTicketUrl = event.external_ticket_url?.trim();
   const normalizedTicketUrl = rawTicketUrl
@@ -55,9 +46,7 @@ export default function EventCard({ event, showStatus = true, distanceKm }: Even
               <ArrowUpRight className="w-3 h-3 text-white/80" />
             </span>
           ) : (
-            <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${templateBadgeStyles[event.template] || 'bg-white/90 text-brand'}`}>
-              {event.template}
-            </span>
+            <div />
           )}
 
           {event.external_price_text ? (
