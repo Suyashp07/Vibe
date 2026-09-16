@@ -114,19 +114,17 @@ export default function Navbar() {
         {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
-            {/* Left: Brand Wordmark (No logo icon) */}
+            {/* Left: Brand Wordmark (Single Line) */}
             <div className="flex items-center gap-3 shrink-0">
-              <Link href="/" className="flex flex-col group py-1">
-                <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-extrabold text-xl sm:text-2xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors">
-                    Vibe
-                  </span>
-                  <span className="text-[11px] sm:text-xs font-bold text-[#E8621A] tracking-wider uppercase">
-                    BY SWANIKI
-                  </span>
-                </div>
-                <span className="text-[10px] text-[#64748B] tracking-tight hidden sm:block pt-0.5">
-                  Live Events & Experiences
+              <Link href="/" className="inline-flex items-center gap-2 group py-1">
+                <span className="font-extrabold text-xl sm:text-2xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors">
+                  Vibe
+                </span>
+                <span className="text-[11px] sm:text-xs font-bold text-[#E8621A] tracking-wider uppercase">
+                  BY SWANIKI
+                </span>
+                <span className="hidden xl:inline text-[11px] text-[#94A3B8] font-medium border-l border-[#E2E8F0] pl-2">
+                  Live Events &amp; Experiences
                 </span>
               </Link>
             </div>
