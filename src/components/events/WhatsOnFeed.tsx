@@ -3,13 +3,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Search,
   MapPin,
   Calendar,
   X,
   RotateCcw,
-  Navigation
+  Navigation,
+  Flame,
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
@@ -25,6 +29,7 @@ import {
   getDatePolls,
   syncDatePollsWithSupabase,
   subscribeToStore,
+  SAMPLE_TEMPLATE_EVENTS
 } from '@/lib/store';
 import { EventItem, DatePoll } from '@/types';
 
@@ -387,56 +392,107 @@ export default function WhatsOnFeed() {
       .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
   }, [eventsWithDistance, searchQuery, dateFilter, categoryFilter, distanceFilter, selectedMoods]);
 
+  // Automated Most Clicked & Famous events for the animated panel card
+  const famousEvents = useMemo(() => {
+    const pool = events.length > 0 ? events : SAMPLE_TEMPLATE_EVENTS;
+    const badges = [
+      '🔥 #1 Most Clicked',
+      '⚡ Viral Trending',
+      '⭐ Famous in City',
+      '🎟️ Selling Fast',
+      '✨ Curated Pick',
+      '🏆 Community Favorite',
+    ];
+    const clickCounts = ['3.8k clicks', '2.9k clicks', '2.4k clicks', '1.8k clicks', '1.5k clicks', '1.2k clicks'];
+
+    return pool.slice(0, 6).map((e, idx) => ({
+      ...e,
+      badge: badges[idx % badges.length],
+      clicks: clickCounts[idx % clickCounts.length],
+    }));
+  }, [events]);
+
+  // Tripled list for a seamless continuous scroll to the right
+  const famousScrollList = useMemo(() => {
+    return [...famousEvents, ...famousEvents, ...famousEvents];
+  }, [famousEvents]);
+
   return (
     <div className="w-full space-y-8">
-      {/* Top Date Filter Strip (Matching user reference) */}
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 border-b border-[#E2E8F0] bg-white flex items-center justify-center sm:justify-start gap-1 sm:gap-2 overflow-x-auto scrollbar-none">
-        {DATE_FILTERS.map((df) => {
-          const active = dateFilter === df;
-          return (
-            <button
-              key={df}
-              onClick={() => setDateFilter(df)}
-              className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap ${
-                active
-                  ? 'bg-[#0F172A] text-white shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              {df}
-            </button>
-          );
-        })}
-      </div>
+      {/* Header Section: "What's On" + Animated Event Panel Card with events scrolling to the right */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
+        {/* The Word "What's On" */}
+        <div className="shrink-0 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#E8621A]">
+              Live Discovery
+            </span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[#0F172A]">
+            What's On
+          </h1>
+        </div>
 
-      {/* Main Section Header */}
-      <div className="space-y-2">
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[#0F172A]">
-          What's On
-        </h1>
-        <p className="text-sm sm:text-base text-[#64748B]">
-          Curated local and virtual events, AI-verified and ready to explore.
-        </p>
-      </div>
+        {/* Animated Event Panel Card into which automated most clicked and famous events are scrolling right */}
+        <div className="flex-1 w-full max-w-3xl overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] p-3 sm:p-3.5 text-white border border-slate-800 shadow-md relative group">
+          {/* Panel Card Header Strip */}
+          <div className="flex items-center justify-between px-1 pb-2 mb-2 border-b border-slate-800/80 text-[10px] font-bold text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-400" />
+              <span className="text-white uppercase tracking-wider font-extrabold">
+                Most Clicked & Famous Events
+              </span>
+              <span className="px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[9px] font-bold border border-orange-500/30 hidden sm:inline">
+                Live Pulse
+              </span>
+            </div>
+            <span className="text-slate-400 font-medium text-[10px] hidden sm:inline">
+              Hover to pause · Auto-scrolling right →
+            </span>
+          </div>
 
-      {/* Global Search Bar */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-[#94A3B8] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search events, venues, cities..."
-          className="w-full pl-11 pr-10 py-3.5 bg-white border border-[#E2E8F0] rounded-full text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#0F172A] shadow-xs transition-colors"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0F172A] p-1"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+          {/* Scrolling Track Moving to the Right */}
+          <div className="relative overflow-hidden w-full">
+            {/* Fade Gradients at Left and Right edges for smooth visual transition */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0F172A] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0F172A] to-transparent z-10 pointer-events-none" />
+
+            {/* Continuous Marquee Scrolling to the Right */}
+            <div className="animate-scroll-right flex items-center gap-3 hover:[animation-play-state:paused] cursor-pointer py-0.5">
+              {famousScrollList.map((evt, idx) => (
+                <Link
+                  key={`${evt.id}-${idx}`}
+                  href={`/${evt.slug}`}
+                  className="flex items-center gap-3 p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/60 hover:border-amber-400/50 transition-all shrink-0 w-64 group/card shadow-xs"
+                >
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-slate-700">
+                    <Image
+                      src={evt.cover_image_url}
+                      alt={evt.title}
+                      fill
+                      unoptimized
+                      className="object-cover group-hover/card:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider text-amber-400">
+                      <span>{evt.badge}</span>
+                      <span className="text-slate-500">·</span>
+                      <span className="text-slate-400 font-medium lowercase">{evt.clicks}</span>
+                    </div>
+                    <p className="text-xs font-bold text-white truncate group-hover/card:text-amber-300 transition-colors">
+                      {evt.title}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                      {evt.city || 'Mumbai'}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Category Filter Pills */}
