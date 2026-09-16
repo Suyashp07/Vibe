@@ -114,17 +114,14 @@ export default function Navbar() {
         {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
-            {/* Left: Brand Wordmark (Single Line) */}
-            <div className="flex items-center gap-3 shrink-0">
-              <Link href="/" className="inline-flex items-center gap-2 group py-1">
-                <span className="font-extrabold text-xl sm:text-2xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors">
-                  Vibe
-                </span>
-                <span className="text-[11px] sm:text-xs font-bold text-[#E8621A] tracking-wider uppercase">
+            {/* Left: Brand Logo (Vibe by Swaniki) */}
+            <div className="flex items-center shrink-0">
+              <Link href="/" className="flex flex-col group py-0.5 select-none">
+                <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-[#E8621A] uppercase leading-none pb-1">
                   BY SWANIKI
                 </span>
-                <span className="hidden xl:inline text-[11px] text-[#94A3B8] font-medium border-l border-[#E2E8F0] pl-2">
-                  Live Events &amp; Experiences
+                <span className="font-display font-black text-2xl sm:text-3xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors leading-none">
+                  Vibe
                 </span>
               </Link>
             </div>

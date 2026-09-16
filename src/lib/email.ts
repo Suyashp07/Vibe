@@ -710,8 +710,12 @@ export async function sendVerificationOtpEmail({
   <div class="email-wrapper">
     <div class="brand-accent-strip"></div>
     <div class="header">
-      <div class="brand-title">Vibe <span class="brand-badge">BY SWANIKI</span></div>
-      <span class="brand-sub">Live Events & Experiences</span>
+      <div style="font-size: 10px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: #E8621A; margin-bottom: 2px;">
+        BY SWANIKI
+      </div>
+      <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; line-height: 1; margin: 0;">
+        Vibe
+      </div>
     </div>
     <div class="body-content">
       <h1 class="welcome-heading">${heading}</h1>
