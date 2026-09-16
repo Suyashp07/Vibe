@@ -13,7 +13,8 @@ import {
   Navigation,
   Flame,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  ArrowRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
@@ -29,13 +30,10 @@ import {
   getDatePolls,
   syncDatePollsWithSupabase,
   subscribeToStore,
-  SAMPLE_TEMPLATE_EVENTS
+  SAMPLE_TEMPLATE_EVENTS,
+  formatIST
 } from '@/lib/store';
 import { EventItem, DatePoll } from '@/types';
-
-// Quick Date Filters matching user reference
-export const DATE_FILTERS = ['All', 'Today', 'Tomorrow', 'Weekend', 'This Week'] as const;
-export type DateFilterType = (typeof DATE_FILTERS)[number];
 
 // Main Categories matching user reference
 export const CATEGORY_FILTERS = [
@@ -88,13 +86,14 @@ interface EventWithDistance extends EventItem {
   distanceKm?: number | null;
 }
 
+
+
 export default function WhatsOnFeed() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // URL search params sync
   const queryParam = searchParams.get('q') || searchParams.get('search') || '';
-  const dateParam = (searchParams.get('date') as DateFilterType) || 'All';
   const categoryParam = (searchParams.get('category') as CategoryFilterType) || 'All';
 
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -103,9 +102,6 @@ export default function WhatsOnFeed() {
 
   // Active filters state
   const [searchQuery, setSearchQuery] = useState(queryParam);
-  const [dateFilter, setDateFilter] = useState<DateFilterType>(
-    DATE_FILTERS.includes(dateParam) ? dateParam : 'All'
-  );
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilterType>(
     CATEGORY_FILTERS.includes(categoryParam) ? categoryParam : 'All'
   );
@@ -129,14 +125,11 @@ export default function WhatsOnFeed() {
         if (parsed.categoryFilter && CATEGORY_FILTERS.includes(parsed.categoryFilter) && !categoryParam) {
           setCategoryFilter(parsed.categoryFilter);
         }
-        if (parsed.dateFilter && DATE_FILTERS.includes(parsed.dateFilter) && !dateParam) {
-          setDateFilter(parsed.dateFilter);
-        }
       }
     } catch {
       // ignore
     }
-  }, [categoryParam, dateParam]);
+  }, [categoryParam]);
 
   // Automatically save filter choices to localStorage
   useEffect(() => {
@@ -148,13 +141,12 @@ export default function WhatsOnFeed() {
           selectedMoods,
           distanceFilter,
           categoryFilter,
-          dateFilter,
         })
       );
     } catch {
       // ignore
     }
-  }, [selectedMoods, distanceFilter, categoryFilter, dateFilter, mounted]);
+  }, [selectedMoods, distanceFilter, categoryFilter, mounted]);
 
   // Sync external search query if URL changes
   useEffect(() => {
@@ -245,7 +237,6 @@ export default function WhatsOnFeed() {
   // Reset all filters to default
   const handleResetMyView = () => {
     setSelectedMoods([]);
-    setDateFilter('All');
     setCategoryFilter('All');
     setDistanceFilter('Off');
     setSearchQuery('');
@@ -256,15 +247,33 @@ export default function WhatsOnFeed() {
     }
   };
 
+  // Automated Most Clicked & Famous events for the animated panel card
+  const famousEvents = useMemo(() => {
+    const pool = eventsWithDistance.length > 0 ? eventsWithDistance : SAMPLE_TEMPLATE_EVENTS;
+    const badges = [
+      '🔥 #1 Most Clicked',
+      '⚡ Viral Trending',
+      '⭐ Famous in City',
+      '🎟️ Selling Fast',
+      '✨ Curated Pick',
+      '🏆 Community Favorite',
+    ];
+    const clickCounts = ['3.8k clicks', '2.9k clicks', '2.4k clicks', '1.8k clicks', '1.5k clicks', '1.2k clicks'];
+
+    return pool.slice(0, 6).map((e, idx) => ({
+      ...e,
+      badge: badges[idx % badges.length],
+      clicks: clickCounts[idx % clickCounts.length],
+    }));
+  }, [eventsWithDistance]);
+
+  // Quadrupled list for a seamless continuous marquee scrolling to the right
+  const famousScrollList = useMemo(() => {
+    return [...famousEvents, ...famousEvents, ...famousEvents, ...famousEvents];
+  }, [famousEvents]);
+
   // Filter Logic
   const filteredEvents = useMemo(() => {
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
     return eventsWithDistance
       .filter((e) => {
         // Only public live events
@@ -278,27 +287,7 @@ export default function WhatsOnFeed() {
           if (!eText.includes(q)) return false;
         }
 
-        // 2. Date filter
-        if (dateFilter !== 'All') {
-          const eDate = e.start_at ? new Date(e.start_at) : null;
-          if (!eDate || isNaN(eDate.getTime())) return false;
-
-          const eDateStr = eDate.toISOString().split('T')[0];
-
-          if (dateFilter === 'Today') {
-            if (eDateStr !== todayStr) return false;
-          } else if (dateFilter === 'Tomorrow') {
-            if (eDateStr !== tomorrowStr) return false;
-          } else if (dateFilter === 'Weekend') {
-            const day = eDate.getDay();
-            if (day !== 0 && day !== 6) return false;
-          } else if (dateFilter === 'This Week') {
-            const diffDays = (eDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-            if (diffDays < 0 || diffDays > 7) return false;
-          }
-        }
-
-        // 3. Category filter
+        // 2. Category filter
         if (categoryFilter !== 'All') {
           const cat = categoryFilter.toLowerCase();
           if (cat === 'technology') {
@@ -320,7 +309,7 @@ export default function WhatsOnFeed() {
           }
         }
 
-        // 4. Distance filter
+        // 3. Distance filter
         if (distanceFilter !== 'Off') {
           const maxKm = distanceFilter === '2 km' ? 2 : distanceFilter === '5 km' ? 5 : 10;
           if (typeof e.distanceKm === 'number') {
@@ -328,7 +317,7 @@ export default function WhatsOnFeed() {
           }
         }
 
-        // 5. Mood / Tag multi-select filter
+        // 4. Mood / Tag multi-select filter
         if (selectedMoods.length > 0) {
           const eDate = e.start_at ? new Date(e.start_at) : null;
           const eHours = eDate ? eDate.getHours() : 18;
@@ -390,198 +379,158 @@ export default function WhatsOnFeed() {
         return true;
       })
       .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
-  }, [eventsWithDistance, searchQuery, dateFilter, categoryFilter, distanceFilter, selectedMoods]);
-
-  // Automated Most Clicked & Famous events for the animated panel card
-  const famousEvents = useMemo(() => {
-    const pool = events.length > 0 ? events : SAMPLE_TEMPLATE_EVENTS;
-    const badges = [
-      '🔥 #1 Most Clicked',
-      '⚡ Viral Trending',
-      '⭐ Famous in City',
-      '🎟️ Selling Fast',
-      '✨ Curated Pick',
-      '🏆 Community Favorite',
-    ];
-    const clickCounts = ['3.8k clicks', '2.9k clicks', '2.4k clicks', '1.8k clicks', '1.5k clicks', '1.2k clicks'];
-
-    return pool.slice(0, 6).map((e, idx) => ({
-      ...e,
-      badge: badges[idx % badges.length],
-      clicks: clickCounts[idx % clickCounts.length],
-    }));
-  }, [events]);
-
-  // Tripled list for a seamless continuous scroll to the right
-  const famousScrollList = useMemo(() => {
-    return [...famousEvents, ...famousEvents, ...famousEvents];
-  }, [famousEvents]);
+  }, [eventsWithDistance, searchQuery, categoryFilter, distanceFilter, selectedMoods]);
 
   return (
     <div className="w-full space-y-8">
-      {/* Header Section: "What's On" + Animated Event Panel Card with events scrolling to the right */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
-        {/* The Word "What's On" */}
-        <div className="shrink-0 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#E8621A]">
-              Live Discovery
-            </span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[#0F172A]">
-            What's On
-          </h1>
-        </div>
-
-        {/* Animated Event Panel Card into which automated most clicked and famous events are scrolling right */}
-        <div className="flex-1 w-full max-w-3xl overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] p-3 sm:p-3.5 text-white border border-slate-800 shadow-md relative group">
-          {/* Panel Card Header Strip */}
-          <div className="flex items-center justify-between px-1 pb-2 mb-2 border-b border-slate-800/80 text-[10px] font-bold text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-400" />
-              <span className="text-white uppercase tracking-wider font-extrabold">
-                Most Clicked & Famous Events
-              </span>
-              <span className="px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[9px] font-bold border border-orange-500/30 hidden sm:inline">
-                Live Pulse
-              </span>
+      {/* ========================================================================= */}
+      {/* 1. UNIFIED HORIZONTAL PLANE: What's On + Real EventCards Marquee + Tags   */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-3xl border border-[#E2E8F0] p-5 sm:p-7 shadow-xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          
+          {/* LEFT: What's On Branding & All Filter Tags (Categories, Moods, Distance, Reset) */}
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-5">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">
+                  Live Discovery
+                </span>
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-display font-black text-[#0F172A] tracking-tight">
+                What's On
+              </h1>
+              <p className="text-xs text-[#64748B] font-medium mt-1 leading-relaxed">
+                Curated local & virtual experiences, AI-verified and ready to explore.
+              </p>
             </div>
-            <span className="text-slate-400 font-medium text-[10px] hidden sm:inline">
-              Hover to pause · Auto-scrolling right →
-            </span>
-          </div>
 
-          {/* Scrolling Track Moving to the Right */}
-          <div className="relative overflow-hidden w-full">
-            {/* Fade Gradients at Left and Right edges for smooth visual transition */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0F172A] to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0F172A] to-transparent z-10 pointer-events-none" />
+            {/* Category Filter Pills (In Horizontal Plane) */}
+            <div className="space-y-2">
+              <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
+                CATEGORIES
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {CATEGORY_FILTERS.map((cat) => {
+                  const active = categoryFilter === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap ${
+                        active
+                          ? 'bg-[#0F172A] text-white shadow-xs'
+                          : 'bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] hover:bg-slate-100'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            {/* Continuous Marquee Scrolling to the Right */}
-            <div className="animate-scroll-right flex items-center gap-3 hover:[animation-play-state:paused] cursor-pointer py-0.5">
-              {famousScrollList.map((evt, idx) => (
-                <Link
-                  key={`${evt.id}-${idx}`}
-                  href={`/${evt.slug}`}
-                  className="flex items-center gap-3 p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/60 hover:border-amber-400/50 transition-all shrink-0 w-64 group/card shadow-xs"
+            {/* Mood Tags + Distance Selector + Reset (In Horizontal Plane) */}
+            <div className="space-y-2.5 pt-2 border-t border-[#F1F5F9]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
+                  <Navigation className="w-3 h-3 text-[#64748B] rotate-45" />
+                  <span>DISTANCE & MOOD</span>
+                </div>
+                <button
+                  onClick={handleResetMyView}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
+                  title="Reset all filters"
                 >
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-slate-700">
-                    <Image
-                      src={evt.cover_image_url}
-                      alt={evt.title}
-                      fill
-                      unoptimized
-                      className="object-cover group-hover/card:scale-110 transition-transform duration-300"
-                    />
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset filters</span>
+                </button>
+              </div>
+
+              {/* Distance Pills */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 border border-[#E2E8F0] rounded-full p-0.5 bg-[#F8FAFC] shadow-2xs">
+                  {DISTANCE_OPTIONS.map((dist) => (
+                    <button
+                      key={dist}
+                      onClick={() => setDistanceFilter(dist)}
+                      className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
+                        distanceFilter === dist
+                          ? 'bg-[#0F172A] text-white'
+                          : 'text-[#64748B] hover:text-[#0F172A]'
+                      }`}
+                    >
+                      {dist}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mood Tags Horizontal Scroll */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {MOOD_TAGS.map((tag) => {
+                  const active = selectedMoods.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => handleToggleMood(tag)}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                        active
+                          ? 'bg-[#0F172A] text-white shadow-xs'
+                          : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Animated Event Panel Card with Full Earlier EventCards Scrolling Right */}
+          <div className="lg:col-span-7 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-4 overflow-hidden relative shadow-2xs flex flex-col justify-between">
+            {/* Header Strip */}
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#E2E8F0] text-xs">
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-[#E8621A] fill-[#E8621A]" />
+                <span className="font-extrabold text-[#0F172A] uppercase tracking-wider text-xs">
+                  Most Clicked & Famous Gatherings
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-extrabold">
+                  Trending
+                </span>
+              </div>
+              <span className="text-[11px] text-[#64748B] font-medium hidden sm:inline">
+                Auto-scrolling right → (Hover to pause)
+              </span>
+            </div>
+
+            {/* Marquee Track with Genuine EventCards from Earlier Codes */}
+            <div className="relative overflow-hidden w-full py-1">
+              {/* Fade gradients */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
+
+              <div className="animate-scroll-right flex items-stretch gap-4 hover:[animation-play-state:paused] cursor-pointer">
+                {famousScrollList.map((evt, idx) => (
+                  <div
+                    key={`marquee-card-${evt.id}-${idx}`}
+                    className="w-[280px] sm:w-[320px] shrink-0 h-[410px] flex flex-col pointer-events-auto"
+                  >
+                    <EventCard event={evt} distanceKm={(evt as any).distanceKm} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider text-amber-400">
-                      <span>{evt.badge}</span>
-                      <span className="text-slate-500">·</span>
-                      <span className="text-slate-400 font-medium lowercase">{evt.clicks}</span>
-                    </div>
-                    <p className="text-xs font-bold text-white truncate group-hover/card:text-amber-300 transition-colors">
-                      {evt.title}
-                    </p>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                      {evt.city || 'Mumbai'}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Category Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {CATEGORY_FILTERS.map((cat) => {
-          const active = categoryFilter === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-4 py-2 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                active
-                  ? 'bg-[#0F172A] text-white shadow-xs'
-                  : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              {cat}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Distance Filter Row */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-          <Navigation className="w-3 h-3 rotate-45" />
-          <span>DISTANCE</span>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          {DISTANCE_OPTIONS.map((dist) => {
-            const active = distanceFilter === dist;
-            return (
-              <button
-                key={dist}
-                onClick={() => setDistanceFilter(dist)}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                  active
-                    ? 'bg-[#0F172A] text-white shadow-xs'
-                    : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                {dist}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Mood / Tag System Row */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-            MOOD
-          </span>
-          <button
-            onClick={handleResetMyView}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset my view</span>
-          </button>
-        </div>
-
-        {/* Interactive Multi-Select Tag Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          {MOOD_TAGS.map((tag) => {
-            const active = selectedMoods.includes(tag);
-            return (
-              <button
-                key={tag}
-                onClick={() => handleToggleMood(tag)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                  active
-                    ? 'bg-[#0F172A] text-white shadow-xs'
-                    : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                {tag}
-              </button>
-            );
-          })}
-        </div>
-
-        <p className="text-xs text-[#94A3B8]">
-          Your filter choices are saved automatically as your default view.
-        </p>
-      </div>
-
-      {/* Events Grid (Keeping EventCard UNCHANGED per user instruction) */}
+      {/* ========================================================================= */}
+      {/* 2. BELOW: ALL EVENTS LISTED IN GRID (With 3D Perspective Spring Reveal)    */}
+      {/* ========================================================================= */}
       <div className="pt-2">
         {filteredEvents.length === 0 ? (
           <div className="p-12 text-center bg-[#F8FAFC] rounded-3xl border border-dashed border-[#E2E8F0] space-y-3">
@@ -604,20 +553,25 @@ export default function WhatsOnFeed() {
             {filteredEvents.map((event, idx) => (
               <motion.div
                 key={event.id}
-                initial={{ opacity: 0, y: 32, scale: 0.97 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: '-30px' }}
+                initial={{ opacity: 0, y: 50, scale: 0.93, rotateX: 6 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+                viewport={{ once: true, amount: 0.12 }}
                 transition={{
-                  duration: 0.45,
-                  ease: [0.215, 0.61, 0.355, 1],
+                  type: 'spring',
+                  stiffness: 115,
+                  damping: 18,
+                  mass: 0.75,
                   delay: (idx % 3) * 0.08,
                 }}
+                whileHover={{
+                  y: -8,
+                  scale: 1.015,
+                  transition: { duration: 0.22, ease: 'easeOut' },
+                }}
+                style={{ transformPerspective: 1000 }}
                 className="h-full flex flex-col"
               >
-                <EventCard
-                  event={event}
-                  distanceKm={event.distanceKm}
-                />
+                <EventCard event={event} distanceKm={event.distanceKm} />
               </motion.div>
             ))}
           </div>
