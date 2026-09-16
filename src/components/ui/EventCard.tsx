@@ -99,7 +99,7 @@ export default function EventCard({ event, showStatus = true, distanceKm }: Even
           </h3>
 
           {/* Tagline */}
-          <p className="font-tagline italic text-sm text-ink-secondary mt-1.5 line-clamp-2 leading-relaxed">
+          <p className="text-xs sm:text-sm font-normal text-[#64748B] mt-1.5 line-clamp-2 leading-relaxed">
             {event.tagline}
           </p>
         </div>

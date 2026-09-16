@@ -483,7 +483,7 @@ export default function WhatsOnFeed() {
                     </h2>
 
                     {currentFlashEvent.tagline && (
-                      <p className="text-xs sm:text-sm text-white/80 line-clamp-1 italic font-tagline">
+                      <p className="text-xs sm:text-sm text-white/85 line-clamp-1 font-normal">
                         {currentFlashEvent.tagline}
                       </p>
                     )}
