@@ -88,8 +88,8 @@ export default function EventCard({ event, showStatus = true, distanceKm }: Even
       <div className="p-5 flex flex-col flex-1 justify-between">
         <div>
           {/* Date row in IST */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-accent mb-2">
-            <Calendar className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] mb-2">
+            <Calendar className="w-3.5 h-3.5 text-[#64748B]" />
             <span>{formatIST(event.start_at)}</span>
           </div>
 
