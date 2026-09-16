@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -18,8 +18,9 @@ import {
   Building2,
   Ticket
 } from 'lucide-react';
-import { EventItem } from '@/types';
+import { EventItem, RSVPItem } from '@/types';
 import { formatIST, getRSVPsByEvent } from '@/lib/store';
+import { getLocalAuthSession } from '@/lib/auth';
 import RSVPForm from '@/components/ui/RSVPForm';
 import ShareEventModal from '@/components/events/ShareEventModal';
 
@@ -30,6 +31,19 @@ interface UnifiedEventDetailViewProps {
 export default function UnifiedEventDetailView({ event }: { event: EventItem }) {
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [confirmedRsvp, setConfirmedRsvp] = useState<RSVPItem | null>(null);
+
+  // Check if current attendee already has a confirmed RSVP for this event
+  useEffect(() => {
+    const session = getLocalAuthSession();
+    if (session?.email) {
+      const allRsvps = getRSVPsByEvent(event.id);
+      const match = allRsvps.find((r) => r.email?.toLowerCase() === session.email?.toLowerCase());
+      if (match) {
+        setConfirmedRsvp(match);
+      }
+    }
+  }, [event.id]);
 
   const rsvps = getRSVPsByEvent(event.id);
   const confirmedCount = rsvps.filter((r) => r.status === 'confirmed').length;
@@ -238,10 +252,24 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 <span>Book Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'}</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
+            ) : confirmedRsvp ? (
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowRsvpModal(true)}
+                  className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span>View Your Confirmed Pass &amp; QR</span>
+                </button>
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium text-center">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Spot Confirmed · Digital Pass Ready</span>
+                </div>
+              </div>
             ) : (
               <button
                 onClick={() => setShowRsvpModal(true)}
-                className="w-full py-3.5 px-4 rounded-xl bg-brand hover:bg-accent text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-xl bg-brand hover:bg-accent text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Ticket className="w-4 h-4" />
                 <span>RSVP Now — Free Entry</span>
@@ -269,18 +297,28 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
       {/* Clean RSVP Modal if native event */}
       {!isExternal && showRsvpModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowRsvpModal(false);
+          }}
+        >
           <div className="relative w-full max-w-md bg-surface rounded-2xl border border-border p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowRsvpModal(false)}
-              className="absolute top-4 right-4 text-ink-muted hover:text-ink text-sm font-bold p-1"
+              className="absolute top-4 right-4 text-ink-muted hover:text-ink text-sm font-bold p-1 z-10"
               aria-label="Close modal"
             >
               ✕
             </button>
             <RSVPForm
               event={event}
-              onSuccess={() => setShowRsvpModal(false)}
+              onSuccess={(rsvp) => {
+                setConfirmedRsvp(rsvp);
+                // Keep showRsvpModal open so the confirmation screen ('step' === 'success')
+                // with attendee name, digital pass, calendar links, and organizer follow card
+                // opens/remains visible automatically right after RSVP is created!
+              }}
             />
           </div>
         </div>
