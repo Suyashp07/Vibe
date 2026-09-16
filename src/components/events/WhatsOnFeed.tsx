@@ -14,9 +14,11 @@ import {
   Flame,
   Sparkles,
   TrendingUp,
-  ArrowRight
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
 import {
   getUserCity,
@@ -247,30 +249,41 @@ export default function WhatsOnFeed() {
     }
   };
 
-  // Automated Most Clicked & Famous events for the animated panel card
-  const famousEvents = useMemo(() => {
+  // 3 to 4 prominent events for the BookMyShow-style flashcard slider
+  const prominentEvents = useMemo(() => {
     const pool = eventsWithDistance.length > 0 ? eventsWithDistance : SAMPLE_TEMPLATE_EVENTS;
-    const badges = [
-      '🔥 #1 Most Clicked',
-      '⚡ Viral Trending',
-      '⭐ Famous in City',
-      '🎟️ Selling Fast',
-      '✨ Curated Pick',
-      '🏆 Community Favorite',
-    ];
-    const clickCounts = ['3.8k clicks', '2.9k clicks', '2.4k clicks', '1.8k clicks', '1.5k clicks', '1.2k clicks'];
-
-    return pool.slice(0, 6).map((e, idx) => ({
-      ...e,
-      badge: badges[idx % badges.length],
-      clicks: clickCounts[idx % clickCounts.length],
-    }));
+    return pool.slice(0, 4);
   }, [eventsWithDistance]);
 
-  // Quadrupled list for a seamless continuous marquee scrolling to the right
-  const famousScrollList = useMemo(() => {
-    return [...famousEvents, ...famousEvents, ...famousEvents, ...famousEvents];
-  }, [famousEvents]);
+  const [flashcardIdx, setFlashcardIdx] = useState(0);
+  const [isFlashcardPaused, setIsFlashcardPaused] = useState(false);
+
+  // Auto-cycle through the 3 to 4 prominent events every 4.5 seconds
+  useEffect(() => {
+    if (isFlashcardPaused || prominentEvents.length <= 1) return;
+    const timer = setInterval(() => {
+      setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [isFlashcardPaused, prominentEvents.length]);
+
+  const handlePrevFlashcard = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFlashcardIdx((prev) => (prev - 1 + prominentEvents.length) % prominentEvents.length);
+  };
+
+  const handleNextFlashcard = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
+  };
+
+  const currentFlashEvent = prominentEvents[flashcardIdx] || prominentEvents[0];
+  const flashcardLink = currentFlashEvent?.source_type === 'external' && currentFlashEvent?.external_ticket_url
+    ? currentFlashEvent.external_ticket_url
+    : `/${currentFlashEvent?.slug || ''}`;
+  const isFlashcardExternal = currentFlashEvent?.source_type === 'external';
 
   // Filter Logic
   const filteredEvents = useMemo(() => {
@@ -387,8 +400,8 @@ export default function WhatsOnFeed() {
       {/* 1. TOP SECTION: "What's On" + Animated Event Panel Card (Scrolling Right)  */}
       {/* ========================================================================= */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        {/* The word "What's On" — DIRECTLY ON PAGE CANVAS (NO CARD!) */}
-        <div className="shrink-0 space-y-1">
+        {/* Left: The word "What's On" — DIRECTLY ON PAGE CANVAS (NO CARD!) */}
+        <div className="shrink-0 space-y-2 max-w-sm">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[11px] font-black uppercase tracking-widest text-[#E8621A]">
@@ -398,46 +411,141 @@ export default function WhatsOnFeed() {
           <h1 className="text-4xl sm:text-5xl font-display font-black text-[#0F172A] tracking-tight">
             What's On
           </h1>
-          <p className="text-xs text-[#64748B] font-medium max-w-xs leading-relaxed">
-            Curated local and virtual events, AI-verified and ready to explore.
+          <p className="text-xs text-[#64748B] font-medium leading-relaxed">
+            Curated local and virtual events, AI-verified and ready to explore across India.
           </p>
         </div>
 
-        {/* Animated Event Panel Card into which automated most clicked and famous events are scrolling right */}
-        <div className="flex-1 w-full max-w-3xl overflow-hidden rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] p-3 sm:p-4 shadow-2xs relative group">
-          {/* Panel Header */}
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#E2E8F0] text-xs">
-            <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-[#E8621A] fill-[#E8621A]" />
-              <span className="font-extrabold text-[#0F172A] uppercase tracking-wider text-xs">
-                Most Clicked & Famous Events
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-extrabold">
-                Trending
-              </span>
-            </div>
-            <span className="text-[11px] text-[#64748B] font-medium hidden sm:inline">
-              Auto-scrolling right → (Hover to pause)
-            </span>
-          </div>
-
-          {/* Marquee Track with Genuine EventCards from Earlier Codes */}
-          <div className="relative overflow-hidden w-full py-1">
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
-
-            <div className="animate-scroll-right flex items-stretch gap-4 hover:[animation-play-state:paused] cursor-pointer">
-              {famousScrollList.map((evt, idx) => (
-                <div
-                  key={`marquee-card-${evt.id}-${idx}`}
-                  className="w-[280px] sm:w-[320px] shrink-0 h-[410px] flex flex-col pointer-events-auto"
+        {/* Right: BookMyShow-style Event Flashcard Slider (3 to 4 prominent events) */}
+        {currentFlashEvent && (
+          <div
+            className="flex-1 w-full max-w-xl lg:max-w-2xl relative rounded-2xl overflow-hidden shadow-md border border-[#E2E8F0] group cursor-pointer h-56 sm:h-60 bg-slate-900"
+            onMouseEnter={() => setIsFlashcardPaused(true)}
+            onMouseLeave={() => setIsFlashcardPaused(false)}
+          >
+            <Link
+              href={flashcardLink}
+              target={isFlashcardExternal ? '_blank' : undefined}
+              rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
+              className="block relative w-full h-full"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentFlashEvent.id}
+                  initial={{ opacity: 0, scale: 1.02 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0"
                 >
-                  <EventCard event={evt} distanceKm={(evt as any).distanceKm} />
-                </div>
-              ))}
-            </div>
+                  {/* Background Poster Image */}
+                  <Image
+                    src={currentFlashEvent.cover_image_url}
+                    alt={currentFlashEvent.title}
+                    fill
+                    unoptimized
+                    priority
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+
+                  {/* BookMyShow-style Cinematic Dark Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/35 pointer-events-none" />
+
+                  {/* Flashcard Content Overlay */}
+                  <div className="absolute inset-0 p-5 sm:p-6 flex flex-col justify-between z-10">
+                    {/* Top Row: Prominent Badge + Price */}
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
+                        <Flame className="w-3 h-3 fill-white" />
+                        <span>PROMINENT EVENT {flashcardIdx + 1}/{prominentEvents.length}</span>
+                      </span>
+
+                      <span className="text-[11px] font-bold bg-white/95 text-[#0F172A] px-2.5 py-1 rounded-full shadow-sm">
+                        {currentFlashEvent.external_price_text || (isFlashcardExternal ? 'Official Site ↗' : 'Free RSVP')}
+                      </span>
+                    </div>
+
+                    {/* Middle: Date, Venue, and Grand Event Title (BookMyShow billboard layout) */}
+                    <div className="space-y-1.5 max-w-lg">
+                      <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{currentFlashEvent.start_at ? formatIST(currentFlashEvent.start_at) : 'Dates TBA'}</span>
+                        <span className="text-white/40">·</span>
+                        <span className="flex items-center gap-1 text-white/90 truncate">
+                          <MapPin className="w-3 h-3 text-[#E8621A] shrink-0" />
+                          <span className="truncate">{currentFlashEvent.city} · {currentFlashEvent.location_name || currentFlashEvent.event_type}</span>
+                        </span>
+                      </div>
+
+                      <h2 className="text-xl sm:text-2xl font-display font-black text-white leading-tight line-clamp-1 drop-shadow-sm uppercase tracking-tight">
+                        {currentFlashEvent.title}
+                      </h2>
+
+                      {currentFlashEvent.tagline && (
+                        <p className="text-xs text-white/80 line-clamp-1 italic font-tagline">
+                          {currentFlashEvent.tagline}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Bottom Row: Organizer Pill + Book/RSVP Button */}
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] font-medium text-white/80 bg-white/10 backdrop-blur-md px-3 py-0.5 rounded-full border border-white/15">
+                        By {currentFlashEvent.organizer_name || 'Vibe Curated'}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-white text-[#0F172A] text-xs font-black group-hover:bg-amber-300 group-hover:text-black transition-all shadow-md">
+                        <span>{isFlashcardExternal ? 'Book Tickets' : 'RSVP Now'}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* BookMyShow Navigation Left Chevron */}
+              <button
+                type="button"
+                onClick={handlePrevFlashcard}
+                aria-label="Previous prominent event"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-30 shadow-md cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {/* BookMyShow Navigation Right Chevron */}
+              <button
+                type="button"
+                onClick={handleNextFlashcard}
+                aria-label="Next prominent event"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-30 shadow-md cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              {/* BookMyShow Bottom Indicator Dots */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30 pointer-events-auto">
+                {prominentEvents.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setFlashcardIdx(idx);
+                    }}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      flashcardIdx === idx
+                        ? 'w-6 bg-white shadow-sm'
+                        : 'w-1.5 bg-white/40 hover:bg-white/75'
+                    }`}
+                    aria-label={`Go to event ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </Link>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
