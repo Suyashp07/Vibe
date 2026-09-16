@@ -384,146 +384,138 @@ export default function WhatsOnFeed() {
   return (
     <div className="w-full space-y-8">
       {/* ========================================================================= */}
-      {/* 1. UNIFIED HORIZONTAL PLANE: What's On + Real EventCards Marquee + Tags   */}
+      {/* 1. TOP SECTION: "What's On" + Animated Event Panel Card (Scrolling Right)  */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-3xl border border-[#E2E8F0] p-5 sm:p-7 shadow-xs">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          
-          {/* LEFT: What's On Branding & All Filter Tags (Categories, Moods, Distance, Reset) */}
-          <div className="lg:col-span-5 flex flex-col justify-between space-y-5">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 mb-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">
-                  Live Discovery
-                </span>
-              </div>
-              <h1 className="text-4xl sm:text-5xl font-display font-black text-[#0F172A] tracking-tight">
-                What's On
-              </h1>
-              <p className="text-xs text-[#64748B] font-medium mt-1 leading-relaxed">
-                Curated local & virtual experiences, AI-verified and ready to explore.
-              </p>
-            </div>
-
-            {/* Category Filter Pills (In Horizontal Plane) */}
-            <div className="space-y-2">
-              <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
-                CATEGORIES
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {CATEGORY_FILTERS.map((cat) => {
-                  const active = categoryFilter === cat;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setCategoryFilter(cat)}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap ${
-                        active
-                          ? 'bg-[#0F172A] text-white shadow-xs'
-                          : 'bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] hover:bg-slate-100'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Mood Tags + Distance Selector + Reset (In Horizontal Plane) */}
-            <div className="space-y-2.5 pt-2 border-t border-[#F1F5F9]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
-                  <Navigation className="w-3 h-3 text-[#64748B] rotate-45" />
-                  <span>DISTANCE & MOOD</span>
-                </div>
-                <button
-                  onClick={handleResetMyView}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
-                  title="Reset all filters"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>Reset filters</span>
-                </button>
-              </div>
-
-              {/* Distance Pills */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 border border-[#E2E8F0] rounded-full p-0.5 bg-[#F8FAFC] shadow-2xs">
-                  {DISTANCE_OPTIONS.map((dist) => (
-                    <button
-                      key={dist}
-                      onClick={() => setDistanceFilter(dist)}
-                      className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
-                        distanceFilter === dist
-                          ? 'bg-[#0F172A] text-white'
-                          : 'text-[#64748B] hover:text-[#0F172A]'
-                      }`}
-                    >
-                      {dist}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Mood Tags Horizontal Scroll */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {MOOD_TAGS.map((tag) => {
-                  const active = selectedMoods.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => handleToggleMood(tag)}
-                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                        active
-                          ? 'bg-[#0F172A] text-white shadow-xs'
-                          : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        {/* The word "What's On" — DIRECTLY ON PAGE CANVAS (NO CARD!) */}
+        <div className="shrink-0 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-black uppercase tracking-widest text-[#E8621A]">
+              Live Discovery
+            </span>
           </div>
+          <h1 className="text-4xl sm:text-5xl font-display font-black text-[#0F172A] tracking-tight">
+            What's On
+          </h1>
+          <p className="text-xs text-[#64748B] font-medium max-w-xs leading-relaxed">
+            Curated local and virtual events, AI-verified and ready to explore.
+          </p>
+        </div>
 
-          {/* RIGHT: Animated Event Panel Card with Full Earlier EventCards Scrolling Right */}
-          <div className="lg:col-span-7 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-4 overflow-hidden relative shadow-2xs flex flex-col justify-between">
-            {/* Header Strip */}
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#E2E8F0] text-xs">
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-[#E8621A] fill-[#E8621A]" />
-                <span className="font-extrabold text-[#0F172A] uppercase tracking-wider text-xs">
-                  Most Clicked & Famous Gatherings
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-extrabold">
-                  Trending
-                </span>
-              </div>
-              <span className="text-[11px] text-[#64748B] font-medium hidden sm:inline">
-                Auto-scrolling right → (Hover to pause)
+        {/* Animated Event Panel Card into which automated most clicked and famous events are scrolling right */}
+        <div className="flex-1 w-full max-w-3xl overflow-hidden rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] p-3 sm:p-4 shadow-2xs relative group">
+          {/* Panel Header */}
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#E2E8F0] text-xs">
+            <div className="flex items-center gap-2">
+              <Flame className="w-4 h-4 text-[#E8621A] fill-[#E8621A]" />
+              <span className="font-extrabold text-[#0F172A] uppercase tracking-wider text-xs">
+                Most Clicked & Famous Events
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-extrabold">
+                Trending
               </span>
             </div>
+            <span className="text-[11px] text-[#64748B] font-medium hidden sm:inline">
+              Auto-scrolling right → (Hover to pause)
+            </span>
+          </div>
 
-            {/* Marquee Track with Genuine EventCards from Earlier Codes */}
-            <div className="relative overflow-hidden w-full py-1">
-              {/* Fade gradients */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
+          {/* Marquee Track with Genuine EventCards from Earlier Codes */}
+          <div className="relative overflow-hidden w-full py-1">
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F8FAFC] to-transparent z-20 pointer-events-none" />
 
-              <div className="animate-scroll-right flex items-stretch gap-4 hover:[animation-play-state:paused] cursor-pointer">
-                {famousScrollList.map((evt, idx) => (
-                  <div
-                    key={`marquee-card-${evt.id}-${idx}`}
-                    className="w-[280px] sm:w-[320px] shrink-0 h-[410px] flex flex-col pointer-events-auto"
-                  >
-                    <EventCard event={evt} distanceKm={(evt as any).distanceKm} />
-                  </div>
-                ))}
-              </div>
+            <div className="animate-scroll-right flex items-stretch gap-4 hover:[animation-play-state:paused] cursor-pointer">
+              {famousScrollList.map((evt, idx) => (
+                <div
+                  key={`marquee-card-${evt.id}-${idx}`}
+                  className="w-[280px] sm:w-[320px] shrink-0 h-[410px] flex flex-col pointer-events-auto"
+                >
+                  <EventCard event={evt} distanceKm={(evt as any).distanceKm} />
+                </div>
+              ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 2. ALL THE TAGS IN ONE CLEAN HORIZONTAL PLANE (NO CARD! DIRECTLY ON CANVAS)*/}
+      {/* ========================================================================= */}
+      <div className="space-y-3 pt-2 border-b border-[#E2E8F0] pb-6">
+        {/* Category Filters Row */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {CATEGORY_FILTERS.map((cat) => {
+            const active = categoryFilter === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`px-4 py-2 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
+                  active
+                    ? 'bg-[#0F172A] text-white shadow-xs'
+                    : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mood Tags Strip + Distance Selector + Reset in one clean horizontal line */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          {/* Mood Tags */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider shrink-0 mr-1">
+              MOOD:
+            </span>
+            {MOOD_TAGS.map((tag) => {
+              const active = selectedMoods.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  onClick={() => handleToggleMood(tag)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    active
+                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                  }`}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right: Distance Selector + Reset */}
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <div className="flex items-center gap-1 border border-[#E2E8F0] rounded-full p-0.5 bg-white shadow-2xs">
+              <Navigation className="w-3 h-3 text-[#64748B] ml-2 rotate-45" />
+              {DISTANCE_OPTIONS.map((dist) => (
+                <button
+                  key={dist}
+                  onClick={() => setDistanceFilter(dist)}
+                  className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
+                    distanceFilter === dist
+                      ? 'bg-[#0F172A] text-white'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
+                  }`}
+                >
+                  {dist}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleResetMyView}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] rounded-full transition-colors cursor-pointer border border-[#E2E8F0] shadow-2xs"
+              title="Reset my view"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
           </div>
         </div>
       </div>
