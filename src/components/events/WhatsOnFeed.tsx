@@ -397,156 +397,138 @@ export default function WhatsOnFeed() {
   return (
     <div className="w-full space-y-8">
       {/* ========================================================================= */}
-      {/* 1. TOP SECTION: "What's On" + Animated Event Panel Card (Scrolling Right)  */}
       {/* ========================================================================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        {/* Left: The word "What's On" — DIRECTLY ON PAGE CANVAS (NO CARD!) */}
-        <div className="shrink-0 space-y-2 max-w-sm">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-[#E8621A]">
-              Live Discovery
-            </span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-display font-black text-[#0F172A] tracking-tight">
-            What's On
-          </h1>
-          <p className="text-xs text-[#64748B] font-medium leading-relaxed">
-            Curated local and virtual events, AI-verified and ready to explore across India.
-          </p>
-        </div>
-
-        {/* Right: BookMyShow-style Event Flashcard Slider (3 to 4 prominent events) */}
-        {currentFlashEvent && (
-          <div
-            className="flex-1 w-full max-w-xl lg:max-w-2xl relative rounded-2xl overflow-hidden shadow-md border border-[#E2E8F0] group cursor-pointer h-56 sm:h-60 bg-slate-900"
-            onMouseEnter={() => setIsFlashcardPaused(true)}
-            onMouseLeave={() => setIsFlashcardPaused(false)}
+      {/* 1. TOP HERO: EVENT FLASHCARD CAROUSEL (FILLS ENTIRE TOP PORTION)          */}
+      {/* ========================================================================= */}
+      {currentFlashEvent && (
+        <div
+          className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md border border-[#E2E8F0] group cursor-pointer h-64 sm:h-72 md:h-80 bg-slate-950"
+          onMouseEnter={() => setIsFlashcardPaused(true)}
+          onMouseLeave={() => setIsFlashcardPaused(false)}
+        >
+          <Link
+            href={flashcardLink}
+            target={isFlashcardExternal ? '_blank' : undefined}
+            rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
+            className="block relative w-full h-full"
           >
-            <Link
-              href={flashcardLink}
-              target={isFlashcardExternal ? '_blank' : undefined}
-              rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
-              className="block relative w-full h-full"
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentFlashEvent.id}
-                  initial={{ opacity: 0, scale: 1.02 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-0"
-                >
-                  {/* Background Poster Image */}
-                  <Image
-                    src={currentFlashEvent.cover_image_url}
-                    alt={currentFlashEvent.title}
-                    fill
-                    unoptimized
-                    priority
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentFlashEvent.id}
+                initial={{ opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0"
+              >
+                {/* Background Poster Image */}
+                <Image
+                  src={currentFlashEvent.cover_image_url}
+                  alt={currentFlashEvent.title}
+                  fill
+                  unoptimized
+                  priority
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
 
-                  {/* BookMyShow-style Cinematic Dark Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/35 pointer-events-none" />
+                {/* Cinematic Dark Gradient Overlay (BookMyShow billboard style) */}
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/95 via-black/75 to-black/35 pointer-events-none" />
 
-                  {/* Flashcard Content Overlay */}
-                  <div className="absolute inset-0 p-5 sm:p-6 flex flex-col justify-between z-10">
-                    {/* Top Row: Prominent Badge + Price */}
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
-                        <Flame className="w-3 h-3 fill-white" />
-                        <span>PROMINENT EVENT {flashcardIdx + 1}/{prominentEvents.length}</span>
-                      </span>
+                {/* Flashcard Content Overlay */}
+                <div className="absolute inset-0 p-6 sm:p-8 md:p-10 flex flex-col justify-between z-10">
+                  {/* Top Row: Prominent Badge + Price */}
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-red-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm">
+                      <Flame className="w-3.5 h-3.5 fill-white" />
+                      <span>PROMINENT EVENT {flashcardIdx + 1}/{prominentEvents.length}</span>
+                    </span>
 
-                      <span className="text-[11px] font-bold bg-white/95 text-[#0F172A] px-2.5 py-1 rounded-full shadow-sm">
-                        {currentFlashEvent.external_price_text || (isFlashcardExternal ? 'Official Site ↗' : 'Free RSVP')}
-                      </span>
-                    </div>
-
-                    {/* Middle: Date, Venue, and Grand Event Title (BookMyShow billboard layout) */}
-                    <div className="space-y-1.5 max-w-lg">
-                      <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{currentFlashEvent.start_at ? formatIST(currentFlashEvent.start_at) : 'Dates TBA'}</span>
-                        <span className="text-white/40">·</span>
-                        <span className="flex items-center gap-1 text-white/90 truncate">
-                          <MapPin className="w-3 h-3 text-[#E8621A] shrink-0" />
-                          <span className="truncate">{currentFlashEvent.city} · {currentFlashEvent.location_name || currentFlashEvent.event_type}</span>
-                        </span>
-                      </div>
-
-                      <h2 className="text-xl sm:text-2xl font-display font-black text-white leading-tight line-clamp-1 drop-shadow-sm uppercase tracking-tight">
-                        {currentFlashEvent.title}
-                      </h2>
-
-                      {currentFlashEvent.tagline && (
-                        <p className="text-xs text-white/80 line-clamp-1 italic font-tagline">
-                          {currentFlashEvent.tagline}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Bottom Row: Organizer Pill + Book/RSVP Button */}
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] font-medium text-white/80 bg-white/10 backdrop-blur-md px-3 py-0.5 rounded-full border border-white/15">
-                        By {currentFlashEvent.organizer_name || 'Vibe Curated'}
-                      </span>
-
-                      <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-white text-[#0F172A] text-xs font-black group-hover:bg-amber-300 group-hover:text-black transition-all shadow-md">
-                        <span>{isFlashcardExternal ? 'Book Tickets' : 'RSVP Now'}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
-                    </div>
+                    <span className="text-xs font-bold bg-white/95 text-[#0F172A] px-3 py-1 rounded-full shadow-sm">
+                      {currentFlashEvent.external_price_text || (isFlashcardExternal ? 'Official Site ↗' : 'Free RSVP')}
+                    </span>
                   </div>
-                </motion.div>
-              </AnimatePresence>
 
-              {/* BookMyShow Navigation Left Chevron */}
-              <button
-                type="button"
-                onClick={handlePrevFlashcard}
-                aria-label="Previous prominent event"
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-30 shadow-md cursor-pointer"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
+                  {/* Middle: Date, Venue, and Grand Event Title */}
+                  <div className="space-y-2 max-w-2xl">
+                    <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-amber-300">
+                      <Calendar className="w-4 h-4 shrink-0" />
+                      <span>{currentFlashEvent.start_at ? formatIST(currentFlashEvent.start_at) : 'Dates TBA'}</span>
+                      <span className="text-white/40">·</span>
+                      <span className="flex items-center gap-1 text-white/90 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
+                        <span className="truncate">{currentFlashEvent.city} · {currentFlashEvent.location_name || currentFlashEvent.event_type}</span>
+                      </span>
+                    </div>
 
-              {/* BookMyShow Navigation Right Chevron */}
-              <button
-                type="button"
-                onClick={handleNextFlashcard}
-                aria-label="Next prominent event"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-30 shadow-md cursor-pointer"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-black text-white leading-tight line-clamp-2 drop-shadow-sm uppercase tracking-tight">
+                      {currentFlashEvent.title}
+                    </h2>
 
-              {/* BookMyShow Bottom Indicator Dots */}
-              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30 pointer-events-auto">
-                {prominentEvents.map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setFlashcardIdx(idx);
-                    }}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      flashcardIdx === idx
-                        ? 'w-6 bg-white shadow-sm'
-                        : 'w-1.5 bg-white/40 hover:bg-white/75'
-                    }`}
-                    aria-label={`Go to event ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            </Link>
-          </div>
-        )}
-      </div>
+                    {currentFlashEvent.tagline && (
+                      <p className="text-xs sm:text-sm text-white/80 line-clamp-1 italic font-tagline">
+                        {currentFlashEvent.tagline}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Bottom Row: Organizer Pill + Book/RSVP Button */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs font-medium text-white/80 bg-white/10 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/15">
+                      By {currentFlashEvent.organizer_name || 'Vibe Curated'}
+                    </span>
+
+                    <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-white text-[#0F172A] text-xs sm:text-sm font-black group-hover:bg-amber-300 group-hover:text-black transition-all shadow-md">
+                      <span>{isFlashcardExternal ? 'Book Tickets' : 'RSVP Now'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation Left Chevron */}
+            <button
+              type="button"
+              onClick={handlePrevFlashcard}
+              aria-label="Previous prominent event"
+              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 z-30 shadow-md cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Navigation Right Chevron */}
+            <button
+              type="button"
+              onClick={handleNextFlashcard}
+              aria-label="Next prominent event"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 z-30 shadow-md cursor-pointer"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Bottom Indicator Dots */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30 pointer-events-auto">
+              {prominentEvents.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFlashcardIdx(idx);
+                  }}
+                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                    flashcardIdx === idx
+                      ? 'w-7 bg-white shadow-sm'
+                      : 'w-2 bg-white/40 hover:bg-white/75'
+                  }`}
+                  aria-label={`Go to event ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 2. TAGS & FILTERS — EXPLICITLY MENTIONED (NO HORIZONTAL SCROLL, NO CARDS) */}
