@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import { signInWithPassword, signInWithGoogle, sendEmailOtp } from '@/lib/auth';
+import { signInWithPassword, signInWithGoogle, sendEmailOtp, verifyEmailOtp } from '@/lib/auth';
 
 function LoginContent() {
   const router = useRouter();
@@ -29,7 +29,12 @@ function LoginContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [showMagicLinkFallback, setShowMagicLinkFallback] = useState(false);
+  
+  // 6-digit OTP verification flow (zero magic link)
+  const [showOtpFlow, setShowOtpFlow] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
 
   const destination = redirectParam || '/dashboard';
 
@@ -68,21 +73,41 @@ function LoginContent() {
     }
   };
 
-  const handleSendMagicLink = async () => {
+  const handleSendOtpCode = async () => {
     if (!email.trim()) {
-      setError('Enter your email address first to receive a login link.');
+      setError('Please enter your email address to receive a verification code.');
       return;
     }
-    setLoading(true);
+    setOtpLoading(true);
     setError(null);
     setMessage(null);
 
     const { error: otpErr } = await sendEmailOtp(email.trim(), 'organizer');
-    setLoading(false);
+    setOtpLoading(false);
     if (otpErr) {
-      setError(otpErr.message || 'Failed to send login link. Please try password sign in.');
+      setError(otpErr.message || 'Failed to send verification code. Please try password sign-in.');
     } else {
-      setMessage(`Login link sent to ${email.trim()}. Check your inbox or spam folder.`);
+      setOtpSent(true);
+      setMessage(`6-digit verification code sent to ${email.trim()}. Enter it below to sign in:`);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode.trim() || otpCode.trim().length < 6) {
+      setError('Please enter the complete 6-digit verification code from your email.');
+      return;
+    }
+
+    setOtpLoading(true);
+    setError(null);
+    const { error: verifyErr } = await verifyEmailOtp(email.trim(), otpCode.trim(), 'organizer');
+    setOtpLoading(false);
+
+    if (verifyErr) {
+      setError(verifyErr.message || 'Invalid or expired code. Please check your email and try again.');
+    } else {
+      router.push(destination);
     }
   };
 
@@ -192,17 +217,22 @@ function LoginContent() {
                 <label className="text-xs font-bold text-[#475569]">Password</label>
                 <button
                   type="button"
-                  onClick={() => setShowMagicLinkFallback((p) => !p)}
+                  onClick={() => {
+                    setShowOtpFlow((p) => !p);
+                    setOtpSent(false);
+                    setOtpCode('');
+                    setError(null);
+                  }}
                   className="text-[11px] font-medium text-[#64748B] hover:text-[#0A0A0A] transition-colors"
                 >
-                  Forgot or need login link?
+                  {showOtpFlow ? 'Use password instead' : 'Sign in with 6-digit code?'}
                 </button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  required
+                  required={!showOtpFlow}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -218,36 +248,93 @@ function LoginContent() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading || googleLoading}
-              className="w-full py-3 bg-[#0A0A0A] hover:bg-[#262626] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <span>Sign In</span>
-              )}
-            </button>
+            {!showOtpFlow && (
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                className="w-full py-3 bg-[#0A0A0A] hover:bg-[#262626] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <span>Sign In</span>
+                )}
+              </button>
+            )}
           </form>
 
-          {/* Magic Link Fallback */}
-          {showMagicLinkFallback && (
-            <div className="mt-4 pt-4 border-t border-[#E2E8F0] space-y-2 animate-in fade-in">
-              <p className="text-[11px] text-[#64748B]">
-                Enter your email above and we will send a passwordless login link directly to your inbox.
-              </p>
-              <button
-                type="button"
-                onClick={handleSendMagicLink}
-                disabled={loading || googleLoading}
-                className="w-full py-2 px-3 border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-semibold rounded-xl transition"
-              >
-                Send Passwordless Login Link
-              </button>
+          {/* 6-Digit Verification Code (OTP) Flow — NO MAGIC LINK */}
+          {showOtpFlow && (
+            <div className="mt-4 pt-4 border-t border-[#E2E8F0] space-y-3 animate-in fade-in">
+              {!otpSent ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-[#64748B]">
+                    Enter your email above to receive a secure 6-digit verification code. No magic link or password needed.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSendOtpCode}
+                    disabled={otpLoading || loading || googleLoading}
+                    className="w-full py-2.5 px-3 border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-bold rounded-xl transition flex items-center justify-center gap-2"
+                  >
+                    {otpLoading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Sending Code...</span>
+                      </>
+                    ) : (
+                      <span>Send 6-Digit Code to Email</span>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-[#0F172A] block mb-1">
+                      Enter 6-Digit Code
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={8}
+                      required
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456"
+                      autoFocus
+                      className="w-full text-center tracking-[8px] font-mono text-xl py-2.5 bg-white border-2 border-[#0F172A] rounded-xl text-[#0F172A] placeholder:text-[#CBD5E1] focus:outline-none transition-colors"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={otpLoading || otpCode.length < 6}
+                    className="w-full py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50 cursor-pointer"
+                  >
+                    {otpLoading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : (
+                      <span>Verify & Sign In</span>
+                    )}
+                  </button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleSendOtpCode}
+                      disabled={otpLoading}
+                      className="text-[11px] text-[#64748B] hover:text-[#0F172A] underline transition-colors"
+                    >
+                      Didn&apos;t get code? Resend
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           )}
 
