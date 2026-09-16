@@ -114,23 +114,20 @@ export default function Navbar() {
         {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
-            {/* Left: Brand Logo */}
+            {/* Left: Brand Wordmark (No logo icon) */}
             <div className="flex items-center gap-3 shrink-0">
-              <Link href="/" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 rounded-xl bg-[#0A0A0A] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 leading-none">
-                    <span className="font-bold text-lg text-[#0F172A] tracking-tight">Vibe</span>
-                    <span className="text-[10px] font-bold text-[#E8621A] tracking-wider uppercase">
-                      by swaniki
-                    </span>
-                  </div>
-                  <span className="text-[9px] text-[#64748B] tracking-tight hidden sm:block">
-                    Live Events & Experiences
+              <Link href="/" className="flex flex-col group py-1">
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="font-extrabold text-xl sm:text-2xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors">
+                    Vibe
+                  </span>
+                  <span className="text-[11px] sm:text-xs font-bold text-[#E8621A] tracking-wider uppercase">
+                    BY SWANIKI
                   </span>
                 </div>
+                <span className="text-[10px] text-[#64748B] tracking-tight hidden sm:block pt-0.5">
+                  Live Events & Experiences
+                </span>
               </Link>
             </div>
 

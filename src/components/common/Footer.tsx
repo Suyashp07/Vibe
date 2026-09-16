@@ -94,12 +94,17 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-[#E2E8F0]">
           {/* Column 1: Brand Info & Social Media Links (Spans 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-xl bg-[#0F172A] flex items-center justify-center text-amber-400 shadow-sm group-hover:scale-105 transition-transform">
-                <Sparkles className="w-4 h-4" />
+            <Link href="/" className="inline-flex flex-col group py-1">
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="font-extrabold text-2xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors">
+                  Vibe
+                </span>
+                <span className="text-xs font-bold text-[#E8621A] tracking-wider uppercase">
+                  BY SWANIKI
+                </span>
               </div>
-              <span className="font-display font-black text-2xl text-[#0F172A] tracking-tight">
-                Vibe <span className="font-tagline italic text-[#E8621A] font-normal text-xl">by Swaniki</span>
+              <span className="text-[10px] text-[#64748B] tracking-tight pt-1">
+                Live Events & Experiences
               </span>
             </Link>
 
