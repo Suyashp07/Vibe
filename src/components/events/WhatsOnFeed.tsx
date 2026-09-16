@@ -9,9 +9,9 @@ import {
   Calendar,
   X,
   RotateCcw,
-  Navigation,
-  ArrowDown
+  Navigation
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
 import {
   getUserCity,
@@ -95,7 +95,6 @@ export default function WhatsOnFeed() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [userCity, setUserCity] = useState<string>('All India');
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [visibleCount, setVisibleCount] = useState<number>(9);
 
   // Active filters state
   const [searchQuery, setSearchQuery] = useState(queryParam);
@@ -388,8 +387,6 @@ export default function WhatsOnFeed() {
       .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
   }, [eventsWithDistance, searchQuery, dateFilter, categoryFilter, distanceFilter, selectedMoods]);
 
-  const displayedEvents = filteredEvents.slice(0, visibleCount);
-
   return (
     <div className="w-full space-y-8">
       {/* Top Date Filter Strip (Matching user reference) */}
@@ -547,29 +544,26 @@ export default function WhatsOnFeed() {
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedEvents.map((event) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event, idx) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 32, scale: 0.97 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{
+                  duration: 0.45,
+                  ease: [0.215, 0.61, 0.355, 1],
+                  delay: (idx % 3) * 0.08,
+                }}
+                className="h-full flex flex-col"
+              >
                 <EventCard
-                  key={event.id}
                   event={event}
                   distanceKm={event.distanceKm}
                 />
-              ))}
-            </div>
-
-            {/* Load More Button */}
-            {filteredEvents.length > visibleCount && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={() => setVisibleCount((prev) => prev + 6)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs font-bold transition-all shadow-xs cursor-pointer"
-                >
-                  <ArrowDown className="w-4 h-4 text-[#E8621A]" />
-                  <span>Load More Events</span>
-                </button>
-              </div>
-            )}
+              </motion.div>
+            ))}
           </div>
         )}
       </div>
