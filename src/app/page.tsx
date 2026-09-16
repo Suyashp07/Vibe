@@ -1,120 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Sparkles,
-  ArrowRight,
-  Calendar,
-  Users,
-  Compass,
-  MapPin,
-  Search,
-  Plus,
-  ArrowUpRight,
-  Flame,
-  CheckCircle2,
-  Loader2
-} from 'lucide-react';
+import React, { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import EventCard from '@/components/ui/EventCard';
-import {
-  getEvents,
-  getRSVPs,
-  formatIST,
-  syncEventsWithSupabase,
-  subscribeToStore,
-  SAMPLE_TEMPLATE_EVENTS
-} from '@/lib/store';
-import { EventItem, RSVPItem } from '@/types';
-import { INDIAN_CITIES, getUserCity } from '@/lib/location';
-
-const FEATURED_CITIES = ['All India', 'Mumbai', 'Delhi NCR', 'Bengaluru', 'Pune', 'Hyderabad', 'Goa'];
+import WhatsOnFeed from '@/components/events/WhatsOnFeed';
 
 function LandingPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const codeParam = searchParams.get('code');
 
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [rsvps, setRsvps] = useState<RSVPItem[]>([]);
-  const [selectedCity, setSelectedCity] = useState<string>('All India');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const initialCity = getUserCity() || 'All India';
-    setSelectedCity(initialCity);
-
-    setEvents(getEvents());
-    setRsvps(getRSVPs());
-
-    syncEventsWithSupabase().then((synced) => {
-      if (synced && synced.length > 0) {
-        setEvents(synced);
-      } else {
-        setEvents(getEvents());
-      }
-      setRsvps(getRSVPs());
-    }).catch(() => {
-      setEvents(getEvents());
-      setRsvps(getRSVPs());
-    });
-
-    const handleLocationChange = () => {
-      setSelectedCity(getUserCity() || 'All India');
-    };
-    window.addEventListener('vibe:location_changed', handleLocationChange);
-
-    const update = () => {
-      setEvents(getEvents());
-      setRsvps(getRSVPs());
-    };
-    const unsub = subscribeToStore(update);
-    return () => {
-      unsub();
-      window.removeEventListener('vibe:location_changed', handleLocationChange);
-    };
-  }, []);
-
-  // Filter events by live status, public visibility, selected city, and search query
-  const liveEvents = events.filter((e) => e.status === 'live' && e.is_public !== false);
-  const sourceEvents = liveEvents.length > 0 ? liveEvents : SAMPLE_TEMPLATE_EVENTS;
-
-  const filteredEvents = sourceEvents.filter((ev) => {
-    const matchesCity =
-      selectedCity === 'All India' ||
-      ev.city?.toLowerCase().includes(selectedCity.toLowerCase()) ||
-      ev.location_address?.toLowerCase().includes(selectedCity.toLowerCase());
-
-    const matchesSearch =
-      !searchQuery.trim() ||
-      ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ev.location_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ev.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ev.tagline?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesCity && matchesSearch;
-  });
-
-  // If returning from OAuth (?code=...), display a clean instant redirect state
+  // If returning from OAuth (?code=...), display clean instant redirect state
   if (codeParam) {
     return (
-      <div className="min-h-screen bg-surface-2 flex flex-col justify-between">
+      <div className="min-h-screen bg-white flex flex-col justify-between">
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center p-6 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-brand text-white flex items-center justify-center shadow-lg animate-pulse">
+          <div className="w-12 h-12 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center shadow-lg animate-pulse">
             <Sparkles className="w-6 h-6" />
           </div>
           <div className="text-center space-y-1">
-            <h2 className="font-sans font-bold text-xl text-ink">Signing you in with Google...</h2>
-            <p className="text-xs text-ink-muted">Redirecting you straight to your dashboard.</p>
+            <h2 className="font-sans font-bold text-xl text-[#0F172A]">Signing you in with Google...</h2>
+            <p className="text-xs text-[#64748B]">Redirecting you straight to your dashboard.</p>
           </div>
-          <Loader2 className="w-6 h-6 text-brand animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#0F172A] animate-spin" />
         </main>
         <Footer />
       </div>
@@ -122,61 +32,12 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface-2">
+    <div className="min-h-screen flex flex-col bg-white text-[#0F172A] font-sans selection:bg-[#0F172A] selection:text-white">
       <Navbar />
 
-
-
-      {/* Live Events Grid */}
-      <section className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="font-sans font-bold text-xl text-ink">
-              Events in {selectedCity}
-            </h2>
-            <p className="text-xs text-ink-muted mt-0.5">
-              {filteredEvents.length} active experiences available
-            </p>
-          </div>
-
-          <Link
-            href="/create"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline"
-          >
-            <span>+ Create your event</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {filteredEvents.length === 0 ? (
-          <div className="p-12 text-center bg-surface rounded-2xl border border-border shadow-xs space-y-3">
-            <p className="text-sm font-bold text-ink">No events found in {selectedCity}.</p>
-            <p className="text-xs text-ink-muted max-w-sm mx-auto">
-              Be the first to host an experience in this city or switch to "All India" to browse experiences across the country.
-            </p>
-            <div className="pt-2 flex items-center justify-center gap-3">
-              <button
-                onClick={() => { setSelectedCity('All India'); setSearchQuery(''); }}
-                className="px-4 py-2 bg-surface-3 text-ink text-xs font-semibold rounded-xl border border-border"
-              >
-                Clear Filters
-              </button>
-              <Link
-                href="/create"
-                className="px-4 py-2 bg-brand text-white text-xs font-bold rounded-xl shadow-xs"
-              >
-                Create Event
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((ev) => (
-              <EventCard key={ev.id} event={ev} />
-            ))}
-          </div>
-        )}
-      </section>
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full">
+        <WhatsOnFeed />
+      </main>
 
       <Footer />
     </div>
@@ -187,8 +48,11 @@ export default function LandingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-surface-2 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <RefreshCw className="w-6 h-6 animate-spin text-[#0F172A]" />
+            <p className="text-xs font-bold text-[#64748B]">Loading...</p>
+          </div>
         </div>
       }
     >
