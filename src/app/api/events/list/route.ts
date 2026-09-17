@@ -32,10 +32,12 @@ export async function GET(request: Request) {
       .select('*, profiles:organizer_id(id, name, handle, logo_url, brand_color, email)')
       .eq('status', 'live');
 
-    // Strictly enforce privacy: public listings only return is_public = true
-    if (!includePrivate && !organizerId) {
+    // Strictly enforce privacy: public listings ONLY return is_public = true.
+    // Private events (is_public: false) are NEVER included in public listings.
+    if (!includePrivate) {
       query = query.eq('is_public', true);
-    } else if (organizerId) {
+    }
+    if (organizerId) {
       query = query.eq('organizer_id', organizerId);
     }
 

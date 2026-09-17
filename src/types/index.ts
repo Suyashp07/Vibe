@@ -65,6 +65,8 @@ export interface RSVPFormConfig {
   confirmation_message: string;
   custom_fields?: CustomFieldConfig[];
   custom_questions?: string[];
+  is_private?: boolean;
+  visibility?: 'public' | 'private';
 }
 
 export interface FAQItem {
@@ -103,6 +105,8 @@ export interface EventItem {
   timezone: string;
   capacity?: number;
   is_public: boolean;
+  is_private?: boolean;
+  visibility?: 'public' | 'private';
   status: 'draft' | 'live' | 'past' | 'cancelled';
   ai_generated: boolean;
   faq: FAQItem[];

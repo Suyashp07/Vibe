@@ -419,6 +419,28 @@ const notifyListeners = () => {
   listeners.forEach(fn => fn());
 };
 
+// Strict Privacy Guard: Verifies if an event is legitimately public and live.
+// Private gatherings (is_public: false, is_private: true, or visibility: 'private')
+// are NEVER public and are strictly restricted to direct secret invite link access.
+export const isPublicLiveEvent = (e: any): boolean => {
+  if (!e) return false;
+  const status = (e.status || '').toLowerCase();
+  if (status !== 'live' && status !== 'published') return false;
+
+  // Explicit privacy signals
+  if (e.is_public === false || String(e.is_public) === 'false') return false;
+  if (e.is_private === true || String(e.is_private) === 'true') return false;
+  if (e.visibility === 'private') return false;
+
+  const cfg = e.rsvp_form_config;
+  if (cfg && (cfg.is_private === true || cfg.is_public === false || cfg.visibility === 'private')) {
+    return false;
+  }
+
+  // Must be affirmatively public
+  return e.is_public === true || String(e.is_public) === 'true';
+};
+
 // Data access operations
 export const getEvents = (): EventItem[] => {
   if (!isClient) return [];
@@ -441,6 +463,14 @@ export const getEvents = (): EventItem[] => {
   } catch {
     return [];
   }
+};
+
+/**
+ * Returns strictly public, live events for public discovery feeds, hero slider, and category lists.
+ * Private events are 100% excluded.
+ */
+export const getPublicEvents = (): EventItem[] => {
+  return getEvents().filter(isPublicLiveEvent);
 };
 
 
@@ -581,7 +611,9 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
         end_at: row.end_at,
         timezone: row.timezone || 'Asia/Kolkata',
         capacity: row.capacity || 50,
-        is_public: row.is_public ?? true,
+        is_public: row.is_public === true,
+        is_private: row.is_public === false || row.rsvp_form_config?.is_private === true,
+        visibility: (row.is_public === false || row.rsvp_form_config?.is_private === true) ? 'private' : 'public',
         status: row.status || 'live',
         ai_generated: row.ai_generated || false,
         faq: row.faq || [],
@@ -604,9 +636,9 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
     const deletedList: string[] = isClient ? JSON.parse(localStorage.getItem('vibe_deleted_events') || '[]') : [];
     const deletedSet = new Set(deletedList);
 
-    // Only keep live remote events, strictly excluding any legacy static demo events or deleted events
+    // Strictly keep only public live remote events, excluding private gatherings, legacy static demo events or deleted events
     const merged = formattedRemote.filter(
-      e => !STATIC_EVENT_IDS.has(e.id) && !STATIC_EVENT_IDS.has(e.slug) && !deletedSet.has(e.id) && !deletedSet.has(e.slug)
+      e => isPublicLiveEvent(e) && !STATIC_EVENT_IDS.has(e.id) && !STATIC_EVENT_IDS.has(e.slug) && !deletedSet.has(e.id) && !deletedSet.has(e.slug)
     );
 
     if (isClient) {

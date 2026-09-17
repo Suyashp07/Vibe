@@ -6,7 +6,7 @@ import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import UnifiedEventDetailView from '@/components/events/UnifiedEventDetailView';
 import OrganizerProfileView from '@/components/organizer/OrganizerProfileView';
-import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase } from '@/lib/store';
+import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase, isPublicLiveEvent } from '@/lib/store';
 import { EventItem, Profile } from '@/types';
 import { Compass, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 import { ADMIN_EMAILS } from '@/lib/adminConstants';
@@ -115,7 +115,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
       const foundOrg = getOrganizerByHandle(slug);
       if (foundOrg) {
         setOrganizer(foundOrg);
-        setOrganizerEvents(allEvents.filter((e) => e.organizer_id === foundOrg.id));
+        setOrganizerEvents(allEvents.filter((e) => e.organizer_id === foundOrg.id && isPublicLiveEvent(e)));
         setEvent(null);
         setLoading(false);
         return;

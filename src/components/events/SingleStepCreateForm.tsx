@@ -402,6 +402,8 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
         timezone: 'Asia/Kolkata',
         capacity: Number(capacity) || 0, // 0 denotes unlimited
         is_public: isStaff ? isPublic : false, // Gated: requires superadmin approval before public listing
+        is_private: !isPublic, // Explicit privacy intent: true if organizer selected private
+        visibility: isPublic ? 'public' : 'private',
         status: isStaff && publishLive ? 'live' : 'draft', // Gated: superadmin review required
         ai_generated: mode === 'ai',
         source_type: ticketingMode === 'external' ? 'external' : 'native',
@@ -437,6 +439,8 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
               ? 'Your RSVP request has been received. The host will review and confirm your invite pass shortly.'
               : confirmationMessage.trim() || 'Your pass is confirmed. See you there.',
           custom_questions: customQuestions,
+          is_private: !isPublic,
+          visibility: isPublic ? 'public' : 'private',
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

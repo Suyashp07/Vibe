@@ -128,7 +128,12 @@ export async function PATCH(req: NextRequest) {
     if (updates.status !== undefined) {
       if (updates.status === 'published' || updates.status === 'live') {
         sanitizedUpdates.status = 'live';
-        sanitizedUpdates.is_public = true;
+        const wasPrivate = existing?.is_public === false || existing?.rsvp_form_config?.is_private === true || existing?.rsvp_form_config?.visibility === 'private';
+        if (updates.is_public !== undefined) {
+          sanitizedUpdates.is_public = Boolean(updates.is_public);
+        } else {
+          sanitizedUpdates.is_public = !wasPrivate;
+        }
       } else if (updates.status === 'draft') {
         sanitizedUpdates.status = 'draft';
         sanitizedUpdates.is_public = false;

@@ -15,7 +15,9 @@ import {
   ShieldCheck,
   Plus,
   X,
-  AlertCircle
+  AlertCircle,
+  Lock,
+  Globe
 } from 'lucide-react';
 import EventEditModal from '@/components/admin/EventEditModal';
 import { calculateEventSurety } from '@/lib/eventSurety';
@@ -74,14 +76,30 @@ export default function AdminEventsPage() {
       (event.status || '').toLowerCase() === 'live' || (event.status || '').toLowerCase() === 'published';
     const newStatus: 'live' | 'draft' = isCurrentlyLive ? 'draft' : 'live';
 
+    // PRESERVE PRIVACY: If the event was marked as private (is_public: false or is_private: true),
+    // approving it to 'live' does NOT make it public. It remains private (accessible only via secret link).
+    const isPrivate = event.is_public === false && (
+      event.is_private === true ||
+      event.rsvp_form_config?.is_private === true ||
+      event.rsvp_form_config?.visibility === 'private' ||
+      event.visibility === 'private'
+    );
+    const targetIsPublic = newStatus === 'live' ? !isPrivate : false;
+
     // 1. Optimistic instant local update (0ms lag!)
     setEvents((prev) =>
       prev.map((e) =>
-        e.id === event.id ? { ...e, status: newStatus, is_public: newStatus === 'live' } : e
+        e.id === event.id ? { ...e, status: newStatus, is_public: targetIsPublic } : e
       )
     );
 
-    showToast(newStatus === 'live' ? `✓ "${event.title}" published live!` : `Moved "${event.title}" to draft.`);
+    showToast(
+      newStatus === 'live'
+        ? targetIsPublic
+          ? `✓ "${event.title}" published live (Public)!`
+          : `✓ "${event.title}" published live (Private / Secret Link)!`
+        : `Moved "${event.title}" to draft.`
+    );
 
     // 2. Background server sync
     try {
@@ -90,7 +108,7 @@ export default function AdminEventsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: event.id,
-          updates: { status: newStatus, is_public: newStatus === 'live' },
+          updates: { status: newStatus, is_public: targetIsPublic },
         }),
       });
 
@@ -106,6 +124,55 @@ export default function AdminEventsPage() {
         prev.map((e) => (e.id === event.id ? { ...e, status: event.status, is_public: event.is_public } : e))
       );
       showToast('Network error updating status.');
+    }
+  };
+
+  // Fast Instant (Optimistic) Privacy Toggle
+  const handleTogglePrivacy = async (event: any) => {
+    const nextIsPublic = !event.is_public;
+
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === event.id
+          ? { ...e, is_public: nextIsPublic, is_private: !nextIsPublic, visibility: nextIsPublic ? 'public' : 'private' }
+          : e
+      )
+    );
+
+    showToast(
+      nextIsPublic
+        ? `🌐 "${event.title}" is now Public (Listed on Discovery Feed).`
+        : `🔒 "${event.title}" is now Private (Hidden from feed, secret link only).`
+    );
+
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: event.id,
+          updates: {
+            is_public: nextIsPublic,
+            rsvp_form_config: {
+              ...(event.rsvp_form_config || {}),
+              is_private: !nextIsPublic,
+              visibility: nextIsPublic ? 'public' : 'private',
+            },
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        setEvents((prev) =>
+          prev.map((e) => (e.id === event.id ? { ...e, is_public: event.is_public } : e))
+        );
+        showToast('Failed to update event privacy.');
+      }
+    } catch {
+      setEvents((prev) =>
+        prev.map((e) => (e.id === event.id ? { ...e, is_public: event.is_public } : e))
+      );
+      showToast('Network error updating privacy.');
     }
   };
 
@@ -486,14 +553,40 @@ export default function AdminEventsPage() {
                       {/* Column 4: Surety & 1-Click Fast Approval Action */}
                       <td className="py-3 px-4">
                         <div className="flex flex-col gap-1.5 items-start">
-                          {/* Surety Score Badge */}
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${surety.badgeColor}`}
-                            title={`Event completeness: ${surety.filledCount}/${surety.totalCount} fields verified`}
-                          >
-                            <ShieldCheck className="w-3 h-3 shrink-0" />
-                            <span>{surety.score}% Surety</span>
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {/* Surety Score Badge */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${surety.badgeColor}`}
+                              title={`Event completeness: ${surety.filledCount}/${surety.totalCount} fields verified`}
+                            >
+                              <ShieldCheck className="w-3 h-3 shrink-0" />
+                              <span>{surety.score}% Surety</span>
+                            </span>
+
+                            {/* Privacy Badge & Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePrivacy(event)}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold border transition cursor-pointer ${
+                                event.is_public === false || event.is_private === true
+                                  ? 'bg-purple-500/15 text-purple-300 border-purple-500/30 hover:bg-purple-500/25'
+                                  : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
+                              }`}
+                              title="Click to toggle Public / Private"
+                            >
+                              {event.is_public === false || event.is_private === true ? (
+                                <>
+                                  <Lock className="w-2.5 h-2.5 text-purple-400" />
+                                  <span>Private</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Globe className="w-2.5 h-2.5 text-blue-400" />
+                                  <span>Public</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
 
                           {/* 1-Click Status Action */}
                           {isDraft ? (

@@ -171,6 +171,8 @@ export async function POST(req: NextRequest) {
       timezone: 'Asia/Kolkata',
       capacity: 0, // 0 denotes unlimited
       is_public: false, // Default to unlisted until superadmin approves
+      is_private: isPublic === false,
+      visibility: isPublic === false ? 'private' : 'public',
       status: 'draft', // Submitted for superadmin review & approval
       ai_generated: true,
       source_type: finalSourceType,
@@ -198,6 +200,8 @@ export async function POST(req: NextRequest) {
         ask_phone: true,
         waitlist_enabled: false,
         approval_required: false,
+        is_private: isPublic === false,
+        visibility: isPublic === false ? 'private' : 'public',
         confirmation_message: hasExternalUrl
           ? 'Redirecting to booking platform.'
           : 'Your admission pass is confirmed! Present your pass with QR code at the entrance.',

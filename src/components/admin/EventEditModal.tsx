@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Save, AlertCircle, Sparkles, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { X, Save, AlertCircle, Sparkles, ExternalLink, Image as ImageIcon, Globe, Lock } from 'lucide-react';
 
 interface EventEditModalProps {
   event: any;
@@ -33,6 +33,7 @@ export default function EventEditModal({
   const [ticketLink, setTicketLink] = useState(event.ticket_link || event.external_ticket_url || event.external_url || '');
   const [coverImage, setCoverImage] = useState(event.cover_image || event.cover_image_url || '');
   const [status, setStatus] = useState(event.status === 'live' || event.status === 'published' ? 'live' : (event.status || 'draft'));
+  const [isPublic, setIsPublic] = useState<boolean>(event.is_public !== false && event.is_private !== true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +62,14 @@ export default function EventEditModal({
         cover_image: coverImage.trim(),
         cover_image_url: coverImage.trim(),
         status: status === 'published' ? 'live' : status,
+        is_public: isPublic,
+        is_private: !isPublic,
+        visibility: isPublic ? 'public' : 'private',
+        rsvp_form_config: {
+          ...(event.rsvp_form_config || {}),
+          is_private: !isPublic,
+          visibility: isPublic ? 'public' : 'private',
+        },
       });
       onClose();
     } catch (err: any) {
@@ -226,6 +235,36 @@ export default function EventEditModal({
                   <option value="past">Past / Ended</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1">Visibility & Privacy</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPublic(true)}
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      isPublic
+                        ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 font-bold'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Public Feed</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPublic(false)}
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      !isPublic
+                        ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 font-bold'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    <Lock className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Private Link</span>
+                  </button>
+                </div>
               </div>
             </div>
 

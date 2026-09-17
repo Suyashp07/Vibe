@@ -28,6 +28,8 @@ import {
 } from '@/lib/location';
 import {
   getEvents,
+  getPublicEvents,
+  isPublicLiveEvent,
   syncEventsWithSupabase,
   getDatePolls,
   syncDatePollsWithSupabase,
@@ -169,16 +171,16 @@ export default function WhatsOnFeed() {
 
   // Load events
   useEffect(() => {
-    setEvents(getEvents());
+    setEvents(getPublicEvents());
 
     Promise.all([syncEventsWithSupabase(), syncDatePollsWithSupabase()])
       .then(() => {
-        setEvents(getEvents());
+        setEvents(getPublicEvents());
       })
       .catch(() => {});
 
     const update = () => {
-      setEvents(getEvents());
+      setEvents(getPublicEvents());
     };
     const unsub = subscribeToStore(update);
     return () => unsub();
@@ -200,15 +202,7 @@ export default function WhatsOnFeed() {
 
   // Strictly filter public live events ONLY (private invite-only events are NEVER shown on public discovery feeds)
   const publicLiveEvents = useMemo(() => {
-    return events.filter((e) => {
-      // Must be live
-      if (e.status !== 'live') return false;
-      // Strictly exclude if marked private or is_public is false
-      if (e.is_public === false || String(e.is_public) === 'false' || (e as any).is_private === true) {
-        return false;
-      }
-      return true;
-    });
+    return events.filter(isPublicLiveEvent);
   }, [events]);
 
   // Calculate distance for each public event from active location
@@ -269,7 +263,8 @@ export default function WhatsOnFeed() {
 
   // 3 to 4 prominent events for the BookMyShow-style flashcard slider (strictly public events only)
   const prominentEvents = useMemo(() => {
-    const pool = eventsWithDistance.length > 0 ? eventsWithDistance : SAMPLE_TEMPLATE_EVENTS;
+    const valid = eventsWithDistance.filter(isPublicLiveEvent);
+    const pool = valid.length > 0 ? valid : SAMPLE_TEMPLATE_EVENTS.filter(isPublicLiveEvent);
     return pool.slice(0, 4);
   }, [eventsWithDistance]);
 
@@ -306,9 +301,8 @@ export default function WhatsOnFeed() {
   // Filter Logic
   const filteredEvents = useMemo(() => {
     return eventsWithDistance
+      .filter(isPublicLiveEvent)
       .filter((e) => {
-        // Only public live events (strictly exclude private/invite-only events)
-        if (e.status !== 'live' || e.is_public === false || String(e.is_public) === 'false' || (e as any).is_private === true) return false;
 
         const eText = `${e.title} ${e.tagline || ''} ${e.description || ''} ${e.category || ''} ${e.location_name || ''} ${e.city || ''} ${e.organizer_name || ''}`.toLowerCase();
 
