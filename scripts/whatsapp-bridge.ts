@@ -1,0 +1,315 @@
+import http from 'http';
+import path from 'path';
+import fs from 'fs';
+import QRCode from 'qrcode';
+import qrcodeTerminal from 'qrcode-terminal';
+import makeWASocket, { 
+  DisconnectReason, 
+  useMultiFileAuthState, 
+  WASocket,
+  proto
+} from '@whiskeysockets/baileys';
+import pino from 'pino';
+
+// Load environment variables if available
+const PORT = Number(process.env.WHATSAPP_BRIDGE_PORT || 3002);
+const BRIDGE_SECRET = process.env.WHATSAPP_BRIDGE_SECRET || 'vibe_wa_sec_local_dev';
+const VIBE_WEBHOOK_URL = 
+  process.env.VIBE_WEBHOOK_URL || 
+  process.env.NEXT_PUBLIC_APP_URL || 
+  'https://vibe-seven-pied.vercel.app/api/whatsapp/webhook';
+
+const AUTH_DIR = path.resolve(process.cwd(), 'auth_info_baileys');
+
+let sock: WASocket | null = null;
+let currentQrCode: string | null = null;
+let connectionState: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+let connectedPhone: string | null = null;
+
+// Track sent messages and their correlation to conversationId (in-memory cache)
+const sentMessageMap = new Map<string, { conversationId?: string; eventId?: string; sentAt: number }>();
+
+async function startWhatsAppBridge() {
+  if (!fs.existsSync(AUTH_DIR)) {
+    fs.mkdirSync(AUTH_DIR, { recursive: true });
+  }
+
+  const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+
+  sock = makeWASocket({
+    auth: state,
+    logger: pino({ level: 'silent' }),
+    printQRInTerminal: false, // Handled manually with qrcodeTerminal
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  sock.ev.on('connection.update', async (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      currentQrCode = qr;
+      connectionState = 'connecting';
+      console.log('\n=============================================================');
+      console.log('📱 SCAN THIS QR CODE WITH WHATSAPP ON YOUR PHONE:');
+      console.log('   (WhatsApp → Settings → Linked Devices → Link a Device)');
+      console.log('=============================================================\n');
+      qrcodeTerminal.generate(qr, { small: true });
+      console.log(`\nOr view QR in your browser at: http://localhost:${PORT}/qr\n`);
+    }
+
+    if (connection === 'close') {
+      const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      connectionState = 'disconnected';
+      connectedPhone = null;
+      console.log(`[WhatsApp Bridge] Connection closed (code: ${statusCode}). Reconnecting: ${shouldReconnect}`);
+
+      if (shouldReconnect) {
+        setTimeout(startWhatsAppBridge, 5000);
+      } else {
+        console.log('[WhatsApp Bridge] Device logged out. Deleting credentials and waiting for restart.');
+        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+        setTimeout(startWhatsAppBridge, 2000);
+      }
+    } else if (connection === 'open') {
+      connectionState = 'connected';
+      currentQrCode = null;
+      const userJid = sock?.user?.id || '';
+      connectedPhone = userJid.split(':')[0] || userJid.split('@')[0];
+      console.log('\n=============================================================');
+      console.log(`✅ WHATSAPP CONNECTED SUCCESSFULLY!`);
+      console.log(`   Connected Number: +${connectedPhone}`);
+      console.log(`   Bridge listening on: http://localhost:${PORT}`);
+      console.log(`   Webhook forwarding to: ${VIBE_WEBHOOK_URL}`);
+      console.log('=============================================================\n');
+    }
+  });
+
+  // Listen to incoming messages
+  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    if (type !== 'notify') return;
+
+    for (const msg of messages) {
+      if (!msg.message || msg.key.fromMe) continue;
+
+      const messageContent =
+        msg.message.conversation ||
+        msg.message.extendedTextMessage?.text ||
+        msg.message.imageMessage?.caption ||
+        '';
+
+      if (!messageContent.trim()) continue;
+
+      // Extract quoted message ID (e.g. if host swiped right on Vibe inquiry)
+      const contextInfo = msg.message.extendedTextMessage?.contextInfo;
+      const quotedStanzaId = contextInfo?.stanzaId;
+
+      const remoteJid = msg.key.remoteJid || '';
+      const senderPhone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '');
+      const senderName = msg.pushName || 'Host';
+
+      // Check if we have this quoted message stored in memory
+      let matchedConversationId: string | undefined = undefined;
+      if (quotedStanzaId && sentMessageMap.has(quotedStanzaId)) {
+        matchedConversationId = sentMessageMap.get(quotedStanzaId)?.conversationId;
+      }
+
+      console.log('[WhatsApp Bridge] Inbound message received:', {
+        from: senderPhone,
+        text: messageContent.slice(0, 40),
+        quotedStanzaId,
+        matchedConversationId,
+      });
+
+      // Forward to Vibe Webhook
+      try {
+        const webhookPayload = {
+          messageId: msg.key.id,
+          senderPhone,
+          senderName,
+          text: messageContent.trim(),
+          quotedMessageId: quotedStanzaId,
+          conversationId: matchedConversationId,
+        };
+
+        const res = await fetch(VIBE_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-whatsapp-webhook-secret': BRIDGE_SECRET,
+            'Authorization': `Bearer ${BRIDGE_SECRET}`,
+          },
+          body: JSON.stringify(webhookPayload),
+        });
+
+        const resData = await res.json().catch(() => ({}));
+        console.log('[WhatsApp Bridge] Webhook forward result:', res.status, resData);
+      } catch (err: any) {
+        console.error('[WhatsApp Bridge] Failed to forward webhook to Vibe:', err.message);
+      }
+    }
+  });
+}
+
+// Lightweight HTTP server for Vibe backend & browser QR view
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url || '/', `http://localhost:${PORT}`);
+
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-whatsapp-webhook-secret');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
+  // 1. Status endpoint: GET /
+  if (req.method === 'GET' && url.pathname === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      service: 'Vibe WhatsApp Web Bridge',
+      status: connectionState,
+      phone: connectedPhone,
+      qrAvailable: Boolean(currentQrCode),
+      uptime: process.uptime(),
+    }));
+    return;
+  }
+
+  // 2. Visual QR Code Page: GET /qr
+  if (req.method === 'GET' && url.pathname === '/qr') {
+    if (connectionState === 'connected') {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`
+        <html>
+          <body style="font-family:system-ui;text-align:center;padding:50px;background:#0d0d0d;color:#fff;">
+            <h1 style="color:#22c55e;">✅ WhatsApp is Connected!</h1>
+            <p>Connected phone: <b>+${connectedPhone}</b></p>
+            <p style="color:#888;">Bridge is actively routing Host ↔ Guest messages.</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
+    if (!currentQrCode) {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`
+        <html>
+          <body style="font-family:system-ui;text-align:center;padding:50px;background:#0d0d0d;color:#fff;">
+            <h2>⏳ Generating QR Code...</h2>
+            <p>Please refresh this page in a few seconds.</p>
+            <script>setTimeout(() => location.reload(), 3000);</script>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
+    try {
+      const qrDataUrl = await QRCode.toDataURL(currentQrCode);
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`
+        <html>
+          <body style="font-family:system-ui;text-align:center;padding:40px;background:#0d0d0d;color:#fff;">
+            <h2>📱 Link WhatsApp with Vibe</h2>
+            <p style="color:#aaa;">Open WhatsApp on your phone → <b>Settings</b> → <b>Linked Devices</b> → <b>Link a Device</b> and scan below:</p>
+            <div style="background:#fff;display:inline-block;padding:20px;border-radius:16px;margin-top:20px;">
+              <img src="${qrDataUrl}" width="300" height="300" style="display:block;" />
+            </div>
+            <p style="color:#666;font-size:12px;margin-top:20px;">Page auto-refreshes when connected.</p>
+            <script>
+              setInterval(async () => {
+                const res = await fetch('/');
+                const data = await res.json();
+                if (data.status === 'connected') location.reload();
+              }, 3000);
+            </script>
+          </body>
+        </html>
+      `);
+    } catch (qrErr: any) {
+      res.writeHead(500);
+      res.end(`QR generation error: ${qrErr.message}`);
+    }
+    return;
+  }
+
+  // 3. Outbound Message Dispatch: POST /send-message
+  if (req.method === 'POST' && url.pathname === '/send-message') {
+    // Verify bearer auth if configured
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (BRIDGE_SECRET && token !== BRIDGE_SECRET) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized: invalid bridge secret' }));
+      return;
+    }
+
+    if (!sock || connectionState !== 'connected') {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'WhatsApp client is not connected. Scan QR code at /qr' }));
+      return;
+    }
+
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const { to, text, metadata } = JSON.parse(body);
+        if (!to || !text) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing required fields: to, text' }));
+          return;
+        }
+
+        const cleanPhone = String(to).replace(/[^0-9]/g, '');
+        const jid = `${cleanPhone}@s.whatsapp.net`;
+
+        const sent = await sock!.sendMessage(jid, { text });
+        const messageId = sent?.key?.id;
+
+        if (messageId && metadata?.conversationId) {
+          sentMessageMap.set(messageId, {
+            conversationId: metadata.conversationId,
+            eventId: metadata.eventId,
+            sentAt: Date.now(),
+          });
+          // Evict old messages after 5000 entries
+          if (sentMessageMap.size > 5000) {
+            const firstKey = sentMessageMap.keys().next().value;
+            if (firstKey) sentMessageMap.delete(firstKey);
+          }
+        }
+
+        console.log('[WhatsApp Bridge] Outbound message sent:', {
+          to: cleanPhone,
+          messageId,
+          conversationId: metadata?.conversationId,
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, messageId }));
+      } catch (err: any) {
+        console.error('[WhatsApp Bridge] Failed to send WhatsApp message:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  res.writeHead(404);
+  res.end('Not found');
+});
+
+server.listen(PORT, () => {
+  console.log(`[WhatsApp Bridge] Service initialized on port ${PORT}`);
+  startWhatsAppBridge().catch((err) => {
+    console.error('[WhatsApp Bridge] Fatal startup error:', err);
+  });
+});

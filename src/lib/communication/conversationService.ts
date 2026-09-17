@@ -283,6 +283,46 @@ export class ConversationService {
   }
 
   /**
+   * Resolves a Vibe conversation based on a quoted external message ID (e.g. from WhatsApp reply)
+   */
+  async resolveConversationByQuotedMessage(quotedExternalMessageId: string): Promise<Conversation | null> {
+    if (!quotedExternalMessageId || !quotedExternalMessageId.trim()) {
+      return null;
+    }
+    const qId = quotedExternalMessageId.trim();
+
+    // 1. Check in-memory messages first
+    for (const [convId, messages] of Array.from(memoryMessages.entries())) {
+      const match = messages.find(
+        (m) => m.external_message_id && String(m.external_message_id) === qId
+      );
+      if (match) {
+        return this.getConversationById(convId);
+      }
+    }
+
+    // 2. Check Supabase
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('conversation_messages')
+          .select('conversation_id')
+          .eq('external_message_id', qId)
+          .maybeSingle();
+
+        if (data && !error && data.conversation_id) {
+          return this.getConversationById(data.conversation_id);
+        }
+      } catch (err) {
+        console.warn('[ConversationService] resolveConversationByQuotedMessage warning:', err);
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Get all conversations for a specific guest or host
    */
   async getConversationsForUser(
