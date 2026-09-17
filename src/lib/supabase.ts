@@ -153,3 +153,35 @@ export const subscribeToMessagesRealtime = (
     client.removeChannel(channel);
   };
 };
+
+/**
+ * Realtime subscription to live conversation messages
+ */
+export const subscribeToConversationRealtime = (
+  conversationId: string,
+  onMessageChange: (payload: any) => void
+) => {
+  const client = getSupabaseClient();
+  if (!client) return () => {};
+
+  const channel = client
+    .channel(`conversation-${conversationId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'conversation_messages',
+        filter: `conversation_id=eq.${conversationId}`,
+      },
+      (payload) => {
+        onMessageChange(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    client.removeChannel(channel);
+  };
+};
+

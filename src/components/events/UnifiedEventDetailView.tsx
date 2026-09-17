@@ -22,22 +22,33 @@ import {
 } from 'lucide-react';
 import { EventItem, RSVPItem, EventAnnouncement } from '@/types';
 import { formatIST, getRSVPsByEvent, getAnnouncements, subscribeToStore } from '@/lib/store';
-import { getLocalAuthSession } from '@/lib/auth';
+import { getLocalAuthSession, useAuth } from '@/lib/auth';
 import RSVPForm from '@/components/ui/RSVPForm';
 import ShareEventModal from '@/components/events/ShareEventModal';
 import AnnouncementBanner from '@/components/communication/AnnouncementBanner';
-import AskHostModal from '@/components/communication/AskHostModal';
+import AuthModal from '@/components/auth/AuthModal';
+import EventConversationModal from '@/components/communication/EventConversationModal';
 
 interface UnifiedEventDetailViewProps {
   event: EventItem;
 }
 
 export default function UnifiedEventDetailView({ event }: { event: EventItem }) {
+  const { isLoggedIn, profile, user } = useAuth();
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showAskHostModal, setShowAskHostModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showConversationModal, setShowConversationModal] = useState(false);
   const [confirmedRsvp, setConfirmedRsvp] = useState<RSVPItem | null>(null);
   const [announcements, setAnnouncements] = useState<EventAnnouncement[]>([]);
+
+  const handleAskHostClick = () => {
+    if (isLoggedIn || user || profile) {
+      setShowConversationModal(true);
+    } else {
+      setShowAuthModal(true);
+    }
+  };
 
   // Check if current attendee already has a confirmed RSVP for this event
   useEffect(() => {
@@ -253,7 +264,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowAskHostModal(true)}
+                onClick={handleAskHostClick}
                 className="px-3.5 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] hover:text-orange-600 transition flex items-center gap-1.5 cursor-pointer"
                 title="Send a direct question to the organizer"
               >
@@ -332,7 +343,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             {/* Share Trigger, Ask Host & Security Guarantee */}
             <div className="space-y-2.5 pt-2">
               <button
-                onClick={() => setShowAskHostModal(true)}
+                onClick={handleAskHostClick}
                 className="w-full py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-stone-50 hover:border-orange-500 text-xs font-semibold text-[#0F172A] hover:text-orange-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
@@ -390,11 +401,23 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         event={event}
       />
 
-      {/* Ask Host Modal */}
-      <AskHostModal
+      {/* Auth Modal for Unauthenticated Guests */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthenticated={() => {
+          setShowAuthModal(false);
+          setShowConversationModal(true);
+        }}
+      />
+
+      {/* Vibe Host ↔ Guest Communication Gateway Modal */}
+      <EventConversationModal
         event={event}
-        isOpen={showAskHostModal}
-        onClose={() => setShowAskHostModal(false)}
+        isOpen={showConversationModal}
+        onClose={() => setShowConversationModal(false)}
+        guestName={profile?.name || user?.user_metadata?.full_name}
+        guestEmail={user?.email || profile?.email}
       />
     </div>
   );

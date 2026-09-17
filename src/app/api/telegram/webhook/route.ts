@@ -16,6 +16,8 @@ import {
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
 import { nanoid } from 'nanoid';
+import { telegramAdapter } from '@/lib/communication/adapters/telegramAdapter';
+import { conversationService } from '@/lib/communication/conversationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +45,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Verify Telegram Webhook Secret Token if configured (Security Requirement 11)
+    if (!telegramAdapter.verifyWebhook(req)) {
+      console.warn('[Telegram Webhook] Unauthorized webhook request: token mismatch');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const update = await req.json();
 
     // 1. Handle Inline Button Callback Queries (Approve / Discard)
@@ -111,11 +119,56 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // 2. Handle Incoming Messages (Photos, Links, Text)
+    // 2. Handle Incoming Messages
     if (!update.message) {
       return NextResponse.json({ ok: true });
     }
 
+    // 2A. Communication Gateway Interception (Host Replies from Telegram Topic)
+    const incomingHostMsg = await telegramAdapter.processIncomingMessage(update);
+    if (incomingHostMsg) {
+      let conv = null;
+      if (incomingHostMsg.conversationId) {
+        conv = await conversationService.getConversationById(incomingHostMsg.conversationId);
+      }
+      if (!conv && incomingHostMsg.telegramTopicId) {
+        conv = await conversationService.resolveConversationByTopic(incomingHostMsg.telegramTopicId);
+      }
+
+      if (conv) {
+        if (conv.status === 'CLOSED') {
+          console.warn('[Telegram Webhook] Host attempted reply on closed conversation:', conv.id);
+          return NextResponse.json({
+            ok: true,
+            warning: 'Conversation is closed',
+            conversationId: conv.id,
+          });
+        }
+
+        const savedMsg = await conversationService.postHostMessage({
+          conversationId: conv.id,
+          senderId: incomingHostMsg.senderId || 'telegram-host',
+          content: incomingHostMsg.messageContent,
+          channel: 'TELEGRAM',
+          externalMessageId: incomingHostMsg.externalMessageId,
+        });
+
+        console.log('[Telegram Webhook] Host message routed to Vibe conversation:', {
+          conversationId: conv.id,
+          messageId: savedMsg.id,
+          topicId: incomingHostMsg.telegramTopicId,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          handledBy: 'communication_gateway',
+          conversationId: conv.id,
+          messageId: savedMsg.id,
+        });
+      }
+    }
+
+    // 3. Existing Event Flyer / Link Submission Ingestion Flow
     const message = update.message;
     const chatId = message.chat.id;
     const senderId = message.from.id;

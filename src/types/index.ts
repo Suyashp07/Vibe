@@ -218,3 +218,38 @@ export interface EventDirectMessage {
   parent_id?: string;
   created_at: string;
 }
+
+export type ConversationStatus = 'OPEN' | 'CLOSED' | 'BLOCKED';
+export type CommunicationChannel = 'WEB' | 'TELEGRAM' | 'WHATSAPP';
+export type MessageSenderRole = 'GUEST' | 'HOST' | 'SYSTEM';
+export type MessageDeliveryStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED';
+
+export interface Conversation {
+  id: string;
+  event_id: string;
+  guest_id: string;
+  host_id: string;
+  guest_name?: string;
+  guest_email?: string;
+  status: ConversationStatus;
+  guest_channel: CommunicationChannel;
+  host_channel: CommunicationChannel;
+  telegram_topic_id?: string | number | null;
+  created_at: string;
+  updated_at: string;
+  last_message_at: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  event_id: string;
+  sender_id: string;
+  sender_role: MessageSenderRole;
+  content: string;
+  channel: CommunicationChannel;
+  external_message_id?: string | number | null;
+  reply_to_message_id?: string | null;
+  created_at: string;
+  delivery_status: MessageDeliveryStatus;
+}
