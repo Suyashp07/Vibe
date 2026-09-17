@@ -43,7 +43,8 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   const [announcements, setAnnouncements] = useState<EventAnnouncement[]>([]);
 
   const handleAskHostClick = () => {
-    if (isLoggedIn || user || profile) {
+    const session = getLocalAuthSession();
+    if (isLoggedIn || user || profile || session?.email) {
       setShowConversationModal(true);
     } else {
       setShowAuthModal(true);

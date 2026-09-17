@@ -17,7 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { EventItem, Conversation, ConversationMessage } from '@/types';
-import { useAuth } from '@/lib/auth';
+import { useAuth, getLocalAuthSession } from '@/lib/auth';
 import { subscribeToConversationRealtime } from '@/lib/supabase';
 
 interface EventConversationModalProps {
@@ -45,13 +45,14 @@ export default function EventConversationModal({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Derive stable guest ID and name
+  // Derive stable guest ID, name, and email from session or props
+  const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
   const effectiveGuestId =
-    user?.id || profile?.id || guestEmail || 'guest-session';
+    user?.id || profile?.id || localSession?.id || localSession?.email || guestEmail || 'guest-session';
   const effectiveGuestName =
-    profile?.name || user?.user_metadata?.full_name || guestName || 'Event Guest';
+    profile?.name || user?.user_metadata?.full_name || localSession?.name || guestName || 'Event Guest';
   const effectiveGuestEmail =
-    user?.email || profile?.email || guestEmail || '';
+    user?.email || profile?.email || localSession?.email || guestEmail || '';
 
   // Auto-scroll to latest message
   const scrollToBottom = () => {
@@ -159,6 +160,8 @@ export default function EventConversationModal({
 
   // Send message
   const handleSendMessage = async (textToSend?: string) => {
+    if (isSending) return; // Prevent duplicate submissions
+
     const text = (textToSend || inputText).trim();
     if (!text || !conversation) return;
 
@@ -169,6 +172,13 @@ export default function EventConversationModal({
 
     setIsSending(true);
     setErrorBanner(null);
+
+    // If retrying, filter out the previous failed temporary message
+    if (textToSend) {
+      setMessages((prev) =>
+        prev.filter((m) => !(m.content === textToSend && m.delivery_status === 'FAILED'))
+      );
+    }
 
     // Optimistic message
     const tempId = `temp-${Date.now()}`;
@@ -297,10 +307,11 @@ export default function EventConversationModal({
         <div className="px-4 py-2 bg-stone-100/60 dark:bg-stone-800/40 border-b border-stone-200/50 dark:border-stone-800 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
           <div className="flex items-center gap-1.5 truncate">
             <Shield className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span className="truncate">Private Communication: Phone numbers are never exposed.</span>
+            <span className="truncate">Private Communication: Host phone number is never exposed.</span>
           </div>
-          <span className="shrink-0 text-stone-400 dark:text-stone-500 text-[10px]">
-            Host via Telegram
+          <span className="shrink-0 text-stone-400 dark:text-stone-500 text-[10px] flex items-center gap-1 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Direct Host Chat
           </span>
         </div>
 
@@ -333,7 +344,7 @@ export default function EventConversationModal({
           {isLoading ? (
             <div className="h-full flex flex-col items-center justify-center space-y-3 text-stone-400">
               <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-              <p className="text-xs font-medium">Connecting to host communication gateway...</p>
+              <p className="text-xs font-medium">Connecting to host...</p>
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-sm mx-auto space-y-3">
@@ -345,7 +356,7 @@ export default function EventConversationModal({
                   Send your question to {organizerName}
                 </h4>
                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 leading-relaxed">
-                  Ask about venue, parking, timing, or accessibility. The host receives this in their Telegram and replies directly to you here.
+                  Ask about venue, parking, timing, or accessibility. The host replies directly to you here.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5 justify-center pt-2">
@@ -413,13 +424,13 @@ export default function EventConversationModal({
                         </span>
                       )}
                       {msg.delivery_status === 'SENT' && (
-                        <span className="flex items-center gap-1 text-stone-400" title="Sent to host's Telegram">
+                        <span className="flex items-center gap-1 text-stone-400" title="Sent to host">
                           <Check className="w-3 h-3 text-emerald-500" />
                           <span>Sent</span>
                         </span>
                       )}
                       {msg.delivery_status === 'DELIVERED' && (
-                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400" title="Delivered">
+                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400" title="Delivered to host">
                           <CheckCheck className="w-3.5 h-3.5" />
                           <span>Delivered</span>
                         </span>
