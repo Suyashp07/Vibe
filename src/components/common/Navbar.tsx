@@ -114,20 +114,19 @@ export default function Navbar() {
         {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
-            {/* Left: Brand Logo (Vibe by Swaniki: Enlarged V with BY SWANIKI above ibe) */}
+            {/* Left: Brand Logo (VIBE BY SWANIKI: Unified, clear, non-split lockup) */}
             <div className="flex items-center shrink-0">
-              <Link href="/" className="flex items-center gap-1 group py-0.5 select-none" title="Vibe by Swaniki">
-                <span className="font-display font-black text-3xl sm:text-4xl text-[#0F172A] tracking-tighter leading-none group-hover:text-[#E8621A] transition-colors">
-                  V
+              <Link
+                href="/"
+                className="flex items-baseline gap-1.5 sm:gap-2 group py-1 select-none"
+                title="Vibe by Swaniki"
+              >
+                <span className="font-display font-black text-2xl sm:text-3xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors leading-none">
+                  VIBE
                 </span>
-                <div className="flex flex-col justify-center -space-y-0.5">
-                  <span className="text-[8px] sm:text-[9px] font-bold tracking-[0.22em] text-[#E8621A] uppercase leading-none">
-                    BY SWANIKI
-                  </span>
-                  <span className="font-display font-black text-xl sm:text-2xl text-[#0F172A] tracking-tight leading-none group-hover:text-black transition-colors">
-                    ibe
-                  </span>
-                </div>
+                <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.18em] text-[#E8621A] uppercase leading-none">
+                  BY SWANIKI
+                </span>
               </Link>
             </div>
 

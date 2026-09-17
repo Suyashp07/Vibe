@@ -94,18 +94,17 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-[#E2E8F0]">
           {/* Column 1: Brand Info & Social Media Links (Spans 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-1 group py-1 select-none" title="Vibe by Swaniki">
-              <span className="font-display font-black text-3xl sm:text-4xl text-[#0F172A] tracking-tighter leading-none group-hover:text-[#E8621A] transition-colors">
-                V
+            <Link
+              href="/"
+              className="inline-flex items-baseline gap-1.5 sm:gap-2 group py-1 select-none"
+              title="Vibe by Swaniki"
+            >
+              <span className="font-display font-black text-2xl sm:text-3xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors leading-none">
+                VIBE
               </span>
-              <div className="flex flex-col justify-center -space-y-0.5">
-                <span className="text-[8px] sm:text-[9px] font-bold tracking-[0.22em] text-[#E8621A] uppercase leading-none">
-                  BY SWANIKI
-                </span>
-                <span className="font-display font-black text-xl sm:text-2xl text-[#0F172A] tracking-tight leading-none group-hover:text-black transition-colors">
-                  ibe
-                </span>
-              </div>
+              <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.18em] text-[#E8621A] uppercase leading-none">
+                BY SWANIKI
+              </span>
             </Link>
 
             <p className="text-xs sm:text-sm text-[#64748B] max-w-sm leading-relaxed">
