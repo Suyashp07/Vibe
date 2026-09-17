@@ -156,7 +156,7 @@ async function startWhatsAppBridge() {
       const contextInfo = msg.message.extendedTextMessage?.contextInfo;
       const quotedStanzaId = contextInfo?.stanzaId;
 
-      const senderPhone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '');
+      const senderPhone = isSelfChat ? (connectedPhone || '916264984285') : remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace('@lid', '');
       const senderName = msg.pushName || 'Host';
 
       // Check if we have this quoted message stored in memory
@@ -193,6 +193,7 @@ async function startWhatsAppBridge() {
 
       console.log('[WhatsApp Bridge] Inbound message received:', {
         from: senderPhone,
+        remoteJid,
         text: messageContent.slice(0, 40),
         hasImage: Boolean(imageBase64),
         quotedStanzaId,
@@ -204,6 +205,7 @@ async function startWhatsAppBridge() {
         const webhookPayload = {
           messageId: msg.key.id,
           senderPhone,
+          senderJid: remoteJid,
           senderName,
           text: messageContent.trim(),
           quotedMessageId: quotedStanzaId,
@@ -346,10 +348,11 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const cleanPhone = String(to).replace(/[^0-9]/g, '');
-        const jid = `${cleanPhone}@s.whatsapp.net`;
+        const targetJid = String(to).includes('@')
+          ? String(to)
+          : `${String(to).replace(/[^0-9]/g, '')}@s.whatsapp.net`;
 
-        const sent = await sock!.sendMessage(jid, { text });
+        const sent = await sock!.sendMessage(targetJid, { text });
         const messageId = sent?.key?.id;
 
         if (messageId) {

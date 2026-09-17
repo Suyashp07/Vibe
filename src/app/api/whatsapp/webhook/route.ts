@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
     }
 
     const senderPhone = payload.senderPhone ? String(payload.senderPhone).replace(/[^0-9]/g, '') : '';
+    const senderJid = payload.senderJid || (senderPhone ? `${senderPhone}@s.whatsapp.net` : '');
+    const replyTarget = senderJid || senderPhone;
     const senderName = payload.senderName || 'Host';
     const textContent = (payload.text || '').trim();
 
@@ -103,8 +105,8 @@ export async function POST(req: NextRequest) {
     if (conv) {
       if (conv.status === 'CLOSED') {
         console.warn('[WhatsApp Webhook] Host attempted reply on closed conversation:', conv.id);
-        if (senderPhone) {
-          await sendWhatsAppReply(senderPhone, '⚠️ This conversation has been closed.');
+        if (replyTarget) {
+          await sendWhatsAppReply(replyTarget, '⚠️ This conversation has been closed.');
         }
         return NextResponse.json({
           ok: true,
@@ -149,8 +151,8 @@ export async function POST(req: NextRequest) {
         `🔗 *Send a Link:* Paste a Luma, BookMyShow, District, or Unstop URL.\n` +
         `💬 *Send a Text:* Forward any event details message or blurb.\n\n` +
         `_Gemini AI will extract all details, create the event, and reply with your live link!_`;
-      if (senderPhone) {
-        await sendWhatsAppReply(senderPhone, welcome);
+      if (replyTarget) {
+        await sendWhatsAppReply(replyTarget, welcome);
       }
       return NextResponse.json({ ok: true, handledBy: 'welcome_prompt' });
     }
@@ -163,14 +165,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, status: 'ignored_insufficient_content' });
     }
 
-    console.log('[WhatsApp Webhook] Event creation request received from:', senderPhone, {
+    console.log('[WhatsApp Webhook] Event creation request received from:', replyTarget, {
       hasImage,
       textLength: textContent.length,
     });
 
     // Send instant progress acknowledgment
-    if (senderPhone) {
-      await sendWhatsAppReply(senderPhone, '🔍 *Analyzing your event with Gemini AI...* Hang tight!');
+    if (replyTarget) {
+      await sendWhatsAppReply(replyTarget, '🔍 *Analyzing your event with Gemini AI...* Hang tight!');
     }
 
     const supabase = getSupabaseAdmin();
@@ -396,8 +398,8 @@ export async function POST(req: NextRequest) {
       `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
       `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
 
-    if (senderPhone) {
-      await sendWhatsAppReply(senderPhone, confirmationMsg);
+    if (replyTarget) {
+      await sendWhatsAppReply(replyTarget, confirmationMsg);
     }
 
     console.log('[WhatsApp Webhook] Event successfully created via WhatsApp:', {

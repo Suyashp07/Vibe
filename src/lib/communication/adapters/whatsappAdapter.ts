@@ -166,13 +166,7 @@ export class WhatsAppAdapter implements CommunicationChannelAdapter {
     const text = payload.text.trim();
     if (!text) return null;
 
-    // Optional phone origin check
-    const hostPhone = this.getHostPhone();
     const senderPhone = payload.senderPhone ? normalizePhone(payload.senderPhone) : undefined;
-    if (hostPhone && senderPhone && !senderPhone.includes(hostPhone) && !hostPhone.includes(senderPhone)) {
-      console.warn('[WhatsAppAdapter] Received message from unrecognized phone number:', senderPhone);
-      return null;
-    }
 
     return {
       conversationId: payload.conversationId,
