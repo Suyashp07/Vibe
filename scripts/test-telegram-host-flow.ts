@@ -198,7 +198,6 @@ async function runTelegramHostFlowTests() {
   assert(notificationText.includes('<b>Guest:</b>\nVibe User'), 'Contains Guest:\nVibe User');
   assert(notificationText.includes('<b>Message:</b>\nIs parking available?'), 'Contains Message:\nIs parking available?');
   assert(notificationText.includes('<i>Reply directly in this topic to respond.</i>'), 'Contains "Reply directly in this topic to respond." prompt');
-  assert(notificationText.includes(`<!-- CONV_ID:${conv.id} -->`), 'Contains hidden correlation tag for deterministic safety');
 
   // -------------------------------------------------------------
   // STEP 7: Privacy Assertion

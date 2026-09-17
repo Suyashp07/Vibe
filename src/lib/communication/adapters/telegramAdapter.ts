@@ -382,8 +382,7 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
       `<b>Event:</b> ${escapeHtml(event.title || 'Event')}\n\n` +
       `<b>Guest:</b>\n${escapeHtml(guestDisplayName)}\n\n` +
       `<b>Message:</b>\n${escapeHtml(message.content)}\n\n` +
-      `<i>Reply directly in this topic to respond.</i>\n` +
-      `<!-- CONV_ID:${conversation.id} -->`;
+      `<i>Reply directly in this topic to respond.</i>`;
 
     const payload: any = {
       chat_id: chatId,
