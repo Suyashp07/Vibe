@@ -237,8 +237,9 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
     event: EventItem;
     guestName: string;
     conversationId: string;
+    chatId?: string | number | null;
   }): Promise<string | number | null> {
-    const chatId = this.getHostChatId();
+    const chatId = params.chatId || this.getHostChatId();
     if (!chatId) {
       console.warn('[TelegramAdapter] Missing TELEGRAM_HOST_CHAT_ID for creating topic.');
       return null;
@@ -246,8 +247,8 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
 
     const shortId = params.conversationId.slice(0, 8);
     // Max topic name length in Telegram is 128 characters
-    const cleanTitle = (params.event.title || 'Event').slice(0, 30);
-    const cleanGuest = (params.guestName || 'Guest').slice(0, 25);
+    const cleanTitle = (params.event.title || 'Event').slice(0, 35).trim();
+    const cleanGuest = sanitizeGuestDisplayName(params.guestName).slice(0, 25).trim();
     const topicName = `${cleanTitle} — ${cleanGuest} (#${shortId})`;
 
     const resp = await this.sendWithRetry('createForumTopic', {
@@ -342,39 +343,38 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
     const { conversation, message, event, guestName } = params;
     let topicId = conversation.telegram_topic_id;
 
-    // Create topic if not already created
+    const guestDisplayName = sanitizeGuestDisplayName(
+      guestName || conversation.guest_name,
+      conversation.guest_email
+    );
+
+    // Create topic if not already created (first message in conversation)
     if (!topicId) {
       const newTopicId = await this.createHostTopic({
         event,
-        guestName: guestName || conversation.guest_name || 'Attendee',
+        guestName: guestDisplayName,
         conversationId: conversation.id,
+        chatId,
       });
       if (newTopicId) {
         topicId = newTopicId;
       }
     }
 
-    const shortId = conversation.id.slice(0, 8);
-    const guestDisplayName = guestName || conversation.guest_name || 'Vibe Attendee';
-
-    // Format IST time
-    const timeStr = new Date().toLocaleTimeString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-
-    // Formatted message adhering strictly to requirements:
-    // Extremely clean, no phone numbers exposed
+    // Formatted notification according to exact VIBE specification:
+    // VIBE
+    // Event: AI & Tech Meetup
+    // Guest:
+    // Vibe User
+    // Message:
+    // Is parking available?
+    // Reply directly in this topic to respond.
     const text =
-      `💬 <b>VIBE — GUEST MESSAGE</b>\n` +
-      `<b>Event:</b> ${escapeHtml(event.title)}\n` +
-      `<b>Conversation:</b> <code>#${shortId}</code>\n\n` +
-      `<b>Guest:</b> ${escapeHtml(guestDisplayName)}\n` +
-      `<b>Time:</b> ${timeStr} (IST)\n\n` +
+      `<b>VIBE</b>\n\n` +
+      `<b>Event:</b> ${escapeHtml(event.title || 'Event')}\n\n` +
+      `<b>Guest:</b>\n${escapeHtml(guestDisplayName)}\n\n` +
       `<b>Message:</b>\n${escapeHtml(message.content)}\n\n` +
-      `<i>👉 Reply directly in this topic to respond to the guest.</i>\n` +
+      `<i>Reply directly in this topic to respond.</i>\n` +
       `<!-- CONV_ID:${conversation.id} -->`;
 
     const payload: any = {
@@ -541,6 +541,18 @@ function escapeHtml(text: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+export function sanitizeGuestDisplayName(name?: string, email?: string): string {
+  if (name && name.trim() && !name.includes('@')) {
+    const cleaned = name.replace(/\+?[0-9\s-]{7,}/g, '').trim();
+    if (cleaned.length > 0) return cleaned;
+  }
+  if (email && email.includes('@')) {
+    const namePart = email.split('@')[0];
+    return `Guest (${namePart})`;
+  }
+  return 'Vibe User';
 }
 
 export const telegramAdapter = new TelegramAdapter();

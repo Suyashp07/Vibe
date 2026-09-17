@@ -503,6 +503,38 @@ export class ConversationService {
       throw new Error('Conversation not found.');
     }
 
+    // Idempotency check 1: in-memory messages for this conversation
+    if (externalMessageId) {
+      const curList = memoryMessages.get(conv.id) || [];
+      const existing = curList.find(
+        (m) => m.external_message_id && String(m.external_message_id) === String(externalMessageId)
+      );
+      if (existing) {
+        console.log('[ConversationService] host_message_duplicate ignored by externalMessageId:', externalMessageId);
+        return existing;
+      }
+
+      // Idempotency check 2: Supabase database check
+      const supabase = getSupabaseAdmin();
+      if (supabase) {
+        try {
+          const { data: existingDbMsg } = await supabase
+            .from('conversation_messages')
+            .select('*')
+            .eq('conversation_id', conv.id)
+            .eq('external_message_id', String(externalMessageId))
+            .maybeSingle();
+
+          if (existingDbMsg) {
+            console.log('[ConversationService] host_message_duplicate found in Supabase:', externalMessageId);
+            return existingDbMsg;
+          }
+        } catch (dbErr) {
+          // ignore error
+        }
+      }
+    }
+
     const newMsg: ConversationMessage = {
       id: `cmsg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       conversation_id: conv.id,
