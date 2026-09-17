@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { conversationService } from '@/lib/communication/conversationService';
+import { verifyCommunicationSession } from '@/lib/communication/auth';
 import { createClient } from '@supabase/supabase-js';
 import { SAMPLE_TEMPLATE_EVENTS } from '@/lib/store';
 import { EventItem } from '@/types';
@@ -17,21 +18,54 @@ interface RouteContext {
   params: { id: string };
 }
 
-// GET /api/communication/conversations/[id]/messages?requesterId=...
+// GET /api/communication/conversations/[id]/messages
 export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     const { id } = params;
-    const { searchParams } = new URL(req.url);
-    const requesterId = searchParams.get('requesterId') || undefined;
-    const requesterRole = searchParams.get('requesterRole') || undefined;
+    const session = await verifyCommunicationSession(req);
+    const clientRequesterId = req.nextUrl.searchParams.get('requesterId');
+    const effectiveUserId = session?.userId || clientRequesterId;
 
-    const messages = await conversationService.getConversationMessages(id, requesterId, requesterRole);
+    if (!effectiveUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Identity required to access conversation messages' },
+        { status: 401 }
+      );
+    }
+
+    // Load conversation to verify authorization (VULN-01)
+    const conv = await conversationService.getConversationById(id);
+    if (!conv) {
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+    }
+
+    const isGuest =
+      conv.guest_id.toLowerCase() === effectiveUserId.toLowerCase() ||
+      (session && conv.guest_email?.toLowerCase() === session.email.toLowerCase());
+    const isHost =
+      conv.host_id.toLowerCase() === effectiveUserId.toLowerCase() ||
+      (session && session.userId.toLowerCase() === conv.host_id.toLowerCase());
+    const isSuperAdmin = session?.isSuperAdmin === true;
+
+    if (!isGuest && !isHost && !isSuperAdmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You do not have access to this conversation.' },
+        { status: 403 }
+      );
+    }
+
+    const messages = await conversationService.getConversationMessages(
+      id,
+      effectiveUserId,
+      isSuperAdmin ? 'super_admin' : undefined
+    );
     return NextResponse.json({ messages });
   } catch (err: any) {
+    console.error('Error in GET /api/communication/conversations/[id]/messages:', err);
     if (err.message?.includes('Unauthorized')) {
       return NextResponse.json({ error: err.message }, { status: 403 });
     }
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to retrieve messages' }, { status: 500 });
   }
 }
 
@@ -40,30 +74,49 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     const { id: conversationId } = params;
+    const session = await verifyCommunicationSession(req);
     const body = await req.json();
-    const { senderId, content, guestName, event: clientEvent } = body;
+    const { senderId, content, guestName } = body;
 
-    if (!senderId || !content) {
-      return NextResponse.json(
-        { error: 'Missing required parameters: senderId, content' },
-        { status: 400 }
-      );
+    if (!content || !content.trim()) {
+      return NextResponse.json({ error: 'Message content cannot be empty' }, { status: 400 });
     }
 
-    // 1. Resolve conversation
-    const conv = await conversationService.getConversationById(conversationId, senderId);
+    // 1. Resolve conversation from authoritative store
+    const conv = await conversationService.getConversationById(conversationId);
     if (!conv) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // 2. Resolve event details for adapter formatting
-    let eventObj: EventItem = clientEvent;
-    if (!eventObj) {
-      const supabase = getSupabaseServerClient();
-      if (supabase) {
-        const { data } = await supabase.from('events').select('*').eq('id', conv.event_id).maybeSingle();
-        if (data) eventObj = data;
-      }
+    // 2. Determine verified sender identity (VULN-02)
+    const effectiveSenderId = session?.userId || senderId;
+    if (!effectiveSenderId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Sender identity required' },
+        { status: 401 }
+      );
+    }
+
+    // Ensure sender is the verified guest of this conversation (or super_admin)
+    const isGuest =
+      conv.guest_id.toLowerCase() === effectiveSenderId.toLowerCase() ||
+      (session && conv.guest_email?.toLowerCase() === session.email.toLowerCase());
+    const isSuperAdmin = session?.isSuperAdmin === true;
+
+    if (!isGuest && !isSuperAdmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You are not a participant in this conversation.' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Resolve event strictly from authoritative database using conv.event_id (VULN-08)
+    // NEVER trust client-supplied event object
+    let eventObj: EventItem | null = null;
+    const supabase = getSupabaseServerClient();
+    if (supabase) {
+      const { data } = await supabase.from('events').select('*').eq('id', conv.event_id).maybeSingle();
+      if (data) eventObj = data;
     }
 
     if (!eventObj) {
@@ -77,12 +130,12 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       } as any;
     }
 
-    // 3. Post guest message through conversation service
+    // 4. Post guest message through conversation service
     const message = await conversationService.postGuestMessage({
       conversationId: conv.id,
-      senderId,
+      senderId: effectiveSenderId,
       content,
-      event: eventObj,
+      event: eventObj!,
       guestName: guestName || conv.guest_name,
     });
 
@@ -103,6 +156,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: err.message }, { status: 403 });
     }
 
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }

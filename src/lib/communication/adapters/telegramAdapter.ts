@@ -458,6 +458,17 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
     }
 
     const chatId = msg.chat?.id;
+    const hostChatId = this.getHostChatId();
+
+    // Verify chat origin: Reject messages from unauthorized groups (VULN-06)
+    if (hostChatId && chatId && String(chatId) !== String(hostChatId)) {
+      logTelegramEvent('telegram_webhook_unauthorized_chat', {
+        chatId,
+        expectedChatId: hostChatId,
+      });
+      return null;
+    }
+
     const topicId = msg.message_thread_id || null;
     let extractedConvId: string | undefined = undefined;
 
@@ -532,7 +543,21 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
       req.headers?.get?.('x-telegram-bot-api-secret-token') ||
       req.headers?.['x-telegram-bot-api-secret-token'];
 
-    return tokenHeader === expectedSecret;
+    if (!tokenHeader) return false;
+
+    const expectedBuf = Buffer.from(expectedSecret);
+    const tokenBuf = Buffer.from(tokenHeader);
+
+    if (expectedBuf.length !== tokenBuf.length) {
+      return false;
+    }
+
+    try {
+      const crypto = require('crypto');
+      return crypto.timingSafeEqual(expectedBuf, tokenBuf);
+    } catch {
+      return false;
+    }
   }
 }
 

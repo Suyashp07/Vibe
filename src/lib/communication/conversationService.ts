@@ -237,8 +237,17 @@ export class ConversationService {
     topicId: string | number,
     chatId?: string | number
   ): Promise<Conversation | null> {
-    const topicStr = String(topicId);
-    const chatStr = chatId ? String(chatId) : null;
+    const topicStr = String(topicId).trim();
+    // Validate numeric format (VULN-09)
+    if (!/^-?[0-9]+$/.test(topicStr)) {
+      return null;
+    }
+
+    const chatStr = chatId ? String(chatId).trim() : null;
+    if (chatStr && !/^-?[0-9]+$/.test(chatStr)) {
+      return null;
+    }
+
     const supabase = getSupabaseAdmin();
 
     if (supabase) {

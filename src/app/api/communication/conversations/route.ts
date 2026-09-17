@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { conversationService } from '@/lib/communication/conversationService';
+import { verifyCommunicationSession, sanitizeConversationForClient } from '@/lib/communication/auth';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -15,17 +16,37 @@ function getSupabaseServerClient() {
 // Find or create conversation for an event + guest
 export async function POST(req: NextRequest) {
   try {
+    const session = await verifyCommunicationSession(req);
     const body = await req.json();
     const { eventId, guestId, hostId, guestName, guestEmail } = body;
 
-    if (!eventId || !guestId) {
+    if (!eventId) {
       return NextResponse.json(
-        { error: 'Missing required parameters: eventId, guestId' },
+        { error: 'Missing required parameter: eventId' },
         { status: 400 }
       );
     }
 
-    // Resolve event and host to ensure validity and prevent IDOR
+    // Determine verified guest identity: Session takes absolute priority over client body
+    let effectiveGuestId = session?.userId || guestId;
+    let effectiveGuestEmail = session?.email || guestEmail;
+    let effectiveGuestName = guestName;
+
+    // Reject static generic fallback identifiers that cause cross-guest collisions (VULN-10)
+    if (!effectiveGuestId || effectiveGuestId === 'guest-session' || effectiveGuestId.trim() === '') {
+      return NextResponse.json(
+        { error: 'Unauthorized: A valid guest identity is required to start a conversation.' },
+        { status: 401 }
+      );
+    }
+
+    // If session is active, verify that client is not attempting to impersonate another guest (VULN-02)
+    if (session && guestId && guestId !== session.userId && guestId !== session.email && !session.isSuperAdmin) {
+      effectiveGuestId = session.userId;
+      effectiveGuestEmail = session.email;
+    }
+
+    // Resolve authoritative host directly from event record (VULN-01, VULN-04)
     let resolvedHostId = hostId;
     const supabase = getSupabaseServerClient();
     if (supabase) {
@@ -46,39 +67,62 @@ export async function POST(req: NextRequest) {
 
     const conversation = await conversationService.findOrCreateConversation({
       eventId,
-      guestId,
+      guestId: effectiveGuestId,
       hostId: resolvedHostId,
-      guestName,
-      guestEmail,
+      guestName: effectiveGuestName,
+      guestEmail: effectiveGuestEmail,
       guestChannel: 'WEB',
       hostChannel: 'TELEGRAM',
     });
 
+    // Strip private infrastructure details before responding to client (VULN-05)
     return NextResponse.json({
       success: true,
-      conversation,
+      conversation: sanitizeConversationForClient(conversation),
     });
   } catch (err: any) {
     console.error('Error in POST /api/communication/conversations:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to initialize conversation' }, { status: 500 });
   }
 }
 
 // GET /api/communication/conversations?userId=...&role=guest|host
 export async function GET(req: NextRequest) {
   try {
+    const session = await verifyCommunicationSession(req);
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const requestedUserId = searchParams.get('userId');
     const role = (searchParams.get('role') || 'guest') as 'guest' | 'host';
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Missing required userId' }, { status: 400 });
+    if (!requestedUserId) {
+      return NextResponse.json({ error: 'Missing required userId parameter' }, { status: 400 });
     }
 
-    const conversations = await conversationService.getConversationsForUser(userId, role);
-    return NextResponse.json({ conversations });
+    // Enforce Authorization: Caller can only list their own conversations unless super_admin (VULN-03)
+    if (session) {
+      const isOwner =
+        session.userId.toLowerCase() === requestedUserId.toLowerCase() ||
+        session.email.toLowerCase() === requestedUserId.toLowerCase();
+      if (!isOwner && !session.isSuperAdmin) {
+        return NextResponse.json(
+          { error: 'Unauthorized: You do not have permission to view conversations for this user.' },
+          { status: 403 }
+        );
+      }
+    } else {
+      // Unauthenticated callers cannot enumerate conversations across users
+      return NextResponse.json(
+        { error: 'Unauthorized: Authentication required to list conversations.' },
+        { status: 401 }
+      );
+    }
+
+    const conversations = await conversationService.getConversationsForUser(requestedUserId, role);
+    const sanitizedList = conversations.map(sanitizeConversationForClient);
+
+    return NextResponse.json({ conversations: sanitizedList });
   } catch (err: any) {
     console.error('Error in GET /api/communication/conversations:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to retrieve conversations' }, { status: 500 });
   }
 }

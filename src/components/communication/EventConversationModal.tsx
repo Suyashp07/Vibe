@@ -47,8 +47,19 @@ export default function EventConversationModal({
 
   // Derive stable guest ID, name, and email from session or props
   const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
+
+  const getAnonymousGuestId = () => {
+    if (typeof window === 'undefined') return 'anon-guest';
+    let anonId = sessionStorage.getItem('vibe_anon_guest_id');
+    if (!anonId) {
+      anonId = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      sessionStorage.setItem('vibe_anon_guest_id', anonId);
+    }
+    return anonId;
+  };
+
   const effectiveGuestId =
-    user?.id || profile?.id || localSession?.id || localSession?.email || guestEmail || 'guest-session';
+    user?.id || profile?.id || localSession?.id || localSession?.email || guestEmail || getAnonymousGuestId();
   const effectiveGuestName =
     profile?.name || user?.user_metadata?.full_name || localSession?.name || guestName || 'Event Guest';
   const effectiveGuestEmail =
