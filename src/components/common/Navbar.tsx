@@ -114,17 +114,17 @@ export default function Navbar() {
         {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
-            {/* Left: Brand Logo (VIBE BY SWANIKI: Unified, clear, non-split lockup) */}
+            {/* Left: Brand Logo (District by Zomato style: vibe over BY SWANIKI) */}
             <div className="flex items-center shrink-0">
               <Link
                 href="/"
-                className="flex items-baseline gap-1.5 sm:gap-2 group py-1 select-none"
+                className="flex flex-col group select-none py-0.5"
                 title="Vibe by Swaniki"
               >
-                <span className="font-display font-black text-2xl sm:text-3xl text-[#0F172A] tracking-tight group-hover:text-black transition-colors leading-none">
-                  VIBE
+                <span className="font-display font-black text-2xl sm:text-[28px] text-[#0F172A] tracking-tight group-hover:text-black transition-colors leading-none">
+                  vibe
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.18em] text-[#E8621A] uppercase leading-none">
+                <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-[0.22em] text-[#E8621A] uppercase leading-none pt-1">
                   BY SWANIKI
                 </span>
               </Link>

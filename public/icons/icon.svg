@@ -16,13 +16,13 @@
   <!-- Subtle inner border -->
   <rect x="8" y="8" width="496" height="496" rx="104" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.1" />
 
-  <!-- Brand Wordmark Lockup: VIBE BY SWANIKI (Unified, Clear, Non-Split) -->
+  <!-- Brand Wordmark Lockup: District by Zomato style (vibe over BY SWANIKI) -->
   <g transform="translate(48, 140)">
-    <!-- Solid VIBE -->
-    <text x="208" y="160" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="900" font-size="148" fill="#FFFFFF" letter-spacing="-2">VIBE</text>
+    <!-- Solid vibe -->
+    <text x="208" y="150" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="900" font-size="140" fill="#FFFFFF" letter-spacing="-3">vibe</text>
     
     <!-- BY SWANIKI -->
-    <text x="208" y="235" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="34" fill="url(#brand-accent)" letter-spacing="10">BY SWANIKI</text>
+    <text x="208" y="225" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="32" fill="url(#brand-accent)" letter-spacing="10">BY SWANIKI</text>
   </g>
 
   <!-- Live Pulse Accent Dot -->
