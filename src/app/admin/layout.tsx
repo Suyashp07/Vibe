@@ -24,40 +24,28 @@ import { useAuth } from '@/lib/auth';
 
 const NAV_ITEMS = [
   {
-    label: 'Overview',
-    href: '/admin',
-    icon: Activity,
-    badge: null,
-  },
-  {
-    label: 'Events & Drafts',
+    label: 'Events & Review',
     href: '/admin/events',
     icon: CalendarDays,
-    badge: 'Live',
-  },
-  {
-    label: 'Ingestion & Curators',
-    href: '/admin/ingestion',
-    icon: Terminal,
     badge: null,
   },
   {
-    label: 'Global RSVPs',
+    label: 'Guest RSVPs',
     href: '/admin/rsvps',
     icon: Users,
     badge: null,
   },
   {
-    label: 'Accounts & Users',
-    href: '/admin/users',
-    icon: UserCheck,
-    badge: 'RBAC',
+    label: 'URL Ingestion & AI',
+    href: '/admin/ingestion',
+    icon: Sparkles,
+    badge: null,
   },
   {
-    label: 'Audit Trail',
-    href: '/admin/audit-logs',
-    icon: ShieldAlert,
-    badge: 'Security',
+    label: 'User Accounts',
+    href: '/admin/users',
+    icon: UserCheck,
+    badge: null,
   },
 ];
 
@@ -127,39 +115,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <Link href="/admin" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#E8621A] to-[#FF8442] flex items-center justify-center text-white shadow-md shadow-orange-500/20">
-              <Sparkles className="w-4 h-4 fill-white" />
+          <Link href="/admin/events" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-xl bg-[#E8621A] flex items-center justify-center text-white shadow-md shadow-orange-500/20 font-black text-sm">
+              V
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-sm tracking-wide text-white uppercase font-mono">Vibe</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E8621A]/10 border border-[#E8621A]/30 text-[#FF8442] font-semibold">
-                  Admin
-                </span>
-              </div>
-              <span className="text-[10px] text-zinc-400 -mt-0.5">Command Center</span>
+              <span className="font-bold text-sm tracking-tight text-white leading-tight">
+                Vibe <span className="text-[#E8621A] text-xs font-semibold">Admin</span>
+              </span>
+              <span className="text-[9px] text-zinc-400 font-mono tracking-wider uppercase">Console</span>
             </div>
           </Link>
         </div>
 
-        {/* Status indicator & User Menu */}
+        {/* User Menu & Live Link */}
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono">
-            <Radio className="w-3 h-3 animate-pulse" />
-            <span>Edge Zero-Trust Active</span>
-          </div>
-
           <Link
             href="/"
             target="_blank"
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition px-2.5 py-1.5 rounded-lg hover:bg-zinc-800/60"
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition px-2.5 py-1.5 rounded-lg hover:bg-zinc-800/60"
           >
             <span>Live Site</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#E8621A]" />
           </Link>
 
-          <div className="h-4 w-px bg-zinc-800 hidden sm:block" />
+          <div className="h-4 w-px bg-zinc-800" />
 
           {/* User profile capsule */}
           <div className="flex items-center gap-2 pl-1">
@@ -171,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {profile?.name || profile?.email?.split('@')[0]}
               </span>
               <span className="text-[10px] text-zinc-400 font-mono">
-                {isSuperAdmin ? 'Super Admin' : 'Curator'}
+                {isSuperAdmin ? 'Super Admin' : 'Staff'}
               </span>
             </div>
             <button
@@ -187,7 +167,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Sidebar Navigation */}
-        <aside className="hidden md:flex w-64 flex-col bg-[#0B0F19] border-r border-zinc-800/80 p-4 space-y-6">
+        <aside className="hidden md:flex w-56 flex-col bg-[#0B0F19] border-r border-zinc-800/80 p-3.5 space-y-4">
           <div className="space-y-1">
             <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 px-3 py-1 font-semibold">
               Management
@@ -199,13 +179,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     isActive
                       ? 'bg-[#E8621A]/15 text-[#FF8442] border border-[#E8621A]/30 shadow-sm shadow-[#E8621A]/10 font-semibold'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <Icon className={`w-4 h-4 ${isActive ? 'text-[#FF8442]' : 'text-zinc-400'}`} />
                     <span>{item.label}</span>
                   </div>
@@ -219,23 +199,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </div>
 
-          {/* Quick System Status Card */}
-          <div className="mt-auto p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-[11px] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-400">Telegram Bot</span>
-              <span className="text-emerald-400 font-mono flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Active
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-400">Supabase RLS</span>
-              <span className="text-emerald-400 font-mono">Enforced</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-400">Security Logs</span>
-              <span className="text-cyan-400 font-mono">Immutable</span>
-            </div>
+          {/* Clean Helper Note */}
+          <div className="mt-auto p-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 text-[11px] text-zinc-400">
+            <p className="font-semibold text-zinc-300 text-xs">Vibe Admin</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5">Quickly review drafts and publish live events.</p>
           </div>
         </aside>
 
