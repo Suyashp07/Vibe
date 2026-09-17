@@ -99,8 +99,9 @@ export default function Footer() {
               className="inline-flex flex-col group select-none py-0.5"
               title="Vibe by Swaniki"
             >
-              <span className="font-display font-black text-2xl sm:text-[28px] text-[#0F172A] tracking-tight group-hover:text-black transition-colors leading-none">
-                vibe
+              <span className="font-display font-black text-2xl sm:text-[28px] text-[#0F172A] tracking-tight leading-none">
+                <span className="transition-colors duration-200 group-hover:text-[#E8621A]">V</span>
+                <span>ibe</span>
               </span>
               <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-[0.22em] text-[#E8621A] uppercase leading-none pt-1">
                 BY SWANIKI

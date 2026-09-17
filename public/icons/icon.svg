@@ -16,10 +16,10 @@
   <!-- Subtle inner border -->
   <rect x="8" y="8" width="496" height="496" rx="104" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.1" />
 
-  <!-- Brand Wordmark Lockup: District by Zomato style (vibe over BY SWANIKI) -->
+  <!-- Brand Wordmark Lockup: District by Zomato style (Vibe over BY SWANIKI) -->
   <g transform="translate(48, 140)">
-    <!-- Solid vibe -->
-    <text x="208" y="150" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="900" font-size="140" fill="#FFFFFF" letter-spacing="-3">vibe</text>
+    <!-- Capital V in orange + white ibe -->
+    <text x="208" y="150" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="900" font-size="140" letter-spacing="-3"><tspan fill="url(#brand-accent)">V</tspan><tspan fill="#FFFFFF">ibe</tspan></text>
     
     <!-- BY SWANIKI -->
     <text x="208" y="225" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="32" fill="url(#brand-accent)" letter-spacing="10">BY SWANIKI</text>
