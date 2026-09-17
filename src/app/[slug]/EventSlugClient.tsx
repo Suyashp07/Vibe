@@ -47,71 +47,60 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
         (e) => e.slug.toLowerCase() === slug.toLowerCase()
       );
 
-      // If not found in live events list (e.g. it's a draft), try fetching directly from Supabase for admins
+      // 2. If not found in local store (e.g. private invite-only event), fetch via /api/events/by-slug
       if (!foundEvent) {
         try {
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-          const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-          if (supabaseUrl && anonKey) {
-            const res = await fetch(
-              `${supabaseUrl}/rest/v1/events?slug=eq.${encodeURIComponent(slug)}&select=*`,
-              {
-                headers: {
-                  apikey: anonKey,
-                  Authorization: `Bearer ${anonKey}`,
-                },
-              }
-            );
-            if (res.ok) {
-              const rows = await res.json();
-              if (rows && rows[0]) {
-                const r = rows[0];
-                foundEvent = {
-                  id: r.id,
-                  organizer_id: r.organizer_id || 'org-1',
-                  organizer_name: 'Organizer',
-                  organizer_handle: 'organizer',
-                  organizer_logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-                  organizer_brand_color: '#E8621A',
-                  slug: r.slug,
-                  title: r.title,
-                  tagline: r.tagline || '',
-                  description: r.description || '',
-                  cover_image_url: r.cover_image_url,
-                  template: r.template || 'grove',
-                  theme: r.theme || { palette: 'forest', font: 'Inter + Fraunces', bg_style: 'texture', button_style: 'solid' },
-                  sections: r.sections || { speakers: true, agenda: true, gallery: true, faq: true },
-                  event_type: r.event_type || 'in-person',
-                  location_name: r.location_name,
-                  location_address: r.location_address,
-                  city: r.city || 'Mumbai',
-                  start_at: r.start_at,
-                  end_at: r.end_at,
-                  timezone: r.timezone || 'Asia/Kolkata',
-                  capacity: r.capacity || 50,
-                  is_public: r.is_public ?? false,
-                  status: r.status || 'draft',
-                  ai_generated: r.ai_generated || false,
-                  faq: r.faq || [],
-                  speakers: r.speakers || [],
-                  agenda: r.agenda || [],
-                  gallery: r.gallery || [],
-                  rsvp_form_config: r.rsvp_form_config || { ask_plus_one: true, ask_dietary: true, waitlist_enabled: true },
-                  whatsapp_caption: r.whatsapp_caption,
-                  instagram_caption: r.instagram_caption,
-                  source_type: r.source_type || 'native',
-                  source_platform: r.source_platform || undefined,
-                  external_ticket_url: r.external_ticket_url || undefined,
-                  external_price_text: r.external_price_text || undefined,
-                  confidence_score: r.confidence_score || undefined,
-                  created_at: r.created_at,
-                  updated_at: r.updated_at,
-                };
-              }
+          const res = await fetch(`/api/events/by-slug?slug=${encodeURIComponent(slug)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.event) {
+              const r = data.event;
+              const orgProfile = r.profiles || {};
+              foundEvent = {
+                id: r.id,
+                organizer_id: r.organizer_id || orgProfile.id || 'org-1',
+                organizer_name: orgProfile.name || r.organizer_name || 'Organizer',
+                organizer_handle: orgProfile.handle || r.organizer_handle || 'organizer',
+                organizer_logo: orgProfile.logo_url || r.organizer_logo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+                organizer_brand_color: orgProfile.brand_color || r.organizer_brand_color || '#E8621A',
+                slug: r.slug,
+                title: r.title,
+                tagline: r.tagline || '',
+                description: r.description || '',
+                cover_image_url: r.cover_image_url,
+                template: r.template || 'grove',
+                theme: r.theme || { palette: 'forest', font: 'Inter + Fraunces', bg_style: 'texture', button_style: 'solid' },
+                sections: r.sections || { speakers: true, agenda: true, gallery: true, faq: true },
+                event_type: r.event_type || 'in-person',
+                location_name: r.location_name,
+                location_address: r.location_address,
+                city: r.city || 'Mumbai',
+                start_at: r.start_at,
+                end_at: r.end_at,
+                timezone: r.timezone || 'Asia/Kolkata',
+                capacity: r.capacity || 50,
+                is_public: r.is_public ?? false,
+                status: r.status || 'live',
+                ai_generated: r.ai_generated || false,
+                faq: r.faq || [],
+                speakers: r.speakers || [],
+                agenda: r.agenda || [],
+                gallery: r.gallery || [],
+                rsvp_form_config: r.rsvp_form_config || { ask_plus_one: true, ask_dietary: true, waitlist_enabled: true },
+                whatsapp_caption: r.whatsapp_caption,
+                instagram_caption: r.instagram_caption,
+                source_type: r.source_type || 'native',
+                source_platform: r.source_platform || undefined,
+                external_ticket_url: r.external_ticket_url || undefined,
+                external_price_text: r.external_price_text || undefined,
+                confidence_score: r.confidence_score || undefined,
+                created_at: r.created_at,
+                updated_at: r.updated_at,
+              };
             }
           }
         } catch (e) {
-          // ignore
+          console.warn('Failed to fetch event by slug:', e);
         }
       }
 

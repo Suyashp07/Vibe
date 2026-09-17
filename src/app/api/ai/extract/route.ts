@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     if (apiKey) {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const candidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
 
       let prompt = `You are a strict, precise event extraction AI.
 Extract structured event details from the provided input (poster image, scraped webpage text, or raw text).
@@ -76,29 +76,32 @@ Never invent fake dates if completely unknown. If uncertain of venue, use city o
         });
       }
 
-      try {
-        const result = await model.generateContent(contents);
-        const responseText = result.response.text();
-        const parsed = JSON.parse(cleanJson(responseText));
+      for (const modelName of candidateModels) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(contents);
+          const responseText = result.response.text();
+          const parsed = JSON.parse(cleanJson(responseText));
 
-        return NextResponse.json({
-          ok: true,
-          event: {
-            title: parsed.title || 'Untitled Event',
-            tagline: parsed.tagline || '',
-            description: parsed.description || '',
-            date: parsed.date || new Date().toISOString().split('T')[0],
-            time: parsed.time || '18:00',
-            city: parsed.city || 'Mumbai',
-            venue_name: parsed.venue_name || '',
-            category: parsed.category || 'Tech & AI',
-            price_text: parsed.price_text || 'Free Entry',
-            external_ticket_url: parsed.external_ticket_url || url || '',
-            is_online: Boolean(parsed.is_online),
-          },
-        });
-      } catch (aiErr: any) {
-        console.warn('Gemini extraction failed, using fallback parser:', aiErr?.message);
+          return NextResponse.json({
+            ok: true,
+            event: {
+              title: parsed.title || 'Untitled Event',
+              tagline: parsed.tagline || '',
+              description: parsed.description || '',
+              date: parsed.date || new Date().toISOString().split('T')[0],
+              time: parsed.time || '18:00',
+              city: parsed.city || 'Mumbai',
+              venue_name: parsed.venue_name || '',
+              category: parsed.category || 'Tech & AI',
+              price_text: parsed.price_text || 'Free Entry',
+              external_ticket_url: parsed.external_ticket_url || url || '',
+              is_online: Boolean(parsed.is_online),
+            },
+          });
+        } catch (aiErr: any) {
+          console.warn(`Gemini extraction with ${modelName} failed:`, aiErr?.message);
+        }
       }
     }
 

@@ -198,13 +198,26 @@ export default function WhatsOnFeed() {
     return () => window.removeEventListener('vibe:location_changed', syncLocation);
   }, []);
 
-  // Calculate distance for each event from active location
+  // Strictly filter public live events ONLY (private invite-only events are NEVER shown on public discovery feeds)
+  const publicLiveEvents = useMemo(() => {
+    return events.filter((e) => {
+      // Must be live
+      if (e.status !== 'live') return false;
+      // Strictly exclude if marked private or is_public is false
+      if (e.is_public === false || String(e.is_public) === 'false' || (e as any).is_private === true) {
+        return false;
+      }
+      return true;
+    });
+  }, [events]);
+
+  // Calculate distance for each public event from active location
   const eventsWithDistance: EventWithDistance[] = useMemo(() => {
     const effectiveCoords =
       userCoords ||
       (userCity && userCity !== 'All India' ? getCityCoordinates(userCity) : null);
 
-    return events.map((e) => {
+    return publicLiveEvents.map((e) => {
       let eventLat = e.location_lat;
       let eventLng = e.location_lng;
 
@@ -232,7 +245,7 @@ export default function WhatsOnFeed() {
 
       return { ...e, distanceKm: null };
     });
-  }, [events, userCoords, userCity]);
+  }, [publicLiveEvents, userCoords, userCity]);
 
   // Toggle mood tag
   const handleToggleMood = (tag: string) => {
@@ -254,7 +267,7 @@ export default function WhatsOnFeed() {
     }
   };
 
-  // 3 to 4 prominent events for the BookMyShow-style flashcard slider
+  // 3 to 4 prominent events for the BookMyShow-style flashcard slider (strictly public events only)
   const prominentEvents = useMemo(() => {
     const pool = eventsWithDistance.length > 0 ? eventsWithDistance : SAMPLE_TEMPLATE_EVENTS;
     return pool.slice(0, 4);
@@ -294,8 +307,8 @@ export default function WhatsOnFeed() {
   const filteredEvents = useMemo(() => {
     return eventsWithDistance
       .filter((e) => {
-        // Only public live events
-        if (e.status !== 'live' || e.is_public === false) return false;
+        // Only public live events (strictly exclude private/invite-only events)
+        if (e.status !== 'live' || e.is_public === false || String(e.is_public) === 'false' || (e as any).is_private === true) return false;
 
         const eText = `${e.title} ${e.tagline || ''} ${e.description || ''} ${e.category || ''} ${e.location_name || ''} ${e.city || ''} ${e.organizer_name || ''}`.toLowerCase();
 

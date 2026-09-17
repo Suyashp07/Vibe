@@ -35,7 +35,8 @@ import {
   ArrowRight,
   Filter,
   RefreshCw,
-  Building2
+  Building2,
+  Lock
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -850,7 +851,13 @@ function DashboardInner() {
                         )}
 
                         {/* Badges Top Left */}
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10 flex-wrap">
+                          {event.is_public === false && (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-950 text-white shadow-sm flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5 text-amber-400" />
+                              Private
+                            </span>
+                          )}
                           {isLive && (
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-emerald-700 shadow-sm flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

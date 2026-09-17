@@ -24,22 +24,36 @@ const fraunces = Fraunces({
   style: ['normal', 'italic'],
 });
 
+import PWARegister from '@/components/pwa/PWARegister';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#0A0A0A',
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#E8621A',
 };
 
 export const metadata: Metadata = {
   title: 'Vibe by Swaniki — Whitelabel Events & Experiences',
   description: 'India-first, lightweight, premium event platform with AI copy generation, 5 editorial templates, and instant branded social share banners.',
+  manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/icons/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '192x192', type: 'image/png' },
+    ],
+  },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Vibe',
   },
+  applicationName: 'Vibe by Swaniki',
   openGraph: {
     title: 'Vibe by Swaniki — Create events that feel alive',
     description: 'Whitelabel event pages with editorial warmth, live RSVP tracking, and AI-powered storytelling.',
@@ -58,6 +72,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${playfair.variable} ${fraunces.variable}`}>
       <body className="min-h-screen bg-surface-2 text-ink antialiased pb-16 md:pb-0">
         {children}
+        <PWARegister />
       </body>
     </html>
   );

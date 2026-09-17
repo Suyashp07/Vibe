@@ -12,15 +12,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let event: any = null;
   let organizer: any = null;
 
-  // Supabase lookup first for live database sync via direct REST to prevent vendor chunk resolution issues
+  // Supabase lookup first for live database sync via direct REST
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('your-project')) {
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-project')) {
     try {
       const res = await fetch(`${supabaseUrl}/rest/v1/events?slug=eq.${encodeURIComponent(slug)}&select=*`, {
         headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
         },
         cache: 'no-store',
       });
@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       if (!event) {
         const resOrg = await fetch(`${supabaseUrl}/rest/v1/profiles?handle=eq.${encodeURIComponent(slug)}&select=*`, {
           headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
           },
           cache: 'no-store',
         });

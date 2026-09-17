@@ -1,0 +1,42 @@
+{
+  "name": "Vibe by Swaniki — Live Events & Experiences",
+  "short_name": "Vibe",
+  "description": "India's premier whitelabel event network for concerts, comedy, tech summits, and exclusive private gatherings.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E8621A",
+  "orientation": "portrait",
+  "categories": ["entertainment", "events", "lifestyle", "social"],
+  "dir": "auto",
+  "lang": "en-IN",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

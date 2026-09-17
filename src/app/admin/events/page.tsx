@@ -18,9 +18,11 @@ import {
   Sparkles,
   RefreshCw,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck
 } from 'lucide-react';
 import EventEditModal from '@/components/admin/EventEditModal';
+import { calculateEventSurety } from '@/lib/eventSurety';
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -282,7 +284,9 @@ export default function AdminEventsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
-                {filteredEvents.map((event) => (
+                {filteredEvents.map((event) => {
+                  const surety = calculateEventSurety(event);
+                  return (
                   <tr key={event.id} className="hover:bg-zinc-800/30 transition">
                     {/* Event & Thumbnail */}
                     <td className="py-3 px-4">
@@ -355,28 +359,37 @@ export default function AdminEventsPage() {
                       </div>
                     </td>
 
-                    {/* Status Toggle / Verify Action */}
+                    {/* Status Toggle / Verify Action & Surety Badge */}
                     <td className="py-3 px-4">
-                      {event.status === 'draft' ? (
-                        <button
-                          onClick={() => handleToggleStatus(event)}
-                          disabled={actionLoading === `status-${event.id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white shadow-sm shadow-emerald-950/40 transition disabled:opacity-50 cursor-pointer"
+                      <div className="flex flex-col gap-1.5 items-start">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${surety.badgeColor}`}
+                          title={`Completeness: ${surety.filledCount}/${surety.totalCount} fields verified`}
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Verify &amp; Publish Live</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleToggleStatus(event)}
-                          disabled={actionLoading === `status-${event.id}`}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer"
-                          title="Click to revert to Draft"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          <span>Live</span>
-                        </button>
-                      )}
+                          <ShieldCheck className="w-3 h-3 shrink-0" />
+                          <span>{surety.score}% Surety</span>
+                        </span>
+                        {event.status === 'draft' ? (
+                          <button
+                            onClick={() => handleToggleStatus(event)}
+                            disabled={actionLoading === `status-${event.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white shadow-sm shadow-emerald-950/40 transition disabled:opacity-50 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Verify &amp; Publish Live</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleStatus(event)}
+                            disabled={actionLoading === `status-${event.id}`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer"
+                            title="Click to revert to Draft"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span>Live</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
 
                     {/* Actions */}
@@ -410,7 +423,8 @@ export default function AdminEventsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

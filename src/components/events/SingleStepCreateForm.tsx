@@ -124,7 +124,7 @@ interface SingleStepCreateFormProps {
 
 export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCreateFormProps) {
   const router = useRouter();
-  const { profile } = useAuth();
+  const { profile, isStaff } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const aiPosterInputRef = useRef<HTMLInputElement>(null);
 
@@ -401,8 +401,8 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
         end_at: endDateTime,
         timezone: 'Asia/Kolkata',
         capacity: Number(capacity) || 0, // 0 denotes unlimited
-        is_public: isPublic, // Public vs Private
-        status: publishLive ? 'live' : 'draft',
+        is_public: isStaff ? isPublic : false, // Gated: requires superadmin approval before public listing
+        status: isStaff && publishLive ? 'live' : 'draft', // Gated: superadmin review required
         ai_generated: mode === 'ai',
         source_type: ticketingMode === 'external' ? 'external' : 'native',
         is_external: ticketingMode === 'external',
@@ -1411,30 +1411,43 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={() => handleSubmit(false)}
-            disabled={isSubmitting}
-            className="px-5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition-colors cursor-pointer disabled:opacity-50"
-          >
-            Save Draft
-          </button>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[#E2E8F0]">
+          <div className="flex items-center gap-1.5 text-[11px] text-[#64748B]">
+            <ShieldCheck className="w-4 h-4 text-[#E8621A] shrink-0" />
+            <span>
+              {isStaff
+                ? 'Superadmin session active: immediate live publishing enabled.'
+                : 'All creations pass superadmin verification before appearing in public discovery.'}
+            </span>
+          </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                <span>Publishing...</span>
-              </>
-            ) : (
-              <span>Publish Event Live</span>
-            )}
-          </button>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={() => handleSubmit(false)}
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Save Draft
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                  <span>Submitting...</span>
+                </>
+              ) : isStaff ? (
+                <span>Publish Event Live</span>
+              ) : (
+                <span>Submit for Superadmin Approval</span>
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </div>

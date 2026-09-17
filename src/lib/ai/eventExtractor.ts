@@ -39,9 +39,9 @@ export interface ExtractedEventData {
 }
 
 const CANDIDATE_MODELS = [
+  'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-flash-latest',
-  'gemini-3.6-flash',
   'gemini-flash-lite-latest',
 ];
 

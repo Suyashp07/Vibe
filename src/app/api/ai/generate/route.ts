@@ -65,27 +65,31 @@ Return ONLY a valid raw JSON object (no backticks, no markdown) with:
   "rsvp_confirmation": "Warm thank you message for guests after RSVPing"
 }`;
 
-        try {
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-          const result = await model.generateContent(prompt);
-          const responseText = result.response.text();
-          const cleaned = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          const parsed = JSON.parse(cleaned);
+        const candidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
 
-          const description = capitalizeText(parsed.description || '');
-          const tagline = capitalizeText(parsed.tagline || '');
+        for (const modelName of candidateModels) {
+          try {
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
+            const cleaned = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const parsed = JSON.parse(cleaned);
 
-          return NextResponse.json({
-            result: description,
-            description,
-            tagline,
-            whatsapp_caption: capitalizeText(parsed.whatsapp_caption || ''),
-            instagram_caption: capitalizeText(parsed.instagram_caption || ''),
-            faq: parsed.faq || [],
-            rsvp_confirmation: capitalizeText(parsed.rsvp_confirmation || '')
-          });
-        } catch (err) {
-          console.warn('Gemini generate error:', err);
+            const description = capitalizeText(parsed.description || '');
+            const tagline = capitalizeText(parsed.tagline || '');
+
+            return NextResponse.json({
+              result: description,
+              description,
+              tagline,
+              whatsapp_caption: capitalizeText(parsed.whatsapp_caption || ''),
+              instagram_caption: capitalizeText(parsed.instagram_caption || ''),
+              faq: parsed.faq || [],
+              rsvp_confirmation: capitalizeText(parsed.rsvp_confirmation || '')
+            });
+          } catch (err: any) {
+            console.warn(`Gemini generate with ${modelName} error:`, err?.message);
+          }
         }
       }
     }

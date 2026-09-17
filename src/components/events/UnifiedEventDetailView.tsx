@@ -16,7 +16,8 @@ import {
   Flame,
   ArrowLeft,
   Building2,
-  Ticket
+  Ticket,
+  Lock
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
 import { formatIST, getRSVPsByEvent } from '@/lib/store';
@@ -102,8 +103,17 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
             {/* Badges Overlay */}
             <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-              <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-bold text-white uppercase tracking-wider shadow-sm">
-                {event.source_platform ? `🎟️ ${event.source_platform.toUpperCase()}` : 'LIVE EVENT'}
+              <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-bold text-white uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                {event.is_public === false || String(event.is_public) === 'false' ? (
+                  <>
+                    <Lock className="w-3 h-3 text-amber-400" />
+                    <span>PRIVATE · INVITE ONLY</span>
+                  </>
+                ) : event.source_platform ? (
+                  `🎟️ ${event.source_platform.toUpperCase()}`
+                ) : (
+                  'LIVE EVENT'
+                )}
               </span>
 
               {event.external_price_text ? (
@@ -120,6 +130,15 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
           {/* Event Header Information */}
           <div className="space-y-2.5">
+            {(event.is_public === false || String(event.is_public) === 'false') && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center gap-2.5 text-xs text-amber-950 font-medium">
+                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Private Gathering:</strong> Unlisted from public discovery. You received exclusive direct invite access from the host.
+                </span>
+              </div>
+            )}
+
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#0F172A] tracking-tight leading-tight">
               {event.title}
             </h1>

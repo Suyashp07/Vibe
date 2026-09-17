@@ -113,9 +113,9 @@ export default function SingleClickCreateAIPage() {
       // Save to local store for instant offline & client state synchronization
       saveEvent(data.event);
 
-      setProgressStep('Publishing event live...');
+      setProgressStep('Submitted for Superadmin Approval! Opening preview...');
       
-      // Instant redirect to the live event page
+      // Redirect to the private preview page
       router.push(`/${data.slug}`);
     } catch (err: any) {
       console.error('Instant create error:', err);

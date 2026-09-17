@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { areDuplicates } from '@/lib/aggregation/dedup';
 import { useAuth } from '@/lib/auth';
+import { calculateEventSurety } from '@/lib/eventSurety';
 
 interface AdminEvent {
   id: string;
@@ -425,7 +426,7 @@ export default function AdminDashboardPage() {
           body: JSON.stringify({ url: u }),
         });
         const data = await res.json();
-        if (res.ok && data.success) {
+        if (res.ok && (data.success || data.ok)) {
           if (data.isDuplicate) duplicates++;
           else created++;
         } else {
@@ -683,6 +684,7 @@ export default function AdminDashboardPage() {
                     const isRejected = (event.status || '').toLowerCase() === 'cancelled' || (event.status || '').toLowerCase() === 'rejected';
 
                     const coverImg = event.cover_image_url || event.cover_image || event.image_url;
+                    const surety = calculateEventSurety(event);
 
                     return (
                       <div
@@ -738,6 +740,15 @@ export default function AdminDashboardPage() {
 
                           {/* Badges Bar */}
                           <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            {/* Event Surety Completeness Badge */}
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-bold border flex items-center gap-1 ${surety.badgeColor}`}
+                              title={`Event completeness: ${surety.score}% (${surety.filledCount}/${surety.totalCount} details verified)`}
+                            >
+                              <ShieldCheck className="w-2.5 h-2.5 shrink-0" />
+                              <span>{surety.score}% Surety</span>
+                            </span>
+
                             {event.source_platform && (
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F1F5F9] text-[#475569]">
                                 {event.source_platform}
@@ -1332,6 +1343,79 @@ function DetailInspector({
           </div>
         </div>
       )}
+
+      {/* Event Surety & Details Comparison Section */}
+      {(() => {
+        const surety = calculateEventSurety(event);
+        return (
+          <div className={`p-3.5 rounded-xl border ${surety.borderColor} ${surety.bgColor} space-y-3`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className={`w-4 h-4 ${surety.textColor}`} />
+                <div>
+                  <h3 className="font-bold text-xs text-[#0A0A0A]">
+                    Event Surety: <span className={surety.textColor}>{surety.score}%</span> ({surety.tier})
+                  </h3>
+                  <p className="text-[10px] text-[#64748B]">
+                    {surety.filledCount} of {surety.totalCount} details verified
+                  </p>
+                </div>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${surety.badgeColor}`}>
+                {surety.tier} Surety
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  surety.score >= 80 ? 'bg-emerald-500' : surety.score >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                }`}
+                style={{ width: `${surety.score}%` }}
+              />
+            </div>
+
+            {/* Field Details Comparison Breakdown */}
+            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+              {surety.checks.map((c) => (
+                <div
+                  key={c.id}
+                  className={`flex items-center justify-between p-2 rounded-lg text-[10px] bg-white border ${
+                    c.present ? 'border-emerald-100' : 'border-rose-200'
+                  }`}
+                >
+                  <div className="min-w-0 pr-1">
+                    <p className="font-semibold text-[#0A0A0A] truncate">{c.label}</p>
+                    <p className="text-[9px] text-[#64748B] truncate">{c.value || c.tip}</p>
+                  </div>
+                  <span className="shrink-0">
+                    {c.present ? (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[9px] flex items-center gap-0.5">
+                        <Check className="w-2.5 h-2.5" />
+                        <span>OK</span>
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-bold text-[9px]">
+                        Missing
+                      </span>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {surety.missingCritical.length > 0 && (
+              <div className="text-[10px] text-rose-800 bg-rose-100/80 px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1.5 border border-rose-200">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span>
+                  Missing critical details: <strong className="font-semibold">{surety.missingCritical.join(', ')}</strong>. Please update before approving.
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Poster Section */}
       <div className="flex items-start gap-4">

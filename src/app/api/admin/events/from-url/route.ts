@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
+      success: true,
       ok: true,
       event: savedEvent,
       isDuplicate,

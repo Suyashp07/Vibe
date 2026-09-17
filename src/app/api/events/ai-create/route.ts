@@ -170,8 +170,8 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: 0, // 0 denotes unlimited
-      is_public: isPublic !== false, // Default to true
-      status: 'live', // Instant live event!
+      is_public: false, // Default to unlisted until superadmin approves
+      status: 'draft', // Submitted for superadmin review & approval
       ai_generated: true,
       source_type: finalSourceType,
       source_platform: finalSourcePlatform,
