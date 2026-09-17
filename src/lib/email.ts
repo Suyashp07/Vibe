@@ -749,3 +749,173 @@ export async function sendVerificationOtpEmail({
   });
 }
 
+/**
+ * 9. Host Broadcast Announcement Email to Attendees
+ */
+export async function sendHostAnnouncementEmail({
+  to,
+  guestName,
+  announcement,
+  event,
+  organizer,
+  appUrl = 'https://vibe.swaniki.com'
+}: {
+  to: string;
+  guestName?: string;
+  announcement: {
+    title: string;
+    message: string;
+    is_urgent?: boolean;
+    target_audience?: string;
+  };
+  event: EventItem;
+  organizer?: {
+    name: string;
+    brand_color?: string;
+    logo_url?: string;
+    handle?: string;
+  };
+  appUrl?: string;
+}): Promise<EmailSendResult> {
+  const org = organizer || {
+    name: event.organizer_name || 'Event Host',
+    brand_color: event.organizer_brand_color || '#E8621A',
+    logo_url: event.organizer_logo,
+    handle: event.organizer_handle
+  };
+
+  const isUrgent = !!announcement.is_urgent;
+  const brandColor = org.brand_color || '#E8621A';
+  const eventUrl = `${appUrl}/e/${event.slug}`;
+  const guestUrl = `${appUrl}/guest`;
+
+  const html = wrapWhiteLabelTemplate(
+    org,
+    `
+    <div style="margin-bottom: 24px;">
+      ${isUrgent ? `
+      <div style="display: inline-block; background-color: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px;">
+        ⚠️ Urgent Host Announcement
+      </div>
+      ` : `
+      <div style="display: inline-block; background-color: #F3F4F6; color: #374151; border: 1px solid #E5E7EB; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px;">
+        📢 Event Update from Organizer
+      </div>
+      `}
+      <h1 style="font-size: 24px; font-weight: 900; color: #111827; margin: 0 0 8px 0; line-height: 1.3;">
+        ${announcement.title}
+      </h1>
+      <p style="font-size: 14px; color: #6B7280; margin: 0;">
+        Regarding your attendance at <strong>${event.title}</strong>
+      </p>
+    </div>
+
+    <div style="background-color: ${isUrgent ? '#FFFBEB' : '#F9FAFB'}; border-left: 4px solid ${isUrgent ? '#F59E0B' : brandColor}; border-radius: 0 12px 12px 0; padding: 20px; margin: 20px 0; font-size: 15px; line-height: 1.6; color: #1F2937; white-space: pre-wrap;">
+${announcement.message}
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin: 24px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; letter-spacing: 0.5px;">Event Schedule</div>
+        <div style="font-size: 14px; font-weight: 700; color: #111827; margin-top: 2px;">${formatIST(event.start_at)}</div>
+        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">📍 ${event.location_name}${event.city ? `, ${event.city}` : ''}</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 28px; text-align: center;">
+      <a href="${eventUrl}" class="cta-button" style="background-color: ${brandColor}; color: #ffffff !important; display: inline-block; padding: 13px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; margin-right: 8px; margin-bottom: 8px;">
+        View Live Event Page →
+      </a>
+      <a href="${guestUrl}" class="secondary-button" style="display: inline-block; padding: 12px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; margin-bottom: 8px;">
+        My Passes & Updates
+      </a>
+    </div>
+    `,
+    `Update from ${org.name}: ${announcement.title}`
+  );
+
+  const subjectPrefix = isUrgent ? `[URGENT UPDATE]` : `[Event Update]`;
+  return sendEmail({
+    to,
+    subject: `${subjectPrefix} ${announcement.title} - ${event.title}`,
+    html
+  });
+}
+
+/**
+ * 10. Direct Message / Q&A Notification Email (Host <-> Guest)
+ */
+export async function sendDirectMessageNotificationEmail({
+  to,
+  recipientName,
+  senderName,
+  senderRole,
+  message,
+  subject,
+  event,
+  organizer,
+  appUrl = 'https://vibe.swaniki.com'
+}: {
+  to: string;
+  recipientName?: string;
+  senderName: string;
+  senderRole: 'host' | 'guest';
+  message: string;
+  subject?: string;
+  event: EventItem;
+  organizer?: {
+    name: string;
+    brand_color?: string;
+    logo_url?: string;
+    handle?: string;
+  };
+  appUrl?: string;
+}): Promise<EmailSendResult> {
+  const org = organizer || {
+    name: event.organizer_name || 'Event Host',
+    brand_color: event.organizer_brand_color || '#E8621A',
+    logo_url: event.organizer_logo,
+    handle: event.organizer_handle
+  };
+
+  const brandColor = org.brand_color || '#E8621A';
+  const isFromHost = senderRole === 'host';
+  const actionUrl = isFromHost 
+    ? `${appUrl}/e/${event.slug}` 
+    : `${appUrl}/dashboard`;
+
+  const html = wrapWhiteLabelTemplate(
+    org,
+    `
+    <div style="margin-bottom: 24px;">
+      <div style="display: inline-block; background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px;">
+        💬 ${isFromHost ? 'Host Response' : 'Guest Inquiry'}
+      </div>
+      <h1 style="font-size: 22px; font-weight: 900; color: #111827; margin: 0 0 6px 0; line-height: 1.3;">
+        ${subject || `New message regarding ${event.title}`}
+      </h1>
+      <p style="font-size: 14px; color: #6B7280; margin: 0;">
+        ${recipientName ? `Hi ${recipientName}, ` : ''}you received a message from <strong>${senderName}</strong> (${isFromHost ? 'Event Host' : 'Attendee'}).
+      </p>
+    </div>
+
+    <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; margin: 20px 0; font-size: 15px; line-height: 1.6; color: #1F2937; white-space: pre-wrap;">
+${message}
+    </div>
+
+    <div style="margin-top: 28px; text-align: center;">
+      <a href="${actionUrl}" class="cta-button" style="background-color: ${brandColor}; color: #ffffff !important; display: inline-block; padding: 13px 28px; border-radius: 10px; font-weight: 700; text-decoration: none;">
+        ${isFromHost ? 'View Event & Reply →' : 'Open Host Console Inbox →'}
+      </a>
+    </div>
+    `,
+    `New message from ${senderName} about ${event.title}`
+  );
+
+  return sendEmail({
+    to,
+    subject: `[Vibe] ${senderName}: ${subject || `Message about ${event.title}`}`,
+    html
+  });
+}
+

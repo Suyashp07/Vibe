@@ -191,3 +191,30 @@ export interface FollowerItem {
   follower_avatar?: string;
   created_at: string;
 }
+
+export interface EventAnnouncement {
+  id: string;
+  event_id: string;
+  organizer_id?: string;
+  title: string;
+  message: string;
+  target_audience: 'all' | 'confirmed' | 'waitlisted';
+  is_urgent?: boolean;
+  send_email?: boolean;
+  created_at: string;
+}
+
+export interface EventDirectMessage {
+  id: string;
+  event_id: string;
+  sender_role: 'guest' | 'host';
+  sender_name: string;
+  sender_email: string;
+  recipient_email: string;
+  rsvp_id?: string;
+  subject?: string;
+  message: string;
+  is_read?: boolean;
+  parent_id?: string;
+  created_at: string;
+}

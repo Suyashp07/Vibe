@@ -17,13 +17,16 @@ import {
   ArrowLeft,
   Building2,
   Ticket,
-  Lock
+  Lock,
+  MessageSquare
 } from 'lucide-react';
-import { EventItem, RSVPItem } from '@/types';
-import { formatIST, getRSVPsByEvent } from '@/lib/store';
+import { EventItem, RSVPItem, EventAnnouncement } from '@/types';
+import { formatIST, getRSVPsByEvent, getAnnouncements, subscribeToStore } from '@/lib/store';
 import { getLocalAuthSession } from '@/lib/auth';
 import RSVPForm from '@/components/ui/RSVPForm';
 import ShareEventModal from '@/components/events/ShareEventModal';
+import AnnouncementBanner from '@/components/communication/AnnouncementBanner';
+import AskHostModal from '@/components/communication/AskHostModal';
 
 interface UnifiedEventDetailViewProps {
   event: EventItem;
@@ -32,7 +35,9 @@ interface UnifiedEventDetailViewProps {
 export default function UnifiedEventDetailView({ event }: { event: EventItem }) {
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showAskHostModal, setShowAskHostModal] = useState(false);
   const [confirmedRsvp, setConfirmedRsvp] = useState<RSVPItem | null>(null);
+  const [announcements, setAnnouncements] = useState<EventAnnouncement[]>([]);
 
   // Check if current attendee already has a confirmed RSVP for this event
   useEffect(() => {
@@ -44,6 +49,14 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         setConfirmedRsvp(match);
       }
     }
+  }, [event.id]);
+
+  useEffect(() => {
+    setAnnouncements(getAnnouncements(event.id));
+    const unsub = subscribeToStore(() => {
+      setAnnouncements(getAnnouncements(event.id));
+    });
+    return () => unsub();
   }, [event.id]);
 
   const rsvps = getRSVPsByEvent(event.id);
@@ -80,6 +93,12 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
           <span>Share</span>
         </button>
       </div>
+
+      {/* Host Announcements Banner */}
+      <AnnouncementBanner
+        announcements={announcements}
+        brandColor={event.organizer_brand_color}
+      />
 
       {/* Main 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -232,12 +251,23 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               </div>
             </div>
 
-            <button
-              onClick={() => setShowShareModal(true)}
-              className="px-3.5 py-1.5 rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition cursor-pointer"
-            >
-              Share Event
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAskHostModal(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] hover:text-orange-600 transition flex items-center gap-1.5 cursor-pointer"
+                title="Send a direct question to the organizer"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
+                <span>Ask Host</span>
+              </button>
+
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="px-3.5 py-1.5 rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition cursor-pointer"
+              >
+                Share Event
+              </button>
+            </div>
           </div>
         </div>
 
@@ -299,8 +329,16 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               </button>
             )}
 
-            {/* Share Trigger & Security Guarantee */}
-            <div className="space-y-3 pt-2">
+            {/* Share Trigger, Ask Host & Security Guarantee */}
+            <div className="space-y-2.5 pt-2">
+              <button
+                onClick={() => setShowAskHostModal(true)}
+                className="w-full py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-stone-50 hover:border-orange-500 text-xs font-semibold text-[#0F172A] hover:text-orange-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
+                <span>Ask Host a Question</span>
+              </button>
+
               <button
                 onClick={() => setShowShareModal(true)}
                 className="w-full py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-xs font-semibold text-[#0F172A] transition flex items-center justify-center gap-1.5 cursor-pointer"
@@ -350,6 +388,13 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         event={event}
+      />
+
+      {/* Ask Host Modal */}
+      <AskHostModal
+        event={event}
+        isOpen={showAskHostModal}
+        onClose={() => setShowAskHostModal(false)}
       />
     </div>
   );

@@ -15,9 +15,11 @@ import {
   Calendar,
   Sparkles,
   Check,
-  CheckCheck
+  CheckCheck,
+  Megaphone
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
+import HostBroadcastModal from '@/components/communication/HostBroadcastModal';
 import { 
   getEventRSVPs, 
   subscribeToStore, 
@@ -45,6 +47,7 @@ export default function EventGuestListModal({
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'waitlisted' | 'cancelled'>(defaultFilter);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
 
   useEffect(() => {
     if (defaultFilter) {
@@ -217,15 +220,27 @@ export default function EventGuestListModal({
             />
           </div>
 
-          {/* CSV Export */}
-          <button
-            onClick={exportCSV}
-            disabled={filtered.length === 0}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-surface-2 hover:bg-surface-3 text-ink text-xs font-semibold disabled:opacity-50 transition-colors shadow-2xs"
-          >
-            <Download className="w-3.5 h-3.5 text-accent" />
-            <span>Export CSV</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Broadcast Announcement to Attendees */}
+            <button
+              onClick={() => setIsBroadcastOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-colors shadow-sm"
+              title="Broadcast email and live notice to guests"
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              <span>Broadcast Update</span>
+            </button>
+
+            {/* CSV Export */}
+            <button
+              onClick={exportCSV}
+              disabled={filtered.length === 0}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-surface-2 hover:bg-surface-3 text-ink text-xs font-semibold disabled:opacity-50 transition-colors shadow-2xs"
+            >
+              <Download className="w-3.5 h-3.5 text-accent" />
+              <span>Export CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* Status Filter Tabs */}
@@ -424,6 +439,13 @@ export default function EventGuestListModal({
           </button>
         </div>
       </div>
+
+      {/* Host Broadcast Modal */}
+      <HostBroadcastModal
+        event={event}
+        isOpen={isBroadcastOpen}
+        onClose={() => setIsBroadcastOpen(false)}
+      />
     </div>
   );
 }

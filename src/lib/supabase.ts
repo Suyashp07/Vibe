@@ -91,3 +91,65 @@ export const uploadCoverImage = async (file: File): Promise<string | null> => {
     return null;
   }
 };
+
+/**
+ * Realtime subscription to live Host Announcements for a specific event
+ */
+export const subscribeToAnnouncementsRealtime = (
+  eventId: string,
+  onAnnouncementChange: (payload: any) => void
+) => {
+  const client = getSupabaseClient();
+  if (!client) return () => {};
+
+  const channel = client
+    .channel(`event-announcements-${eventId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'event_announcements',
+        filter: `event_id=eq.${eventId}`,
+      },
+      (payload) => {
+        onAnnouncementChange(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    client.removeChannel(channel);
+  };
+};
+
+/**
+ * Realtime subscription to live Messages for an event or recipient
+ */
+export const subscribeToMessagesRealtime = (
+  eventId: string,
+  onMessageChange: (payload: any) => void
+) => {
+  const client = getSupabaseClient();
+  if (!client) return () => {};
+
+  const channel = client
+    .channel(`event-messages-${eventId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'event_messages',
+        filter: `event_id=eq.${eventId}`,
+      },
+      (payload) => {
+        onMessageChange(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    client.removeChannel(channel);
+  };
+};

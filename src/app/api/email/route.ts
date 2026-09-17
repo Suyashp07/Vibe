@@ -5,7 +5,9 @@ import {
   sendWaitlistedEmail,
   sendEventReminderEmail,
   sendEventUpdatedEmail,
-  sendEventCancelledEmail
+  sendEventCancelledEmail,
+  sendHostAnnouncementEmail,
+  sendDirectMessageNotificationEmail
 } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -149,6 +151,55 @@ export async function POST(req: NextRequest) {
           logo_url: event.organizer_logo,
           handle: event.organizer_handle
         }
+      });
+      return NextResponse.json(result);
+    }
+
+    // 7. Host Broadcast Announcement
+    if (type === 'announcement') {
+      const { announcement } = body;
+      if (!announcement || !event) {
+        return NextResponse.json({ error: 'Missing announcement or event payload' }, { status: 400 });
+      }
+
+      const result = await sendHostAnnouncementEmail({
+        to,
+        guestName,
+        announcement,
+        event,
+        organizer: organizer || {
+          name: event.organizer_name,
+          brand_color: event.organizer_brand_color,
+          logo_url: event.organizer_logo,
+          handle: event.organizer_handle
+        },
+        appUrl
+      });
+      return NextResponse.json(result);
+    }
+
+    // 8. Direct Message / Q&A Notification
+    if (type === 'direct_message') {
+      const { senderName, senderRole, message, subject, recipientName } = body;
+      if (!message || !event) {
+        return NextResponse.json({ error: 'Missing message or event payload' }, { status: 400 });
+      }
+
+      const result = await sendDirectMessageNotificationEmail({
+        to,
+        recipientName: recipientName || guestName,
+        senderName: senderName || 'Organizer',
+        senderRole: senderRole || 'host',
+        message,
+        subject,
+        event,
+        organizer: organizer || {
+          name: event.organizer_name,
+          brand_color: event.organizer_brand_color,
+          logo_url: event.organizer_logo,
+          handle: event.organizer_handle
+        },
+        appUrl
       });
       return NextResponse.json(result);
     }

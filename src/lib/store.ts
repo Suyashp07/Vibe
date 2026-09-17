@@ -1,4 +1,4 @@
-import { EventItem, Profile, RSVPItem, CommentItem, DatePoll, TemplateType, FollowerItem } from '@/types';
+import { EventItem, Profile, RSVPItem, CommentItem, DatePoll, TemplateType, FollowerItem, EventAnnouncement, EventDirectMessage } from '@/types';
 
 export const INITIAL_ORGANIZERS: Profile[] = [
   {
@@ -401,8 +401,62 @@ const STORAGE_KEYS = {
   POLLS: 'vibe_polls_v1',
   ORGANIZERS: 'vibe_organizers_v1',
   FOLLOWS: 'vibe_follows_v1',
+  ANNOUNCEMENTS: 'vibe_announcements_v1',
+  MESSAGES: 'vibe_messages_v1',
   USER: 'vibe_current_user_v1'
 };
+
+export const INITIAL_ANNOUNCEMENTS: EventAnnouncement[] = [
+  {
+    id: 'ann-1',
+    event_id: 'evt-1',
+    organizer_id: 'org-1',
+    title: 'Terrace Rooftop Entry & Weather Update',
+    message: 'Welcome everyone! The terrace has been covered with ambient fairy lights and rain-proof canopy. Please check in at the Subko ground counter for your guest wristband.',
+    target_audience: 'all',
+    is_urgent: true,
+    send_email: false,
+    created_at: new Date(Date.now() - 3600000 * 4).toISOString()
+  },
+  {
+    id: 'ann-2',
+    event_id: 'evt-1',
+    organizer_id: 'org-1',
+    title: 'Parking Advisory - Bandra West',
+    message: 'Valet parking is currently limited. We recommend using the public parking lot near Perry Road or taking rideshares to the venue.',
+    target_audience: 'confirmed',
+    is_urgent: false,
+    send_email: false,
+    created_at: new Date(Date.now() - 3600000 * 24).toISOString()
+  }
+];
+
+export const INITIAL_MESSAGES: EventDirectMessage[] = [
+  {
+    id: 'msg-1',
+    event_id: 'evt-1',
+    sender_role: 'guest',
+    sender_name: 'Tanvi Shah',
+    sender_email: 'tanvi@gmail.com',
+    recipient_email: 'hello@swaniki.com',
+    subject: 'Dietary preferences for Subko chai salon',
+    message: 'Hi Swaniki team, does the beverage bar have oat milk or decaf options available during the salon?',
+    is_read: true,
+    created_at: new Date(Date.now() - 3600000 * 6).toISOString()
+  },
+  {
+    id: 'msg-2',
+    event_id: 'evt-1',
+    sender_role: 'host',
+    sender_name: 'Swaniki Studio',
+    sender_email: 'hello@swaniki.com',
+    recipient_email: 'tanvi@gmail.com',
+    parent_id: 'msg-1',
+    message: 'Hey Tanvi! Absolutely. Subko has fresh oat and almond milk on tap, as well as herbal tisanes if you prefer zero caffeine. Looking forward to hosting you!',
+    is_read: true,
+    created_at: new Date(Date.now() - 3600000 * 5).toISOString()
+  }
+];
 
 // Simple event-emitter for real-time live counter updates across components
 type StoreListener = () => void;
@@ -1353,4 +1407,224 @@ export const toggleFollowOrganizer = (data: {
   } else {
     return followOrganizer(data);
   }
+};
+
+// ==========================================
+// HOST <-> GUEST COMMUNICATION GATEWAY STORE
+// ==========================================
+
+export const getAnnouncements = (eventId?: string): EventAnnouncement[] => {
+  if (!isClient) return eventId ? INITIAL_ANNOUNCEMENTS.filter(a => a.event_id === eventId) : INITIAL_ANNOUNCEMENTS;
+  const stored = localStorage.getItem(STORAGE_KEYS.ANNOUNCEMENTS);
+  let all: EventAnnouncement[] = [];
+  if (!stored) {
+    all = INITIAL_ANNOUNCEMENTS;
+    localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENTS, JSON.stringify(all));
+  } else {
+    try {
+      all = JSON.parse(stored);
+    } catch {
+      all = INITIAL_ANNOUNCEMENTS;
+    }
+  }
+
+  // Also trigger async Supabase sync in background if client configured
+  const client = getSupabaseClient();
+  if (client) {
+    let query = client.from('event_announcements').select('*').order('created_at', { ascending: false });
+    if (eventId) query = query.eq('event_id', eventId);
+    Promise.resolve(query)
+      .then(({ data, error }: any) => {
+        if (!error && data && data.length > 0) {
+          const currentStored = localStorage.getItem(STORAGE_KEYS.ANNOUNCEMENTS);
+          const currentList: EventAnnouncement[] = currentStored ? JSON.parse(currentStored) : [];
+          const mergedMap = new Map<string, EventAnnouncement>();
+          currentList.forEach(a => mergedMap.set(a.id, a));
+          data.forEach((a: any) => mergedMap.set(a.id, a));
+          localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENTS, JSON.stringify(Array.from(mergedMap.values())));
+          notifyListeners();
+        }
+      })
+      .catch(() => {});
+  }
+
+  if (eventId) {
+    return all.filter(a => a.event_id === eventId);
+  }
+  return all;
+};
+
+export const saveAnnouncement = (
+  announcement: Omit<EventAnnouncement, 'id' | 'created_at'> & { id?: string }
+): EventAnnouncement => {
+  const newAnnouncement: EventAnnouncement = {
+    ...announcement,
+    id: announcement.id || `ann-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    created_at: new Date().toISOString()
+  };
+
+  if (isClient) {
+    const stored = localStorage.getItem(STORAGE_KEYS.ANNOUNCEMENTS);
+    const all: EventAnnouncement[] = stored ? JSON.parse(stored) : [...INITIAL_ANNOUNCEMENTS];
+    all.unshift(newAnnouncement);
+    localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENTS, JSON.stringify(all));
+    notifyListeners();
+
+    // Sync to Supabase in background
+    const client = getSupabaseClient();
+    if (client) {
+      Promise.resolve(
+        client.from('event_announcements').insert([{
+          id: newAnnouncement.id.startsWith('ann-') ? undefined : newAnnouncement.id,
+          event_id: newAnnouncement.event_id,
+          organizer_id: newAnnouncement.organizer_id || null,
+          title: newAnnouncement.title,
+          message: newAnnouncement.message,
+          target_audience: newAnnouncement.target_audience,
+          is_urgent: !!newAnnouncement.is_urgent,
+          send_email: !!newAnnouncement.send_email
+        }])
+      )
+        .then(({ error }: any) => {
+          if (error) console.warn('Supabase announcement sync note:', error.message);
+        })
+        .catch(err => console.warn('Supabase announcement sync error:', err));
+    }
+  }
+
+  return newAnnouncement;
+};
+
+export const deleteAnnouncement = (announcementId: string): boolean => {
+  if (!isClient) return false;
+  const stored = localStorage.getItem(STORAGE_KEYS.ANNOUNCEMENTS);
+  if (!stored) return false;
+  try {
+    const all: EventAnnouncement[] = JSON.parse(stored);
+    const filtered = all.filter(a => a.id !== announcementId);
+    localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENTS, JSON.stringify(filtered));
+    notifyListeners();
+
+    const client = getSupabaseClient();
+    if (client) {
+      Promise.resolve(client.from('event_announcements').delete().eq('id', announcementId))
+        .catch(() => {});
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const getEventMessages = (filter?: { eventId?: string; email?: string }): EventDirectMessage[] => {
+  if (!isClient) return INITIAL_MESSAGES;
+  const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+  let all: EventDirectMessage[] = [];
+  if (!stored) {
+    all = INITIAL_MESSAGES;
+    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(all));
+  } else {
+    try {
+      all = JSON.parse(stored);
+    } catch {
+      all = INITIAL_MESSAGES;
+    }
+  }
+
+  // Supabase background sync
+  const client = getSupabaseClient();
+  if (client) {
+    let query = client.from('event_messages').select('*').order('created_at', { ascending: true });
+    if (filter?.eventId) query = query.eq('event_id', filter.eventId);
+    Promise.resolve(query)
+      .then(({ data, error }: any) => {
+        if (!error && data && data.length > 0) {
+          const currentStored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+          const currentList: EventDirectMessage[] = currentStored ? JSON.parse(currentStored) : [];
+          const mergedMap = new Map<string, EventDirectMessage>();
+          currentList.forEach(m => mergedMap.set(m.id, m));
+          data.forEach((m: any) => mergedMap.set(m.id, m));
+          localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(Array.from(mergedMap.values())));
+          notifyListeners();
+        }
+      })
+      .catch(() => {});
+  }
+
+  return all.filter(m => {
+    if (filter?.eventId && m.event_id !== filter.eventId) return false;
+    if (filter?.email) {
+      const q = filter.email.toLowerCase();
+      return m.sender_email.toLowerCase() === q || m.recipient_email.toLowerCase() === q;
+    }
+    return true;
+  });
+};
+
+export const sendEventMessage = (
+  message: Omit<EventDirectMessage, 'id' | 'created_at'> & { id?: string }
+): EventDirectMessage => {
+  const newMsg: EventDirectMessage = {
+    ...message,
+    id: message.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    created_at: new Date().toISOString(),
+    is_read: message.is_read ?? false
+  };
+
+  if (isClient) {
+    const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+    const all: EventDirectMessage[] = stored ? JSON.parse(stored) : [...INITIAL_MESSAGES];
+    all.push(newMsg);
+    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(all));
+    notifyListeners();
+
+    const client = getSupabaseClient();
+    if (client) {
+      Promise.resolve(
+        client.from('event_messages').insert([{
+          id: newMsg.id.startsWith('msg-') ? undefined : newMsg.id,
+          event_id: newMsg.event_id,
+          sender_role: newMsg.sender_role,
+          sender_name: newMsg.sender_name,
+          sender_email: newMsg.sender_email,
+          recipient_email: newMsg.recipient_email,
+          rsvp_id: newMsg.rsvp_id || null,
+          subject: newMsg.subject || null,
+          message: newMsg.message,
+          is_read: newMsg.is_read,
+          parent_id: newMsg.parent_id || null
+        }])
+      )
+        .then(({ error }: any) => {
+          if (error) console.warn('Supabase message sync note:', error.message);
+        })
+        .catch(err => console.warn('Supabase message sync error:', err));
+    }
+  }
+
+  return newMsg;
+};
+
+export const markEventMessageRead = (messageId: string): boolean => {
+  if (!isClient) return false;
+  const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+  if (!stored) return false;
+  try {
+    const all: EventDirectMessage[] = JSON.parse(stored);
+    const found = all.find(m => m.id === messageId);
+    if (found) {
+      found.is_read = true;
+      localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(all));
+      notifyListeners();
+
+      const client = getSupabaseClient();
+      if (client) {
+        Promise.resolve(
+          client.from('event_messages').update({ is_read: true }).eq('id', messageId)
+        ).catch(() => {});
+      }
+      return true;
+    }
+  } catch {}
+  return false;
 };

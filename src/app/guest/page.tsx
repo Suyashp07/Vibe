@@ -22,7 +22,9 @@ import {
   Users,
   Heart,
   Sparkles,
-  Building2
+  Building2,
+  Megaphone,
+  MessageSquare
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -33,6 +35,7 @@ import {
   getRSVPs,
   getFollows,
   getOrganizers,
+  getAnnouncements,
   generateGoogleCalendarUrl,
   downloadICS,
   formatIST,
@@ -43,6 +46,7 @@ import { EventItem, RSVPItem, Profile, FollowerItem } from '@/types';
 import { useAuth } from '@/lib/auth';
 import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import FollowButton from '@/components/ui/FollowButton';
+import AskHostModal from '@/components/communication/AskHostModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 
@@ -58,6 +62,7 @@ export default function GuestDashboardPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'following'>('upcoming');
   const [cancelModalRsvp, setCancelModalRsvp] = useState<RSVPItem | null>(null);
   const [selectedPass, setSelectedPass] = useState<{ rsvp: RSVPItem; event: EventItem } | null>(null);
+  const [contactHostEvent, setContactHostEvent] = useState<EventItem | null>(null);
 
   useEffect(() => {
     setEvents(getEvents());
@@ -428,6 +433,7 @@ export default function GuestDashboardPage() {
               {displayedPasses.map(({ rsvp, event }) => {
                 const isCancelled = rsvp.status === 'cancelled';
                 const isWaitlisted = rsvp.status === 'waitlisted';
+                const eventAnnouncements = getAnnouncements(event.id);
 
                 return (
                   <motion.div
@@ -473,11 +479,30 @@ export default function GuestDashboardPage() {
                         <p className="text-xs text-ink-muted flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5" /> {event.location_name}
                         </p>
+
+                        {eventAnnouncements.length > 0 && (
+                          <div className="mt-2.5 p-2 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center gap-2 text-xs text-orange-950 font-medium">
+                            <Megaphone className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                            <span className="truncate">
+                              <strong>Host Update:</strong> {eventAnnouncements[0].title}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Actions (View, Add to Cal, Directions, Cancel) */}
+                    {/* Actions (View, Add to Cal, Directions, Ask Host, Cancel) */}
                     <div className="flex flex-wrap items-center gap-2 self-end md:self-center">
+                      <button
+                        type="button"
+                        onClick={() => setContactHostEvent(event)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 text-ink text-xs font-semibold border border-border transition-colors cursor-pointer"
+                        title="Ask Host a Question"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
+                        <span>Ask Host</span>
+                      </button>
+
                       <a
                         href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${event.location_name}, ${event.location_address}`)}`}
                         target="_blank"
@@ -612,6 +637,16 @@ export default function GuestDashboardPage() {
           rsvp={selectedPass.rsvp}
           event={selectedPass.event}
           onClose={() => setSelectedPass(null)}
+        />
+      )}
+
+      {/* Ask Host Modal */}
+      {contactHostEvent && (
+        <AskHostModal
+          event={contactHostEvent}
+          isOpen={Boolean(contactHostEvent)}
+          onClose={() => setContactHostEvent(null)}
+          defaultEmail={guestEmail}
         />
       )}
 

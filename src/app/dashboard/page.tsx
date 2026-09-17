@@ -36,12 +36,16 @@ import {
   Filter,
   RefreshCw,
   Building2,
-  Lock
+  Lock,
+  Megaphone,
+  MessageSquare
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import ShareEventModal from '@/components/events/ShareEventModal';
 import DigitalPassModal from '@/components/ui/DigitalPassModal';
+import HostBroadcastModal from '@/components/communication/HostBroadcastModal';
+import HostInboxDrawer from '@/components/communication/HostInboxDrawer';
 import {
   getEvents,
   getRSVPs,
@@ -98,6 +102,8 @@ function DashboardInner() {
   // Selected Event for Host Modals
   const [shareEvent, setShareEvent] = useState<EventItem | null>(null);
   const [guestListEvent, setGuestListEvent] = useState<EventItem | null>(null);
+  const [broadcastEvent, setBroadcastEvent] = useState<EventItem | null>(null);
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   // Guest email switcher (for attendees accessing bookings via email)
   const [guestEmail, setGuestEmail] = useState('');
@@ -776,24 +782,36 @@ function DashboardInner() {
                 ))}
               </div>
 
-              {/* Search Hosted Events */}
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                <input
-                  type="text"
-                  placeholder="Search your hosted events..."
-                  value={hostSearch}
-                  onChange={(e) => setHostSearch(e.target.value)}
-                  className="w-full pl-10 pr-8 py-2 text-xs bg-white border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] transition-colors shadow-xs"
-                />
-                {hostSearch && (
-                  <button
-                    onClick={() => setHostSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0F172A]"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {/* Guest Inquiries Inbox */}
+                <button
+                  onClick={() => setIsInboxOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] hover:border-orange-500 text-[#0F172A] hover:text-orange-600 text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                  title="View direct messages and inquiries from attendees"
+                >
+                  <MessageSquare className="w-4 h-4 text-orange-500" />
+                  <span>Inquiries Inbox</span>
+                </button>
+
+                {/* Search Hosted Events */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                  <input
+                    type="text"
+                    placeholder="Search hosted events..."
+                    value={hostSearch}
+                    onChange={(e) => setHostSearch(e.target.value)}
+                    className="w-full pl-10 pr-8 py-2 text-xs bg-white border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] transition-colors shadow-xs"
+                  />
+                  {hostSearch && (
+                    <button
+                      onClick={() => setHostSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0F172A]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -930,6 +948,14 @@ function DashboardInner() {
                                 <Share2 className="w-4 h-4" />
                               </button>
 
+                              <button
+                                onClick={() => setBroadcastEvent(event)}
+                                title="Broadcast Announcement to Guests"
+                                className="p-2 rounded-lg hover:bg-orange-50 text-[#64748B] hover:text-orange-600 transition-colors cursor-pointer"
+                              >
+                                <Megaphone className="w-4 h-4 text-orange-500" />
+                              </button>
+
                               <Link
                                 href={`/${event.slug}`}
                                 target="_blank"
@@ -991,6 +1017,26 @@ function DashboardInner() {
           event={shareEvent}
         />
       )}
+
+      {/* ==================================================== */}
+      {/* HOST BROADCAST ANNOUNCEMENT MODAL                    */}
+      {/* ==================================================== */}
+      {broadcastEvent && (
+        <HostBroadcastModal
+          event={broadcastEvent}
+          isOpen={Boolean(broadcastEvent)}
+          onClose={() => setBroadcastEvent(null)}
+        />
+      )}
+
+      {/* ==================================================== */}
+      {/* HOST INBOX DRAWER                                    */}
+      {/* ==================================================== */}
+      <HostInboxDrawer
+        isOpen={isInboxOpen}
+        onClose={() => setIsInboxOpen(false)}
+        events={events}
+      />
 
       <Footer />
     </div>
