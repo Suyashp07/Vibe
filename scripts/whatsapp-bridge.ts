@@ -7,11 +7,32 @@ import makeWASocket, {
   DisconnectReason, 
   useMultiFileAuthState, 
   WASocket,
-  proto
+  proto,
+  downloadMediaMessage
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 
-// Load environment variables if available
+// Auto-load environment variables from .env.local if present
+function loadEnvLocal() {
+  const envPath = path.resolve(process.cwd(), '.env.local');
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx > 0) {
+        const key = trimmed.slice(0, idx).trim();
+        const val = trimmed.slice(idx + 1).trim();
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
+loadEnvLocal();
+
 const PORT = Number(process.env.WHATSAPP_BRIDGE_PORT || 3002);
 const BRIDGE_SECRET = process.env.WHATSAPP_BRIDGE_SECRET || 'vibe_wa_sec_local_dev';
 const VIBE_WEBHOOK_URL = 
@@ -115,9 +136,41 @@ async function startWhatsAppBridge() {
         matchedConversationId = sentMessageMap.get(quotedStanzaId)?.conversationId;
       }
 
+      // Check for attached poster / flyer image
+      let imageBase64: string | undefined = undefined;
+      let imageMimeType: string | undefined = undefined;
+
+      const hasImage = Boolean(
+        msg.message.imageMessage ||
+        (msg.message.documentMessage && msg.message.documentMessage.mimetype?.startsWith('image/'))
+      );
+
+      if (hasImage && sock) {
+        try {
+          const buffer = await downloadMediaMessage(
+            msg,
+            'buffer',
+            {},
+            {
+              logger: pino({ level: 'silent' }),
+              reuploadRequest: sock.updateMediaMessage,
+            }
+          );
+          imageBase64 = (buffer as Buffer).toString('base64');
+          imageMimeType = msg.message.imageMessage?.mimetype || msg.message.documentMessage?.mimetype || 'image/jpeg';
+          console.log('[WhatsApp Bridge] Downloaded attached poster image:', {
+            mimeType: imageMimeType,
+            sizeBytes: (buffer as Buffer).length,
+          });
+        } catch (mediaErr: any) {
+          console.warn('[WhatsApp Bridge] Failed to download image attachment:', mediaErr.message);
+        }
+      }
+
       console.log('[WhatsApp Bridge] Inbound message received:', {
         from: senderPhone,
         text: messageContent.slice(0, 40),
+        hasImage: Boolean(imageBase64),
         quotedStanzaId,
         matchedConversationId,
       });
@@ -131,6 +184,8 @@ async function startWhatsAppBridge() {
           text: messageContent.trim(),
           quotedMessageId: quotedStanzaId,
           conversationId: matchedConversationId,
+          imageBase64,
+          imageMimeType,
         };
 
         const res = await fetch(VIBE_WEBHOOK_URL, {

@@ -32,3 +32,6 @@ pnpm-debug.log*
 .vscode/
 *.tsbuildinfo
 
+# WhatsApp Web Session credentials (Never commit!)
+auth_info_baileys/
+
