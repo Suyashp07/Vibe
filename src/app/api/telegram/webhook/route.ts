@@ -127,14 +127,23 @@ export async function POST(req: NextRequest) {
     // 2A. Communication Gateway Interception (Host Replies from Telegram Topic)
     const incomingHostMsg = await telegramAdapter.processIncomingMessage(update);
     if (incomingHostMsg) {
+      // 2A.1 Handle duplicate webhook deliveries safely
+      if (incomingHostMsg.isDuplicate) {
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+
       let conv = null;
       if (incomingHostMsg.conversationId) {
         conv = await conversationService.getConversationById(incomingHostMsg.conversationId);
       }
       if (!conv && incomingHostMsg.telegramTopicId) {
-        conv = await conversationService.resolveConversationByTopic(incomingHostMsg.telegramTopicId);
+        conv = await conversationService.resolveConversationByTopic(
+          incomingHostMsg.telegramTopicId,
+          incomingHostMsg.telegramChatId
+        );
       }
 
+      // 2A.2 Exact mapping matched
       if (conv) {
         if (conv.status === 'CLOSED') {
           console.warn('[Telegram Webhook] Host attempted reply on closed conversation:', conv.id);
@@ -157,6 +166,7 @@ export async function POST(req: NextRequest) {
           conversationId: conv.id,
           messageId: savedMsg.id,
           topicId: incomingHostMsg.telegramTopicId,
+          chatId: incomingHostMsg.telegramChatId,
         });
 
         return NextResponse.json({
@@ -164,6 +174,20 @@ export async function POST(req: NextRequest) {
           handledBy: 'communication_gateway',
           conversationId: conv.id,
           messageId: savedMsg.id,
+        });
+      }
+
+      // 2A.3 Unmapped topic handling: Do NOT guess! Safely ignore and log.
+      if (incomingHostMsg.telegramTopicId || incomingHostMsg.isUnmapped) {
+        console.warn('[Telegram Webhook] telegram_webhook_unmapped_topic: Topic cannot be mapped to any Vibe conversation. Safely ignoring without guessing.', {
+          chatId: incomingHostMsg.telegramChatId,
+          topicId: incomingHostMsg.telegramTopicId,
+        });
+        return NextResponse.json({
+          ok: true,
+          ignored: 'unmapped_topic',
+          chatId: incomingHostMsg.telegramChatId,
+          topicId: incomingHostMsg.telegramTopicId,
         });
       }
     }

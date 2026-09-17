@@ -234,6 +234,7 @@ export interface Conversation {
   status: ConversationStatus;
   guest_channel: CommunicationChannel;
   host_channel: CommunicationChannel;
+  telegram_chat_id?: string | number | null;
   telegram_topic_id?: string | number | null;
   created_at: string;
   updated_at: string;

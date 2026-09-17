@@ -130,15 +130,19 @@ async function runTests() {
   );
 
   // ----------------------------------------------------
-  // TEST 4: Host receives Telegram message
+  // TEST 4: Host receives Telegram message & Chat ID mapping
   // ----------------------------------------------------
-  console.log('\n--- TEST 4: Telegram Channel Adapter Dispatch ---');
-  // Assign a mock Telegram Topic ID to simulate Telegram Supergroup Topic creation
-  await conversationService.updateConversationTopic(convA1.id, '99201');
+  console.log('\n--- TEST 4: Telegram Channel Adapter Dispatch & Chat ID Mapping ---');
+  // Assign a mock Telegram Chat ID and Topic ID
+  await conversationService.updateConversationTopic(convA1.id, '99201', '-1001234567890');
   const updatedConvA1 = await conversationService.getConversationById(convA1.id);
   assert(
     updatedConvA1?.telegram_topic_id === '99201',
     'Test 4: Telegram Topic ID properly bound to conversation'
+  );
+  assert(
+    updatedConvA1?.telegram_chat_id === '-1001234567890',
+    'Test 4: Telegram Chat ID properly bound to conversation'
   );
 
   // ----------------------------------------------------
@@ -153,15 +157,36 @@ async function runTests() {
   assert(telegramAdapter.verifyWebhook(validMockReq), 'Test 5: Webhook verification passes with valid secret or unset');
 
   // ----------------------------------------------------
-  // TEST 6: Telegram topic resolves correct conversation
+  // TEST 6: Telegram topic resolves correct conversation & Unmapped safety
   // ----------------------------------------------------
-  console.log('\n--- TEST 6: Telegram Topic Resolves Correct Conversation ---');
-  const resolvedConv = await conversationService.resolveConversationByTopic('99201');
+  console.log('\n--- TEST 6: Telegram Topic Resolves Correct Conversation & Unmapped Safety ---');
+  const resolvedConv = await conversationService.resolveConversationByTopic('99201', '-1001234567890');
   assert(Boolean(resolvedConv), 'Test 6: Topic 99201 successfully resolved');
   assert(
     resolvedConv?.id === convA1.id,
     'Test 6: Resolved conversation matches Guest A exact conversation',
     `Resolved: ${resolvedConv?.id}, Expected: ${convA1.id}`
+  );
+
+  // Unmapped topic test: Do NOT guess! Must return null cleanly
+  const unmappedTopicConv = await conversationService.resolveConversationByTopic('999999', '-1001234567890');
+  assert(
+    unmappedTopicConv === null,
+    'Test 6B: Unmapped topic ID returns null without guessing any conversation'
+  );
+
+  // Message without topic or correlation is marked as isUnmapped
+  const unmappedIncoming = await telegramAdapter.processIncomingMessage({
+    message: {
+      message_id: 8888,
+      chat: { id: -1001234567890 },
+      from: { id: 9999, is_bot: false },
+      text: 'Random blurb without topic or correlation',
+    },
+  });
+  assert(
+    unmappedIncoming?.isUnmapped === true,
+    'Test 6C: Unmapped incoming message is flagged as isUnmapped for safe ignore/review'
   );
 
   // ----------------------------------------------------
@@ -271,10 +296,15 @@ async function runTests() {
   );
 
   // ----------------------------------------------------
-  // TEST 12: Duplicate Telegram webhook
+  // TEST 12: Duplicate Telegram Webhook Idempotency & Deduplication
   // ----------------------------------------------------
-  console.log('\n--- TEST 12: Duplicate Telegram Webhook Idempotency ---');
+  console.log('\n--- TEST 12: Duplicate Telegram Webhook Idempotency & Deduplication ---');
+  const updateId = 889901;
+  const isDupFirst = await telegramAdapter.isDuplicateUpdate(updateId);
+  assert(isDupFirst === false, 'Test 12: Initial webhook update_id is not a duplicate');
+
   const webhookUpdate = {
+    update_id: updateId,
     message: {
       message_id: 99120,
       message_thread_id: 99201,
@@ -283,15 +313,13 @@ async function runTests() {
     },
   };
   const processed1 = await telegramAdapter.processIncomingMessage(webhookUpdate);
+  assert(processed1?.isDuplicate !== true, 'Test 12: First delivery of webhook processed normally');
+
+  const isDupSecond = await telegramAdapter.isDuplicateUpdate(updateId);
+  assert(isDupSecond === true, 'Test 12: Deduplication detects update_id as already processed');
+
   const processed2 = await telegramAdapter.processIncomingMessage(webhookUpdate);
-  assert(
-    Boolean(processed1 && processed2),
-    'Test 12: Webhook payload processed deterministically'
-  );
-  assert(
-    processed1?.externalMessageId === processed2?.externalMessageId,
-    'Test 12: External message ID matches across duplicate deliveries'
-  );
+  assert(processed2?.isDuplicate === true, 'Test 12: Second delivery of identical update_id flagged as duplicate');
 
   // ----------------------------------------------------
   // TEST 13: Rate limiting

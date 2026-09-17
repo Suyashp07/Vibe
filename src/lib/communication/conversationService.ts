@@ -229,22 +229,29 @@ export class ConversationService {
   }
 
   /**
-   * Resolves conversation by Telegram topic ID
+   * Resolves conversation by Telegram topic ID and optional chat ID.
+   * Maps (telegram_chat_id, telegram_topic_id) -> vibe_conversation_id.
+   * If topic cannot be mapped: returns null without guessing.
    */
-  async resolveConversationByTopic(topicId: string | number): Promise<Conversation | null> {
+  async resolveConversationByTopic(
+    topicId: string | number,
+    chatId?: string | number
+  ): Promise<Conversation | null> {
     const topicStr = String(topicId);
+    const chatStr = chatId ? String(chatId) : null;
     const supabase = getSupabaseAdmin();
 
     if (supabase) {
       try {
-        const { data, error } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('telegram_topic_id', topicStr)
-          .maybeSingle();
+        let query = supabase.from('conversations').select('*').eq('telegram_topic_id', topicStr);
+        if (chatStr) {
+          query = query.or(`telegram_chat_id.eq.${chatStr},telegram_chat_id.is.null`);
+        }
+        const { data, error } = await query.maybeSingle();
 
         if (data && !error) {
-          console.log('[ConversationService] conversation_resolved by topic:', {
+          console.log('[ConversationService] conversation_resolved by topic and chat mapping:', {
+            chatId: chatStr,
             topicId: topicStr,
             conversationId: data.id,
           });
@@ -257,7 +264,9 @@ export class ConversationService {
 
     for (const conv of Array.from(memoryConversations.values())) {
       if (conv.telegram_topic_id && String(conv.telegram_topic_id) === topicStr) {
-        return conv;
+        if (!chatStr || !conv.telegram_chat_id || String(conv.telegram_chat_id) === chatStr) {
+          return conv;
+        }
       }
     }
 
@@ -412,9 +421,13 @@ export class ConversationService {
       newMsg.delivery_status = dispatchResult.status;
       newMsg.external_message_id = dispatchResult.externalMessageId || null;
 
-      // Update topic if new topic was created
-      if (dispatchResult.topicId && (!conv.telegram_topic_id || conv.telegram_topic_id !== dispatchResult.topicId)) {
-        await this.updateConversationTopic(conv.id, dispatchResult.topicId);
+      // Update topic & chat mapping if created or changed
+      if (dispatchResult.topicId || dispatchResult.chatId) {
+        await this.updateConversationTopic(
+          conv.id,
+          dispatchResult.topicId || conv.telegram_topic_id || '',
+          dispatchResult.chatId || conv.telegram_chat_id
+        );
       }
     } catch (dispatchErr: any) {
       console.error('[ConversationService] Channel adapter dispatch failed:', dispatchErr.message);
@@ -554,21 +567,30 @@ export class ConversationService {
   }
 
   /**
-   * Update Telegram topic mapping for conversation
+   * Update Telegram chat and topic mapping for conversation
    */
-  async updateConversationTopic(conversationId: string, topicId: string | number): Promise<void> {
-    const topicStr = String(topicId);
+  async updateConversationTopic(
+    conversationId: string,
+    topicId: string | number,
+    chatId?: string | number | null
+  ): Promise<void> {
+    const topicStr = topicId ? String(topicId) : null;
+    const chatStr = chatId ? String(chatId) : null;
     const conv = memoryConversations.get(conversationId);
     if (conv) {
-      conv.telegram_topic_id = topicStr;
+      if (topicStr) conv.telegram_topic_id = topicStr;
+      if (chatStr) conv.telegram_chat_id = chatStr;
     }
 
     const supabase = getSupabaseAdmin();
     if (supabase) {
       try {
+        const updateData: any = {};
+        if (topicStr) updateData.telegram_topic_id = topicStr;
+        if (chatStr) updateData.telegram_chat_id = chatStr;
         await supabase
           .from('conversations')
-          .update({ telegram_topic_id: topicStr })
+          .update(updateData)
           .eq('id', conversationId);
       } catch (err) {
         console.warn('[ConversationService] updateConversationTopic warning:', err);
@@ -598,6 +620,18 @@ export class ConversationService {
       }
     }
 
+    // Close the Telegram Forum Topic if active
+    if (conv.telegram_topic_id) {
+      try {
+        await telegramAdapter.closeHostTopic({
+          topicId: conv.telegram_topic_id,
+          chatId: conv.telegram_chat_id,
+        });
+      } catch (topicErr) {
+        console.warn('[ConversationService] closeHostTopic note:', topicErr);
+      }
+    }
+
     return conv;
   }
 
@@ -620,6 +654,18 @@ export class ConversationService {
           .eq('id', conversationId);
       } catch (err) {
         console.warn('[ConversationService] reopenConversation warning:', err);
+      }
+    }
+
+    // Reopen the Telegram Forum Topic if active
+    if (conv.telegram_topic_id) {
+      try {
+        await telegramAdapter.reopenHostTopic({
+          topicId: conv.telegram_topic_id,
+          chatId: conv.telegram_chat_id,
+        });
+      } catch (topicErr) {
+        console.warn('[ConversationService] reopenHostTopic note:', topicErr);
       }
     }
 

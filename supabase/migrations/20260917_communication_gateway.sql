@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   status text CHECK (status IN ('OPEN', 'CLOSED', 'BLOCKED')) DEFAULT 'OPEN',
   guest_channel text CHECK (guest_channel IN ('WEB', 'TELEGRAM', 'WHATSAPP')) DEFAULT 'WEB',
   host_channel text CHECK (host_channel IN ('WEB', 'TELEGRAM', 'WHATSAPP')) DEFAULT 'TELEGRAM',
+  telegram_chat_id text,
   telegram_topic_id text,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
@@ -21,7 +22,16 @@ CREATE TABLE IF NOT EXISTS public.conversations (
 CREATE INDEX IF NOT EXISTS idx_conversations_event_guest ON public.conversations(event_id, guest_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_host ON public.conversations(host_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_telegram_topic ON public.conversations(telegram_topic_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_telegram_mapping ON public.conversations(telegram_chat_id, telegram_topic_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON public.conversations(last_message_at DESC);
+
+-- Duplicate webhook protection tracking table
+CREATE TABLE IF NOT EXISTS public.telegram_webhook_updates (
+  update_id bigint PRIMARY KEY,
+  processed_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_telegram_webhook_updates_time ON public.telegram_webhook_updates(processed_at DESC);
 
 CREATE TABLE IF NOT EXISTS public.conversation_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -43,6 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_conv_messages_external_id ON public.conversation_
 -- Enable Row Level Security
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.telegram_webhook_updates ENABLE ROW LEVEL SECURITY;
 
 -- Policies for conversations
 DO $$ 

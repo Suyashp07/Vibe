@@ -18,6 +18,7 @@ export interface SendToHostResult {
   status: MessageDeliveryStatus;
   error?: string;
   topicId?: string | number | null;
+  chatId?: string | number | null;
 }
 
 export interface SendToGuestParams {
@@ -35,12 +36,15 @@ export interface SendToGuestResult {
 
 export interface IncomingAdapterMessage {
   conversationId?: string;
+  telegramChatId?: string | number;
   telegramTopicId?: string | number;
   messageContent: string;
   senderRole: 'GUEST' | 'HOST';
   externalMessageId?: string | number;
   senderId?: string;
   senderName?: string;
+  isDuplicate?: boolean;
+  isUnmapped?: boolean;
   rawPayload?: any;
 }
 
