@@ -54,12 +54,20 @@ export class TelegramAdapter implements CommunicationChannelAdapter {
     return process.env.TELEGRAM_BOT_TOKEN || null;
   }
 
-  private getHostChatId(): string | number | null {
-    return (
+  private getHostChatId(customChatId?: string | number | null): string | number | null {
+    const raw = (
+      customChatId ||
       process.env.TELEGRAM_HOST_CHAT_ID ||
       process.env.TELEGRAM_ADMIN_CHAT_ID ||
       null
     );
+    if (!raw) return null;
+    let str = String(raw).trim();
+    // Auto-normalize if missing -100 prefix for supergroups (e.g. -4426227684 -> -1004426227684)
+    if (str.startsWith('-') && !str.startsWith('-100') && str.length >= 10) {
+      str = '-100' + str.slice(1);
+    }
+    return str;
   }
 
   /**
