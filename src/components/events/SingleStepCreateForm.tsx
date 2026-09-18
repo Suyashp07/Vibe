@@ -484,20 +484,20 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
       {/* Top Header & Breadcrumb */}
       <div className="mb-6">
         <Link
-          href="/dashboard"
+          href="/create"
           className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0F172A] mb-3 transition-colors font-medium"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Dashboard</span>
+          <span>Back to Creation Options</span>
         </Link>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="font-display font-black text-2xl sm:text-3xl text-[#0F172A] tracking-tight">
-              Create an Event
+              Custom Event Studio
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-              Set up details, schedule, ticketing, and guest pass controls step-by-step.
+              Configure your gathering details, location, schedule, ticketing, and guest pass settings.
             </p>
           </div>
 
