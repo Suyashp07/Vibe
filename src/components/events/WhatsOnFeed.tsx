@@ -8,6 +8,8 @@ import {
   Search,
   MapPin,
   Calendar,
+  CalendarDays,
+  CalendarPlus,
   X,
   RotateCcw,
   Navigation,
@@ -423,8 +425,50 @@ export default function WhatsOnFeed() {
   }, [eventsWithDistance, searchQuery, categoryFilter, distanceFilter, selectedMoods]);
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-6 sm:space-y-8">
       {/* ========================================================================= */}
+      {/* 0. DUAL-SEGMENTED VIEW SWITCHER: EVENTS LIST vs VIBE INSTANT              */}
+      {/* ========================================================================= */}
+      <div className="flex items-center justify-between gap-3 pb-1 flex-wrap">
+        <div className="inline-flex p-1 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl shadow-inner">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all bg-white text-[#0F172A] shadow-xs cursor-default"
+            title="Scheduled & curated events catalogue"
+          >
+            <CalendarDays className="w-4 h-4 text-[#E8621A]" />
+            <span>📅 Events</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B] hidden sm:inline-block">
+              Catalogue
+            </span>
+          </button>
+
+          <Link
+            href="/vibes"
+            className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#64748B] hover:text-[#0F172A] hover:bg-white/60 transition-all cursor-pointer group"
+            title="Switch to full-screen spontaneous flash meetups stream"
+          >
+            <div className="relative">
+              <Zap className="w-4 h-4 text-[#E8621A] group-hover:scale-110 transition-transform" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E8621A] animate-ping" />
+            </div>
+            <span>⚡ Vibe Instant</span>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-[#E8621A] to-amber-500 text-white shadow-2xs">
+              LIVE
+            </span>
+          </Link>
+        </div>
+
+        {/* Quick Host CTA */}
+        <Link
+          href="/create"
+          className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-bold text-[#0F172A] transition-all hover:border-[#0F172A] cursor-pointer shadow-2xs hover:scale-[1.02] active:scale-95"
+        >
+          <CalendarPlus className="w-3.5 h-3.5 text-[#E8621A]" />
+          <span>+ Host an Event</span>
+        </Link>
+      </div>
+
       {/* ========================================================================= */}
       {/* 1. TOP HERO: EVENT FLASHCARD CAROUSEL (FILLS ENTIRE TOP PORTION)          */}
       {/* ========================================================================= */}

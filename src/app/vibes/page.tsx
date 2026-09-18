@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Sparkles,
   Zap,
+  CalendarDays,
   Compass,
   MessageSquare
 } from 'lucide-react';
@@ -230,6 +231,22 @@ function VibesReelsContent() {
               <span className="text-xs px-1.5 py-0.5 rounded-md bg-[#E8621A] text-white font-black tracking-widest uppercase ml-1">
                 INSTANT
               </span>
+            </span>
+          </div>
+
+          {/* Dual Segmented Toggle: Return to Scheduled Events */}
+          <div className="hidden sm:inline-flex p-0.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/15">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-white/75 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              title="Switch to Events List Catalogue"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span>📅 Events</span>
+            </Link>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#E8621A] text-white shadow-xs">
+              <Zap className="w-3.5 h-3.5 fill-white" />
+              <span>Instant</span>
             </span>
           </div>
         </div>

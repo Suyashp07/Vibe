@@ -12,6 +12,8 @@ import {
   Ticket,
   Compass,
   Calendar,
+  CalendarDays,
+  CalendarPlus,
   User,
   LogIn,
   LogOut,
@@ -162,7 +164,7 @@ export default function Navbar() {
                 title="Vibe Instant: Spontaneous Flash Meetups"
               >
                 <Zap className="w-3.5 h-3.5 fill-current animate-pulse" />
-                <span>⚡ Instant</span>
+                <span>⚡ Vibe Instant</span>
               </Link>
 
               {/* Location Picker (MakeMyTrip / BookMyShow City dropdown) */}
@@ -177,13 +179,13 @@ export default function Navbar() {
                 <ChevronDown className="w-3 h-3 text-[#94A3B8] shrink-0" />
               </button>
 
-              {/* Host / Create Event CTA (MakeMyTrip "List Your Event" button) */}
+              {/* Host / Create Event CTA */}
               <Link
                 href="/create"
-                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>List Event</span>
+                <CalendarPlus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>+ Host Event</span>
               </Link>
 
               {/* User Auth Profile (Hi, Guest / Hi, Name) */}
@@ -309,17 +311,18 @@ export default function Navbar() {
         aria-label="Mobile Web App Navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] px-3 py-1.5 flex items-center justify-around shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)]"
       >
+        {/* 1. Events Tab */}
         <Link
           href="/"
           className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
-            pathname === '/' ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
+            pathname === '/' ? 'text-[#E8621A] font-black' : 'text-[#64748B]'
           }`}
         >
-          <Compass className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Explore</span>
+          <CalendarDays className={`w-5 h-5 ${pathname === '/' ? 'stroke-[2.5]' : ''}`} />
+          <span className="text-[10px] tracking-tight">Events</span>
         </Link>
 
-        {/* ⚡ Vibe Instant Tab */}
+        {/* 2. ⚡ Vibe Instant Tab */}
         <Link
           href="/vibes"
           className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
@@ -335,11 +338,11 @@ export default function Navbar() {
           <span className="text-[10px] font-bold tracking-tight">Instant</span>
         </Link>
 
-        {/* Floating Center Create Button */}
+        {/* 3. Floating Center Host Button */}
         <Link
           href="/create"
           className="flex flex-col items-center -mt-4 group"
-          title="Host or Create Event"
+          title="Host an Event"
         >
           <div className="w-11 h-11 rounded-full bg-[#0F172A] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform border-2 border-white">
             <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -347,6 +350,7 @@ export default function Navbar() {
           <span className="text-[10px] font-bold text-[#0F172A] mt-0.5">Host</span>
         </Link>
 
+        {/* 4. Search Tab */}
         <Link
           href="/discover"
           className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
@@ -357,6 +361,7 @@ export default function Navbar() {
           <span className="text-[10px] tracking-tight">Search</span>
         </Link>
 
+        {/* 5. Passes Tab */}
         <Link
           href="/dashboard?tab=passes"
           className={`relative flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
