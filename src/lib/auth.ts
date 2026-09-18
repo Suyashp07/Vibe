@@ -578,8 +578,18 @@ export const signOut = async () => {
  */
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<AuthProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<AuthProfile | null>(() => {
+    if (typeof window !== 'undefined') {
+      return getLocalAuthSession();
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !getLocalAuthSession();
+    }
+    return true;
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -587,6 +597,7 @@ export const useAuth = () => {
       const local = getLocalAuthSession();
       if (local) {
         setProfile(local);
+        setLoading(false);
       }
 
       // 2. Check Supabase session

@@ -135,6 +135,7 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
   const [aiPosterName, setAiPosterName] = useState<string | null>(null);
   const [isExtractingAi, setIsExtractingAi] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState<string | null>(null);
+  const [showAiAutofill, setShowAiAutofill] = useState(mode === 'ai');
 
   // Basic Details
   const [title, setTitle] = useState('');
@@ -465,28 +466,39 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
       {/* Navigation & Header */}
       <div className="mb-8">
         <Link
-          href="/create"
+          href="/dashboard"
           className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0F172A] mb-3 transition-colors font-medium"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Creation Options</span>
+          <span>Back to Dashboard</span>
         </Link>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-bold text-2xl sm:text-3xl text-[#0F172A] tracking-tight">
-              {mode === 'ai' ? 'Auto-Create Event with AI' : 'Custom Event Studio'}
+              Create an Event
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-              {mode === 'ai'
-                ? 'Provide a flyer poster, event link, or notes to automatically extract and structure your gathering.'
-                : 'Configure your gathering details, location, schedule, ticketing, and guest pass settings.'}
+              Configure your gathering details, location, schedule, ticketing, and guest pass settings.
             </p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAiAutofill(!showAiAutofill)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer border shrink-0 ${
+              showAiAutofill
+                ? 'bg-[#E8621A] text-white border-[#E8621A]'
+                : 'bg-white hover:bg-[#FAF8F5] text-[#0F172A] border-[#E2E8F0] hover:border-[#E8621A]/50'
+            }`}
+          >
+            <Sparkles className={`w-4 h-4 ${showAiAutofill ? 'fill-white' : 'text-[#E8621A]'}`} />
+            <span>{showAiAutofill ? 'Close AI Auto-Fill' : '⚡ Auto-Fill with AI'}</span>
+          </button>
         </div>
       </div>
 
-      {/* AI Extraction Workstation (Shown only when mode is 'ai') */}
-      {mode === 'ai' && (
+      {/* AI Extraction Workstation (Shown when toggled or when mode is 'ai') */}
+      {showAiAutofill && (
         <div className="bg-white rounded-2xl p-6 sm:p-7 border border-[#E2E8F0] shadow-sm mb-8 space-y-5">
           <div className="flex items-center gap-2 pb-3 border-b border-[#F1F5F9]">
             <Wand2 className="w-4 h-4 text-[#0F172A]" />

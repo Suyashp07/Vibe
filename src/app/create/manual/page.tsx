@@ -4,14 +4,16 @@ import React from 'react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import SingleStepCreateForm from '@/components/events/SingleStepCreateForm';
-import { useAuth, signInWithGoogle } from '@/lib/auth';
+import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
 import { Sparkles, LogIn, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CreateManualPage() {
   const { isLoggedIn, loading } = useAuth();
+  const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
+  const isAuth = isLoggedIn || Boolean(localSession);
 
-  if (loading) {
+  if (loading && !localSession) {
     return (
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
         <Navbar />
@@ -23,7 +25,7 @@ export default function CreateManualPage() {
     );
   }
 
-  if (!isLoggedIn) {
+  if (!isAuth && !loading) {
     return (
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
         <Navbar />

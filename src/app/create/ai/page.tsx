@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import { useAuth, signInWithGoogle } from '@/lib/auth';
+import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
 import { saveEvent } from '@/lib/store';
 
 type InputMode = 'poster' | 'link' | 'notes';
@@ -153,7 +153,10 @@ export default function SingleClickCreateAIPage() {
     }
   };
 
-  if (loading) {
+  const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
+  const isAuth = isLoggedIn || Boolean(localSession);
+
+  if (loading && !localSession) {
     return (
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
         <Navbar />
@@ -166,7 +169,7 @@ export default function SingleClickCreateAIPage() {
   }
 
   // Auth Guard
-  if (!isLoggedIn) {
+  if (!isAuth && !loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#FAF8F5] via-white to-[#F8FAFC] text-[#0A0A0A]">
         <Navbar />
