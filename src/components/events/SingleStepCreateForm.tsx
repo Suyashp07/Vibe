@@ -250,7 +250,7 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
       setAiSuccessMsg('Event details extracted successfully. Please review the details below.');
     } catch (err: any) {
       console.error('Extraction error:', err);
-      setErrorMsg(err.message || 'AI extraction failed. Please enter details manually.');
+      setErrorMsg(err.message || 'AI extraction failed. Please enter details directly below.');
     } finally {
       setIsExtractingAi(false);
     }
@@ -474,7 +474,7 @@ export default function SingleStepCreateForm({ mode = 'manual' }: SingleStepCrea
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="font-bold text-2xl sm:text-3xl text-[#0F172A] tracking-tight">
-              {mode === 'ai' ? 'Auto-Create Event with AI' : 'Manual Event Setup'}
+              {mode === 'ai' ? 'Auto-Create Event with AI' : 'Custom Event Studio'}
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-1">
               {mode === 'ai'

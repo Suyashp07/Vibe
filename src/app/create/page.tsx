@@ -7,11 +7,17 @@ import {
   ArrowLeft,
   ArrowRight,
   Wand2,
-  PenLine,
+  SlidersHorizontal,
   CheckCircle2,
   Sparkles,
   ShieldCheck,
-  LogIn
+  LogIn,
+  Zap,
+  MapPin,
+  Ticket,
+  FileText,
+  Lock,
+  MessageCircle
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -26,7 +32,7 @@ export default function CreateEventHubPage() {
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-7 h-7 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#0F172A] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -36,21 +42,21 @@ export default function CreateEventHubPage() {
   // Guard: If not logged in, show clean authentication prompt
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#FAF8F5] via-white to-[#F8FAFC] text-[#0A0A0A]">
         <Navbar />
 
-        <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
-          <div className="w-full bg-white rounded-2xl p-8 border border-[#E2E8F0] shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95">
-            <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0A0A0A] mx-auto flex items-center justify-center shadow-xs">
-              <Sparkles className="w-6 h-6 text-[#0A0A0A]" />
+        <main className="flex-1 max-w-md mx-auto px-4 py-16 sm:py-24 flex items-center justify-center w-full">
+          <div className="w-full bg-white rounded-3xl p-8 sm:p-10 border border-[#E2E8F0] shadow-xl text-center space-y-6 animate-in fade-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#E8621A] to-amber-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-[#E8621A]/25">
+              <Sparkles className="w-7 h-7 fill-white" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="font-sans font-bold text-2xl text-[#0A0A0A]">
-                Sign in to Create Event
+              <h1 className="font-display font-black text-2xl sm:text-3xl text-[#0F172A] tracking-tight">
+                Sign in to Host
               </h1>
-              <p className="text-xs text-[#64748B] max-w-sm mx-auto leading-relaxed">
-                Sign in to publish your gathering, manage private guest lists, and collect attendee RSVPs.
+              <p className="text-xs sm:text-sm text-[#64748B] max-w-sm mx-auto leading-relaxed">
+                Publish your event, manage your private guest list, and track live RSVPs in real time.
               </p>
             </div>
 
@@ -58,7 +64,7 @@ export default function CreateEventHubPage() {
             <button
               onClick={() => signInWithGoogle('organizer', '/create')}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0A0A0A] cursor-pointer"
+              className="w-full py-3 px-4 rounded-2xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0F172A] cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -82,10 +88,10 @@ export default function CreateEventHubPage() {
             </button>
 
             {/* Email Buttons */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
               <Link
                 href="/login?redirect=/create"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] font-semibold text-xs transition-all hover:border-[#0A0A0A]"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] font-bold text-xs transition-all hover:border-[#0F172A]"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -93,16 +99,16 @@ export default function CreateEventHubPage() {
 
               <Link
                 href="/signup?redirect=/create"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0A0A0A] hover:bg-[#262626] text-white font-semibold text-xs transition-all shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold text-xs transition-all shadow-md"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Free to host • Instant publishing</span>
+            <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-2 text-xs text-[#64748B]">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Free to host • Zero setup fees</span>
             </div>
           </div>
         </main>
@@ -113,120 +119,223 @@ export default function CreateEventHubPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#FAF8F5] via-white to-[#F8FAFC] text-[#0A0A0A] relative overflow-hidden">
+      {/* Decorative ambient background blur lights */}
+      <div className="absolute -top-32 left-1/4 w-96 h-96 bg-[#E8621A]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-48 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 w-full">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0A0A0A] font-medium transition-colors mb-3"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Dashboard</span>
-          </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
-            Create an Event
+      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 w-full relative z-10">
+        {/* Navigation Breadcrumb & Header */}
+        <div className="mb-10 text-center max-w-2xl mx-auto">
+          <div className="flex justify-center mb-4">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#E2E8F0] shadow-xs text-xs font-semibold text-[#64748B] hover:text-[#0F172A] hover:border-[#CBD5E1] transition-all hover:scale-105 active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Dashboard</span>
+            </Link>
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8621A]/10 text-[#E8621A] text-xs font-black uppercase tracking-wider mb-3 border border-[#E8621A]/20">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Event Creator Hub</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-black tracking-tight text-[#0F172A] leading-tight">
+            How would you like to host?
           </h1>
-          <p className="text-sm text-[#64748B] mt-1.5">
-            Select how you would like to set up and structure your gathering.
+          <p className="text-sm sm:text-base text-[#64748B] mt-3 leading-relaxed">
+            Choose between instant 1-click AI creation from any poster flyer or link, or step into our full custom event studio.
           </p>
         </div>
 
         {/* Dual Option Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Card 1: Create with AI */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
+          {/* Card 1: 1-Click Instant AI */}
           <Link
             href="/create/ai"
-            className="group relative flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#0F172A] hover:shadow-md transition-all text-left"
+            className="group relative flex flex-col justify-between p-7 sm:p-9 rounded-3xl bg-white border-2 border-[#E2E8F0] hover:border-[#E8621A] hover:shadow-2xl hover:shadow-[#E8621A]/15 hover:-translate-y-1.5 transition-all duration-300 text-left overflow-hidden cursor-pointer"
           >
-            <div className="space-y-4">
+            {/* Top Glowing Gradient Accent */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#E8621A] to-amber-400 opacity-80 group-hover:opacity-100 transition-opacity" />
+
+            <div className="space-y-6">
+              {/* Top Row: Icon + Badge */}
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center border border-[#E2E8F0] group-hover:bg-[#0F172A] group-hover:text-white transition-colors">
-                  <Wand2 className="w-5 h-5" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#E8621A] to-[#FF8C42] text-white flex items-center justify-center shadow-lg shadow-[#E8621A]/30 group-hover:scale-110 transition-transform duration-300">
+                  <Wand2 className="w-7 h-7" />
                 </div>
-                <span className="text-[11px] font-semibold text-[#0F172A] bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                  1-Click Instant
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#E8621A] bg-[#E8621A]/10 border border-[#E8621A]/30 px-3 py-1 rounded-full shadow-xs">
+                  <Zap className="w-3.5 h-3.5 fill-[#E8621A]" />
+                  <span>Fastest · 30 Seconds</span>
                 </span>
               </div>
 
+              {/* Title & Description */}
               <div>
-                <h2 className="text-lg font-bold text-[#0F172A] tracking-tight group-hover:text-[#0F172A]">
-                  1-Click Event Creation (Bot Engine)
+                <h2 className="text-xl sm:text-2xl font-display font-black text-[#0F172A] tracking-tight group-hover:text-[#E8621A] transition-colors">
+                  1-Click Instant AI
                 </h2>
-                <p className="text-xs sm:text-sm text-[#64748B] mt-2 leading-relaxed">
-                  Bypass the bot and create an event in one click without filling forms. Provide a poster flyer, link, or notes and AI publishes your live gathering instantly.
+                <p className="text-xs sm:text-sm text-[#64748B] mt-2.5 leading-relaxed font-normal">
+                  Bypass tedious forms completely. Upload an event flyer, paste an external link, or drop simple notes — AI vision extracts all details and prepares your live gathering in seconds.
                 </p>
               </div>
 
-              <div className="pt-2 space-y-2 border-t border-[#F1F5F9]">
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              {/* Capability Tags */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <span className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E2E8F0] text-[11px] font-semibold text-[#475569] flex items-center gap-1">
+                  <span>🖼️ Flyer & Poster OCR</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E2E8F0] text-[11px] font-semibold text-[#475569] flex items-center gap-1">
+                  <span>🔗 BookMyShow / Luma Link</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E2E8F0] text-[11px] font-semibold text-[#475569] flex items-center gap-1">
+                  <span>✨ Auto-Magic Copy</span>
+                </span>
+              </div>
+
+              {/* Key Features Checklist */}
+              <div className="pt-3 space-y-2.5 border-t border-[#F1F5F9]">
+                <div className="flex items-center gap-2.5 text-xs text-[#334155] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Single-click live publishing — zero form filling</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Poster & flyer OCR vision extraction</span>
+                <div className="flex items-center gap-2.5 text-xs text-[#334155] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Smart extraction of dates, timing & venue</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>BookMyShow, Luma & District link scraper</span>
+                <div className="flex items-center gap-2.5 text-xs text-[#334155] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Auto-generates social captions & hashtags</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-4 border-t border-[#F1F5F9] flex items-center justify-between text-xs font-semibold text-[#0F172A]">
-              <span>Create in 1-Click</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            {/* Bottom CTA Button */}
+            <div className="mt-8 pt-5 border-t border-[#F1F5F9]">
+              <div className="w-full py-3 px-5 rounded-2xl bg-[#0F172A] group-hover:bg-[#E8621A] text-white font-black text-xs sm:text-sm flex items-center justify-between transition-colors shadow-md group-hover:shadow-lg group-hover:shadow-[#E8621A]/25">
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 fill-white" />
+                  <span>Create with AI Magic</span>
+                </span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              </div>
             </div>
           </Link>
 
-          {/* Card 2: Manual Creation */}
+          {/* Card 2: Custom Event Studio (Completely free of "manual") */}
           <Link
             href="/create/manual"
-            className="group relative flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#0F172A] hover:shadow-md transition-all text-left"
+            className="group relative flex flex-col justify-between p-7 sm:p-9 rounded-3xl bg-white border-2 border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-2xl hover:shadow-[#3B82F6]/15 hover:-translate-y-1.5 transition-all duration-300 text-left overflow-hidden cursor-pointer"
           >
-            <div className="space-y-4">
+            {/* Top Glowing Gradient Accent */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#3B82F6] to-indigo-500 opacity-80 group-hover:opacity-100 transition-opacity" />
+
+            <div className="space-y-6">
+              {/* Top Row: Icon + Badge */}
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center border border-[#E2E8F0] group-hover:bg-[#0F172A] group-hover:text-white transition-colors">
-                  <PenLine className="w-5 h-5" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#0F172A] to-[#1E293B] text-white flex items-center justify-center shadow-lg shadow-slate-900/30 group-hover:scale-110 transition-transform duration-300">
+                  <SlidersHorizontal className="w-7 h-7 text-blue-400" />
                 </div>
-                <span className="text-[11px] font-semibold text-[#475569] bg-[#F1F5F9] px-2.5 py-1 rounded-full border border-[#E2E8F0]">
-                  Full Control
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full shadow-xs">
+                  <span>Full Creative Control</span>
                 </span>
               </div>
 
+              {/* Title & Description */}
               <div>
-                <h2 className="text-lg font-bold text-[#0F172A] tracking-tight group-hover:text-[#0F172A]">
-                  Manual Event Setup
+                <h2 className="text-xl sm:text-2xl font-display font-black text-[#0F172A] tracking-tight group-hover:text-[#3B82F6] transition-colors">
+                  Custom Event Studio
                 </h2>
-                <p className="text-xs sm:text-sm text-[#64748B] mt-2 leading-relaxed">
-                  Enter event details, venue location, schedule, ticketing, and guest registration requirements with complete manual precision.
+                <p className="text-xs sm:text-sm text-[#64748B] mt-2.5 leading-relaxed font-normal">
+                  Design every detail of your gathering with complete creative control. Configure interactive Google Maps coordinates, ticketing tiers, and custom registration questionnaires.
                 </p>
               </div>
 
-              <div className="pt-2 space-y-2 border-t border-[#F1F5F9]">
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Interactive Google Map venue preview</span>
+              {/* Capability Tags */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <span className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E2E8F0] text-[11px] font-semibold text-[#475569] flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-red-500" />
+                  <span>Google Maps Venue</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E2E8F0] text-[11px] font-semibold text-[#475569] flex items-center gap-1">
+                  <Ticket className="w-3 h-3 text-amber-500" />
+                  <span>Custom Ticket Tiers</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E2E8F0] text-[11px] font-semibold text-[#475569] flex items-center gap-1">
+                  <FileText className="w-3 h-3 text-blue-500" />
+                  <span>RSVP Question Builder</span>
+                </span>
+              </div>
+
+              {/* Key Features Checklist */}
+              <div className="pt-3 space-y-2.5 border-t border-[#F1F5F9]">
+                <div className="flex items-center gap-2.5 text-xs text-[#334155] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Pin-point venue selection with Google Maps</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Public discovery or private personal invite</span>
+                <div className="flex items-center gap-2.5 text-xs text-[#334155] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Public explore feed discovery or private invite-only</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#475569]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Custom question builder & pass controls</span>
+                <div className="flex items-center gap-2.5 text-xs text-[#334155] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Tailored RSVP forms, questions & pass controls</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-4 border-t border-[#F1F5F9] flex items-center justify-between text-xs font-semibold text-[#0F172A]">
-              <span>Continue Manually</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            {/* Bottom CTA Button */}
+            <div className="mt-8 pt-5 border-t border-[#F1F5F9]">
+              <div className="w-full py-3 px-5 rounded-2xl bg-[#F8FAFC] group-hover:bg-[#0F172A] border border-[#E2E8F0] group-hover:border-transparent text-[#0F172A] group-hover:text-white font-black text-xs sm:text-sm flex items-center justify-between transition-colors shadow-xs group-hover:shadow-lg">
+                <span className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span>Start Custom Setup</span>
+                </span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              </div>
             </div>
           </Link>
+        </div>
+
+        {/* Helpful Trust & Feature Reassurance Footer Strip */}
+        <div className="mt-12 max-w-4xl mx-auto p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              0%
+            </div>
+            <div>
+              <span className="font-bold text-[#0F172A] block">Zero Platform Fees</span>
+              <span>100% free hosting for community meetups</span>
+            </div>
+          </div>
+
+          <div className="hidden sm:block w-px h-8 bg-[#E2E8F0]" />
+
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-[#0F172A] block">Flexible Privacy</span>
+              <span>Public feed discovery or private pass link</span>
+            </div>
+          </div>
+
+          <div className="hidden sm:block w-px h-8 bg-[#E2E8F0]" />
+
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-[#0F172A] block">WhatsApp & Telegram</span>
+              <span>Instant attendee updates & communication</span>
+            </div>
+          </div>
         </div>
       </main>
 
