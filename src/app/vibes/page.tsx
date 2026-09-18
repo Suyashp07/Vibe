@@ -44,9 +44,11 @@ function VibesReelsContent() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [cityDropdownOpen, setCityDropdownOpen] = useState<boolean>(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cityDropdownRef = useRef<HTMLDivElement | null>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
 
   // Load initial events from store & fetch fresh from Supabase
@@ -167,11 +169,14 @@ function VibesReelsContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Close city dropdown when clicking outside
+  // Close city or category dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
         setCityDropdownOpen(false);
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -221,8 +226,52 @@ function VibesReelsContent() {
           </div>
         </div>
 
-        {/* Center/Right: City Selector & Create Trigger */}
-        <div className="flex items-center gap-2">
+        {/* Center/Right: Category Dropdown, City Selector & Create Trigger */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Category Dropdown Filter */}
+          <div className="relative" ref={categoryDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-xs font-bold text-white backdrop-blur-xl transition-all cursor-pointer shadow-md"
+              title="Filter by Category"
+            >
+              <Filter className="w-3.5 h-3.5 text-[#E8621A]" />
+              <span className="max-w-[90px] sm:max-w-[140px] truncate">
+                {ACTIVITY_FILTERS.find((f) => f.id === selectedActivity)?.label || 'All Vibes'}
+              </span>
+              <ChevronDown className="w-3 h-3 text-white/60 shrink-0" />
+            </button>
+
+            {categoryDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-[#14171F] border border-white/15 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
+                <div className="px-3.5 py-1.5 text-[10px] font-mono uppercase tracking-widest text-white/40 border-b border-white/10 mb-1">
+                  Filter Category
+                </div>
+                {ACTIVITY_FILTERS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedActivity(f.id);
+                      setCategoryDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                      selectedActivity === f.id
+                        ? 'bg-[#E8621A]/20 text-[#E8621A] font-bold'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span>{f.label}</span>
+                    {selectedActivity === f.id && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#E8621A]" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* City Dropdown Selector */}
           <div className="relative" ref={cityDropdownRef}>
             <button
@@ -271,24 +320,6 @@ function VibesReelsContent() {
         </div>
       </header>
 
-      {/* Floating Sub-Header: Activity Filter Chips */}
-      <div className="absolute top-16 left-0 right-0 z-30 px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar pointer-events-auto bg-gradient-to-b from-black/40 to-transparent">
-        {ACTIVITY_FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setSelectedActivity(f.id)}
-            className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer backdrop-blur-xl border ${
-              selectedActivity === f.id
-                ? 'bg-white text-black border-white shadow-md'
-                : 'bg-black/40 text-white/75 border-white/10 hover:bg-black/60 hover:text-white'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
       {/* Center Stage: Fullscreen Snap Scroll Container */}
       <div className="flex-1 w-full h-full flex justify-center items-center relative">
         {/* On mobile: full bleed. On desktop: phone-frame aspect ratio for true Reels look */}
@@ -336,6 +367,34 @@ function VibesReelsContent() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Desktop Left Category Dock (Completely outside the Reel Frame) */}
+        <div className="hidden lg:flex absolute left-6 xl:left-12 top-1/2 -translate-y-1/2 flex-col gap-2 z-30 w-52 pointer-events-auto">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-white/50 px-3 mb-1 flex items-center gap-1.5 font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-[#E8621A]" />
+            <span>CATEGORIES</span>
+          </div>
+          <div className="flex flex-col gap-1.5 p-2 rounded-3xl bg-[#111318]/80 border border-white/10 backdrop-blur-2xl shadow-2xl">
+            {ACTIVITY_FILTERS.map((f) => {
+              const isActive = selectedActivity === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setSelectedActivity(f.id)}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-between group ${
+                    isActive
+                      ? 'bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white shadow-lg shadow-[#E8621A]/30 scale-[1.02]'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <span>{f.label}</span>
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Desktop Navigation Floating Arrows (Right Side of Reel Frame) */}

@@ -195,21 +195,13 @@ export default function VibeReelCard({
         </div>
       )}
 
-      {/* Top Bar of the Card */}
-      <div className="relative z-10 p-4 sm:p-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Flash Vibe Badge */}
-          <span className="px-3 py-1 rounded-full text-[11px] font-black tracking-wider uppercase bg-[#E8621A] text-white flex items-center gap-1.5 shadow-lg shadow-[#E8621A]/30">
-            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-            <span>FLASH VIBE</span>
-          </span>
-
-          {/* Activity Chip */}
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-black/60 backdrop-blur-md text-white/90 border border-white/10 flex items-center gap-1">
-            <span>{emoji}</span>
-            <span className="capitalize">{event.flash_activity || 'Meetup'}</span>
-          </span>
-        </div>
+      {/* Top Bar of the Card (with proper clearance below the floating header) */}
+      <div className="relative z-10 pt-16 sm:pt-20 px-4 sm:px-6 pb-2 flex items-center justify-between">
+        {/* Flash Vibe Badge */}
+        <span className="px-3 py-1 rounded-full text-[11px] font-black tracking-wider uppercase bg-[#E8621A] text-white flex items-center gap-1.5 shadow-lg shadow-[#E8621A]/30">
+          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+          <span>FLASH VIBE</span>
+        </span>
 
         {/* Reel Counter */}
         <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white/70 border border-white/10">
@@ -350,8 +342,13 @@ export default function VibeReelCard({
           {event.title}
         </h2>
 
-        {/* Time & Venue Pills */}
+        {/* Activity, Time & Venue Pills */}
         <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
+          <span className="px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md text-white/90 border border-white/15 font-bold flex items-center gap-1.5 capitalize">
+            <span>{emoji}</span>
+            <span>{event.flash_activity || 'Meetup'}</span>
+          </span>
+
           <span className="px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[#FF8C42] border border-white/10 font-bold flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
             <span>{formatStartTime()}</span>
