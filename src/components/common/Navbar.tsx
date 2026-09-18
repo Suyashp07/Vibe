@@ -204,7 +204,7 @@ export default function Navbar() {
                 href="/vibes"
                 className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all inline-flex items-center gap-1.5 ${
                   pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-                    ? 'bg-[#E8621A]/10 text-[#E8621A] font-black border border-[#E8621A]/20 shadow-2xs'
+                    ? 'bg-[#FDF8EE] text-[#9A3412] font-black border border-[#FDE68A]/70 shadow-2xs'
                     : 'text-[#475569] hover:text-[#E8621A] font-bold hover:bg-[#F8FAFC]'
                 }`}
               >
@@ -220,7 +220,7 @@ export default function Navbar() {
                 href="/create"
                 className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all ${
                   pathname.startsWith('/create')
-                    ? 'bg-[#0F172A] text-white font-black shadow-xs'
+                    ? 'bg-[#FDF8EE] text-[#9A3412] font-black border border-[#FDE68A]/70 shadow-2xs'
                     : 'text-[#475569] hover:text-[#0F172A] font-bold hover:bg-[#F8FAFC]'
                 }`}
               >
