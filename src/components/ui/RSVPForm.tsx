@@ -222,7 +222,7 @@ export default function RSVPForm({
   const handleActivateGuestAccount = () => {
     if (!submittedRsvp) return;
     createGuestAccountFromRsvp(submittedRsvp.email, submittedRsvp.name, submittedRsvp.phone);
-    router.push('/guest');
+    router.push('/passes');
   };
 
   // STEP 3: SUCCESS VIEW
@@ -325,7 +325,7 @@ export default function RSVPForm({
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-left space-y-2.5">
           <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
             <Sparkles className="w-4 h-4 text-[#E8621A] shrink-0" />
-            <span>Save pass to your personal Guest Dashboard</span>
+            <span>Save pass to your personal Pass Wallet</span>
           </div>
           <p className="text-[11px] text-[#64748B] leading-relaxed">
             Access your pass anytime, cancel bookings, get directions, and follow {event.organizer_name} for future gatherings.
@@ -335,7 +335,7 @@ export default function RSVPForm({
             onClick={handleActivateGuestAccount}
             className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#0F172A] hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
           >
-            <span>Activate Guest Account &amp; Go to Dashboard →</span>
+            <span>View Digital Pass &amp; Bookings →</span>
           </button>
         </div>
 

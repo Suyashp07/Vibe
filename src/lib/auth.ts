@@ -233,7 +233,7 @@ export const signUpWithEmailOtp = async (
   }
 
   const redirectUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/auth/callback?role=${role}&next=${role === 'organizer' ? '/onboarding' : '/guest'}`
+    ? `${window.location.origin}/auth/callback?role=${role}&next=${role === 'organizer' ? '/onboarding' : '/passes'}`
     : undefined;
 
   const { data, error } = await client.auth.signInWithOtp({

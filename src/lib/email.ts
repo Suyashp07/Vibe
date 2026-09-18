@@ -787,7 +787,7 @@ export async function sendHostAnnouncementEmail({
   const isUrgent = !!announcement.is_urgent;
   const brandColor = org.brand_color || '#E8621A';
   const eventUrl = `${appUrl}/e/${event.slug}`;
-  const guestUrl = `${appUrl}/guest`;
+  const guestUrl = `${appUrl}/passes`;
 
   const html = wrapWhiteLabelTemplate(
     org,

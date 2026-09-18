@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   Calendar,
   Compass,
@@ -51,7 +52,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 
 export default function GuestDashboardPage() {
+  const router = useRouter();
   const { profile } = useAuth();
+
+  useEffect(() => {
+    router.replace('/passes');
+  }, [router]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [rsvps, setRsvps] = useState<RSVPItem[]>([]);
   const [follows, setFollows] = useState<FollowerItem[]>([]);

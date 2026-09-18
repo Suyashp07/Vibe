@@ -281,7 +281,7 @@ export default function Navbar() {
 
                       <div className="py-1">
                         <Link
-                          href="/dashboard?tab=passes"
+                          href="/passes"
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#0F172A] hover:bg-[#F8FAFC] transition-colors font-medium"
                         >
@@ -460,15 +460,15 @@ export default function Navbar() {
 
         {/* 5. Passes Tab */}
         <Link
-          href="/dashboard?tab=passes"
+          href="/passes"
           className={`relative flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
-            pathname.includes('guest') || (pathname === '/dashboard' && confirmedPassCount > 0)
-              ? 'text-[#0F172A] font-bold'
+            pathname.startsWith('/passes') || pathname.startsWith('/guest')
+              ? 'text-[#E8621A] font-black'
               : 'text-[#64748B]'
           }`}
         >
           <div className="relative">
-            <Ticket className="w-5 h-5" />
+            <Ticket className={`w-5 h-5 ${pathname.startsWith('/passes') ? 'text-[#E8621A]' : ''}`} />
             {confirmedPassCount > 0 && (
               <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-[#E8621A] text-white text-[9px] font-bold flex items-center justify-center">
                 {confirmedPassCount}
