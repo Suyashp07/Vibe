@@ -208,14 +208,11 @@ export default function Navbar() {
                     : 'text-[#475569] hover:text-[#E8621A] font-bold hover:bg-[#F8FAFC]'
                 }`}
               >
-                <div className="relative">
-                  <Zap className="w-3.5 h-3.5 fill-[#E8621A] text-[#E8621A]" />
+                <span>Vibe Instant</span>
+                <div className="relative inline-flex items-center justify-center">
+                  <Zap className="w-3.5 h-3.5 fill-[#E8621A] text-[#E8621A] animate-buzz shrink-0" />
                   <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#E8621A] animate-ping" />
                 </div>
-                <span>Vibe Instant</span>
-                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-[#E8621A] text-white leading-none">
-                  Live
-                </span>
               </Link>
 
               {/* Feature 3: Host an Event */}
