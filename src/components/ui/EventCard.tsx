@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Calendar, Users, Flame, ArrowUpRight } from 'lucide-react';
+import { MapPin, Calendar, Users, Flame, ArrowUpRight, MessageCircle } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST, getEventRSVPs } from '@/lib/store';
 
@@ -11,9 +11,10 @@ interface EventCardProps {
   event: EventItem;
   showStatus?: boolean;
   distanceKm?: number | null;
+  onConnectHost?: (event: EventItem) => void;
 }
 
-export default function EventCard({ event, showStatus = true, distanceKm }: EventCardProps) {
+export default function EventCard({ event, showStatus = true, distanceKm, onConnectHost }: EventCardProps) {
   const rsvps = getEventRSVPs(event.id);
   const count = rsvps.length;
   const isNearlyFull = event.capacity && (event.capacity - count) <= 8 && (event.capacity - count) > 0;
@@ -105,36 +106,54 @@ export default function EventCard({ event, showStatus = true, distanceKm }: Even
         </div>
 
         {/* Organizer & Action */}
-        <div className="pt-4 mt-4 border-t border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="pt-4 mt-4 border-t border-border flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {event.organizer_logo ? (
               <Image
                 src={event.organizer_logo}
                 alt={event.organizer_name}
                 width={26}
                 height={26}
-                className="rounded-full object-cover border border-border"
+                className="rounded-full object-cover border border-border shrink-0"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                 {(event.organizer_name || event.source_platform || 'V')[0]?.toUpperCase()}
               </div>
             )}
-            <span className="text-xs font-medium text-ink-secondary truncate max-w-[120px]">
+            <span className="text-xs font-medium text-ink-secondary truncate max-w-[110px] sm:max-w-[130px]">
               {event.organizer_name || (event.source_platform ? `Via ${event.source_platform}` : 'Curated by Vibe')}
             </span>
           </div>
 
-          {hasExternalLink ? (
-            <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
-              Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Partner'}
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-          ) : (
-            <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
-              RSVP on Vibe →
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {onConnectHost && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onConnectHost(event);
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                title="Connect to Host"
+              >
+                <MessageCircle className="w-3 h-3 fill-current" />
+                <span className="hidden sm:inline">Connect</span>
+              </button>
+            )}
+
+            {hasExternalLink ? (
+              <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Partner'}
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
+                RSVP on Vibe →
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </>

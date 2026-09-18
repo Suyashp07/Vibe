@@ -17,10 +17,12 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
+import ConnectHostModal from '@/components/communication/ConnectHostModal';
 import {
   getUserCity,
   getUserCoords,
@@ -272,6 +274,7 @@ export default function WhatsOnFeed() {
 
   const [flashcardIdx, setFlashcardIdx] = useState(0);
   const [isFlashcardPaused, setIsFlashcardPaused] = useState(false);
+  const [connectHostEvent, setConnectHostEvent] = useState<EventItem | null>(null);
 
   // Auto-cycle through the 3 to 4 prominent events every 4.5 seconds
   useEffect(() => {
@@ -430,7 +433,7 @@ export default function WhatsOnFeed() {
       {/* ========================================================================= */}
       {currentFlashEvent && (
         <div
-          className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md border border-[#E2E8F0] group cursor-pointer h-64 sm:h-72 md:h-80 bg-slate-950"
+          className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md border border-[#E2E8F0] group cursor-pointer min-h-[290px] h-72 sm:h-80 md:h-84 bg-slate-950"
           onMouseEnter={() => setIsFlashcardPaused(true)}
           onMouseLeave={() => setIsFlashcardPaused(false)}
         >
@@ -499,13 +502,30 @@ export default function WhatsOnFeed() {
                     )}
                   </div>
 
-                  {/* Bottom Row: Organizer Pill + Book/RSVP Button */}
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-xs font-medium text-white/80 bg-white/10 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/15">
-                      By {currentFlashEvent.organizer_name || 'Vibe Curated'}
-                    </span>
+                  {/* Bottom Row: Organizer Pill + Connect to Host Button + Book/RSVP Button */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                      <span className="text-xs font-medium text-white/80 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 truncate max-w-[150px] sm:max-w-none">
+                        By {currentFlashEvent.organizer_name || 'Vibe Curated'}
+                      </span>
 
-                    <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-white text-[#0F172A] text-xs sm:text-sm font-black group-hover:bg-amber-300 group-hover:text-black transition-all shadow-md">
+                      {/* Connect to Host Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setConnectHostEvent(currentFlashEvent);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer border border-emerald-300/40 group/btn"
+                        title="Connect with event organizer"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 fill-slate-950 group-hover/btn:rotate-12 transition-transform" />
+                        <span>Connect to Host</span>
+                      </button>
+                    </div>
+
+                    <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-white text-[#0F172A] text-xs sm:text-sm font-black group-hover:bg-amber-300 group-hover:text-black transition-all shadow-md shrink-0">
                       <span>{isFlashcardExternal ? 'Book Tickets' : 'RSVP Now'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </span>
@@ -747,12 +767,21 @@ export default function WhatsOnFeed() {
                 style={{ transformPerspective: 1000 }}
                 className="h-full flex flex-col"
               >
-                <EventCard event={event} distanceKm={event.distanceKm} />
+                <EventCard event={event} distanceKm={event.distanceKm} onConnectHost={setConnectHostEvent} />
               </motion.div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Connect to Host Modal */}
+      {connectHostEvent && (
+        <ConnectHostModal
+          event={connectHostEvent}
+          isOpen={Boolean(connectHostEvent)}
+          onClose={() => setConnectHostEvent(null)}
+        />
+      )}
     </div>
   );
 }
