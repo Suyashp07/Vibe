@@ -318,7 +318,7 @@ export default function SingleClickCreateAIPage() {
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
-              <Link2 className="w-3.5 h-3.5 text-blue-500" />
+              <Link2 className="w-3.5 h-3.5 text-[#E8621A]" />
               <span>Web Link</span>
               {url.trim() && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />}
             </button>

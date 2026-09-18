@@ -121,7 +121,7 @@ export default function CreateEventHubPage() {
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#0A0A0A] relative overflow-hidden">
       {/* Decorative ambient background accents */}
       <div className="absolute -top-32 left-1/4 w-80 h-80 bg-[#E8621A]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-48 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-48 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <Navbar />
 
@@ -204,24 +204,24 @@ export default function CreateEventHubPage() {
           {/* Option 2: Custom Event Studio (Completely free of "manual" wording) */}
           <Link
             href="/create/manual"
-            className="group relative flex flex-col justify-between p-5 sm:p-7 rounded-3xl bg-white border-2 border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-xl hover:shadow-[#3B82F6]/10 transition-all duration-200 text-left overflow-hidden cursor-pointer"
+            className="group relative flex flex-col justify-between p-5 sm:p-7 rounded-3xl bg-white border-2 border-[#E2E8F0] hover:border-[#0F172A] hover:shadow-xl hover:shadow-slate-900/10 transition-all duration-200 text-left overflow-hidden cursor-pointer"
           >
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#3B82F6] to-indigo-500 opacity-90 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0F172A] via-[#334155] to-slate-400 opacity-90 group-hover:opacity-100 transition-opacity" />
 
             <div className="space-y-4">
               {/* Badge & Icon Header */}
               <div className="flex items-center justify-between">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0F172A] to-[#1E293B] text-white flex items-center justify-center shadow-md shadow-slate-900/25 group-hover:scale-105 transition-transform duration-200">
-                  <SlidersHorizontal className="w-6 h-6 text-blue-400" />
+                  <SlidersHorizontal className="w-6 h-6 text-white" />
                 </div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full shadow-2xs">
+                <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#0F172A] bg-[#F1F5F9] border border-[#CBD5E1] px-2.5 py-1 rounded-full shadow-2xs">
                   <span>Full Creative Control</span>
                 </span>
               </div>
 
               {/* Title & Concise Description */}
               <div>
-                <h2 className="text-lg sm:text-xl font-display font-black text-[#0F172A] tracking-tight group-hover:text-[#3B82F6] transition-colors">
+                <h2 className="text-lg sm:text-xl font-display font-black text-[#0F172A] tracking-tight group-hover:text-[#E8621A] transition-colors">
                   Custom Event Studio
                 </h2>
                 <p className="text-xs text-[#64748B] mt-1.5 leading-relaxed">
@@ -271,7 +271,7 @@ export default function CreateEventHubPage() {
           <div className="hidden sm:block w-px h-4 bg-[#E2E8F0]" />
 
           <div className="flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-blue-600" />
+            <Lock className="w-3.5 h-3.5 text-[#0F172A]" />
             <span className="font-semibold text-[#0F172A]">Public or Invite-Only</span>
           </div>
 
