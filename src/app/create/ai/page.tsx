@@ -20,34 +20,40 @@ import {
   Zap,
   LogIn,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Image as ImageIcon
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import { useAuth, signInWithGoogle } from '@/lib/auth';
 import { saveEvent } from '@/lib/store';
 
+type InputMode = 'poster' | 'link' | 'notes';
+
 export default function SingleClickCreateAIPage() {
   const router = useRouter();
   const { isLoggedIn, loading, profile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Inputs
+  // Mode & Inputs
+  const [activeMode, setActiveMode] = useState<InputMode>('poster');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
   const [posterBase64, setPosterBase64] = useState<string | null>(null);
   const [posterName, setPosterName] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showExtraNotes, setShowExtraNotes] = useState(false);
+  const [extraNotes, setExtraNotes] = useState('');
 
   // Execution State
   const [isCreating, setIsCreating] = useState(false);
   const [progressStep, setProgressStep] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // File Upload Handler
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  // File Upload Handlers
+  const handleFileProcess = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
       setPosterName(file.name);
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
@@ -60,16 +66,40 @@ export default function SingleClickCreateAIPage() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileProcess(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileProcess(file);
+  };
+
   const handleRemovePoster = () => {
     setPosterBase64(null);
     setPosterName(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 1-Click Instant Creation Handler (Exact same pipeline as Telegram bot)
+  // 1-Click Instant Creation Handler
   const handleSingleClickCreate = async () => {
-    if (!posterBase64 && !url.trim() && !text.trim()) {
-      setErrorMessage('Please provide a flyer poster, an event URL, or text notes to create your event.');
+    const combinedText = [text.trim(), extraNotes.trim()].filter(Boolean).join('\n');
+    const hasInput = Boolean(posterBase64 || url.trim() || combinedText);
+
+    if (!hasInput) {
+      setErrorMessage('Please provide an event poster, webpage link, or brief notes.');
       return;
     }
 
@@ -80,7 +110,7 @@ export default function SingleClickCreateAIPage() {
       if (posterBase64) {
         setProgressStep('Analyzing flyer poster with Gemini Vision OCR...');
       } else if (url.trim()) {
-        setProgressStep('Crawling event link metadata...');
+        setProgressStep('Crawling event webpage link & metadata...');
       } else {
         setProgressStep('Extracting event details with AI...');
       }
@@ -91,7 +121,7 @@ export default function SingleClickCreateAIPage() {
         body: JSON.stringify({
           url: url.trim() || undefined,
           imageBase64: posterBase64 || undefined,
-          text: text.trim() || undefined,
+          text: combinedText || undefined,
           isPublic,
           organizerId: profile?.id,
           organizerName: profile?.name || profile?.handle || 'Event Host',
@@ -110,12 +140,10 @@ export default function SingleClickCreateAIPage() {
         throw new Error('Event created but slug was not returned.');
       }
 
-      // Save to local store for instant offline & client state synchronization
+      // Save to local store for instant client synchronization
       saveEvent(data.event);
 
-      setProgressStep('Submitted for Superadmin Approval! Opening preview...');
-      
-      // Redirect to the private preview page
+      setProgressStep('Event created! Opening preview...');
       router.push(`/${data.slug}`);
     } catch (err: any) {
       console.error('Instant create error:', err);
@@ -130,7 +158,7 @@ export default function SingleClickCreateAIPage() {
       <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-7 h-7 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#0F172A] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -140,18 +168,18 @@ export default function SingleClickCreateAIPage() {
   // Auth Guard
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#FAF8F5] via-white to-[#F8FAFC] text-[#0A0A0A]">
         <Navbar />
 
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
-          <div className="w-full bg-white rounded-2xl p-8 border border-[#E2E8F0] shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95">
-            <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0A0A0A] mx-auto flex items-center justify-center shadow-xs">
-              <Wand2 className="w-6 h-6 text-[#0A0A0A]" />
+          <div className="w-full bg-white rounded-3xl p-8 border border-[#E2E8F0] shadow-xl text-center space-y-6 animate-in fade-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#E8621A] to-amber-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-[#E8621A]/25">
+              <Wand2 className="w-7 h-7" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="font-sans font-bold text-2xl text-[#0A0A0A]">
-                Sign in to Create Event
+              <h1 className="font-display font-black text-2xl text-[#0F172A] tracking-tight">
+                Sign in to Create
               </h1>
               <p className="text-xs text-[#64748B] max-w-sm mx-auto leading-relaxed">
                 Sign in to instantly publish your gathering with AI in a single click.
@@ -161,7 +189,7 @@ export default function SingleClickCreateAIPage() {
             <button
               onClick={() => signInWithGoogle('organizer', '/create/ai')}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0A0A0A] cursor-pointer"
+              className="w-full py-3 px-4 rounded-2xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0F172A] cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -187,7 +215,7 @@ export default function SingleClickCreateAIPage() {
             <div className="grid grid-cols-2 gap-2 pt-2">
               <Link
                 href="/login?redirect=/create/ai"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] font-semibold text-xs transition-all hover:border-[#0A0A0A]"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] font-bold text-xs transition-all hover:border-[#0F172A]"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -195,15 +223,15 @@ export default function SingleClickCreateAIPage() {
 
               <Link
                 href="/signup?redirect=/create/ai"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0A0A0A] hover:bg-[#262626] text-white font-semibold text-xs transition-all shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold text-xs transition-all shadow-md"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-xs text-[#64748B]">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>Free to host • Instant 1-click publishing</span>
             </div>
           </div>
@@ -214,208 +242,309 @@ export default function SingleClickCreateAIPage() {
     );
   }
 
+  const hasAnyInput = Boolean(posterBase64 || url.trim() || text.trim() || extraNotes.trim());
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#FAF8F5] via-white to-[#F8FAFC] text-[#0A0A0A] relative overflow-hidden">
+      {/* Decorative ambient lights */}
+      <div className="absolute -top-32 left-1/3 w-80 h-80 bg-[#E8621A]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-48 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
       <Navbar />
 
-      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-16 w-full">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-6">
-          <Link
-            href="/create"
-            className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0A0A0A] font-medium transition-colors mb-3"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Creation Options</span>
-          </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
+      <main className="flex-1 max-w-xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full relative z-10 flex flex-col justify-center">
+        {/* Compact Breadcrumb & Header */}
+        <div className="mb-5 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Link
+              href="/create"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#E2E8F0] shadow-2xs text-xs font-semibold text-[#64748B] hover:text-[#0F172A] hover:border-[#CBD5E1] transition-all"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Back</span>
+            </Link>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#E8621A]/10 text-[#E8621A] text-[11px] font-black uppercase tracking-wider border border-[#E8621A]/20">
+              <Sparkles className="w-3 h-3" />
+              <span>1-Click AI</span>
+            </span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-[#0F172A]">
             Single-Click Event Creation
           </h1>
-          <p className="text-sm text-[#64748B] mt-1.5">
-            Create an event in one click without filling forms. Provide a poster, event URL, or prompt and AI publishes your live gathering instantly.
+          <p className="text-xs sm:text-sm text-[#64748B] mt-1 max-w-md mx-auto">
+            Provide a poster flyer, ticket link, or prompt — AI auto-extracts and publishes your event in seconds.
           </p>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMessage}</span>
+            <span className="flex-1">{errorMessage}</span>
+            <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-700">
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
-        {/* 1-Click Workstation Box */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E2E8F0] shadow-sm space-y-6">
-          {/* Method A: Poster Upload */}
-          <div>
-            <label className="block text-xs font-semibold text-[#475569] mb-2">
-              Option 1: Event Poster / Flyer Image (Vision OCR)
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+        {/* Compact 1-Click Workstation Card */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E2E8F0] shadow-xl shadow-slate-900/[0.04] space-y-4">
+          {/* Segmented Mode Selector (Saves vertical scrolling!) */}
+          <div className="grid grid-cols-3 p-1 rounded-2xl bg-[#F1F5F9] border border-[#E2E8F0]/60 gap-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveMode('poster')}
+              className={`py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeMode === 'poster'
+                  ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-[#E8621A]" />
+              <span>Flyer / Poster</span>
+              {posterBase64 && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />}
+            </button>
 
-            {!posterBase64 ? (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-8 px-4 border-2 border-dashed border-[#CBD5E1] hover:border-[#0F172A] rounded-xl bg-[#F8FAFC] hover:bg-white text-xs font-medium text-[#475569] hover:text-[#0F172A] transition-all flex flex-col items-center justify-center gap-2 cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E2E8F0] flex items-center justify-center text-[#0F172A] shadow-xs">
-                  <Upload className="w-5 h-5 text-[#64748B]" />
+            <button
+              type="button"
+              onClick={() => setActiveMode('link')}
+              className={`py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeMode === 'link'
+                  ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              <Link2 className="w-3.5 h-3.5 text-blue-500" />
+              <span>Web Link</span>
+              {url.trim() && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMode('notes')}
+              className={`py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeMode === 'notes'
+                  ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 text-purple-500" />
+              <span>Prompt / Notes</span>
+              {text.trim() && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />}
+            </button>
+          </div>
+
+          {/* Active Input View */}
+          <div className="pt-1">
+            {/* Mode 1: Poster Upload Dropzone */}
+            {activeMode === 'poster' && (
+              <div className="space-y-2.5">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+
+                {!posterBase64 ? (
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`py-5 sm:py-6 px-4 border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                      isDragging
+                        ? 'border-[#E8621A] bg-[#E8621A]/10 scale-[1.01]'
+                        : 'border-[#CBD5E1] hover:border-[#E8621A] bg-[#FAF8F5]/60 hover:bg-[#FAF8F5]'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#E2E8F0] flex items-center justify-center text-[#E8621A] shadow-xs">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs font-bold text-[#0F172A]">
+                        Drop flyer image here, or <span className="text-[#E8621A] underline">browse</span>
+                      </div>
+                      <p className="text-[10px] text-[#94A3B8] mt-0.5">JPEG, PNG, or WebP · Gemini Vision OCR</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-2.5 sm:p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-emerald-200 shrink-0 bg-white shadow-xs">
+                        <Image
+                          src={posterBase64}
+                          alt="Event flyer preview"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-[#0F172A] truncate">
+                          {posterName || 'Flyer attached'}
+                        </div>
+                        <div className="text-[11px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Ready for Vision OCR extraction</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePoster}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-white transition-colors cursor-pointer shrink-0"
+                      title="Remove flyer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mode 2: Event Webpage Link */}
+            {activeMode === 'link' && (
+              <div className="space-y-2">
+                <div className="relative">
+                  <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                  <input
+                    type="url"
+                    placeholder="https://in.bookmyshow.com/... or https://lu.ma/... or district.in"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors placeholder:text-[#94A3B8]"
+                  />
+                  {url.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setUrl('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-                <div className="text-center">
-                  <span className="font-semibold text-[#0F172A]">Click to upload event poster</span>
-                  <p className="text-[11px] text-[#94A3B8] mt-0.5">JPEG, PNG, or WebP</p>
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#64748B]">
+                  <span className="font-semibold text-[#475569]">Supported:</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono">BookMyShow</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono">Luma</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono">District</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono">Paytm Insider</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono">Unstop</span>
                 </div>
-              </button>
-            ) : (
-              <div className="relative rounded-xl border border-[#E2E8F0] overflow-hidden p-3 bg-[#F8FAFC] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-[#E2E8F0] shrink-0 bg-white">
-                    <Image
-                      src={posterBase64}
-                      alt="Uploaded event flyer"
-                      fill
-                      className="object-cover"
-                      unoptimized
+              </div>
+            )}
+
+            {/* Mode 3: Prompt / Text Notes */}
+            {activeMode === 'notes' && (
+              <div>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Subko Bandra coffee cupping session this Saturday at 5pm. Free entry for coffee enthusiasts."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors resize-none placeholder:text-[#94A3B8]"
+                />
+              </div>
+            )}
+
+            {/* Compact Optional Context Toggle (Available for poster & link) */}
+            {activeMode !== 'notes' && (
+              <div className="pt-1.5">
+                {!showExtraNotes ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowExtraNotes(true)}
+                    className="text-[11px] font-semibold text-[#E8621A] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>+ Add extra notes or prompt (optional)</span>
+                  </button>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-[#64748B]">
+                      <span>Extra notes (optional):</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowExtraNotes(false);
+                          setExtraNotes('');
+                        }}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. Bring your own badminton racquet, RSVP deadline 4pm"
+                      value={extraNotes}
+                      onChange={(e) => setExtraNotes(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] bg-white"
                     />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-[#0F172A] truncate">
-                      {posterName || 'Event Poster Attached'}
-                    </div>
-                    <div className="text-[11px] text-emerald-600 font-medium mt-0.5 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Ready for AI Vision analysis</span>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemovePoster}
-                  className="p-1.5 rounded-lg text-[#94A3B8] hover:text-red-600 hover:bg-white transition-colors cursor-pointer shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                )}
               </div>
             )}
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-[#E2E8F0] w-full" />
-            <span className="bg-white px-3 text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider absolute">
-              or
-            </span>
-          </div>
+          {/* Compact Visibility Selector */}
+          <div className="pt-2 border-t border-[#F1F5F9] flex items-center justify-between gap-3">
+            <span className="text-xs font-bold text-[#475569]">Visibility:</span>
 
-          {/* Method B: Event Link */}
-          <div>
-            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-              Option 2: Event Webpage Link
-            </label>
-            <div className="relative">
-              <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-              <input
-                type="url"
-                placeholder="https://in.bookmyshow.com/... or https://lu.ma/... or district.in"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors placeholder:text-[#94A3B8]"
-              />
-            </div>
-            <p className="text-[11px] text-[#94A3B8] mt-1">
-              Supports BookMyShow, Luma, District, Paytm Insider, and Unstop links.
-            </p>
-          </div>
-
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-[#E2E8F0] w-full" />
-            <span className="bg-white px-3 text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider absolute">
-              or
-            </span>
-          </div>
-
-          {/* Method C: Raw Prompt / Text Notes */}
-          <div>
-            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-              Option 3: Quick Event Notes / Prompt
-            </label>
-            <textarea
-              rows={3}
-              placeholder="e.g. Subko Bandra coffee cupping session this Saturday at 5pm. Free entry for coffee enthusiasts."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] bg-white transition-colors resize-none placeholder:text-[#94A3B8]"
-            />
-          </div>
-
-          {/* Privacy Setting */}
-          <div className="pt-2 border-t border-[#F1F5F9]">
-            <label className="block text-xs font-semibold text-[#475569] mb-2">
-              Event Visibility
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsPublic(true)}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   isPublic
-                    ? 'border-[#0F172A] bg-[#F8FAFC] ring-1 ring-[#0F172A]'
-                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
+                    ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-xs'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white text-[#64748B]'
                 }`}
               >
-                <Globe className="w-4 h-4 text-[#0F172A]" />
-                <div>
-                  <div className="text-xs font-bold text-[#0F172A]">Public</div>
-                  <div className="text-[10px] text-[#64748B]">Discovery feed</div>
-                </div>
+                <Globe className="w-3.5 h-3.5" />
+                <span>Public Feed</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsPublic(false)}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   !isPublic
-                    ? 'border-[#0F172A] bg-[#F8FAFC] ring-1 ring-[#0F172A]'
-                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
+                    ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-xs'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white text-[#64748B]'
                 }`}
               >
-                <Lock className="w-4 h-4 text-[#0F172A]" />
-                <div>
-                  <div className="text-xs font-bold text-[#0F172A]">Private</div>
-                  <div className="text-[10px] text-[#64748B]">Secret invite link only</div>
-                </div>
+                <Lock className="w-3.5 h-3.5" />
+                <span>Private Link</span>
               </button>
             </div>
           </div>
 
-          {/* Single-Click Action Button */}
-          <div className="pt-3">
+          {/* 1-Click Action Button */}
+          <div className="pt-1">
             <button
               type="button"
               onClick={handleSingleClickCreate}
-              disabled={isCreating || (!posterBase64 && !url.trim() && !text.trim())}
-              className="w-full py-3.5 px-5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-sm font-semibold transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-sm"
+              disabled={isCreating || !hasAnyInput}
+              className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] hover:from-[#E8621A] hover:to-[#FF8C42] text-white text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 shadow-md hover:shadow-lg hover:shadow-[#E8621A]/20 hover:scale-[1.01] active:scale-[0.99]"
             >
               {isCreating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>{progressStep || 'Creating Event Instantly...'}</span>
+                  <span>{progressStep || 'Extracting & Publishing Event...'}</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  <span>Create Event Instantly (Single-Click)</span>
+                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                  <span>Create Event Instantly</span>
                 </>
               )}
             </button>
-            <p className="text-[11px] text-[#94A3B8] text-center mt-2">
-              Bypasses the bot and creates a live published event with passes in one click.
+            <p className="text-[10px] text-[#94A3B8] text-center mt-1.5">
+              Live published immediately with passes • Superadmin reviewed
             </p>
           </div>
         </div>
