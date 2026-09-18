@@ -6,6 +6,7 @@ import {
   Heart,
   Flame,
   MessageCircle,
+  MessageSquare,
   Ticket,
   Share2,
   MapPin,
@@ -119,10 +120,7 @@ export default function VibeReelCard({
     } catch {}
   };
 
-  // Host WhatsApp direct chat link
-  const hostPhone = (event.whatsapp_host_phone || '919820011223').replace(/[^0-9]/g, '');
-  const chatText = `Hey ${event.organizer_name || 'Host'}! I saw your Vibe "${event.title}" on Vibe Instant and would love to join!`;
-  const whatsappChatUrl = `https://wa.me/${hostPhone}?text=${encodeURIComponent(chatText)}`;
+
 
   // Google maps URL
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -236,18 +234,18 @@ export default function VibeReelCard({
           </span>
         </button>
 
-        {/* 2. Connect with Host */}
+        {/* 2. Message Host */}
         <button
           type="button"
           onClick={() => setConnectHostOpen(true)}
           className="group flex flex-col items-center gap-1 cursor-pointer"
-          title="Connect with Host (WhatsApp & In-App)"
+          title="Message Host on Vibe"
         >
-          <div className="w-12 h-12 rounded-full bg-[#25D366]/90 hover:bg-[#25D366] text-black border border-white/20 flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-90 shadow-lg shadow-[#25D366]/40">
-            <MessageCircle className="w-6 h-6 fill-black" />
+          <div className="w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-90 shadow-md">
+            <MessageSquare className="w-5 h-5 text-amber-400" />
           </div>
-          <span className="text-[10px] font-black text-emerald-300 drop-shadow-md tracking-tight uppercase">
-            Connect
+          <span className="text-[10px] font-bold text-white drop-shadow-md tracking-tight">
+            Chat
           </span>
         </button>
 
@@ -318,47 +316,24 @@ export default function VibeReelCard({
 
       {/* Bottom Content Area: Event Details & Action */}
       <div className="relative z-10 p-4 sm:p-6 max-w-lg pb-6 sm:pb-8">
-        {/* Host Row with direct interactive Connect with Host button */}
-        <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setConnectHostOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-[#25D366] transition-all group/host cursor-pointer shadow-lg shadow-black/40"
-            title="Click to Connect with Host"
-          >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#E8621A] to-purple-500 overflow-hidden border border-white/40 shrink-0">
-              {event.organizer_logo ? (
-                <img
-                  src={event.organizer_logo}
-                  alt={event.organizer_name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
-                  {event.organizer_name?.slice(0, 1) || 'H'}
-                </div>
-              )}
-            </div>
-            <span className="text-xs font-bold text-white truncate drop-shadow-md group-hover/host:text-emerald-300 transition-colors">
-              {event.organizer_name}
-            </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#25D366] text-black flex items-center gap-1 shadow-sm group-hover/host:scale-105 transition-transform">
-              <MessageCircle className="w-3 h-3 fill-black" />
-              <span>Connect with Host</span>
-            </span>
-          </button>
-
-          {event.source_platform === 'telegram' ? (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0088cc]/20 text-[#38bdf8] border border-[#0088cc]/30 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]" />
-              Telegram
-            </span>
-          ) : (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
-              WhatsApp Bridge
-            </span>
-          )}
+        {/* Host Info */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E8621A] to-purple-500 overflow-hidden border border-white/30 shrink-0">
+            {event.organizer_logo ? (
+              <img
+                src={event.organizer_logo}
+                alt={event.organizer_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                {event.organizer_name?.slice(0, 1) || 'H'}
+              </div>
+            )}
+          </div>
+          <span className="text-xs font-bold text-white truncate drop-shadow-md">
+            {event.organizer_name}
+          </span>
         </div>
 
         {/* Event Title */}
@@ -413,7 +388,7 @@ export default function VibeReelCard({
           </div>
         </div>
 
-        {/* Primary Action Row: Claim Spot + Connect with Host */}
+        {/* Primary Action Row: Claim Spot + Message Host */}
         <div className="flex items-center gap-2.5 max-w-md w-full">
           <button
             type="button"
@@ -440,11 +415,11 @@ export default function VibeReelCard({
           <button
             type="button"
             onClick={() => setConnectHostOpen(true)}
-            className="py-3 px-3.5 sm:px-4 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xl shadow-[#25D366]/30 hover:scale-[1.02] active:scale-95 transition-all shrink-0 cursor-pointer"
-            title="Connect with Host (WhatsApp & In-App)"
+            className="py-3 px-3.5 sm:px-4 rounded-2xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-95 transition-all shrink-0 cursor-pointer"
+            title="Message Host on Vibe"
           >
-            <MessageCircle className="w-4 h-4 fill-black shrink-0" />
-            <span>Connect with Host</span>
+            <MessageSquare className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Message Host</span>
           </button>
         </div>
       </div>
@@ -534,10 +509,10 @@ export default function VibeReelCard({
                 setDetailsOpen(false);
                 setConnectHostOpen(true);
               }}
-              className="py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <MessageCircle className="w-4 h-4 fill-black" />
-              <span>Connect with Host</span>
+              <MessageSquare className="w-4 h-4 text-amber-400" />
+              <span>Message Host</span>
             </button>
           </div>
         </div>

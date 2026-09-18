@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const bridgeUrl = (process.env.WHATSAPP_BRIDGE_URL || 'http://localhost:3002').replace(/\/$/, '');
-  const fallbackPhone = process.env.WHATSAPP_HOST_PHONE || '916264984285';
+  const fallbackPhone = process.env.WHATSAPP_HOST_PHONE || '';
 
   try {
     const res = await fetch(bridgeUrl, {

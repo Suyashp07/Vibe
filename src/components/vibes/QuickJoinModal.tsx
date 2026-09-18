@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, CheckCircle2, MessageCircle, ArrowRight, User, Phone, MapPin, Calendar, Clock } from 'lucide-react';
+import { X, Sparkles, CheckCircle2, ArrowRight, User, Phone, MapPin, Calendar, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem } from '@/types';
 import { useAuth } from '@/lib/auth';
@@ -103,10 +103,6 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
       setSubmitting(false);
     }
   };
-
-  const hostPhone = event.whatsapp_host_phone || '919820011223';
-  const chatMsg = `Hey ${event.organizer_name || 'Host'}! I just joined your Flash Vibe "${event.title}" on Vibe Instant! My name is ${name || 'a fellow guest'}.`;
-  const whatsappUrl = `https://wa.me/${hostPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(chatMsg)}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -230,22 +226,12 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
             </p>
 
             <div className="space-y-2.5">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 transition-all cursor-pointer"
-              >
-                <MessageCircle className="w-4 h-4 fill-black" />
-                <span>Chat with Host on WhatsApp</span>
-              </a>
-
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white font-medium text-xs transition-colors cursor-pointer"
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#E8621A]/30"
               >
-                Back to Reels
+                Done
               </button>
             </div>
           </div>

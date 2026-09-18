@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Calendar, Users, Flame, ArrowUpRight, MessageCircle } from 'lucide-react';
+import { MapPin, Calendar, Users, Flame, ArrowUpRight } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST, getEventRSVPs } from '@/lib/store';
 
@@ -11,10 +11,9 @@ interface EventCardProps {
   event: EventItem;
   showStatus?: boolean;
   distanceKm?: number | null;
-  onConnectHost?: (event: EventItem) => void;
 }
 
-export default function EventCard({ event, showStatus = true, distanceKm, onConnectHost }: EventCardProps) {
+export default function EventCard({ event, showStatus = true, distanceKm }: EventCardProps) {
   const rsvps = getEventRSVPs(event.id);
   const count = rsvps.length;
   const isNearlyFull = event.capacity && (event.capacity - count) <= 8 && (event.capacity - count) > 0;
@@ -127,22 +126,6 @@ export default function EventCard({ event, showStatus = true, distanceKm, onConn
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {onConnectHost && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onConnectHost(event);
-                }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                title="Connect to Host"
-              >
-                <MessageCircle className="w-3 h-3 fill-current" />
-                <span className="hidden sm:inline">Connect</span>
-              </button>
-            )}
-
             {hasExternalLink ? (
               <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
                 Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Partner'}

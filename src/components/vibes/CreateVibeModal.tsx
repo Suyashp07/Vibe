@@ -14,7 +14,7 @@ interface CreateVibeModalProps {
 
 export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVibeModalProps) {
   const { profile } = useAuth();
-  const [bridgePhone, setBridgePhone] = useState('916264984285');
+  const [bridgePhone, setBridgePhone] = useState('');
   const [bridgeConnected, setBridgeConnected] = useState(false);
   const [activeTab, setActiveTab] = useState<'whatsapp' | 'quickform'>('whatsapp');
 
