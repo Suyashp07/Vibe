@@ -208,7 +208,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
               <ol className="text-xs text-white/70 space-y-1.5 list-decimal pl-4">
                 <li>Tap below to open WhatsApp with the bridge bot.</li>
                 <li>Send a message starting with <code className="bg-black/50 px-1.5 py-0.5 rounded text-[#E8621A] font-mono">/vibe</code> followed by your plans.</li>
-                <li>Gemini AI will extract details, publish it to Vibe Reels, and reply with your live link!</li>
+                <li>Gemini AI will extract details, publish it to Vibe Instant, and reply with your live link!</li>
               </ol>
             </div>
 
@@ -359,7 +359,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                   disabled={submitting}
                   className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {submitting ? 'Publishing Flash Vibe...' : '⚡ Post to Vibe Reels Stream'}
+                  {submitting ? 'Publishing Flash Vibe...' : '⚡ Post to Vibe Instant Stream'}
                 </button>
               </form>
             ) : (
@@ -369,14 +369,14 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 </div>
                 <h4 className="text-lg font-black text-white mb-1">Flash Vibe is Live!</h4>
                 <p className="text-xs text-white/70 mb-4">
-                  Your event is now showing in the Vibe Reels feed for users in {city}.
+                  Your event is now showing in the Vibe Instant feed for users in {city}.
                 </p>
                 <button
                   type="button"
                   onClick={onClose}
                   className="px-6 py-2.5 rounded-xl bg-[#E8621A] text-white font-bold text-xs shadow-md"
                 >
-                  View in Reels
+                  View in Instant
                 </button>
               </div>
             )}

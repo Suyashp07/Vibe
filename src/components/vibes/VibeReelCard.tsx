@@ -117,7 +117,7 @@ export default function VibeReelCard({
 
   // Host WhatsApp direct chat link
   const hostPhone = (event.whatsapp_host_phone || '919820011223').replace(/[^0-9]/g, '');
-  const chatText = `Hey ${event.organizer_name || 'Host'}! I saw your Vibe "${event.title}" on Vibe Reels and would love to join!`;
+  const chatText = `Hey ${event.organizer_name || 'Host'}! I saw your Vibe "${event.title}" on Vibe Instant and would love to join!`;
   const whatsappChatUrl = `https://wa.me/${hostPhone}?text=${encodeURIComponent(chatText)}`;
 
   // Google maps URL

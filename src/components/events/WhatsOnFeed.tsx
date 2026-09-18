@@ -300,7 +300,7 @@ export default function WhatsOnFeed() {
     : `/${currentFlashEvent?.slug || ''}`;
   const isFlashcardExternal = currentFlashEvent?.source_type === 'external';
 
-  // Filter Logic (Strictly excludes Flash Vibe events which are exclusive to Vibe Reels)
+  // Filter Logic (Strictly excludes Flash Vibe events which are exclusive to Vibe Instant)
   const filteredEvents = useMemo(() => {
     return eventsWithDistance
       .filter(isPublicLiveEvent)
@@ -559,7 +559,7 @@ export default function WhatsOnFeed() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIBE REELS: FLASH EVENTS PROMOTIONAL BANNER                                */}
+      {/* VIBE INSTANT: FLASH EVENTS PROMOTIONAL BANNER                             */}
       {/* ========================================================================= */}
       <Link
         href="/vibes"
@@ -573,7 +573,7 @@ export default function WhatsOnFeed() {
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <span className="font-display font-black text-sm sm:text-base tracking-tight text-white flex items-center gap-1.5">
-                <span>⚡ Vibe Reels — Spontaneous Flash Meetups</span>
+                <span>⚡ Vibe Instant — Spontaneous Flash Meetups</span>
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white">
                 LIVE
@@ -589,7 +589,7 @@ export default function WhatsOnFeed() {
         </div>
 
         <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 group-hover:bg-[#E8621A] text-white text-xs font-bold transition-colors relative z-10 shrink-0">
-          <span>Watch Reels</span>
+          <span>Open Instant</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </div>
       </Link>

@@ -220,7 +220,7 @@ function VibesReelsContent() {
               <Zap className="w-5 h-5 text-[#E8621A] fill-[#E8621A] animate-pulse" />
               <span>VIBE</span>
               <span className="text-xs px-1.5 py-0.5 rounded-md bg-[#E8621A] text-white font-black tracking-widest uppercase ml-1">
-                REELS
+                INSTANT
               </span>
             </span>
           </div>

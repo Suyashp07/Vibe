@@ -105,7 +105,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
   };
 
   const hostPhone = event.whatsapp_host_phone || '919820011223';
-  const chatMsg = `Hey ${event.organizer_name || 'Host'}! I just joined your Flash Vibe "${event.title}" on Vibe Reels! My name is ${name || 'a fellow guest'}.`;
+  const chatMsg = `Hey ${event.organizer_name || 'Host'}! I just joined your Flash Vibe "${event.title}" on Vibe Instant! My name is ${name || 'a fellow guest'}.`;
   const whatsappUrl = `https://wa.me/${hostPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(chatMsg)}`;
 
   return (

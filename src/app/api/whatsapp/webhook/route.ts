@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
       const welcome = 
         `👋 *Welcome to Vibe Event Creator!*\n\n` +
         `You can create and publish events directly from WhatsApp:\n\n` +
-        `⚡ *Flash Vibe / Meetup:* Send "/vibe <details>" (e.g. "/vibe Box cricket at Bandra Turf tonight 8 PM. Need 4 players") to post straight to the *Vibe Reels* feed!\n` +
+        `⚡ *Flash Vibe / Meetup:* Send "/vibe <details>" (e.g. "/vibe Box cricket at Bandra Turf tonight 8 PM. Need 4 players") to post straight to the *Vibe Instant* feed!\n` +
         `📸 *Send a Poster:* Send or forward any event flyer image.\n` +
         `🔗 *Send a Link:* Paste a Luma, BookMyShow, District, or Unstop URL.\n` +
         `💬 *Send a Text:* Forward any event details message or blurb.\n\n` +
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
     // Send instant progress acknowledgment
     if (replyTarget) {
       const progressMsg = isFlashVibe
-        ? '⚡ *Creating your Flash Vibe with Gemini AI...* Posting directly to Vibe Reels!'
+        ? '⚡ *Creating your Flash Vibe with Gemini AI...* Posting directly to Vibe Instant!'
         : '🔍 *Analyzing your event with Gemini AI...* Hang tight!';
       await sendWhatsAppReply(replyTarget, progressMsg);
     }
@@ -507,11 +507,11 @@ export async function POST(req: NextRequest) {
     let confirmationMsg = '';
     if (isFlashVibe) {
       confirmationMsg =
-        `⚡ *YOUR FLASH VIBE IS LIVE ON VIBE REELS!*\n\n` +
+        `⚡ *YOUR FLASH VIBE IS LIVE ON VIBE INSTANT!*\n\n` +
         `🔥 *${createdEventTitle}*\n` +
         `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
         `🕒 ${dateStr}\n\n` +
-        `📱 *Open in Vibe Reels:*\n${liveReelUrl}\n\n` +
+        `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
         `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
     } else {
       confirmationMsg = 

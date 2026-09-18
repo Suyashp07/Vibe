@@ -861,7 +861,7 @@ export const getPublicEvents = (): EventItem[] => {
 };
 
 /**
- * Returns strictly flash vibe events for the Vibe Reels stream.
+ * Returns strictly flash vibe events for the Vibe Instant stream.
  */
 export const getFlashVibeEvents = (): EventItem[] => {
   const allEvents = getEvents();
