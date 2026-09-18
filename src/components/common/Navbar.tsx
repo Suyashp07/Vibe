@@ -27,14 +27,16 @@ import {
   GraduationCap,
   Users,
   Utensils,
-  Zap
+  Zap,
+  X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth, setLocalAuthSession, AuthProfile } from '@/lib/auth';
 import { syncEventsWithSupabase, getRSVPs } from '@/lib/store';
 import { getSupabaseClient } from '@/lib/supabase';
 import LocationModal from '@/components/location/LocationModal';
 import AuthModal from '@/components/auth/AuthModal';
-import { getUserCity } from '@/lib/location';
+import { getUserCity, INDIAN_CITIES } from '@/lib/location';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -48,9 +50,34 @@ export default function Navbar() {
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeCity, setActiveCity] = useState<string>('All India');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [confirmedPassCount, setConfirmedPassCount] = useState(0);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Derive region / state for District-style location display
+  const activeState = React.useMemo(() => {
+    const normalized = activeCity.toLowerCase().trim();
+    if (INDIAN_CITIES[normalized]?.state) {
+      return INDIAN_CITIES[normalized].state;
+    }
+    const found = Object.values(INDIAN_CITIES).find(
+      (c) => c.name.toLowerCase() === normalized || normalized.includes(c.name.toLowerCase())
+    );
+    if (found?.state) return found.state;
+    return activeCity === 'All India' ? 'India' : 'Maharashtra';
+  }, [activeCity]);
+
+  // Close search on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && searchOpen) {
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [searchOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -97,6 +124,7 @@ export default function Navbar() {
   // Handle global search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSearchOpen(false);
     if (searchQuery.trim()) {
       router.push(`/discover?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
@@ -114,11 +142,11 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] shadow-xs">
-        {/* Tier 1: Main Header Bar (MakeMyTrip & BookMyShow style) */}
+        {/* District by Zomato Structure: Logo + Location on Left, 3 Core Features in Center, Search + Profile on Right */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
-            {/* Left: Brand Logo (District by Zomato style: Vibe over BY SWANIKI with V turning orange on hover) */}
-            <div className="flex items-center shrink-0">
+            {/* Left: Brand Logo + Location Selector (District style) */}
+            <div className="flex items-center gap-3 sm:gap-6 shrink-0">
               <Link
                 href="/"
                 className="flex flex-col group select-none py-0.5"
@@ -132,61 +160,92 @@ export default function Navbar() {
                   BY SWANIKI
                 </span>
               </Link>
-            </div>
 
-            {/* Center: Global Search Bar (BookMyShow style) */}
-            <form
-              onSubmit={handleSearchSubmit}
-              className="flex-1 max-w-xl mx-2 hidden sm:block relative"
-            >
-              <div className="relative flex items-center w-full">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                <input
-                  type="text"
-                  placeholder="Search for events, plays, concerts, workshops, and venues..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F172A] focus:bg-white transition-all text-[#0F172A] placeholder:text-[#94A3B8]"
-                />
-              </div>
-            </form>
-
-            {/* Right: City Selector & User Menu & Host Action */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Vibe Instant Flash Meetups CTA */}
-              <Link
-                href="/vibes"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                  pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-                    ? 'bg-[#0F172A] text-white'
-                    : 'bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white hover:opacity-95 shadow-[#E8621A]/20'
-                }`}
-                title="Vibe Instant: Spontaneous Flash Meetups"
-              >
-                <Zap className="w-3.5 h-3.5 fill-current animate-pulse" />
-                <span>⚡ Vibe Instant</span>
-              </Link>
-
-              {/* Location Picker (MakeMyTrip / BookMyShow City dropdown) */}
+              {/* Location Selector (District by Zomato style: Purple Pin + City & State) */}
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-xs font-semibold text-[#0F172A] transition-colors cursor-pointer"
+                className="flex items-center gap-2.5 px-2.5 py-1 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer text-left group border border-transparent hover:border-[#E2E8F0]"
                 title="Change city location"
               >
-                <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
-                <span className="max-w-[80px] sm:max-w-[120px] truncate">{activeCity}</span>
-                <ChevronDown className="w-3 h-3 text-[#94A3B8] shrink-0" />
+                <div className="w-8 h-8 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-[#7C3AED] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <MapPin className="w-4 h-4 text-[#7C3AED]" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs sm:text-sm font-black text-[#0F172A] leading-tight group-hover:text-[#7C3AED] transition-colors max-w-[90px] sm:max-w-[130px] truncate">
+                      {activeCity}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-[#94A3B8] group-hover:text-[#0F172A] transition-colors shrink-0" />
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-medium text-[#64748B] leading-tight truncate max-w-[85px] sm:max-w-[120px]">
+                    {activeState}
+                  </span>
+                </div>
               </button>
+            </div>
 
-              {/* Host / Create Event CTA */}
+            {/* Center: The Three Core Features (Events, Vibe Instant, Host an Event) */}
+            <nav className="hidden md:flex items-center gap-1.5 lg:gap-2.5">
+              {/* Feature 1: Events */}
+              <Link
+                href="/"
+                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all ${
+                  pathname === '/' || pathname.startsWith('/event')
+                    ? 'bg-[#FDF8EE] text-[#9A3412] font-black border border-[#FDE68A]/70 shadow-2xs'
+                    : 'text-[#475569] hover:text-[#0F172A] font-bold hover:bg-[#F8FAFC]'
+                }`}
+              >
+                Events
+              </Link>
+
+              {/* Feature 2: Vibe Instant */}
+              <Link
+                href="/vibes"
+                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all inline-flex items-center gap-1.5 ${
+                  pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
+                    ? 'bg-[#E8621A]/10 text-[#E8621A] font-black border border-[#E8621A]/20 shadow-2xs'
+                    : 'text-[#475569] hover:text-[#E8621A] font-bold hover:bg-[#F8FAFC]'
+                }`}
+              >
+                <div className="relative">
+                  <Zap className="w-3.5 h-3.5 fill-[#E8621A] text-[#E8621A]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#E8621A] animate-ping" />
+                </div>
+                <span>Vibe Instant</span>
+                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-[#E8621A] text-white leading-none">
+                  Live
+                </span>
+              </Link>
+
+              {/* Feature 3: Host an Event */}
               <Link
                 href="/create"
-                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
+                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all ${
+                  pathname.startsWith('/create')
+                    ? 'bg-[#0F172A] text-white font-black shadow-xs'
+                    : 'text-[#475569] hover:text-[#0F172A] font-bold hover:bg-[#F8FAFC]'
+                }`}
               >
-                <CalendarPlus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>+ Host Event</span>
+                Host an Event
               </Link>
+            </nav>
+
+            {/* Right: Search Icon Button + User Profile Avatar (District style) */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Search Icon Trigger */}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(!searchOpen)}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                  searchOpen
+                    ? 'bg-[#0F172A] text-white shadow-xs'
+                    : 'text-[#0F172A] hover:bg-[#F1F5F9] border border-[#E2E8F0]'
+                }`}
+                title="Search events, venues, and artists"
+              >
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+              </button>
 
               {/* User Auth Profile (Hi, Guest / Hi, Name) */}
               {mounted && isLoggedIn && profile ? (
@@ -194,25 +253,22 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 pl-2 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] transition-colors cursor-pointer flex items-center justify-center overflow-hidden"
+                    title={profile.name}
                   >
-                    <div className="w-7 h-7 rounded-lg bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold overflow-hidden">
-                      {profile.avatar_url ? (
-                        <Image
-                          src={profile.avatar_url}
-                          alt={profile.name}
-                          width={28}
-                          height={28}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <span>{profile.name?.slice(0, 2).toUpperCase() || 'US'}</span>
-                      )}
-                    </div>
-                    <span className="text-xs font-semibold text-[#0F172A] hidden sm:inline-block max-w-[100px] truncate">
-                      Hi, {firstName}
-                    </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8]" />
+                    {profile.avatar_url ? (
+                      <Image
+                        src={profile.avatar_url}
+                        alt={profile.name}
+                        width={36}
+                        height={36}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold">
+                        {profile.name?.slice(0, 2).toUpperCase() || 'US'}
+                      </div>
+                    )}
                   </button>
 
                   {/* Dropdown Menu */}
@@ -287,23 +343,64 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthModalMode('signin');
-                      setAuthModalOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] transition-colors cursor-pointer"
-                  >
-                    <User className="w-3.5 h-3.5 text-[#64748B]" />
-                    <span>Hi, Sign In</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('signin');
+                    setAuthModalOpen(true);
+                  }}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] flex items-center justify-center transition-colors cursor-pointer"
+                  title="Sign In"
+                >
+                  <User className="w-5 h-5" />
+                </button>
               )}
             </div>
           </div>
         </div>
+
+        {/* Expandable Search Drawer (District-style focused search) */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-t border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 shadow-inner overflow-hidden"
+            >
+              <div className="max-w-3xl mx-auto flex items-center gap-3">
+                <form onSubmit={handleSearchSubmit} className="flex-1 relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder={`Search events, concerts, plays, workshops in ${activeCity}...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-white border border-[#CBD5E1] rounded-2xl focus:outline-none focus:border-[#0F172A] text-[#0F172A] shadow-xs"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#94A3B8] hover:text-[#0F172A]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </form>
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="px-3 py-2 text-xs font-bold text-[#64748B] hover:text-[#0F172A] rounded-xl hover:bg-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Mobile WebApp Fixed Bottom Navigation Bar (MakeMyTrip & BookMyShow PWA style) */}
