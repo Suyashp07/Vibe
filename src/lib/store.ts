@@ -839,7 +839,7 @@ export const getEvents = (): EventItem[] => {
 };
 
 /**
- * Strict check if an event is a spontaneous/flash event belonging to the Vibe section.
+ * Strict check if an event is a spontaneous/flash event belonging to the Vibe Instant section.
  */
 export const isFlashVibeEvent = (e: any): boolean => {
   if (!e) return false;
@@ -848,13 +848,15 @@ export const isFlashVibeEvent = (e: any): boolean => {
     String(e.is_flash) === 'true' ||
     e.category === 'Flash Vibe' ||
     e.theme?.is_flash === true ||
-    e.rsvp_form_config?.is_flash === true
+    e.rsvp_form_config?.is_flash === true ||
+    e.source_platform === 'whatsapp' ||
+    e.source_platform === 'telegram'
   );
 };
 
 /**
  * Returns strictly public, live events for public discovery feeds, hero slider, and category lists.
- * Flash events (specific to Vibe section) and private events are 100% excluded.
+ * Flash events (specific to Vibe Instant) and private events are 100% excluded.
  */
 export const getPublicEvents = (): EventItem[] => {
   return getEvents().filter(e => isPublicLiveEvent(e) && !isFlashVibeEvent(e));
@@ -862,11 +864,19 @@ export const getPublicEvents = (): EventItem[] => {
 
 /**
  * Returns strictly flash vibe events for the Vibe Instant stream.
+ * Real events created via WhatsApp and Telegram bots appear FIRST, sorted newest to oldest.
  */
 export const getFlashVibeEvents = (): EventItem[] => {
   const allEvents = getEvents();
   const flashFromStore = allEvents.filter(e => isFlashVibeEvent(e) && isPublicLiveEvent(e));
   
+  // Real live events from WhatsApp, Telegram, and Supabase sorted newest first
+  flashFromStore.sort((a, b) => {
+    const timeA = new Date(a.created_at || a.start_at || 0).getTime();
+    const timeB = new Date(b.created_at || b.start_at || 0).getTime();
+    return timeB - timeA;
+  });
+
   const existingIds = new Set(flashFromStore.map(e => e.id));
   const existingSlugs = new Set(flashFromStore.map(e => e.slug));
   

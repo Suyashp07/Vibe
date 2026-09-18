@@ -331,10 +331,17 @@ export default function VibeReelCard({
           <span className="text-xs font-bold text-white truncate drop-shadow-md">
             {event.organizer_name}
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
-            via WhatsApp Bridge
-          </span>
+          {event.source_platform === 'telegram' ? (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0088cc]/20 text-[#38bdf8] border border-[#0088cc]/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]" />
+              via Telegram Bot
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
+              via WhatsApp Bridge
+            </span>
+          )}
         </div>
 
         {/* Event Title */}

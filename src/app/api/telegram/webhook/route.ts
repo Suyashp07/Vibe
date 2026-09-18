@@ -69,11 +69,53 @@ export async function POST(req: NextRequest) {
       const supabase = getSupabaseAdmin();
       const appUrl = getAppUrl();
 
+      if (data.startsWith('publish_instant:')) {
+        const eventId = data.replace('publish_instant:', '');
+        const { data: current, error } = await supabase
+          .from('events')
+          .select('id, slug, title, theme, rsvp_form_config')
+          .eq('id', eventId)
+          .single();
+
+        if (error || !current) {
+          await answerTelegramCallback(cq.id, 'Failed to publish event', true);
+          return NextResponse.json({ ok: true });
+        }
+
+        await supabase
+          .from('events')
+          .update({
+            status: 'live',
+            is_public: true,
+            theme: { ...(current.theme || {}), is_flash: true },
+            rsvp_form_config: { ...(current.rsvp_form_config || {}), is_flash: true },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', eventId);
+
+        await answerTelegramCallback(cq.id, '⚡ Published to Vibe Instant!');
+
+        const instantLink = `${appUrl}/vibes?event=${current.slug}`;
+        const publishedText = `⚡ <b>EVENT IS LIVE ON VIBE INSTANT!</b>\n\n📌 <b>${current.title}</b>\n🔗 <a href="${instantLink}">${instantLink}</a>\n\n<i>Swipe full-screen in Vibe Instant stream right now!</i>`;
+
+        await editTelegramMessage(chatId, messageId, publishedText, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
+              [{ text: '📋 Copy Link', callback_data: `copy:${instantLink}` }],
+            ],
+          },
+        });
+
+        return NextResponse.json({ ok: true });
+      }
+
       if (data.startsWith('publish:')) {
         const eventId = data.replace('publish:', '');
         const { data: updatedEvent, error } = await supabase
           .from('events')
-          .update({ status: 'live', updated_at: new Date().toISOString() })
+          .update({ status: 'live', is_public: true, updated_at: new Date().toISOString() })
           .eq('id', eventId)
           .select('id, title, slug, start_at, location_name')
           .single();
@@ -202,14 +244,40 @@ export async function POST(req: NextRequest) {
 
     // Handle /start or /help command
     const textContent = message.text || message.caption || '';
-    if (textContent.startsWith('/start') || textContent.startsWith('/help')) {
-      const welcome = `👋 <b>Welcome to Vibe Event Submission Bot!</b>\n\n` +
-        `Send me any event poster flyer, ticketing link, or message blurb, and I will extract the event details and submit it to Vibe!\n\n` +
-        `<b>How to submit:</b>\n` +
+    const lowerText = textContent.toLowerCase();
+
+    // Check for Flash Vibe / Vibe Instant intent
+    const isPhoto = Boolean(message.photo && message.photo.length > 0);
+    const isImageDoc = Boolean(message.document && message.document.mime_type?.startsWith('image/'));
+    const hasExternalLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
+
+    const isFlashVibe =
+      lowerText.startsWith('/vibe') ||
+      lowerText.startsWith('/flash') ||
+      lowerText.startsWith('vibe:') ||
+      lowerText.startsWith('flash:') ||
+      lowerText.startsWith('⚡') ||
+      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging)\b/i.test(textContent) ||
+      (!isPhoto && !hasExternalLink && textContent.length < 350 && textContent.length > 5);
+
+    let flashActivity: string = 'other';
+    if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
+    else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
+    else if (/\b(pickleball|paddle)\b/i.test(textContent)) flashActivity = 'pickleball';
+    else if (/\b(football|futsal|soccer)\b/i.test(textContent)) flashActivity = 'football';
+    else if (/\b(chai|coffee|cafe|tea)\b/i.test(textContent)) flashActivity = 'coffee';
+    else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
+    else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
+    else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
+
+    if (lowerText.startsWith('/start') || lowerText.startsWith('/help') || lowerText === 'hi') {
+      const welcome = `👋 <b>Welcome to Vibe Event Bot!</b>\n\n` +
+        `You can submit formal events or post spontaneous meetups straight to Vibe:\n\n` +
+        `⚡ <b>Post to Vibe Instant:</b> Send "/vibe &lt;details&gt;" (e.g. <i>"/vibe Box cricket at Bandra Turf tonight 8 PM. Need 4 players"</i>) to post immediately live to the <b>Vibe Instant</b> stream!\n` +
         `📸 <b>Send a Poster Image:</b> Forward any event flyer or Instagram screenshot.\n` +
         `🔗 <b>Send a Link:</b> Paste any Unstop, District, BookMyShow, or Luma URL.\n` +
-        `💬 <b>Send a Text:</b> Forward any WhatsApp event blurb.\n\n` +
-        `<i>Your submission will be routed to Vibe administrators for review and published live!</i>`;
+        `💬 <b>Send a Text:</b> Forward any event details blurb.\n\n` +
+        `<i>Gemini AI will extract all details and publish it!</i>`;
       await sendTelegramMessage(chatId, welcome, { parse_mode: 'HTML' });
       return NextResponse.json({ ok: true });
     }
@@ -217,9 +285,6 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdmin();
     let extracted: ExtractedEventData;
     let coverImageUrl = getCategoryCover('default');
-
-    const isPhoto = Boolean(message.photo && message.photo.length > 0);
-    const isImageDoc = Boolean(message.document && message.document.mime_type?.startsWith('image/'));
 
     // CASE A: Flyer Image Provided (as Photo or Document file)
     if (isPhoto || isImageDoc) {
@@ -350,15 +415,25 @@ export async function POST(req: NextRequest) {
     const finalSourcePlatform = hasExternalUrl ? extracted.source_platform : undefined;
     const finalTicketUrl = hasExternalUrl ? normalizedTicketUrl : undefined;
 
-    // 3. Insert into Supabase `public.events` as draft
+    // If it's a Flash Vibe / Meetup, it is published immediately live to Vibe Instant!
+    const isLiveImmediately = isFlashVibe;
+
+    // 3. Insert into Supabase `public.events`
     const insertPayload = {
       slug: finalSlug,
       title: extracted.title || 'Untitled Event',
       tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
       description: extracted.description || '',
       cover_image_url: coverImageUrl,
-      template: extracted.template || 'grove',
-      theme: themeConfig,
+      template: isFlashVibe ? 'ember' : (extracted.template || 'grove'),
+      theme: {
+        ...themeConfig,
+        is_flash: isFlashVibe,
+        flash_activity: flashActivity,
+        vibe_cheers_count: 1,
+        spots_limit: isFlashVibe ? 12 : undefined,
+        spots_filled: 1,
+      },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
       location_name: extracted.venue_name || `${detectedCity} Venue`,
@@ -367,12 +442,12 @@ export async function POST(req: NextRequest) {
       start_at: validStartAt,
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
-      capacity: 250,
-      is_public: false, // Strictly private until verified and published by an administrator
-      status: 'draft',  // Strictly draft until verified and published by an administrator
+      capacity: isFlashVibe ? 12 : 250,
+      is_public: isLiveImmediately ? true : false,
+      status: isLiveImmediately ? 'live' : 'draft',
       ai_generated: true,
       source_type: finalSourceType,
-      source_platform: finalSourcePlatform,
+      source_platform: finalSourcePlatform || 'telegram',
       external_ticket_url: finalTicketUrl,
       external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
       confidence_score: extracted.confidence_score || 0.9,
@@ -382,9 +457,10 @@ export async function POST(req: NextRequest) {
         ask_dietary: false,
         ask_tshirt: false,
         waitlist_enabled: true,
-        confirmation_message: hasExternalUrl
-          ? 'Redirecting to ticketing platform'
-          : 'Your spot is confirmed! Present your pass with QR code at the entrance.',
+        is_flash: isFlashVibe,
+        confirmation_message: isFlashVibe
+          ? `You're confirmed for ${extracted.title || 'this flash meetup'}! Coordinate directly with other guests on Vibe.`
+          : (hasExternalUrl ? 'Redirecting to ticketing platform' : 'Your spot is confirmed! Present your pass with QR code at the entrance.'),
       },
     };
 
@@ -426,8 +502,22 @@ export async function POST(req: NextRequest) {
     let previewText: string;
     let inlineKeyboard: any[];
 
-    if (isCurator) {
-      previewText = `✨ <b>EVENT EXTRACTED & QUEUED FOR REVIEW!</b> (Confidence: ${confidencePercent}%)\n\n` +
+    if (isFlashVibe) {
+      const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
+      previewText = `⚡ <b>YOUR FLASH VIBE IS LIVE ON VIBE INSTANT!</b>\n\n` +
+        `🔥 <b>${extracted.title}</b>\n` +
+        `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
+        `🕒 ${dateStr} IST\n\n` +
+        `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
+        `📲 <i>Forward this link to your group or squad — anyone can swipe to your card and tap "I'm In" to join!</i>`;
+
+      inlineKeyboard = [
+        [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
+        [{ text: '📋 Copy Link', callback_data: `copy:${instantLink}` }],
+        [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
+      ];
+    } else if (isCurator) {
+      previewText = `✨ <b>EVENT EXTRACTED!</b> (Confidence: ${confidencePercent}%)\n\n` +
         `📌 <b>Title:</b> ${extracted.title}\n` +
         `🏷️ <b>Category:</b> ${detectedCategory}\n` +
         `🗓️ <b>Date:</b> ${dateStr} IST\n` +
@@ -436,10 +526,11 @@ export async function POST(req: NextRequest) {
         `🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}\n` +
         (hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : '') +
         `🖼️ <b>Poster:</b> ${isPhoto ? 'Custom Uploaded Flyer' : `${detectedCategory} Curated Background`}\n\n` +
-        `🛡️ <b>STATUS: PENDING ADMIN VERIFICATION</b>\n` +
-        `<i>This draft has been routed to the Vibe Admin Command Center. Verify and approve it in the admin panel to publish it live!</i>`;
+        `⚡ <i>Publish live to Vibe Instant stream or review in admin:</i>`;
 
       inlineKeyboard = [
+        [{ text: '⚡ Publish to Vibe Instant Live!', callback_data: `publish_instant:${savedEvent.id}` }],
+        [{ text: '🚀 Publish to Events Feed', callback_data: `publish:${savedEvent.id}` }],
         [{ text: '🛡️ Review in Admin Command Center ↗', url: adminEventsUrl }],
         [{ text: '❌ Discard Draft', callback_data: `discard:${savedEvent.id}` }],
       ];

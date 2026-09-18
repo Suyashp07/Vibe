@@ -68,7 +68,15 @@ function VibesReelsContent() {
       setActiveCity(userCity);
     }
 
-    return () => unsubscribe();
+    // Auto-poll Supabase every 6 seconds so real events posted via WhatsApp or Telegram bots show live immediately
+    const pollInterval = setInterval(() => {
+      syncEventsWithSupabase().then(() => loadEvents()).catch(() => {});
+    }, 6000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(pollInterval);
+    };
   }, []);
 
   // Filter events by City & Activity
