@@ -1,11 +1,25 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Playfair_Display, Fraunces } from 'next/font/google';
+import { Inter, Outfit, Plus_Jakarta_Sans, Playfair_Display, Fraunces } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+  weight: ['400', '600', '700', '800', '900'],
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  display: 'swap',
+  weight: ['600', '700', '800'],
 });
 
 const playfair = Playfair_Display({
@@ -69,7 +83,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}>
       <body className="min-h-screen bg-surface-2 text-ink antialiased pb-16 md:pb-0">
         {children}
         <PWARegister />

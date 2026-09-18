@@ -37,6 +37,7 @@ import { getSupabaseClient } from '@/lib/supabase';
 import LocationModal from '@/components/location/LocationModal';
 import AuthModal from '@/components/auth/AuthModal';
 import { getUserCity, INDIAN_CITIES } from '@/lib/location';
+import BrandLogo from '@/components/common/BrandLogo';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -147,19 +148,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
             {/* Left: Brand Logo + Location Selector (District style) */}
             <div className="flex items-center gap-3 sm:gap-6 shrink-0">
-              <Link
-                href="/"
-                className="flex flex-col group select-none py-0.5"
-                title="Vibe by Swaniki"
-              >
-                <span className="font-display font-black text-2xl sm:text-[28px] text-[#0F172A] tracking-tight leading-none">
-                  <span className="transition-colors duration-200 group-hover:text-[#E8621A]">V</span>
-                  <span>ibe</span>
-                </span>
-                <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-[0.22em] text-[#E8621A] uppercase leading-none pt-1">
-                  BY SWANIKI
-                </span>
-              </Link>
+              <BrandLogo />
 
               {/* Location Selector (District by Zomato style: Purple Pin + City & State) */}
               <button

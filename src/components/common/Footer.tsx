@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import BrandLogo from '@/components/common/BrandLogo';
 import {
   Sparkles,
   Heart,
@@ -94,19 +95,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-[#E2E8F0]">
           {/* Column 1: Brand Info & Social Media Links (Spans 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link
-              href="/"
-              className="inline-flex flex-col group select-none py-0.5"
-              title="Vibe by Swaniki"
-            >
-              <span className="font-display font-black text-2xl sm:text-[28px] text-[#0F172A] tracking-tight leading-none">
-                <span className="transition-colors duration-200 group-hover:text-[#E8621A]">V</span>
-                <span>ibe</span>
-              </span>
-              <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-[0.22em] text-[#E8621A] uppercase leading-none pt-1">
-                BY SWANIKI
-              </span>
-            </Link>
+            <BrandLogo />
 
             <p className="text-xs sm:text-sm text-[#64748B] max-w-sm leading-relaxed">
               India's premier whitelabel event network. Curating cultural gatherings, tech summits, live concerts, and social mixers with AI-streamed verification and pass distribution.

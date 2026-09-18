@@ -47,7 +47,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ["var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
+        brand: ["var(--font-outfit)", "Outfit", "var(--font-inter)", "-apple-system", "sans-serif"],
+        display: ["var(--font-outfit)", "Outfit", "var(--font-inter)", "-apple-system", "sans-serif"],
+        subbrand: ["var(--font-jakarta)", "Plus Jakarta Sans", "var(--font-inter)", "-apple-system", "sans-serif"],
         tagline: ["var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
         sans: ["var(--font-inter)", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
       },
