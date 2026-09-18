@@ -559,31 +559,36 @@ export default function WhatsOnFeed() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. TAGS & FILTERS — EXPLICITLY MENTIONED (NO HORIZONTAL SCROLL, NO CARDS) */}
+      {/* 2. TAGS & FILTERS CONSOLE — ELEVATED CARD WITH DISTINCT VISUAL BOUNDARY   */}
       {/* ========================================================================= */}
-      <div className="space-y-4 pt-2 border-b border-[#E2E8F0] pb-6">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E2E8F0] shadow-xs space-y-5">
         {/* Category Filter Pills (Explicitly Mentioned, Flex-Wrap) */}
-        <div className="flex flex-wrap items-center gap-2">
-          {CATEGORY_FILTERS.map((cat) => {
-            const active = categoryFilter === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-4 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                  active
-                    ? 'bg-[#0F172A] text-white shadow-xs'
-                    : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
+        <div>
+          <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-2.5">
+            Categories
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {CATEGORY_FILTERS.map((cat) => {
+              const active = categoryFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-4 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                    active
+                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      : 'bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] hover:bg-white hover:border-[#CBD5E1]'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Distance Filter Row (Explicitly Mentioned) */}
-        <div className="flex items-center gap-3 pt-1">
+        <div className="pt-3 border-t border-[#F1F5F9] flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
             <Navigation className="w-3.5 h-3.5 rotate-45" />
             <span>DISTANCE</span>
@@ -595,10 +600,10 @@ export default function WhatsOnFeed() {
                 <button
                   key={dist}
                   onClick={() => setDistanceFilter(dist)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                  className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                     active
                       ? 'bg-[#0F172A] text-white shadow-xs'
-                      : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                      : 'bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] hover:bg-white hover:border-[#CBD5E1]'
                   }`}
                 >
                   {dist}
@@ -609,7 +614,7 @@ export default function WhatsOnFeed() {
         </div>
 
         {/* Mood Tags (Explicitly Mentioned, All Visible, Flex-Wrap, No Cards!) */}
-        <div className="space-y-2.5 pt-1">
+        <div className="pt-3 border-t border-[#F1F5F9] space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
               MOOD
@@ -634,7 +639,7 @@ export default function WhatsOnFeed() {
                   className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                     active
                       ? 'bg-[#0F172A] text-white shadow-xs'
-                      : 'bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                      : 'bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] hover:bg-white hover:border-[#CBD5E1]'
                   }`}
                 >
                   {tag}
@@ -650,22 +655,31 @@ export default function WhatsOnFeed() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. BELOW: ALL EVENTS LISTED IN GRID (Ascending order of proximity)         */}
+      {/* 3. BELOW: ALL EVENTS LISTED IN GRID (Ascending order of proximity)         */}
       {/* ========================================================================= */}
-      <div className="pt-2 space-y-4">
+      <div className="pt-4 space-y-5">
         {filteredEvents.length > 0 && (
-          <div className="flex items-center justify-between pb-1">
-            <div className="flex items-center gap-2">
-              <Navigation className="w-4 h-4 text-[#E8621A] rotate-45" />
-              <h3 className="text-base sm:text-lg font-bold text-[#0F172A]">
-                {userCity && userCity !== 'All India' ? `Events Near ${userCity}` : 'Events Near You'}
-              </h3>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B]">
-                {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'}
-              </span>
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#E8621A] shrink-0">
+                <Navigation className="w-5 h-5 rotate-45 text-[#E8621A]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black text-[#0F172A] tracking-tight">
+                    {userCity && userCity !== 'All India' ? `Events Near ${userCity}` : 'Events Near You'}
+                  </h3>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-[#9A3412] border border-amber-200">
+                    {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'gatherings'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Curated gatherings sorted by proximity to your active location
+                </p>
+              </div>
             </div>
 
-            <span className="text-xs font-medium text-[#64748B] hidden sm:inline-flex items-center gap-1.5 bg-[#F8FAFC] px-3 py-1 rounded-full border border-[#E2E8F0]">
+            <span className="text-xs font-medium text-[#64748B] self-start sm:self-auto inline-flex items-center gap-1.5 bg-[#F8FAFC] px-3.5 py-1.5 rounded-xl border border-[#E2E8F0]">
               <span>Sorted by proximity</span>
               <span className="text-[#0F172A] font-bold">(nearest first)</span>
             </span>
