@@ -24,6 +24,8 @@ import confetti from 'canvas-confetti';
 import { EventItem } from '@/types';
 import { cheerFlashVibe, getRSVPs } from '@/lib/store';
 import QuickJoinModal from './QuickJoinModal';
+import ConnectHostModal from '@/components/communication/ConnectHostModal';
+import { useAuth } from '@/lib/auth';
 
 interface VibeReelCardProps {
   event: EventItem;
@@ -42,9 +44,11 @@ export default function VibeReelCard({
   index,
   total,
 }: VibeReelCardProps) {
+  const { profile } = useAuth();
   const [cheers, setCheers] = useState(event.vibe_cheers_count || 12);
   const [hasCheered, setHasCheered] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [connectHostOpen, setConnectHostOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
   const [shareToast, setShareToast] = useState(false);
@@ -232,19 +236,20 @@ export default function VibeReelCard({
           </span>
         </button>
 
-        {/* 2. Chat with Host on WhatsApp */}
-        <a
-          href={whatsappChatUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* 2. Connect with Host */}
+        <button
+          type="button"
+          onClick={() => setConnectHostOpen(true)}
           className="group flex flex-col items-center gap-1 cursor-pointer"
-          title="Chat with Host on WhatsApp"
+          title="Connect with Host (WhatsApp & In-App)"
         >
-          <div className="w-12 h-12 rounded-full bg-[#25D366]/90 hover:bg-[#25D366] text-black border border-white/20 flex items-center justify-center backdrop-blur-xl transition-all hover:scale-105 active:scale-90 shadow-lg shadow-[#25D366]/30">
+          <div className="w-12 h-12 rounded-full bg-[#25D366]/90 hover:bg-[#25D366] text-black border border-white/20 flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-90 shadow-lg shadow-[#25D366]/40">
             <MessageCircle className="w-6 h-6 fill-black" />
           </div>
-          <span className="text-[11px] font-bold text-white drop-shadow-md">Host</span>
-        </a>
+          <span className="text-[10px] font-black text-emerald-300 drop-shadow-md tracking-tight uppercase">
+            Connect
+          </span>
+        </button>
 
         {/* 3. Instant RSVP Button */}
         <button
@@ -313,33 +318,45 @@ export default function VibeReelCard({
 
       {/* Bottom Content Area: Event Details & Action */}
       <div className="relative z-10 p-4 sm:p-6 max-w-lg pb-6 sm:pb-8">
-        {/* Host Pill with WhatsApp tag */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E8621A] to-purple-500 overflow-hidden border border-white/30 shrink-0">
-            {event.organizer_logo ? (
-              <img
-                src={event.organizer_logo}
-                alt={event.organizer_name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
-                {event.organizer_name?.slice(0, 1) || 'H'}
-              </div>
-            )}
-          </div>
-          <span className="text-xs font-bold text-white truncate drop-shadow-md">
-            {event.organizer_name}
-          </span>
+        {/* Host Row with direct interactive Connect with Host button */}
+        <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setConnectHostOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-[#25D366] transition-all group/host cursor-pointer shadow-lg shadow-black/40"
+            title="Click to Connect with Host"
+          >
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#E8621A] to-purple-500 overflow-hidden border border-white/40 shrink-0">
+              {event.organizer_logo ? (
+                <img
+                  src={event.organizer_logo}
+                  alt={event.organizer_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                  {event.organizer_name?.slice(0, 1) || 'H'}
+                </div>
+              )}
+            </div>
+            <span className="text-xs font-bold text-white truncate drop-shadow-md group-hover/host:text-emerald-300 transition-colors">
+              {event.organizer_name}
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#25D366] text-black flex items-center gap-1 shadow-sm group-hover/host:scale-105 transition-transform">
+              <MessageCircle className="w-3 h-3 fill-black" />
+              <span>Connect with Host</span>
+            </span>
+          </button>
+
           {event.source_platform === 'telegram' ? (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0088cc]/20 text-[#38bdf8] border border-[#0088cc]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]" />
-              via Telegram Bot
+              Telegram
             </span>
           ) : (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
-              via WhatsApp Bridge
+              WhatsApp Bridge
             </span>
           )}
         </div>
@@ -396,12 +413,12 @@ export default function VibeReelCard({
           </div>
         </div>
 
-        {/* Primary CTA: Glowing Join Button */}
-        <div className="flex items-center gap-2.5 max-w-sm">
+        {/* Primary Action Row: Claim Spot + Connect with Host */}
+        <div className="flex items-center gap-2.5 max-w-md w-full">
           <button
             type="button"
             onClick={() => setJoinModalOpen(true)}
-            className={`flex-1 py-3 px-5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer ${
+            className={`flex-1 py-3 px-3.5 sm:px-4 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xl transition-all cursor-pointer ${
               hasJoined
                 ? 'bg-emerald-500 text-white shadow-emerald-500/30'
                 : 'bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white shadow-[#E8621A]/40'
@@ -409,15 +426,25 @@ export default function VibeReelCard({
           >
             {hasJoined ? (
               <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>You're Attending!</span>
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Attending!</span>
               </>
             ) : (
               <>
-                <Zap className="w-4 h-4 fill-white" />
-                <span>⚡ I'm In — Claim Free Spot</span>
+                <Zap className="w-4 h-4 fill-white shrink-0" />
+                <span className="truncate">⚡ I'm In — Claim Spot</span>
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setConnectHostOpen(true)}
+            className="py-3 px-3.5 sm:px-4 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xl shadow-[#25D366]/30 hover:scale-[1.02] active:scale-95 transition-all shrink-0 cursor-pointer"
+            title="Connect with Host (WhatsApp & In-App)"
+          >
+            <MessageCircle className="w-4 h-4 fill-black shrink-0" />
+            <span>Connect with Host</span>
           </button>
         </div>
       </div>
@@ -497,19 +524,21 @@ export default function VibeReelCard({
                 setDetailsOpen(false);
                 setJoinModalOpen(true);
               }}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs"
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs cursor-pointer"
             >
               ⚡ Claim Your Spot Now
             </button>
-            <a
-              href={whatsappChatUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="py-3 px-4 rounded-xl bg-[#25D366] text-black font-bold text-xs flex items-center gap-1.5"
+            <button
+              type="button"
+              onClick={() => {
+                setDetailsOpen(false);
+                setConnectHostOpen(true);
+              }}
+              className="py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <MessageCircle className="w-4 h-4 fill-black" />
-              <span>Chat Host</span>
-            </a>
+              <span>Connect with Host</span>
+            </button>
           </div>
         </div>
       )}
@@ -527,6 +556,15 @@ export default function VibeReelCard({
         isOpen={joinModalOpen}
         onClose={() => setJoinModalOpen(false)}
         onSuccess={() => setHasJoined(true)}
+      />
+
+      {/* Connect with Host Modal */}
+      <ConnectHostModal
+        event={event}
+        isOpen={connectHostOpen}
+        onClose={() => setConnectHostOpen(false)}
+        guestEmail={profile?.email}
+        guestName={profile?.name}
       />
     </div>
   );
