@@ -366,9 +366,10 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        const cleanPhone = String(to).replace(/[^0-9]/g, '');
         const targetJid = String(to).includes('@')
           ? String(to)
-          : `${String(to).replace(/[^0-9]/g, '')}@s.whatsapp.net`;
+          : `${cleanPhone}@s.whatsapp.net`;
 
         const sent = await sock!.sendMessage(targetJid, { text });
         const messageId = sent?.key?.id;

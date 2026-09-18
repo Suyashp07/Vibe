@@ -24,7 +24,8 @@ import {
   Laptop,
   GraduationCap,
   Users,
-  Utensils
+  Utensils,
+  Zap
 } from 'lucide-react';
 import { useAuth, setLocalAuthSession, AuthProfile } from '@/lib/auth';
 import { syncEventsWithSupabase, getRSVPs } from '@/lib/store';
@@ -150,6 +151,20 @@ export default function Navbar() {
 
             {/* Right: City Selector & User Menu & Host Action */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Vibe Reels Flash Meetups CTA */}
+              <Link
+                href="/vibes"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                  pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
+                    ? 'bg-[#0F172A] text-white'
+                    : 'bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white hover:opacity-95 shadow-[#E8621A]/20'
+                }`}
+                title="Vibe Reels: Spontaneous Meetups & Flash Events"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current animate-pulse" />
+                <span>⚡ Vibes</span>
+              </Link>
+
               {/* Location Picker (MakeMyTrip / BookMyShow City dropdown) */}
               <button
                 type="button"
@@ -296,7 +311,7 @@ export default function Navbar() {
       >
         <Link
           href="/"
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
+          className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
             pathname === '/' ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
           }`}
         >
@@ -304,14 +319,20 @@ export default function Navbar() {
           <span className="text-[10px] tracking-tight">Explore</span>
         </Link>
 
+        {/* ⚡ Vibes Reels Tab */}
         <Link
-          href="/discover"
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
-            pathname.startsWith('/discover') ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
+          href="/vibes"
+          className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+            pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
+              ? 'text-[#E8621A] font-black'
+              : 'text-[#64748B] hover:text-[#E8621A]'
           }`}
         >
-          <Search className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Search</span>
+          <div className="relative">
+            <Zap className={`w-5 h-5 ${pathname.startsWith('/vibes') ? 'fill-[#E8621A]' : ''}`} />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#E8621A] animate-ping" />
+          </div>
+          <span className="text-[10px] font-bold tracking-tight">Vibes</span>
         </Link>
 
         {/* Floating Center Create Button */}
@@ -327,8 +348,18 @@ export default function Navbar() {
         </Link>
 
         <Link
+          href="/discover"
+          className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+            pathname.startsWith('/discover') ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Search</span>
+        </Link>
+
+        <Link
           href="/dashboard?tab=passes"
-          className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
+          className={`relative flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
             pathname.includes('guest') || (pathname === '/dashboard' && confirmedPassCount > 0)
               ? 'text-[#0F172A] font-bold'
               : 'text-[#64748B]'
@@ -343,16 +374,6 @@ export default function Navbar() {
             )}
           </div>
           <span className="text-[10px] tracking-tight">Passes</span>
-        </Link>
-
-        <Link
-          href="/dashboard"
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
-            pathname === '/dashboard' ? 'text-[#0F172A] font-bold' : 'text-[#64748B]'
-          }`}
-        >
-          <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Dashboard</span>
         </Link>
       </nav>
 

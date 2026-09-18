@@ -58,6 +58,7 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
       method: 'POST',
       headers,
       body: JSON.stringify({ to: toPhone, text }),
+      signal: AbortSignal.timeout(3000),
     });
     return res.ok;
   } catch (err: any) {
@@ -154,11 +155,35 @@ export async function POST(req: NextRequest) {
     // -------------------------------------------------------------
     const lowerText = textContent.toLowerCase();
 
+    // Detect Flash Vibe intent:
+    // Triggered if text starts with /vibe, /flash, vibe:, flash:, contains spontaneous meetup/sports keywords,
+    // or is an informal text message without external ticketing links or flyer poster
+    const hasExternalLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
+    const isFlashVibe =
+      lowerText.startsWith('/vibe') ||
+      lowerText.startsWith('/flash') ||
+      lowerText.startsWith('vibe:') ||
+      lowerText.startsWith('flash:') ||
+      lowerText.startsWith('⚡') ||
+      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging)\b/i.test(textContent) ||
+      (!payload.imageBase64 && !hasExternalLink && textContent.length < 350);
+
+    let flashActivity: string = 'other';
+    if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
+    else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
+    else if (/\b(pickleball|paddle)\b/i.test(textContent)) flashActivity = 'pickleball';
+    else if (/\b(football|futsal|soccer)\b/i.test(textContent)) flashActivity = 'football';
+    else if (/\b(chai|coffee|cafe|tea)\b/i.test(textContent)) flashActivity = 'coffee';
+    else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
+    else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
+    else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
+
     // Handle greeting or help command
     if (lowerText === '/start' || lowerText === '/help' || lowerText === 'help' || lowerText === 'hi') {
       const welcome = 
         `👋 *Welcome to Vibe Event Creator!*\n\n` +
         `You can create and publish events directly from WhatsApp:\n\n` +
+        `⚡ *Flash Vibe / Meetup:* Send "/vibe <details>" (e.g. "/vibe Box cricket at Bandra Turf tonight 8 PM. Need 4 players") to post straight to the *Vibe Reels* feed!\n` +
         `📸 *Send a Poster:* Send or forward any event flyer image.\n` +
         `🔗 *Send a Link:* Paste a Luma, BookMyShow, District, or Unstop URL.\n` +
         `💬 *Send a Text:* Forward any event details message or blurb.\n\n` +
@@ -180,11 +205,16 @@ export async function POST(req: NextRequest) {
     console.log('[WhatsApp Webhook] Event creation request received from:', replyTarget, {
       hasImage,
       textLength: textContent.length,
+      isFlashVibe,
+      flashActivity,
     });
 
     // Send instant progress acknowledgment
     if (replyTarget) {
-      await sendWhatsAppReply(replyTarget, '🔍 *Analyzing your event with Gemini AI...* Hang tight!');
+      const progressMsg = isFlashVibe
+        ? '⚡ *Creating your Flash Vibe with Gemini AI...* Posting directly to Vibe Reels!'
+        : '🔍 *Analyzing your event with Gemini AI...* Hang tight!';
+      await sendWhatsAppReply(replyTarget, progressMsg);
     }
 
     const supabase = getSupabaseAdmin();
@@ -245,20 +275,39 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine cover fallback
+    const FLASH_COVERS: Record<string, string> = {
+      cricket: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
+      football: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&auto=format&fit=crop&q=80',
+      badminton: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
+      pickleball: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
+      coffee: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80',
+      games: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1200&auto=format&fit=crop&q=80',
+      music: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80',
+      sprint: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80',
+      other: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&auto=format&fit=crop&q=80',
+    };
+
     if (!coverImageUrl) {
-      const finalCategory = extracted.category || detectCategoryFromText(extracted.title);
-      coverImageUrl = getCategoryCover(finalCategory, extracted.title);
+      if (isFlashVibe) {
+        coverImageUrl = FLASH_COVERS[flashActivity] || FLASH_COVERS['other'];
+      } else {
+        const finalCategory = extracted.category || detectCategoryFromText(extracted.title);
+        coverImageUrl = getCategoryCover(finalCategory, extracted.title);
+      }
     }
 
     // Validate timestamps safely
-    let validStartAt = new Date(Date.now() + 86400000).toISOString();
+    let validStartAt = isFlashVibe
+      ? new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // Flash vibes default to starting in 2 hours
+      : new Date(Date.now() + 86400000).toISOString();
+
     try {
       if (extracted.start_at && !isNaN(new Date(extracted.start_at).getTime())) {
         validStartAt = new Date(extracted.start_at).toISOString();
       }
     } catch {}
 
-    let validEndAt = new Date(new Date(validStartAt).getTime() + 10800000).toISOString();
+    let validEndAt = new Date(new Date(validStartAt).getTime() + (isFlashVibe ? 7200000 : 10800000)).toISOString();
     try {
       if (extracted.end_at && !isNaN(new Date(extracted.end_at).getTime())) {
         validEndAt = new Date(extracted.end_at).toISOString();
@@ -374,12 +423,18 @@ export async function POST(req: NextRequest) {
         extracted.description ||
         `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
       cover_image_url: coverImageUrl,
-      template: extracted.template || 'grove',
+      template: isFlashVibe ? 'ember' : (extracted.template || 'grove'),
       theme: {
-        palette: extracted.template === 'ember' ? 'sunset' : 'forest',
+        palette: isFlashVibe ? 'sunset' : (extracted.template === 'ember' ? 'sunset' : 'forest'),
         font: 'Inter',
         bg_style: 'solid',
         button_style: 'pill',
+        is_flash: isFlashVibe,
+        flash_activity: flashActivity,
+        whatsapp_host_phone: senderPhone,
+        vibe_cheers_count: 1,
+        spots_limit: isFlashVibe ? 12 : undefined,
+        spots_filled: 1,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -389,7 +444,7 @@ export async function POST(req: NextRequest) {
       start_at: validStartAt,
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
-      capacity: 250,
+      capacity: isFlashVibe ? 12 : 250,
       is_public: true,
       status: 'live', // Published live so host can immediately share!
       ai_generated: true,
@@ -404,9 +459,10 @@ export async function POST(req: NextRequest) {
         ask_dietary: false,
         ask_tshirt: false,
         waitlist_enabled: true,
-        confirmation_message: hasExternalUrl
-          ? 'Redirecting to ticketing platform'
-          : 'Your spot is confirmed! Present your pass with QR code at the entrance.',
+        is_flash: isFlashVibe,
+        confirmation_message: isFlashVibe
+          ? `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`
+          : (hasExternalUrl ? 'Redirecting to ticketing platform' : 'Your spot is confirmed! Present your pass with QR code at the entrance.'),
       },
     };
 
@@ -445,15 +501,27 @@ export async function POST(req: NextRequest) {
 
     const appUrl = getAppUrl();
     const liveEventUrl = `${appUrl}/${createdEventSlug}`;
+    const liveReelUrl = `${appUrl}/vibes?event=${createdEventSlug}`;
 
     // Send confirmation message to the organizer's WhatsApp
-    const confirmationMsg = 
-      `🎉 *YOUR EVENT IS LIVE ON VIBE!*\n\n` +
-      `📌 *${createdEventTitle}*\n` +
-      `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-      `🕒 ${dateStr}\n\n` +
-      `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
-      `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
+    let confirmationMsg = '';
+    if (isFlashVibe) {
+      confirmationMsg =
+        `⚡ *YOUR FLASH VIBE IS LIVE ON VIBE REELS!*\n\n` +
+        `🔥 *${createdEventTitle}*\n` +
+        `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
+        `🕒 ${dateStr}\n\n` +
+        `📱 *Open in Vibe Reels:*\n${liveReelUrl}\n\n` +
+        `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
+    } else {
+      confirmationMsg = 
+        `🎉 *YOUR EVENT IS LIVE ON VIBE!*\n\n` +
+        `📌 *${createdEventTitle}*\n` +
+        `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
+        `🕒 ${dateStr}\n\n` +
+        `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
+        `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
+    }
 
     if (replyTarget) {
       await sendWhatsAppReply(replyTarget, confirmationMsg);

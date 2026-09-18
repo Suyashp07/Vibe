@@ -1,0 +1,399 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  Flame,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Zap,
+  Compass,
+  MessageSquare
+} from 'lucide-react';
+import { EventItem } from '@/types';
+import { getFlashVibeEvents, subscribeToStore, syncEventsWithSupabase, SAMPLE_FLASH_VIBES } from '@/lib/store';
+import { getUserCity } from '@/lib/location';
+import VibeReelCard from '@/components/vibes/VibeReelCard';
+import CreateVibeModal from '@/components/vibes/CreateVibeModal';
+
+const CITIES = ['All Cities', 'Mumbai', 'Satna', 'Bengaluru', 'Delhi', 'Pune', 'Hyderabad', 'Goa'];
+
+const ACTIVITY_FILTERS = [
+  { id: 'all', label: '⚡ All Vibes' },
+  { id: 'sports', label: '🏏 Sports & Turf', match: ['cricket', 'football', 'badminton', 'pickleball'] },
+  { id: 'coffee', label: '☕ Chai & Hangouts', match: ['coffee', 'chai', 'cafe', 'sprint'] },
+  { id: 'games', label: '🎲 Tabletop & Games', match: ['games', 'chess', 'catan'] },
+  { id: 'music', label: '🎸 Jam & Acoustic', match: ['music', 'jam', 'acoustic'] },
+];
+
+function VibesReelsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetSlug = searchParams.get('event') || searchParams.get('id');
+
+  const [events, setEvents] = useState<EventItem[]>(SAMPLE_FLASH_VIBES);
+  const [activeCity, setActiveCity] = useState<string>('All Cities');
+  const [selectedActivity, setSelectedActivity] = useState<string>('all');
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
+  const [cityDropdownOpen, setCityDropdownOpen] = useState<boolean>(false);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const cityDropdownRef = useRef<HTMLDivElement | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  // Load initial events from store & fetch fresh from Supabase
+  useEffect(() => {
+    const loadEvents = () => {
+      const vibes = getFlashVibeEvents();
+      setEvents(vibes);
+    };
+
+    loadEvents();
+    syncEventsWithSupabase().then(() => loadEvents()).catch(() => {});
+    const unsubscribe = subscribeToStore(loadEvents);
+
+    // City sync
+    const userCity = getUserCity();
+    if (userCity && CITIES.includes(userCity)) {
+      setActiveCity(userCity);
+    }
+
+    return () => unsubscribe();
+  }, []);
+
+  // Filter events by City & Activity
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      // City filter
+      if (activeCity !== 'All Cities' && e.city) {
+        if (!e.city.toLowerCase().includes(activeCity.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Activity filter
+      if (selectedActivity !== 'all') {
+        const filterDef = ACTIVITY_FILTERS.find((f) => f.id === selectedActivity);
+        if (filterDef?.match) {
+          const act = (e.flash_activity || '').toLowerCase();
+          const title = (e.title || '').toLowerCase();
+          const matches = filterDef.match.some(
+            (m) => act.includes(m) || title.includes(m)
+          );
+          if (!matches) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [events, activeCity, selectedActivity]);
+
+  // Scroll to target event if requested in query params
+  useEffect(() => {
+    if (targetSlug && filteredEvents.length > 0) {
+      const idx = filteredEvents.findIndex(
+        (e) => e.slug === targetSlug || e.id === targetSlug
+      );
+      if (idx >= 0 && containerRef.current) {
+        const container = containerRef.current;
+        container.scrollTo({
+          top: idx * container.clientHeight,
+          behavior: 'smooth',
+        });
+        setCurrentIndex(idx);
+      }
+    }
+  }, [targetSlug, filteredEvents]);
+
+  // Track scroll position to update current reel index and URL
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const { scrollTop, clientHeight } = containerRef.current;
+    const index = Math.round(scrollTop / clientHeight);
+    if (index !== currentIndex && index >= 0 && index < filteredEvents.length) {
+      setCurrentIndex(index);
+      const cur = filteredEvents[index];
+      if (cur?.slug && typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/vibes?event=${cur.slug}`);
+      }
+    }
+  };
+
+  // Touch swipe support for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null || !containerRef.current) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diff = touchStartY.current - touchEndY;
+    const threshold = 40;
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        scrollToNext();
+      } else {
+        scrollToPrev();
+      }
+    }
+    touchStartY.current = null;
+  };
+
+  // Keyboard navigation (Arrow keys, Space)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!containerRef.current) return;
+      const height = containerRef.current.clientHeight;
+
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
+        e.preventDefault();
+        containerRef.current.scrollBy({ top: height, behavior: 'smooth' });
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) {
+        e.preventDefault();
+        containerRef.current.scrollBy({ top: -height, behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Close city dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+        setCityDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const scrollToPrev = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({
+        top: -containerRef.current.clientHeight,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const scrollToNext = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({
+        top: containerRef.current.clientHeight,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  return (
+    <div className="h-[100dvh] w-full bg-black text-white relative overflow-hidden flex flex-col select-none">
+      {/* Top Floating Glass Navigation Header */}
+      <header className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/90 via-black/50 to-transparent p-3 sm:p-4 flex items-center justify-between pointer-events-auto">
+        {/* Left: Brand / Back */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/"
+            className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all backdrop-blur-xl cursor-pointer"
+            title="Back to Discover Feed"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+
+          <div className="flex items-center gap-1.5">
+            <span className="font-display font-black text-lg sm:text-xl tracking-tight text-white flex items-center gap-1">
+              <Zap className="w-5 h-5 text-[#E8621A] fill-[#E8621A] animate-pulse" />
+              <span>VIBE</span>
+              <span className="text-xs px-1.5 py-0.5 rounded-md bg-[#E8621A] text-white font-black tracking-widest uppercase ml-1">
+                REELS
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Center/Right: City Selector & Create Trigger */}
+        <div className="flex items-center gap-2">
+          {/* City Dropdown Selector */}
+          <div className="relative" ref={cityDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-xs font-bold text-white backdrop-blur-xl transition-all cursor-pointer shadow-md"
+            >
+              <MapPin className="w-3.5 h-3.5 text-[#E8621A]" />
+              <span>{activeCity}</span>
+              <ChevronDown className="w-3 h-3 text-white/60" />
+            </button>
+
+            {cityDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-[#14171F] border border-white/15 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
+                {CITIES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => {
+                      setActiveCity(c);
+                      setCityDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                      activeCity === c
+                        ? 'bg-[#E8621A]/20 text-[#E8621A] font-bold'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span>{c}</span>
+                    {activeCity === c && <span className="w-1.5 h-1.5 rounded-full bg-[#E8621A]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Create / Post Vibe CTA */}
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-[#E8621A]/30 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span className="hidden sm:inline">Post Vibe</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Floating Sub-Header: Activity Filter Chips */}
+      <div className="absolute top-16 left-0 right-0 z-30 px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar pointer-events-auto bg-gradient-to-b from-black/40 to-transparent">
+        {ACTIVITY_FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setSelectedActivity(f.id)}
+            className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer backdrop-blur-xl border ${
+              selectedActivity === f.id
+                ? 'bg-white text-black border-white shadow-md'
+                : 'bg-black/40 text-white/75 border-white/10 hover:bg-black/60 hover:text-white'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Center Stage: Fullscreen Snap Scroll Container */}
+      <div className="flex-1 w-full h-full flex justify-center items-center relative">
+        {/* On mobile: full bleed. On desktop: phone-frame aspect ratio for true Reels look */}
+        <div className="w-full h-full sm:max-w-[480px] sm:h-[100dvh] relative sm:border-x sm:border-white/10 shadow-2xl bg-black overflow-hidden">
+          {filteredEvents.length > 0 ? (
+            <div
+              ref={containerRef}
+              onScroll={handleScroll}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="w-full h-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+            >
+              {filteredEvents.map((evt, idx) => (
+                <div key={evt.id} className="w-full h-full snap-start snap-always relative">
+                  <VibeReelCard
+                    event={evt}
+                    isActive={idx === currentIndex}
+                    onPrev={scrollToPrev}
+                    onNext={scrollToNext}
+                    index={idx}
+                    total={filteredEvents.length}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Empty State when filter yields 0 events */
+            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-black/90">
+              <div className="w-16 h-16 rounded-full bg-[#E8621A]/20 text-[#E8621A] border border-[#E8621A]/30 flex items-center justify-center mb-4 animate-pulse">
+                <Flame className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-2">
+                No Flash Vibes in {activeCity} yet!
+              </h3>
+              <p className="text-xs text-white/60 max-w-xs mb-6 leading-relaxed">
+                Be the trendsetter! Post a pickup game, casual hangout, or sprint via WhatsApp in seconds.
+              </p>
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(true)}
+                className="py-3 px-6 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs shadow-lg shadow-[#E8621A]/30 flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Post a Flash Vibe via WhatsApp</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Navigation Floating Arrows (Right Side of Reel Frame) */}
+        <div className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 flex-col items-center gap-3 z-30">
+          <button
+            type="button"
+            onClick={scrollToPrev}
+            disabled={currentIndex === 0}
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="Previous Reel (Arrow Up)"
+          >
+            <ChevronUp className="w-5 h-5" />
+          </button>
+
+          <span className="text-[11px] font-mono text-white/50 font-bold">
+            {filteredEvents.length > 0 ? `${currentIndex + 1}/${filteredEvents.length}` : '0/0'}
+          </span>
+
+          <button
+            type="button"
+            onClick={scrollToNext}
+            disabled={currentIndex >= filteredEvents.length - 1}
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="Next Reel (Arrow Down)"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+
+          <div className="mt-4 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] text-white/40 text-center font-mono uppercase tracking-wider">
+            ↑ ↓ Keys
+          </div>
+        </div>
+      </div>
+
+      {/* Create Vibe Modal */}
+      <CreateVibeModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreated={(slug) => {
+          setCreateModalOpen(false);
+          router.push(`/vibes?event=${slug}`);
+        }}
+      />
+    </div>
+  );
+}
+
+export default function VibesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-[100dvh] w-full bg-black flex flex-col items-center justify-center text-white">
+          <RefreshCw className="w-8 h-8 animate-spin text-[#E8621A] mb-3" />
+          <p className="text-xs font-bold text-white/60 tracking-wider uppercase">Loading Vibe Stream...</p>
+        </div>
+      }
+    >
+      <VibesReelsContent />
+    </Suspense>
+  );
+}

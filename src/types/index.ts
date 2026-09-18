@@ -123,6 +123,13 @@ export interface EventItem {
   external_price_text?: string;
   category?: string;
   confidence_score?: number;
+  is_flash?: boolean;
+  flash_activity?: 'cricket' | 'football' | 'badminton' | 'pickleball' | 'coffee' | 'games' | 'music' | 'sprint' | 'other' | string;
+  spots_limit?: number;
+  spots_filled?: number;
+  whatsapp_host_phone?: string;
+  vibe_cheers_count?: number;
+  flash_tags?: string[];
   created_at: string;
   updated_at: string;
 }

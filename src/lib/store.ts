@@ -367,6 +367,325 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
   }
 ];
 
+export const SAMPLE_FLASH_VIBES: EventItem[] = [
+  {
+    id: 'flash-1',
+    organizer_id: 'org-1',
+    organizer_name: 'Kabir Verma (Turf Captain)',
+    organizer_handle: 'kabir_cricket',
+    organizer_logo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    organizer_brand_color: '#F97316',
+    slug: 'bandra-box-cricket-night',
+    title: '🏏 Box Cricket: 6v6 Under Turf Lights',
+    tagline: 'Need 4 players for a friendly 8-over tape-ball match tonight!',
+    description: 'Friendly casual match tonight at Bandra Urban Turf! Pitch is booked for 2 full hours under stadium floodlights. Bowlers and all-rounders needed. Bring sneakers, bats and tape balls are provided. Post-match cutting chai on the house!',
+    cover_image_url: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
+    template: 'ember',
+    theme: {
+      palette: 'sunset',
+      font: 'Inter',
+      bg_style: 'solid',
+      button_style: 'pill',
+      custom_accent: '#F97316',
+    },
+    sections: { speakers: false, agenda: false, gallery: false, faq: true },
+    event_type: 'in-person',
+    location_name: 'Urban Sports Turf, Bandra West',
+    location_address: 'Opposite Hill Road, Bandra West, Mumbai 400050',
+    city: 'Mumbai',
+    start_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+    timezone: 'Asia/Kolkata',
+    capacity: 12,
+    is_public: true,
+    status: 'live',
+    ai_generated: true,
+    is_flash: true,
+    flash_activity: 'cricket',
+    spots_limit: 12,
+    spots_filled: 8,
+    whatsapp_host_phone: '919820011223',
+    vibe_cheers_count: 42,
+    flash_tags: ['Cricket', 'Box Match', 'Bandra', 'Friendly', 'Under Lights'],
+    faq: [
+      { q: 'Do I need to bring cricket gear?', a: 'Just wear sneakers or trainers. Tape balls and bats will be provided at the turf.' },
+      { q: 'What is the skill level?', a: 'Casual & friendly! Open to all skill levels.' }
+    ],
+    rsvp_form_config: {
+      ask_plus_one: true,
+      ask_dietary: false,
+      ask_tshirt: false,
+      waitlist_enabled: true,
+      confirmation_message: 'You are in for Box Cricket tonight! Meet Kabir at Bandra Turf.'
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-2',
+    organizer_id: 'org-2',
+    organizer_name: 'Rhea Sen (Indie Hacker)',
+    organizer_handle: 'rhea_codes',
+    organizer_logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    organizer_brand_color: '#06B6D4',
+    slug: 'midnight-chai-and-code-mumbai',
+    title: '☕ Midnight Chai & Indie Hackers Sprint',
+    tagline: 'Late night co-working sprint, product teardowns & hot tea by the sea',
+    description: 'Anyone shipping side projects or debugging on a Friday night? Bring your charged laptop and meet on the promenade benches opposite Pizza By The Bay. 2-hour sprint followed by cutting chai and honest feedback.',
+    cover_image_url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80',
+    template: 'ember',
+    theme: {
+      palette: 'forest',
+      font: 'Inter',
+      bg_style: 'solid',
+      button_style: 'pill',
+      custom_accent: '#06B6D4',
+    },
+    sections: { speakers: false, agenda: false, gallery: false, faq: true },
+    event_type: 'in-person',
+    location_name: 'Marine Drive Promenade, Churchgate',
+    location_address: 'Benches opposite Pizza By The Bay, Marine Drive, Mumbai 400020',
+    city: 'Mumbai',
+    start_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString(),
+    timezone: 'Asia/Kolkata',
+    capacity: 15,
+    is_public: true,
+    status: 'live',
+    ai_generated: true,
+    is_flash: true,
+    flash_activity: 'coffee',
+    spots_limit: 15,
+    spots_filled: 11,
+    whatsapp_host_phone: '919820044556',
+    vibe_cheers_count: 58,
+    flash_tags: ['Chai', 'Co-Working', 'Indie Hackers', 'Marine Drive', 'Midnight'],
+    faq: [
+      { q: 'Are power outlets available?', a: 'We sit on the sea promenade, so please charge your laptop before arriving!' },
+      { q: 'Can beginners join?', a: 'Yes! Anyone working on tech, design, or writing is welcome.' }
+    ],
+    rsvp_form_config: {
+      ask_plus_one: true,
+      ask_dietary: false,
+      ask_tshirt: false,
+      waitlist_enabled: true,
+      confirmation_message: 'See you at Marine Drive! Bring your laptop and good vibes.'
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-3',
+    organizer_id: 'org-3',
+    organizer_name: 'Arjun Nambiar',
+    organizer_handle: 'arjun_badminton',
+    organizer_logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    organizer_brand_color: '#10B981',
+    slug: 'indiranagar-badminton-doubles',
+    title: '🏸 Evening Badminton Doubles — 2 Spots Open!',
+    tagline: 'Intermediate friendly rally, synthetic wooden court booked',
+    description: 'Booked wooden court at Play Arena for 7:30 PM to 9:30 PM. We have 2 players ready, looking for 2 more for mixed doubles. Feather shuttles provided. Please wear non-marking court shoes!',
+    cover_image_url: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
+    template: 'ember',
+    theme: {
+      palette: 'sunset',
+      font: 'Inter',
+      bg_style: 'solid',
+      button_style: 'pill',
+      custom_accent: '#10B981',
+    },
+    sections: { speakers: false, agenda: false, gallery: false, faq: true },
+    event_type: 'in-person',
+    location_name: 'Smash Court, 100ft Road',
+    location_address: '100ft Road, Near Sony World Signal, Indiranagar, Bengaluru 560038',
+    city: 'Bengaluru',
+    start_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+    timezone: 'Asia/Kolkata',
+    capacity: 4,
+    is_public: true,
+    status: 'live',
+    ai_generated: true,
+    is_flash: true,
+    flash_activity: 'badminton',
+    spots_limit: 4,
+    spots_filled: 2,
+    whatsapp_host_phone: '919845099881',
+    vibe_cheers_count: 31,
+    flash_tags: ['Badminton', 'Doubles', 'Indiranagar', 'Wooden Court'],
+    faq: [
+      { q: 'Do I need my own racket?', a: 'We have 1 spare racket, but please bring your own if you have one!' },
+      { q: 'Shoe requirements?', a: 'Strictly non-marking court shoes only.' }
+    ],
+    rsvp_form_config: {
+      ask_plus_one: false,
+      ask_dietary: false,
+      ask_tshirt: false,
+      waitlist_enabled: true,
+      confirmation_message: 'Spot reserved for Badminton! See you on court 2.'
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-4',
+    organizer_id: 'org-1',
+    organizer_name: 'Tara Bhatia (Host)',
+    organizer_handle: 'tara_boardgames',
+    organizer_logo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    organizer_brand_color: '#8B5CF6',
+    slug: 'catan-and-gelato-koramangala',
+    title: '🎲 Catan, Codenames & Gelato Mixer',
+    tagline: 'Cozy rooftop terrace games evening for new friends & casual gamers',
+    description: 'Gathering for tabletop games! We have Settlers of Catan, Secret Hitler, Codenames, and Exploding Kittens. Beginners very welcome, we teach the rules in 5 mins. Artisanal gelato & iced teas available.',
+    cover_image_url: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1200&auto=format&fit=crop&q=80',
+    template: 'ember',
+    theme: {
+      palette: 'forest',
+      font: 'Inter',
+      bg_style: 'solid',
+      button_style: 'pill',
+      custom_accent: '#8B5CF6',
+    },
+    sections: { speakers: false, agenda: false, gallery: false, faq: true },
+    event_type: 'in-person',
+    location_name: 'Milano Rooftop Cafe, Koramangala',
+    location_address: '80 Feet Rd, 5th Block, Koramangala, Bengaluru 560095',
+    city: 'Bengaluru',
+    start_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+    timezone: 'Asia/Kolkata',
+    capacity: 16,
+    is_public: true,
+    status: 'live',
+    ai_generated: true,
+    is_flash: true,
+    flash_activity: 'games',
+    spots_limit: 16,
+    spots_filled: 12,
+    whatsapp_host_phone: '919845012345',
+    vibe_cheers_count: 67,
+    flash_tags: ['Board Games', 'Catan', 'Gelato', 'Koramangala', 'Social'],
+    faq: [
+      { q: 'I have never played Catan, can I still join?', a: 'Absolutely! More than half the table are usually first-timers.' }
+    ],
+    rsvp_form_config: {
+      ask_plus_one: true,
+      ask_dietary: false,
+      ask_tshirt: false,
+      waitlist_enabled: true,
+      confirmation_message: 'Table booked! Meet us on the terrace floor.'
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-5',
+    organizer_id: 'org-3',
+    organizer_name: 'Dhruv Kapoor (Acoustic Club)',
+    organizer_handle: 'dhruv_music',
+    organizer_logo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
+    organizer_brand_color: '#EC4899',
+    slug: 'sunset-acoustic-jam-delhi',
+    title: '🎸 Sunset Acoustic Jam & Chords by the Lake',
+    tagline: 'Bring your guitar, uke, or just your singing voice to the park',
+    description: 'Unplugged sunset session on the grassy banks of Hauz Khas Deer Park. Indie folk, acoustic Bollywood, western classics. Bring an instrument if you play, or just come sit on a picnic mat and sing along!',
+    cover_image_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80',
+    template: 'ember',
+    theme: {
+      palette: 'sunset',
+      font: 'Inter',
+      bg_style: 'solid',
+      button_style: 'pill',
+      custom_accent: '#EC4899',
+    },
+    sections: { speakers: false, agenda: false, gallery: false, faq: true },
+    event_type: 'in-person',
+    location_name: 'Deer Park Lake Side, Hauz Khas',
+    location_address: 'Deer Park Gate 2, Hauz Khas Village, New Delhi 110016',
+    city: 'Delhi',
+    start_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+    timezone: 'Asia/Kolkata',
+    capacity: 20,
+    is_public: true,
+    status: 'live',
+    ai_generated: true,
+    is_flash: true,
+    flash_activity: 'music',
+    spots_limit: 20,
+    spots_filled: 14,
+    whatsapp_host_phone: '919811055443',
+    vibe_cheers_count: 89,
+    flash_tags: ['Acoustic', 'Jam Session', 'Sunset', 'Hauz Khas', 'Singalong'],
+    faq: [
+      { q: 'Is it free?', a: 'Yes! Completely free community gathering.' },
+      { q: 'What if I cannot sing?', a: 'Good vibes and claps are all that are required!' }
+    ],
+    rsvp_form_config: {
+      ask_plus_one: true,
+      ask_dietary: false,
+      ask_tshirt: false,
+      waitlist_enabled: true,
+      confirmation_message: 'Grab a mat and see you at Hauz Khas Deer Park!'
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-6',
+    organizer_id: 'org-2',
+    organizer_name: 'Sameer & Friends',
+    organizer_handle: 'sameer_paddle',
+    organizer_logo: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80',
+    organizer_brand_color: '#3B82F6',
+    slug: 'weekend-pickleball-novice-rally',
+    title: '🏓 Weekend Pickleball Novice Rally & Match',
+    tagline: 'Learn and play India\'s fastest growing paddle sport',
+    description: 'Courts reserved at Juhu. Friendly, high-energy pickleball for beginners and casual players. Paddles and balls provided. Come sweat it out and make sporty friends!',
+    cover_image_url: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
+    template: 'ember',
+    theme: {
+      palette: 'forest',
+      font: 'Inter',
+      bg_style: 'solid',
+      button_style: 'pill',
+      custom_accent: '#3B82F6',
+    },
+    sections: { speakers: false, agenda: false, gallery: false, faq: true },
+    event_type: 'in-person',
+    location_name: 'Juhu Club Courts, Juhu',
+    location_address: '13th Road, JVPD Scheme, Juhu, Mumbai 400049',
+    city: 'Mumbai',
+    start_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+    timezone: 'Asia/Kolkata',
+    capacity: 8,
+    is_public: true,
+    status: 'live',
+    ai_generated: true,
+    is_flash: true,
+    flash_activity: 'pickleball',
+    spots_limit: 8,
+    spots_filled: 5,
+    whatsapp_host_phone: '919820077889',
+    vibe_cheers_count: 53,
+    flash_tags: ['Pickleball', 'Rally', 'Juhu', 'Paddle Sport', 'Beginner'],
+    faq: [
+      { q: 'Is coaching included?', a: 'Basic rules and serve technique will be taught during warm-up.' }
+    ],
+    rsvp_form_config: {
+      ask_plus_one: true,
+      ask_dietary: false,
+      ask_tshirt: false,
+      waitlist_enabled: true,
+      confirmation_message: 'Paddles ready! See you at Juhu Courts.'
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+];
+
 export const INITIAL_EVENTS: EventItem[] = [];
 
 export const STATIC_EVENT_IDS = new Set([
@@ -520,19 +839,70 @@ export const getEvents = (): EventItem[] => {
 };
 
 /**
- * Returns strictly public, live events for public discovery feeds, hero slider, and category lists.
- * Private events are 100% excluded.
+ * Strict check if an event is a spontaneous/flash event belonging to the Vibe section.
  */
-export const getPublicEvents = (): EventItem[] => {
-  return getEvents().filter(isPublicLiveEvent);
+export const isFlashVibeEvent = (e: any): boolean => {
+  if (!e) return false;
+  return Boolean(
+    e.is_flash === true ||
+    String(e.is_flash) === 'true' ||
+    e.category === 'Flash Vibe' ||
+    e.theme?.is_flash === true ||
+    e.rsvp_form_config?.is_flash === true
+  );
 };
 
+/**
+ * Returns strictly public, live events for public discovery feeds, hero slider, and category lists.
+ * Flash events (specific to Vibe section) and private events are 100% excluded.
+ */
+export const getPublicEvents = (): EventItem[] => {
+  return getEvents().filter(e => isPublicLiveEvent(e) && !isFlashVibeEvent(e));
+};
+
+/**
+ * Returns strictly flash vibe events for the Vibe Reels stream.
+ */
+export const getFlashVibeEvents = (): EventItem[] => {
+  const allEvents = getEvents();
+  const flashFromStore = allEvents.filter(e => isFlashVibeEvent(e) && isPublicLiveEvent(e));
+  
+  const existingIds = new Set(flashFromStore.map(e => e.id));
+  const existingSlugs = new Set(flashFromStore.map(e => e.slug));
+  
+  const combined = [...flashFromStore];
+  for (const sample of SAMPLE_FLASH_VIBES) {
+    if (!existingIds.has(sample.id) && !existingSlugs.has(sample.slug)) {
+      combined.push(sample);
+    }
+  }
+  return combined;
+};
+
+export const cheerFlashVibe = (eventId: string): number => {
+  if (!isClient) return 0;
+  const key = `vibe_cheers_${eventId}`;
+  const current = parseInt(localStorage.getItem(key) || '0', 10);
+  const next = current + 1;
+  localStorage.setItem(key, next.toString());
+  
+  const events = getEvents();
+  const target = events.find(e => e.id === eventId || e.slug === eventId);
+  if (target) {
+    target.vibe_cheers_count = (target.vibe_cheers_count || 0) + 1;
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+  }
+  notifyListeners();
+  return next;
+};
 
 export const getEventBySlug = (slug: string): EventItem | undefined => {
   const events = getEvents();
   const found = events.find(e => e.slug.toLowerCase() === slug.toLowerCase());
   if (found) return found;
-  return SAMPLE_TEMPLATE_EVENTS.find(e => e.slug.toLowerCase() === slug.toLowerCase());
+  const sampleFound = SAMPLE_TEMPLATE_EVENTS.find(e => e.slug.toLowerCase() === slug.toLowerCase());
+  if (sampleFound) return sampleFound;
+  return SAMPLE_FLASH_VIBES.find(e => e.slug.toLowerCase() === slug.toLowerCase());
 };
 
 import { getSupabaseClient, isSupabaseConfigured } from './supabase';
@@ -556,7 +926,7 @@ export const saveEvent = async (event: EventItem) => {
     try {
       const isUUID = Boolean(event.organizer_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.organizer_id));
       await client.from('events').upsert({
-        id: event.id.startsWith('evt-') ? undefined : event.id,
+        id: event.id.startsWith('evt-') || event.id.startsWith('flash-') ? undefined : event.id,
         organizer_id: isUUID ? event.organizer_id : undefined,
         slug: event.slug,
         title: event.title,
@@ -564,7 +934,16 @@ export const saveEvent = async (event: EventItem) => {
         description: event.description,
         cover_image_url: event.cover_image_url,
         template: event.template,
-        theme: event.theme,
+        theme: {
+          ...(typeof event.theme === 'object' ? event.theme : {}),
+          is_flash: Boolean(event.is_flash),
+          flash_activity: event.flash_activity,
+          whatsapp_host_phone: event.whatsapp_host_phone,
+          vibe_cheers_count: event.vibe_cheers_count,
+          flash_tags: event.flash_tags,
+          spots_limit: event.spots_limit,
+          spots_filled: event.spots_filled,
+        },
         sections: event.sections,
         event_type: event.event_type,
         location_name: event.location_name,
@@ -682,6 +1061,13 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
         external_ticket_url: row.external_ticket_url || undefined,
         external_price_text: row.external_price_text || undefined,
         confidence_score: row.confidence_score || undefined,
+        is_flash: Boolean(row.is_flash || row.category === 'Flash Vibe' || row.theme?.is_flash || row.rsvp_form_config?.is_flash),
+        flash_activity: row.flash_activity || row.theme?.flash_activity || 'other',
+        spots_limit: row.spots_limit || row.theme?.spots_limit || row.capacity || 10,
+        spots_filled: row.spots_filled || row.theme?.spots_filled || 0,
+        whatsapp_host_phone: row.whatsapp_host_phone || row.theme?.whatsapp_host_phone || orgProfile.phone || '',
+        vibe_cheers_count: row.vibe_cheers_count || row.theme?.vibe_cheers_count || 0,
+        flash_tags: row.flash_tags || row.theme?.flash_tags || [],
         created_at: row.created_at,
         updated_at: row.updated_at
       };
