@@ -80,7 +80,9 @@ function CallbackHandler() {
             role: assignedRole as any,
             handle: dbProf?.handle || meta.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
             bio: dbProf?.bio || meta.bio,
-            avatar_url: dbProf?.logo_url || dbProf?.avatar_url || meta.avatar_url || meta.picture,
+            avatar_url: cleanEmail.toLowerCase().includes('pandeysuyash100@gmail.com')
+              ? ''
+              : (dbProf?.logo_url || dbProf?.avatar_url || meta.avatar_url || meta.picture),
             brand_color: dbProf?.brand_color || meta.brand_color || '#0A0A0A',
             brand_font: 'Inter',
             phone: dbProf?.phone || meta.phone,

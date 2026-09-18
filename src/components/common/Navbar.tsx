@@ -256,7 +256,7 @@ export default function Navbar() {
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] transition-colors cursor-pointer flex items-center justify-center overflow-hidden"
                     title={profile.name}
                   >
-                    {profile.avatar_url ? (
+                    {profile.avatar_url && !profile.email?.toLowerCase().includes('pandeysuyash100@gmail.com') ? (
                       <Image
                         src={profile.avatar_url}
                         alt={profile.name}
@@ -265,8 +265,8 @@ export default function Navbar() {
                         className="object-cover w-full h-full"
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold">
-                        {profile.name?.slice(0, 2).toUpperCase() || 'US'}
+                      <div className="w-full h-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold tracking-tight">
+                        {profile.name?.slice(0, 2).toUpperCase() || 'SP'}
                       </div>
                     )}
                   </button>

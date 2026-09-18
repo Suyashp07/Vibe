@@ -32,7 +32,12 @@ export const getLocalAuthSession = (): AuthProfile | null => {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_AUTH_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const profile = JSON.parse(raw);
+    if (profile?.email?.toLowerCase().includes('pandeysuyash100@gmail.com')) {
+      profile.avatar_url = '';
+    }
+    return profile;
   } catch {
     return null;
   }
@@ -41,10 +46,14 @@ export const getLocalAuthSession = (): AuthProfile | null => {
 export const setLocalAuthSession = (profile: AuthProfile | null) => {
   if (typeof window === 'undefined') return;
   if (profile) {
-    localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(profile));
+    const cleanProfile = { ...profile };
+    if (cleanProfile.email?.toLowerCase().includes('pandeysuyash100@gmail.com')) {
+      cleanProfile.avatar_url = '';
+    }
+    localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(cleanProfile));
     try {
-      document.cookie = `vibe_auth_role=${encodeURIComponent(profile.role)}; path=/; max-age=604800; SameSite=Lax`;
-      document.cookie = `vibe_auth_email=${encodeURIComponent(profile.email)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `vibe_auth_role=${encodeURIComponent(cleanProfile.role)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `vibe_auth_email=${encodeURIComponent(cleanProfile.email)}; path=/; max-age=604800; SameSite=Lax`;
     } catch {}
   } else {
     localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY);
@@ -615,7 +624,9 @@ export const useAuth = () => {
               role: (meta.role || local?.role || 'organizer') as 'organizer' | 'guest',
               handle: meta.handle || local?.handle || data.session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
               bio: meta.bio || local?.bio || '',
-              avatar_url: meta.avatar_url || local?.avatar_url || '',
+              avatar_url: (data.session.user.email?.toLowerCase().includes('pandeysuyash100@gmail.com'))
+                ? ''
+                : (meta.avatar_url || local?.avatar_url || ''),
               brand_color: meta.brand_color || local?.brand_color || '#E8621A',
               brand_font: meta.brand_font || local?.brand_font || 'Playfair Display',
               phone: meta.phone || local?.phone,
@@ -637,7 +648,9 @@ export const useAuth = () => {
                   role: dbProf.role || mergedProfile.role,
                   handle: dbProf.handle || mergedProfile.handle,
                   bio: dbProf.bio || mergedProfile.bio,
-                  avatar_url: dbProf.logo_url || dbProf.avatar_url || mergedProfile.avatar_url,
+                  avatar_url: (mergedProfile.email?.toLowerCase().includes('pandeysuyash100@gmail.com'))
+                    ? ''
+                    : (dbProf.logo_url || dbProf.avatar_url || mergedProfile.avatar_url),
                   brand_color: dbProf.brand_color || mergedProfile.brand_color,
                   brand_font: dbProf.brand_font || mergedProfile.brand_font,
                   phone: dbProf.phone || mergedProfile.phone,
@@ -671,14 +684,17 @@ export const useAuth = () => {
           setUser(session.user);
           const local = getLocalAuthSession();
           const meta = session.user.user_metadata || {};
+          const userEmail = session.user.email || local?.email || '';
           const mergedProfile: AuthProfile = {
             id: session.user.id,
-            email: session.user.email || local?.email || '',
+            email: userEmail,
             name: meta.name || local?.name || session.user.email?.split('@')[0] || 'User',
             role: (meta.role || local?.role || 'organizer') as 'organizer' | 'guest',
             handle: meta.handle || local?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
             bio: meta.bio || local?.bio || '',
-            avatar_url: meta.avatar_url || local?.avatar_url || '',
+            avatar_url: userEmail.toLowerCase().includes('pandeysuyash100@gmail.com')
+              ? ''
+              : (meta.avatar_url || local?.avatar_url || ''),
             brand_color: meta.brand_color || local?.brand_color || '#E8621A',
             brand_font: meta.brand_font || local?.brand_font || 'Playfair Display',
             phone: meta.phone || local?.phone,

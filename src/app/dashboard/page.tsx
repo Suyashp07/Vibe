@@ -314,7 +314,7 @@ function DashboardInner() {
             {/* User Identity Details */}
             <div className="flex items-start sm:items-center gap-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#0F172A] to-[#334155] text-white flex items-center justify-center font-bold text-xl sm:text-2xl shadow-sm overflow-hidden shrink-0 border-2 border-white">
-                {profile?.avatar_url ? (
+                {profile?.avatar_url && !profile?.email?.toLowerCase().includes('pandeysuyash100@gmail.com') ? (
                   <Image
                     src={profile.avatar_url}
                     alt={profile.name || 'User'}
