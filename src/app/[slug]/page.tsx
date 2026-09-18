@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-project')) {
     try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/events?slug=eq.${encodeURIComponent(slug)}&select=*`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/events?slug=ilike.${encodeURIComponent(params.slug)}&select=*`, {
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
 
       if (!event) {
-        const resOrg = await fetch(`${supabaseUrl}/rest/v1/profiles?handle=eq.${encodeURIComponent(slug)}&select=*`, {
+        const resOrg = await fetch(`${supabaseUrl}/rest/v1/profiles?handle=ilike.${encodeURIComponent(params.slug)}&select=*`, {
           headers: {
             apikey: supabaseKey,
             Authorization: `Bearer ${supabaseKey}`,

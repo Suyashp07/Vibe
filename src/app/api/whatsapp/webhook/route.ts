@@ -23,10 +23,22 @@ function getSupabaseAdmin() {
 }
 
 function getAppUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://vibe-seven-pied.vercel.app')
-  );
+  if (process.env.NEXT_PUBLIC_PRODUCTION_URL) {
+    return process.env.NEXT_PUBLIC_PRODUCTION_URL.replace(/\/$/, '');
+  }
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, '');
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  if (!appUrl || appUrl.includes('localhost') || appUrl.includes('127.0.0.1')) {
+    // WhatsApp messages are sent to real phones that cannot connect to localhost.
+    // Always use the live production URL for all WhatsApp links.
+    return 'https://vibe-seven-pied.vercel.app';
+  }
+  return appUrl.replace(/\/$/, '');
 }
 
 /**
@@ -253,7 +265,14 @@ export async function POST(req: NextRequest) {
       }
     } catch {}
 
-    const finalSlug = `${extracted.suggested_slug || 'event'}-${nanoid(4)}`;
+    // Generate clean lowercase URL slug
+    const cleanBaseSlug = (extracted.suggested_slug || extracted.title || 'event')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+    const suffix = nanoid(5).toLowerCase().replace(/[^a-z0-9]/g, '0');
+    const finalSlug = `${cleanBaseSlug || 'event'}-${suffix}`;
     const detectedCity = extracted.city || 'Mumbai';
 
     // Platform & ticketing normalization
@@ -287,24 +306,62 @@ export async function POST(req: NextRequest) {
         if (profileData) {
           organizerId = profileData.id;
         } else {
-          // Auto-provision an organizer profile for this WhatsApp sender
-          const { data: newProf } = await supabase
-            .from('profiles')
-            .insert([{
-              name: senderName || 'Event Host',
-              phone: senderPhone,
-              role: 'organizer',
-              onboarded: true,
-            }])
-            .select('id')
-            .maybeSingle();
+          // Provision an auth user to satisfy foreign key constraint on profiles(id)
+          const userEmail = `${senderPhone}@whatsapp.vibe.community`;
+          let authUserId: string | undefined = undefined;
 
-          if (newProf) {
-            organizerId = newProf.id;
+          try {
+            const { data: authData } = await supabase.auth.admin.createUser({
+              email: userEmail,
+              email_confirm: true,
+              user_metadata: {
+                name: senderName || 'Event Host',
+                phone: senderPhone,
+                role: 'organizer',
+              },
+            });
+            authUserId = authData?.user?.id;
+          } catch (createErr) {
+            // User might already exist in auth.users
+          }
+
+          if (authUserId) {
+            const { data: newProf } = await supabase
+              .from('profiles')
+              .upsert({
+                id: authUserId,
+                name: senderName || 'Event Host',
+                phone: senderPhone,
+                email: userEmail,
+                role: 'organizer',
+                onboarded: true,
+              })
+              .select('id')
+              .maybeSingle();
+
+            if (newProf) {
+              organizerId = newProf.id;
+            }
           }
         }
       } catch (profErr) {
         console.warn('[WhatsApp Webhook] Profile lookup error:', profErr);
+      }
+    }
+
+    // Default fallback organizer ID if unlinked so organizer_id is never null
+    if (!organizerId && supabase) {
+      try {
+        const { data: fallbackProf } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
+        if (fallbackProf) {
+          organizerId = fallbackProf.id;
+        }
+      } catch (e) {
+        // ignore
       }
     }
 

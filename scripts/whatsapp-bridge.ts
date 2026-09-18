@@ -214,15 +214,33 @@ async function startWhatsAppBridge() {
           imageMimeType,
         };
 
-        const res = await fetch(VIBE_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-whatsapp-webhook-secret': BRIDGE_SECRET,
-            'Authorization': `Bearer ${BRIDGE_SECRET}`,
-          },
-          body: JSON.stringify(webhookPayload),
-        });
+        let res: Response;
+        try {
+          res = await fetch(VIBE_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-whatsapp-webhook-secret': BRIDGE_SECRET,
+              'Authorization': `Bearer ${BRIDGE_SECRET}`,
+            },
+            body: JSON.stringify(webhookPayload),
+          });
+        } catch (localErr: any) {
+          if (!VIBE_WEBHOOK_URL.includes('vercel.app')) {
+            console.warn(`[WhatsApp Bridge] Local webhook failed (${localErr.message}). Retrying on production Vercel...`);
+            res = await fetch('https://vibe-seven-pied.vercel.app/api/whatsapp/webhook', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-whatsapp-webhook-secret': BRIDGE_SECRET,
+                'Authorization': `Bearer ${BRIDGE_SECRET}`,
+              },
+              body: JSON.stringify(webhookPayload),
+            });
+          } else {
+            throw localErr;
+          }
+        }
 
         const resData = await res.json().catch(() => ({}));
         console.log('[WhatsApp Bridge] Webhook forward result:', res.status, resData);
