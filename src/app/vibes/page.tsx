@@ -19,7 +19,24 @@ import { getUserCity } from '@/lib/location';
 import VibeReelCard from '@/components/vibes/VibeReelCard';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
 
-const CITIES = ['All Cities', 'Mumbai', 'Satna', 'Bengaluru', 'Delhi', 'Pune', 'Hyderabad', 'Goa', 'Bhopal', 'Indore'];
+const CITIES = [
+  'All Cities',
+  'Bhopal',
+  'Indore',
+  'Satna',
+  'Mumbai',
+  'Pune',
+  'Delhi NCR',
+  'Bengaluru',
+  'Hyderabad',
+  'Goa',
+  'Jaipur',
+  'Chandigarh',
+  'Kolkata',
+  'Chennai',
+  'Ahmedabad',
+  'Lucknow'
+];
 
 const ACTIVITY_FILTERS = [
   { id: 'all', label: '⚡ All Vibes' },
@@ -28,6 +45,42 @@ const ACTIVITY_FILTERS = [
   { id: 'games', label: '🎲 Tabletop & Games', match: ['games', 'chess', 'catan'] },
   { id: 'music', label: '🎸 Jam & Acoustic', match: ['music', 'jam', 'acoustic'] },
 ];
+
+function matchesCityFilter(event: EventItem, filterCity: string): boolean {
+  if (!filterCity || filterCity === 'All Cities' || filterCity === 'All India' || filterCity === 'all') {
+    return true;
+  }
+  const cleanTarget = filterCity.toLowerCase().trim();
+  const eventCity = (event.city || '').toLowerCase().trim();
+  const eventVenue = (event.location_name || '').toLowerCase().trim();
+  const eventAddress = (event.location_address || '').toLowerCase().trim();
+
+  // Common Indian city aliases
+  if (cleanTarget.includes('delhi') || cleanTarget.includes('ncr') || cleanTarget.includes('gurgaon') || cleanTarget.includes('noida')) {
+    return (
+      eventCity.includes('delhi') || eventCity.includes('noida') || eventCity.includes('gurugram') || eventCity.includes('gurgaon') ||
+      eventVenue.includes('delhi') || eventAddress.includes('delhi')
+    );
+  }
+  if (cleanTarget.includes('bengaluru') || cleanTarget.includes('bangalore')) {
+    return (
+      eventCity.includes('bengaluru') || eventCity.includes('bangalore') ||
+      eventVenue.includes('bengaluru') || eventVenue.includes('bangalore')
+    );
+  }
+  if (cleanTarget.includes('mumbai') || cleanTarget.includes('bombay')) {
+    return Boolean(
+      eventCity.includes('mumbai') || eventCity.includes('bombay') || eventCity.includes('bandra') || eventCity.includes('juhu') ||
+      eventVenue.includes('mumbai') || eventAddress.includes('mumbai')
+    );
+  }
+
+  return Boolean(
+    (eventCity && (eventCity.includes(cleanTarget) || cleanTarget.includes(eventCity))) ||
+    (eventVenue && eventVenue.includes(cleanTarget)) ||
+    (eventAddress && eventAddress.includes(cleanTarget))
+  );
+}
 
 function VibesReelsContent() {
   const router = useRouter();
@@ -61,7 +114,9 @@ function VibesReelsContent() {
     // City sync
     const syncCity = () => {
       const userCity = getUserCity();
-      if (userCity && userCity !== 'All India') {
+      if (!userCity || userCity === 'All India' || userCity === 'all') {
+        setActiveCity('All Cities');
+      } else {
         setActiveCity(userCity);
       }
     };
@@ -82,12 +137,10 @@ function VibesReelsContent() {
 
   // Filter events by City & Activity
   const filteredEvents = useMemo(() => {
-    return events.filter((e) => {
+    const filtered = events.filter((e) => {
       // City filter
-      if (activeCity !== 'All Cities' && e.city) {
-        if (!e.city.toLowerCase().includes(activeCity.toLowerCase())) {
-          return false;
-        }
+      if (!matchesCityFilter(e, activeCity)) {
+        return false;
       }
 
       // Activity filter
@@ -105,6 +158,8 @@ function VibesReelsContent() {
 
       return true;
     });
+
+    return filtered;
   }, [events, activeCity, selectedActivity]);
 
   // Scroll to target event if requested in query params

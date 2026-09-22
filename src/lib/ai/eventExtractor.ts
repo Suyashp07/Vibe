@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { nanoid } from 'nanoid';
 import { TemplateType } from '@/types';
+import { INDIAN_CITIES } from '@/lib/location';
 
 export type EventCategory =
   | 'tech'
@@ -39,13 +40,24 @@ export interface ExtractedEventData {
 }
 
 const CANDIDATE_MODELS = [
-  'gemini-flash-lite-latest',
-  'gemini-2.5-flash',
-  'gemini-flash-latest',
   'gemini-3.6-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
+  'gemini-3.5-flash',
+  'gemini-3.7-flash',
+  'gemini-2.5-pro',
+  'gemini-flash-latest',
 ];
+
+export function detectCityFromText(text: string): { name: string; state?: string } | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  for (const [key, val] of Object.entries(INDIAN_CITIES)) {
+    const regex = new RegExp(`\\b${key}\\b`, 'i');
+    if (regex.test(lower)) {
+      return { name: val.name, state: val.state };
+    }
+  }
+  return null;
+}
 
 function getGenAI() {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -447,9 +459,12 @@ export async function extractEventFromImage(
       const parsed = JSON.parse(cleaned);
 
       const category = parsed.category || detectCategoryFromText(`${parsed.title || ''} ${parsed.description || ''}`);
+      const detectedCityObj = detectCityFromText(caption || `${parsed.title || ''} ${parsed.venue_name || ''} ${parsed.location_address || ''}`);
+      const finalCity = detectedCityObj?.name || parsed.city || 'Mumbai';
 
       return {
         ...parsed,
+        city: finalCity,
         category,
         suggested_slug: generateSlug(parsed.title || 'event'),
         confidence_score: parsed.confidence_score || 0.95,
@@ -463,13 +478,17 @@ export async function extractEventFromImage(
   // Fallback if all AI models fail
   console.error('[AI Extractor Image] All candidate models failed, using fallback:', lastError);
   const fallbackCategory = detectCategoryFromText(caption || '');
+  const detectedCityObj = detectCityFromText(caption || '');
+  const fallbackCity = detectedCityObj?.name || 'Mumbai';
+  const fallbackAddress = detectedCityObj?.state ? `${fallbackCity}, ${detectedCityObj.state}` : `${fallbackCity}, India`;
+
   return {
-    title: caption ? caption.slice(0, 50) : 'Live Experience',
+    title: caption ? caption.slice(0, 50).trim() : 'Live Experience',
     tagline: 'Experience the vibe in town',
     description: caption || 'Join this exciting upcoming gathering. Registration and details available via event host.',
     venue_name: 'City Venue',
-    location_address: 'City Center',
-    city: 'Pune',
+    location_address: fallbackAddress,
+    city: fallbackCity,
     start_at: new Date(Date.now() + 86400000).toISOString(),
     end_at: new Date(Date.now() + 86400000 + 10800000).toISOString(),
     price_text: 'Free Entry',
@@ -536,11 +555,14 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
         parsed.cover_image_url ||
         getCategoryCover(category, parsed.title || text);
 
+      const detectedCityObj = detectCityFromText(text || `${parsed.title || ''} ${parsed.venue_name || ''} ${parsed.location_address || ''}`);
+      const finalCity = detectedCityObj?.name || parsed.city || 'Mumbai';
+
       return {
         ...parsed,
+        city: finalCity,
         category,
         ticket_url: targetUrl || parsed.ticket_url,
-        // Deterministic price from scraped metadata takes precedence over AI guess
         price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
         source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
         cover_image_url: finalCover,
@@ -558,15 +580,18 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
   const fallbackTitle = text.slice(0, 50).trim() || 'Curated Gathering';
   const fallbackCat = detectCategoryFromText(`${fallbackTitle} ${text}`);
   const fallbackCover = extractedCover || getCategoryCover(fallbackCat, fallbackTitle);
+  const detectedCityObj = detectCityFromText(text);
+  const fallbackCity = detectedCityObj?.name || 'Mumbai';
+  const fallbackAddress = detectedCityObj?.state ? `${fallbackCity}, ${detectedCityObj.state}` : `${fallbackCity}, India`;
 
   return {
     title: fallbackTitle,
-    tagline: 'Exciting weekend plan',
+    tagline: 'Exciting gathering in ' + fallbackCity,
     description: text,
     category: fallbackCat,
-    venue_name: 'City Venue',
-    location_address: 'City Center',
-    city: 'Pune',
+    venue_name: fallbackCity + ' Venue',
+    location_address: fallbackAddress,
+    city: fallbackCity,
     start_at: new Date(Date.now() + 86400000).toISOString(),
     end_at: new Date(Date.now() + 86400000 + 10800000).toISOString(),
     ticket_url: targetUrl,
