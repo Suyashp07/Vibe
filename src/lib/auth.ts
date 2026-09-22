@@ -616,21 +616,27 @@ export const useAuth = () => {
           const { data } = await client.auth.getSession();
           if (data?.session?.user) {
             setUser(data.session.user);
+            const userEmail = (data.session.user.email || '').toLowerCase();
+            const isDifferentUser = Boolean(local && local.email && local.email.toLowerCase() !== userEmail);
+            const safeLocal = isDifferentUser ? null : local;
+
+            const isSuper = ADMIN_EMAILS.includes(userEmail);
             const meta = data.session.user.user_metadata || {};
+
             let mergedProfile: AuthProfile = {
               id: data.session.user.id,
-              email: data.session.user.email || local?.email || '',
-              name: meta.name || local?.name || data.session.user.email?.split('@')[0] || 'User',
-              role: (meta.role || local?.role || 'organizer') as 'organizer' | 'guest',
-              handle: meta.handle || local?.handle || data.session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-              bio: meta.bio || local?.bio || '',
-              avatar_url: (data.session.user.email?.toLowerCase().includes('pandeysuyash100@gmail.com'))
+              email: userEmail,
+              name: meta.name || safeLocal?.name || userEmail.split('@')[0] || 'User',
+              role: isSuper ? 'super_admin' : 'organizer',
+              handle: meta.handle || safeLocal?.handle || userEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+              bio: meta.bio || safeLocal?.bio || '',
+              avatar_url: (userEmail.includes('pandeysuyash100@gmail.com'))
                 ? ''
-                : (meta.avatar_url || local?.avatar_url || ''),
-              brand_color: meta.brand_color || local?.brand_color || '#E8621A',
-              brand_font: meta.brand_font || local?.brand_font || 'Playfair Display',
-              phone: meta.phone || local?.phone,
-              onboarded: local?.onboarded ?? meta.onboarded ?? false,
+                : (meta.avatar_url || safeLocal?.avatar_url || ''),
+              brand_color: meta.brand_color || safeLocal?.brand_color || '#E8621A',
+              brand_font: meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
+              phone: meta.phone || safeLocal?.phone,
+              onboarded: safeLocal?.onboarded ?? meta.onboarded ?? false,
               isDemo: false,
             };
 
@@ -642,10 +648,14 @@ export const useAuth = () => {
                 .eq('id', data.session.user.id)
                 .single();
               if (dbProf) {
+                const resolvedRole = isSuper
+                  ? 'super_admin'
+                  : (dbProf.role === 'super_admin' || dbProf.role === 'curator' ? dbProf.role : (dbProf.role || 'organizer'));
+
                 mergedProfile = {
                   ...mergedProfile,
                   name: dbProf.name || mergedProfile.name,
-                  role: dbProf.role || mergedProfile.role,
+                  role: resolvedRole as any,
                   handle: dbProf.handle || mergedProfile.handle,
                   bio: dbProf.bio || mergedProfile.bio,
                   avatar_url: (mergedProfile.email?.toLowerCase().includes('pandeysuyash100@gmail.com'))
@@ -664,6 +674,7 @@ export const useAuth = () => {
           } else if (!local) {
             setUser(null);
             setProfile(null);
+            setLocalAuthSession(null);
           }
         } catch (e) {
           console.warn('Auth session check failed:', e);
@@ -683,32 +694,47 @@ export const useAuth = () => {
         if (session?.user) {
           setUser(session.user);
           const local = getLocalAuthSession();
+          const userEmail = (session.user.email || '').toLowerCase();
+          const isDifferentUser = Boolean(local && local.email && local.email.toLowerCase() !== userEmail);
+          const safeLocal = isDifferentUser ? null : local;
+
+          const isSuper = ADMIN_EMAILS.includes(userEmail);
           const meta = session.user.user_metadata || {};
-          const userEmail = session.user.email || local?.email || '';
+
+          let resolvedRole: 'super_admin' | 'curator' | 'organizer' | 'guest' = isSuper ? 'super_admin' : 'organizer';
+          try {
+            const { data: dbProf } = await client
+              .from('profiles')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+            if (dbProf?.role) {
+              resolvedRole = isSuper ? 'super_admin' : (dbProf.role as any);
+            }
+          } catch {}
+
           const mergedProfile: AuthProfile = {
             id: session.user.id,
             email: userEmail,
-            name: meta.name || local?.name || session.user.email?.split('@')[0] || 'User',
-            role: (meta.role || local?.role || 'organizer') as 'organizer' | 'guest',
-            handle: meta.handle || local?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-            bio: meta.bio || local?.bio || '',
-            avatar_url: userEmail.toLowerCase().includes('pandeysuyash100@gmail.com')
+            name: meta.name || safeLocal?.name || session.user.email?.split('@')[0] || 'User',
+            role: resolvedRole,
+            handle: meta.handle || safeLocal?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+            bio: meta.bio || safeLocal?.bio || '',
+            avatar_url: userEmail.includes('pandeysuyash100@gmail.com')
               ? ''
-              : (meta.avatar_url || local?.avatar_url || ''),
-            brand_color: meta.brand_color || local?.brand_color || '#E8621A',
-            brand_font: meta.brand_font || local?.brand_font || 'Playfair Display',
-            phone: meta.phone || local?.phone,
-            onboarded: local?.onboarded ?? meta.onboarded ?? false,
+              : (meta.avatar_url || safeLocal?.avatar_url || ''),
+            brand_color: meta.brand_color || safeLocal?.brand_color || '#E8621A',
+            brand_font: meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
+            phone: meta.phone || safeLocal?.phone,
+            onboarded: safeLocal?.onboarded ?? meta.onboarded ?? false,
             isDemo: false,
           };
           setProfile(mergedProfile);
           setLocalAuthSession(mergedProfile);
         } else {
-          const local = getLocalAuthSession();
-          if (!local) {
-            setUser(null);
-            setProfile(null);
-          }
+          setUser(null);
+          setProfile(null);
+          setLocalAuthSession(null);
         }
       });
       authListener = data.subscription;
@@ -727,10 +753,11 @@ export const useAuth = () => {
     };
   }, []);
 
-  const isStaff = isStaffRole(profile?.role, profile?.email);
-  const isSuperAdmin =
-    profile?.role === 'super_admin' ||
-    (profile?.email ? ADMIN_EMAILS.includes(profile.email.toLowerCase()) : false);
+  const isStaff = Boolean(profile?.email && isStaffRole(profile?.role, profile?.email));
+  const isSuperAdmin = Boolean(
+    (profile?.role === 'super_admin' && profile?.email && ADMIN_EMAILS.includes(profile.email.toLowerCase())) ||
+    (profile?.email && ADMIN_EMAILS.includes(profile.email.toLowerCase()))
+  );
 
   return {
     user,

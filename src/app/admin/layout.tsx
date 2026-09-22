@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   ShieldAlert,
   CalendarDays,
@@ -51,8 +51,16 @@ const NAV_ITEMS = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { profile, loading, isStaff, isSuperAdmin, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // If user session is loaded and they are not staff, instantly kick out to dashboard
+  React.useEffect(() => {
+    if (!loading && !isStaff) {
+      router.replace('/dashboard?denied=admin_access_required');
+    }
+  }, [loading, isStaff, router]);
 
   // Fallback while loading
   if (loading) {
@@ -77,7 +85,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div>
             <h1 className="text-xl font-bold tracking-tight text-zinc-100">Access Restricted</h1>
             <p className="text-sm text-zinc-400 mt-2">
-              The Vibe Admin Panel is strictly reserved for verified super administrators and telegram curators.
+              The Vibe Admin Panel is strictly reserved for verified super administrators.
             </p>
           </div>
           <div className="p-3.5 bg-black/40 rounded-xl border border-zinc-800 text-xs text-zinc-400 font-mono text-left">
@@ -86,16 +94,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div className="flex gap-3">
             <Link
-              href="/"
+              href="/dashboard"
               className="flex-1 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold transition"
             >
-              Back to Home
+              Back to Dashboard
             </Link>
             <button
               onClick={() => signOut()}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-semibold border border-red-500/30 transition"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-semibold border border-red-500/30 transition cursor-pointer"
             >
-              Switch Account
+              Sign Out
             </button>
           </div>
         </div>

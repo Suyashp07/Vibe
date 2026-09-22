@@ -211,8 +211,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="hover:text-[#0F172A] hover:font-medium transition-colors">
-                  Admin Verification Queue
+                <Link href="/dashboard" className="hover:text-[#0F172A] hover:font-medium transition-colors">
+                  Host Organizer Console
                 </Link>
               </li>
             </ul>

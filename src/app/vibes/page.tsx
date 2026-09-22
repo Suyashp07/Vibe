@@ -64,10 +64,14 @@ function VibesReelsContent() {
     const unsubscribe = subscribeToStore(loadEvents);
 
     // City sync
-    const userCity = getUserCity();
-    if (userCity && CITIES.includes(userCity)) {
-      setActiveCity(userCity);
-    }
+    const syncCity = () => {
+      const userCity = getUserCity();
+      if (userCity && userCity !== 'All India') {
+        setActiveCity(userCity);
+      }
+    };
+    syncCity();
+    window.addEventListener('vibe:location_changed', syncCity);
 
     // Auto-poll Supabase every 6 seconds so real events posted via WhatsApp or Telegram bots show live immediately
     const pollInterval = setInterval(() => {
@@ -77,6 +81,7 @@ function VibesReelsContent() {
     return () => {
       unsubscribe();
       clearInterval(pollInterval);
+      window.removeEventListener('vibe:location_changed', syncCity);
     };
   }, []);
 

@@ -12,12 +12,15 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Only guard /admin routes
-  if (pathname.startsWith('/admin')) {
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !anonKey) {
-      return response;
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
     const supabase = createServerClient(supabaseUrl, anonKey, {
@@ -41,26 +44,45 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const cookieEmail = request.cookies.get('vibe_auth_email')?.value;
-    const decodedCookieEmail = cookieEmail ? decodeURIComponent(cookieEmail).toLowerCase() : '';
-    const effectiveEmail = user?.email?.toLowerCase() || decodedCookieEmail;
-
-    // 1. Not logged in -> Redirect to login with redirect param
-    if (!user && !decodedCookieEmail) {
+    // 1. Not cryptographically logged in -> Redirect to login with redirect param
+    if (!user || !user.email) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // 2. Logged in -> Check email against whitelist or role
-    const isWhitelisted = ADMIN_EMAILS.includes(effectiveEmail);
-    const cookieRole = request.cookies.get('vibe_auth_role')?.value;
-    const metaRole = user?.user_metadata?.role || cookieRole;
-    const isMetaStaff = metaRole === 'super_admin' || metaRole === 'curator';
+    const effectiveEmail = user.email.toLowerCase();
 
-    if (!isWhitelisted && !isMetaStaff) {
-      // User is logged in but has no administrative privileges
+    // 2. Super admin whitelist check (Primary Gate)
+    const isWhitelisted = ADMIN_EMAILS.includes(effectiveEmail);
+    if (isWhitelisted) {
+      return response;
+    }
+
+    // 3. Database role check via Supabase Service Role Key (Secondary Gate for Telegram Curators)
+    let isStaff = false;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const adminDb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+        const { data: profile } = await adminDb
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile?.role === 'super_admin' || profile?.role === 'curator') {
+          isStaff = true;
+        }
+      } catch (err) {
+        console.error('Admin middleware role check error:', err);
+      }
+    }
+
+    if (!isStaff) {
+      // User is logged in but has no administrative privileges -> Bounce immediately to dashboard
       const forbiddenUrl = request.nextUrl.clone();
       forbiddenUrl.pathname = '/dashboard';
       forbiddenUrl.searchParams.set('denied', 'admin_access_required');
@@ -72,5 +94,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin', '/admin/:path*'],
 };

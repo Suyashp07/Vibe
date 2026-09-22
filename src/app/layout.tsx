@@ -39,6 +39,7 @@ const fraunces = Fraunces({
 });
 
 import PWARegister from '@/components/pwa/PWARegister';
+import AutoLocationDetector from '@/components/location/AutoLocationDetector';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -49,18 +50,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Vibe by Swaniki — Whitelabel Events & Experiences',
-  description: 'India-first, lightweight, premium event platform with AI copy generation, 5 editorial templates, and instant branded social share banners.',
+  metadataBase: new URL('https://vibe-seven-pied.vercel.app'),
+  title: 'Vibe by Swaniki — Whitelabel Event Network',
+  description: 'Design, distribute, and collect RSVPs for boutique cultural gatherings, tech summits, and live mixers across India with AI verification.',
   manifest: '/manifest.json',
   icons: {
-    icon: [
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-      { url: '/icons/icon.svg', type: 'image/svg+xml' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '192x192', type: 'image/png' },
-    ],
+    icon: '/favicon.ico',
+    apple: '/icon-192x192.png',
   },
   appleWebApp: {
     capable: true,
@@ -87,6 +83,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-surface-2 text-ink antialiased pb-16 md:pb-0">
         {children}
         <PWARegister />
+        <AutoLocationDetector />
       </body>
     </html>
   );

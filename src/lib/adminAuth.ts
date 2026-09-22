@@ -69,51 +69,40 @@ export async function verifyStaffSession(req?: NextRequest): Promise<{
     }
   }
 
-  // 3. Fallback to vibe_auth_email cookie
-  if (!user) {
-    try {
-      const cookieStore = cookies();
-      const cookieEmail = cookieStore.get('vibe_auth_email')?.value || req?.cookies.get('vibe_auth_email')?.value;
-      if (cookieEmail) {
-        const decodedEmail = decodeURIComponent(cookieEmail).toLowerCase();
-        user = { id: '', email: decodedEmail };
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
+  // 3. Fallback check: user must be authenticated via valid token or session
   if (!user || !user.email) {
-    return { authorized: false, user: null, role: 'none', isSuperAdmin: false, error: 'Unauthorized: No active session' };
+    return { authorized: false, user: null, role: 'none', isSuperAdmin: false, error: 'Unauthorized: No active cryptographic session' };
   }
 
-  // Ensure user.id is resolved to a valid UUID from profiles if empty or lookup role
+  const cleanEmail = user.email.toLowerCase();
+
+  // 4. Check whitelist first
+  const isSuper = isSuperAdminEmail(cleanEmail);
+  if (isSuper) {
+    return { authorized: true, user: { id: user.id, email: cleanEmail }, role: 'super_admin', isSuperAdmin: true };
+  }
+
+  // 5. Query database profiles table via service role client to check assigned role
   const adminClient = createClient(supabaseUrl, serviceKey || anonKey, { auth: { persistSession: false } });
   let profileRole: string | null = null;
   try {
     const { data: profile } = await adminClient
       .from('profiles')
       .select('id, role')
-      .eq('email', user.email.toLowerCase())
+      .eq('id', user.id)
       .maybeSingle();
 
-    if (profile?.id) {
-      user.id = profile.id;
+    if (profile?.role) {
       profileRole = profile.role;
     }
   } catch (err) {
-    console.warn('Profile lookup failed:', err);
+    console.warn('Profile lookup failed in verifyStaffSession:', err);
   }
 
-  const isSuper = isSuperAdminEmail(user.email);
-  if (isSuper) {
-    return { authorized: true, user, role: 'super_admin', isSuperAdmin: true };
-  }
-
-  if (profileRole && isStaffRole(profileRole, user.email)) {
+  if (profileRole && (profileRole === 'super_admin' || profileRole === 'curator')) {
     return {
       authorized: true,
-      user,
+      user: { id: user.id, email: cleanEmail },
       role: profileRole,
       isSuperAdmin: profileRole === 'super_admin',
     };
