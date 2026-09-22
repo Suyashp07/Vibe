@@ -260,6 +260,27 @@ async function startWhatsAppBridge() {
           if (res.ok) {
             const resData = await res.json().catch(() => ({}));
             console.log(`[WhatsApp Bridge] Webhook forwarded successfully to ${targetUrl}:`, resData);
+
+            // Directly send confirmation / reply back to the WhatsApp user
+            if (resData.replyText && sock) {
+              try {
+                const targetJid = remoteJid || (senderPhone ? `${senderPhone}@s.whatsapp.net` : '');
+                if (targetJid) {
+                  const sent = await sock.sendMessage(targetJid, { text: resData.replyText });
+                  if (sent?.key?.id) {
+                    sentMessageMap.set(sent.key.id, {
+                      conversationId: resData.conversationId || resData.event?.slug,
+                      eventId: resData.event?.id,
+                      sentAt: Date.now(),
+                    });
+                  }
+                  console.log(`[WhatsApp Bridge] ✅ Sent confirmation reply back to ${targetJid}`);
+                }
+              } catch (sendReplyErr: any) {
+                console.warn(`[WhatsApp Bridge] Could not send reply back to ${remoteJid}:`, sendReplyErr.message);
+              }
+            }
+
             forwarded = true;
             break;
           } else {

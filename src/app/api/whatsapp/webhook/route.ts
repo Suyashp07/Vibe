@@ -191,7 +191,11 @@ export async function POST(req: NextRequest) {
       if (replyTarget) {
         await sendWhatsAppReply(replyTarget, welcome);
       }
-      return NextResponse.json({ ok: true, handledBy: 'welcome_prompt' });
+      return NextResponse.json({
+        ok: true,
+        handledBy: 'welcome_prompt',
+        replyText: welcome,
+      });
     }
 
     // Check if there is enough content to create an event
@@ -484,6 +488,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
+      replyText: confirmationMsg,
       event: {
         slug: createdEventSlug,
         title: createdEventTitle,
