@@ -36,6 +36,15 @@ function normalizePhone(phone: string): string {
  * WhatsAppAdapter implementing the unified CommunicationChannelAdapter interface
  * for the WhatsApp Web QR-code Bridge (Baileys microservice).
  */
+import { createClient } from '@supabase/supabase-js';
+
+function getSupabaseServerClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !serviceKey || supabaseUrl.includes('your-project')) return null;
+  return createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+}
+
 export class WhatsAppAdapter implements CommunicationChannelAdapter {
   channelName = 'WHATSAPP' as const;
 
@@ -59,9 +68,32 @@ export class WhatsAppAdapter implements CommunicationChannelAdapter {
     const { conversation, message, event, guestName } = params;
     const bridgeUrl = this.getBridgeUrl();
     const bridgeSecret = this.getBridgeSecret();
-    const hostPhone =
-      normalizePhone(event?.whatsapp_host_phone || event?.theme?.whatsapp_host_phone || '') ||
-      this.getHostPhone();
+
+    let hostPhone: string | undefined =
+      normalizePhone(event?.whatsapp_host_phone || event?.theme?.whatsapp_host_phone || '');
+
+    // If not found on event, look up organizer's phone in Supabase profiles
+    if (!hostPhone && event?.organizer_id) {
+      try {
+        const supabase = getSupabaseServerClient();
+        if (supabase) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', event.organizer_id)
+            .maybeSingle();
+          if (prof?.phone) {
+            hostPhone = normalizePhone(prof.phone);
+          }
+        }
+      } catch (profErr) {
+        console.warn('[WhatsAppAdapter] Profile phone lookup note:', profErr);
+      }
+    }
+
+    if (!hostPhone) {
+      hostPhone = this.getHostPhone();
+    }
 
     if (!hostPhone) {
       console.warn('[WhatsAppAdapter] No host WhatsApp number found on event or in env. Message saved as PENDING.');
