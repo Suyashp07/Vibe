@@ -657,34 +657,7 @@ export default function WhatsOnFeed() {
       {/* ========================================================================= */}
       {/* 3. BELOW: ALL EVENTS LISTED IN GRID (Ascending order of proximity)         */}
       {/* ========================================================================= */}
-      <div className="pt-4 space-y-5">
-        {filteredEvents.length > 0 && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#E8621A] shrink-0">
-                <Navigation className="w-5 h-5 rotate-45 text-[#E8621A]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base sm:text-lg font-black text-[#0F172A] tracking-tight">
-                    {userCity && userCity !== 'All India' ? `Events Near ${userCity}` : 'Events Near You'}
-                  </h3>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-[#9A3412] border border-amber-200">
-                    {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'gatherings'}
-                  </span>
-                </div>
-                <p className="text-xs text-[#64748B] mt-0.5">
-                  Curated gatherings sorted by proximity to your active location
-                </p>
-              </div>
-            </div>
-
-            <span className="text-xs font-medium text-[#64748B] self-start sm:self-auto inline-flex items-center gap-1.5 bg-[#F8FAFC] px-3.5 py-1.5 rounded-xl border border-[#E2E8F0]">
-              <span>Sorted by proximity</span>
-              <span className="text-[#0F172A] font-bold">(nearest first)</span>
-            </span>
-          </div>
-        )}
+      <div className="pt-2">
 
         {filteredEvents.length === 0 ? (
           <div className="p-12 text-center bg-[#F8FAFC] rounded-3xl border border-dashed border-[#E2E8F0] space-y-3">
