@@ -105,8 +105,16 @@ export default function Navbar() {
       setActiveCity(getUserCity() || 'All India');
     };
 
+    const handleOpenLocationModal = () => {
+      setLocationModalOpen(true);
+    };
+
     window.addEventListener('vibe:location_changed', handleCityChange);
-    return () => window.removeEventListener('vibe:location_changed', handleCityChange);
+    window.addEventListener('vibe:open_location_modal', handleOpenLocationModal);
+    return () => {
+      window.removeEventListener('vibe:location_changed', handleCityChange);
+      window.removeEventListener('vibe:open_location_modal', handleOpenLocationModal);
+    };
   }, []);
 
   // Close dropdown when clicking outside
