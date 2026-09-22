@@ -501,11 +501,111 @@ export async function extractEventFromImage(
   };
 }
 
+export function parseEventDeterministic(text: string): {
+  title: string;
+  venue_name: string;
+  location_address: string;
+  city: string;
+  start_at: string;
+  end_at: string;
+  category: EventCategory;
+} {
+  const currentYear = new Date().getFullYear();
+  let title = '';
+  let venue = '';
+  let city = 'Mumbai';
+  let state = '';
+  let startAt = new Date(Date.now() + 86400000);
+
+  // 1. Extract City from INDIAN_CITIES
+  const cityObj = detectCityFromText(text);
+  if (cityObj) {
+    city = cityObj.name;
+    state = cityObj.state || '';
+  }
+
+  // 2. Extract Named Title e.g. "Named Tedxtalk", "called TedX", "title: Startup Meetup"
+  const namedMatch = text.match(/(?:named|called|titled|topic)[:\s]+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|timing|$|\.|\,))/i) ||
+                     text.match(/(?:named|called|titled|topic)[:\s]+([^\n\.,]+)/i);
+  if (namedMatch && namedMatch[1].trim()) {
+    title = namedMatch[1].trim();
+  }
+
+  // 3. Extract Venue e.g. "at RGPV Bhopal", "at Subko Cafe", "in Cyber Hub"
+  const venueMatch = text.match(/\b(?:at|in)\s+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|named|called|timing|$|\.|\,))/i);
+  if (venueMatch && venueMatch[1].trim()) {
+    venue = venueMatch[1].trim();
+  } else {
+    venue = `${city} Venue`;
+  }
+
+  // 4. Extract Date & Time e.g. "29th September at 10 am", "Sep 29", "tomorrow at 7 pm"
+  const dateMatch = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i);
+  const timeMatch = text.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+
+  if (dateMatch) {
+    const day = parseInt(dateMatch[1]);
+    const monthStr = dateMatch[2].toLowerCase();
+    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monthIndex = months.findIndex((m) => monthStr.startsWith(m));
+    if (monthIndex >= 0) {
+      let hours = 10;
+      let minutes = 0;
+      if (timeMatch) {
+        hours = parseInt(timeMatch[1]);
+        if (timeMatch[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
+        if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
+        if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
+      }
+      startAt = new Date(currentYear, monthIndex, day, hours, minutes);
+    }
+  } else if (/tomorrow/i.test(text)) {
+    const tm = new Date(Date.now() + 86400000);
+    let hours = 18;
+    let minutes = 0;
+    if (timeMatch) {
+      hours = parseInt(timeMatch[1]);
+      if (timeMatch[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
+      if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
+      if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
+    }
+    tm.setHours(hours, minutes, 0, 0);
+    startAt = tm;
+  }
+
+  // 5. Clean Fallback Title if not yet found
+  if (!title) {
+    let clean = text
+      .replace(/^(?:event|gathering|meetup|live)\s+/i, '')
+      .replace(/\s+at\s+[\w\s]+?(?=\s+on|\s+at|$)/gi, '')
+      .replace(/\s+on\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+/gi, '')
+      .replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)/gi, '')
+      .trim();
+    title = clean.length > 5 ? clean.slice(0, 50) : (text.slice(0, 50).trim() || 'Curated Gathering');
+  }
+
+  title = capitalizeWords(title);
+  const category = detectCategoryFromText(`${title} ${text}`);
+  const address = state ? `${venue}, ${city}, ${state}` : `${venue}, ${city}, India`;
+  const endAt = new Date(startAt.getTime() + 3 * 60 * 60 * 1000);
+
+  return {
+    title,
+    venue_name: venue,
+    location_address: address,
+    city,
+    start_at: startAt.toISOString(),
+    end_at: endAt.toISOString(),
+    category,
+  };
+}
+
 /**
  * Extract event data from text or forwarded link
  */
 export async function extractEventFromText(text: string): Promise<ExtractedEventData> {
   const genAI = getGenAI();
+  const deterministicData = parseEventDeterministic(text);
 
   // 1. Check if message contains a URL
   const urlMatch = text.match(/(https?:\/\/[^\s]+)/i);
@@ -549,24 +649,38 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
       const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(cleaned);
 
-      const category = parsed.category || detectCategoryFromText(`${parsed.title || ''} ${parsed.description || ''} ${text}`);
+      const category = parsed.category || deterministicData.category;
       const finalCover =
         extractedCover ||
         parsed.cover_image_url ||
         getCategoryCover(category, parsed.title || text);
 
-      const detectedCityObj = detectCityFromText(text || `${parsed.title || ''} ${parsed.venue_name || ''} ${parsed.location_address || ''}`);
-      const finalCity = detectedCityObj?.name || parsed.city || 'Mumbai';
+      const finalTitle = parsed.title && parsed.title !== 'Live Experience' && parsed.title !== 'Community Gathering'
+        ? parsed.title
+        : deterministicData.title;
+
+      const finalCity = parsed.city && parsed.city !== 'Pune'
+        ? parsed.city
+        : deterministicData.city;
+
+      const finalVenue = parsed.venue_name && parsed.venue_name !== 'City Venue'
+        ? parsed.venue_name
+        : deterministicData.venue_name;
 
       return {
         ...parsed,
+        title: finalTitle,
+        venue_name: finalVenue,
+        location_address: parsed.location_address || deterministicData.location_address,
         city: finalCity,
         category,
+        start_at: parsed.start_at || deterministicData.start_at,
+        end_at: parsed.end_at || deterministicData.end_at,
         ticket_url: targetUrl || parsed.ticket_url,
         price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
         source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
         cover_image_url: finalCover,
-        suggested_slug: generateSlug(parsed.title || 'event'),
+        suggested_slug: generateSlug(finalTitle || 'event'),
         confidence_score: parsed.confidence_score || 0.90,
       };
     } catch (err: any) {
@@ -575,32 +689,27 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     }
   }
 
-  // Fallback if all AI models fail
-  console.error('[AI Extractor Text] All candidate models failed, using fallback:', lastError);
-  const fallbackTitle = text.slice(0, 50).trim() || 'Curated Gathering';
-  const fallbackCat = detectCategoryFromText(`${fallbackTitle} ${text}`);
-  const fallbackCover = extractedCover || getCategoryCover(fallbackCat, fallbackTitle);
-  const detectedCityObj = detectCityFromText(text);
-  const fallbackCity = detectedCityObj?.name || 'Mumbai';
-  const fallbackAddress = detectedCityObj?.state ? `${fallbackCity}, ${detectedCityObj.state}` : `${fallbackCity}, India`;
+  // High-fidelity fallback using deterministic entity parser
+  console.log('[AI Extractor Text] Using deterministic parser fallback for:', text);
+  const fallbackCover = extractedCover || getCategoryCover(deterministicData.category, deterministicData.title);
 
   return {
-    title: fallbackTitle,
-    tagline: 'Exciting gathering in ' + fallbackCity,
+    title: deterministicData.title,
+    tagline: `Exciting gathering in ${deterministicData.city}`,
     description: text,
-    category: fallbackCat,
-    venue_name: fallbackCity + ' Venue',
-    location_address: fallbackAddress,
-    city: fallbackCity,
-    start_at: new Date(Date.now() + 86400000).toISOString(),
-    end_at: new Date(Date.now() + 86400000 + 10800000).toISOString(),
+    category: deterministicData.category,
+    venue_name: deterministicData.venue_name,
+    location_address: deterministicData.location_address,
+    city: deterministicData.city,
+    start_at: deterministicData.start_at,
+    end_at: deterministicData.end_at,
     ticket_url: targetUrl,
     price_text: scrapedPrice || (targetUrl ? 'See booking page' : 'Free Entry'),
     source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : 'vibe',
     cover_image_url: fallbackCover,
     template: 'grove',
-    confidence_score: 0.75,
+    confidence_score: 0.85,
     faq: [{ q: 'Where do I register?', a: 'Via the official booking link.' }],
-    suggested_slug: generateSlug(fallbackTitle),
+    suggested_slug: generateSlug(deterministicData.title),
   };
 }
