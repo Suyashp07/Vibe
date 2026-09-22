@@ -20,7 +20,7 @@ export default function BrandLogo({ className = '', href = '/' }: BrandLogoProps
         <span>V</span>
         <span className="relative inline-flex items-baseline justify-center mx-[0.5px]">
           {/* Base letter i with top black dot clipped cleanly so only the authentic Outfit stem renders */}
-          <span className="text-[#0F172A] [clip-path:inset(28%_0_0_0)] select-none">i</span>
+          <span className="text-[#E8621A] [clip-path:inset(28%_0_0_0)] select-none">i</span>
           {/* Vibrant brand orange point/tittle precisely positioned over the i */}
           <span
             className="absolute top-[2px] sm:top-[2.5px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] sm:w-[5.5px] sm:h-[5.5px] rounded-full bg-[#E8621A] pointer-events-none shadow-2xs group-hover:scale-125 group-hover:bg-[#FF6D1F] transition-all duration-200"
