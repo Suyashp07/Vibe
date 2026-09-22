@@ -23,6 +23,9 @@ export interface AuthProfile {
 import { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail } from './adminConstants';
 export { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail };
 
+// In-memory TTL cache for profile database queries to prevent polling storms
+const profileDbCache = new Map<string, { data: any; timestamp: number }>();
+
 /**
  * Detect synthetic placeholder or auto-generated random avatars (e.g. Dicebear)
  */
@@ -115,24 +118,29 @@ export const getLocalAuthSession = (): AuthProfile | null => {
 
 export const setLocalAuthSession = (profile: AuthProfile | null) => {
   if (typeof window === 'undefined') return;
+  const currentStr = localStorage.getItem(LOCAL_STORAGE_AUTH_KEY);
   if (profile) {
     const cleanProfile = { ...profile };
     if (isSyntheticAvatar(cleanProfile.avatar_url)) {
       cleanProfile.avatar_url = '';
     }
-    localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(cleanProfile));
+    const nextStr = JSON.stringify(cleanProfile);
+    if (currentStr === nextStr) return; // Skip if identical to prevent event loops
+
+    localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, nextStr);
     try {
       document.cookie = `vibe_auth_role=${encodeURIComponent(cleanProfile.role)}; path=/; max-age=604800; SameSite=Lax`;
       document.cookie = `vibe_auth_email=${encodeURIComponent(cleanProfile.email)}; path=/; max-age=604800; SameSite=Lax`;
     } catch {}
   } else {
+    if (!currentStr) return; // Skip if already empty
     localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY);
     try {
       document.cookie = 'vibe_auth_role=; path=/; max-age=0; SameSite=Lax';
       document.cookie = 'vibe_auth_email=; path=/; max-age=0; SameSite=Lax';
     } catch {}
   }
-  // Dispatch storage event so all tabs/components update
+  // Dispatch storage event so other tabs/components update
   window.dispatchEvent(new Event('vibe_auth_changed'));
 };
 
@@ -721,40 +729,51 @@ export const useAuth = () => {
               isDemo: false,
             };
 
-            // Enrich with public.profiles if exists in database
-            try {
-              const { data: dbProf } = await client
-                .from('profiles')
-                .select('*')
-                .eq('id', data.session.user.id)
-                .single();
-              if (dbProf) {
-                const resolvedRole = isSuper
-                  ? 'super_admin'
-                  : (dbProf.role === 'super_admin' || dbProf.role === 'curator' ? dbProf.role : (dbProf.role || 'organizer'));
+            // Enrich with public.profiles if exists in database (cached for 60s)
+            let dbProf: any = null;
+            const cached = profileDbCache.get(data.session.user.id);
+            if (cached && Date.now() - cached.timestamp < 60000) {
+              dbProf = cached.data;
+            } else {
+              try {
+                const { data: fetchedProf } = await client
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', data.session.user.id)
+                  .single();
+                if (fetchedProf) {
+                  dbProf = fetchedProf;
+                  profileDbCache.set(data.session.user.id, { data: fetchedProf, timestamp: Date.now() });
+                }
+              } catch {}
+            }
 
-                const resolvedAvatar = resolveAvatarUrl({
-                  dbLogoUrl: dbProf.logo_url,
-                  dbAvatarUrl: dbProf.avatar_url,
-                  metaAvatar: meta.avatar_url,
-                  metaPicture: meta.picture,
-                  localAvatar: mergedProfile.avatar_url,
-                });
+            if (dbProf) {
+              const resolvedRole = isSuper
+                ? 'super_admin'
+                : (dbProf.role === 'super_admin' || dbProf.role === 'curator' ? dbProf.role : (dbProf.role || 'organizer'));
 
-                mergedProfile = {
-                  ...mergedProfile,
-                  name: dbProf.name || mergedProfile.name,
-                  role: resolvedRole as any,
-                  handle: dbProf.handle || mergedProfile.handle,
-                  bio: dbProf.bio || mergedProfile.bio,
-                  avatar_url: resolvedAvatar,
-                  brand_color: dbProf.brand_color || mergedProfile.brand_color,
-                  brand_font: dbProf.brand_font || mergedProfile.brand_font,
-                  phone: dbProf.phone || mergedProfile.phone,
-                  onboarded: dbProf.onboarded !== undefined ? dbProf.onboarded : mergedProfile.onboarded,
-                };
-              }
-            } catch {}
+              const resolvedAvatar = resolveAvatarUrl({
+                dbLogoUrl: dbProf.logo_url,
+                dbAvatarUrl: dbProf.avatar_url,
+                metaAvatar: meta.avatar_url,
+                metaPicture: meta.picture,
+                localAvatar: mergedProfile.avatar_url,
+              });
+
+              mergedProfile = {
+                ...mergedProfile,
+                name: dbProf.name || mergedProfile.name,
+                role: resolvedRole as any,
+                handle: dbProf.handle || mergedProfile.handle,
+                bio: dbProf.bio || mergedProfile.bio,
+                avatar_url: resolvedAvatar,
+                brand_color: dbProf.brand_color || mergedProfile.brand_color,
+                brand_font: dbProf.brand_font || mergedProfile.brand_font,
+                phone: dbProf.phone || mergedProfile.phone,
+                onboarded: dbProf.onboarded !== undefined ? dbProf.onboarded : mergedProfile.onboarded,
+              };
+            }
 
             setProfile(mergedProfile);
             setLocalAuthSession(mergedProfile);
@@ -790,17 +809,28 @@ export const useAuth = () => {
 
           let resolvedRole: 'super_admin' | 'curator' | 'organizer' | 'guest' = isSuper ? 'super_admin' : 'organizer';
           let dbProf: any = null;
-          try {
-            const { data: prof } = await client
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            dbProf = prof;
+          const cached = profileDbCache.get(session.user.id);
+          if (cached && Date.now() - cached.timestamp < 60000) {
+            dbProf = cached.data;
             if (dbProf?.role) {
               resolvedRole = isSuper ? 'super_admin' : (dbProf.role as any);
             }
-          } catch {}
+          } else {
+            try {
+              const { data: prof } = await client
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              if (prof) {
+                dbProf = prof;
+                profileDbCache.set(session.user.id, { data: prof, timestamp: Date.now() });
+                if (dbProf?.role) {
+                  resolvedRole = isSuper ? 'super_admin' : (dbProf.role as any);
+                }
+              }
+            } catch {}
+          }
 
           const resolvedAvatar = resolveAvatarUrl({
             dbLogoUrl: dbProf?.logo_url,

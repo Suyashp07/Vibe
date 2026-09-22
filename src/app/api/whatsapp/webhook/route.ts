@@ -342,75 +342,23 @@ export async function POST(req: NextRequest) {
     const finalSourcePlatform = hasExternalUrl ? extracted.source_platform : undefined;
     const finalTicketUrl = hasExternalUrl ? normalizedTicketUrl : undefined;
 
-    // Resolve or Auto-Provision Organizer Profile by phone number
-    let organizerId: string | undefined = undefined;
+    // Resolve Organizer Profile by phone number safely
+    let organizerId: string | null = null;
     if (supabase && senderPhone) {
       try {
+        const cleanDigits = senderPhone.replace(/\D/g, '');
+        const last10 = cleanDigits.slice(-10);
         const { data: profileData } = await supabase
           .from('profiles')
           .select('id, name')
-          .eq('phone', senderPhone)
+          .or(`phone.eq.${cleanDigits},phone.eq.${last10},phone.eq.+91${last10},phone.eq.91${last10}`)
           .maybeSingle();
 
-        if (profileData) {
+        if (profileData?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileData.id)) {
           organizerId = profileData.id;
-        } else {
-          // Provision an auth user to satisfy foreign key constraint on profiles(id)
-          const userEmail = `${senderPhone}@whatsapp.vibe.community`;
-          let authUserId: string | undefined = undefined;
-
-          try {
-            const { data: authData } = await supabase.auth.admin.createUser({
-              email: userEmail,
-              email_confirm: true,
-              user_metadata: {
-                name: senderName || 'Event Host',
-                phone: senderPhone,
-                role: 'organizer',
-              },
-            });
-            authUserId = authData?.user?.id;
-          } catch (createErr) {
-            // User might already exist in auth.users
-          }
-
-          if (authUserId) {
-            const { data: newProf } = await supabase
-              .from('profiles')
-              .upsert({
-                id: authUserId,
-                name: senderName || 'Event Host',
-                phone: senderPhone,
-                email: userEmail,
-                role: 'organizer',
-                onboarded: true,
-              })
-              .select('id')
-              .maybeSingle();
-
-            if (newProf) {
-              organizerId = newProf.id;
-            }
-          }
         }
       } catch (profErr) {
         console.warn('[WhatsApp Webhook] Profile lookup error:', profErr);
-      }
-    }
-
-    // Default fallback organizer ID if unlinked so organizer_id is never null
-    if (!organizerId && supabase) {
-      try {
-        const { data: fallbackProf } = await supabase
-          .from('profiles')
-          .select('id')
-          .limit(1)
-          .maybeSingle();
-        if (fallbackProf) {
-          organizerId = fallbackProf.id;
-        }
-      } catch (e) {
-        // ignore
       }
     }
 

@@ -58,8 +58,10 @@ export default function EventConversationModal({
     return anonId;
   };
 
-  const effectiveGuestId =
-    user?.id || profile?.id || localSession?.id || localSession?.email || guestEmail || getAnonymousGuestId();
+  const effectiveGuestId = React.useMemo(() => {
+    return user?.id || profile?.id || localSession?.id || localSession?.email || guestEmail || getAnonymousGuestId();
+  }, [user?.id, profile?.id, localSession?.id, localSession?.email, guestEmail]);
+
   const effectiveGuestName =
     profile?.name || user?.user_metadata?.full_name || localSession?.name || guestName || 'Event Guest';
   const effectiveGuestEmail =
@@ -149,7 +151,7 @@ export default function EventConversationModal({
     }
   };
 
-  // Set up Supabase Realtime + polling backup
+  // Set up Supabase Realtime + lightweight 15s fallback poll only when active
   useEffect(() => {
     if (!conversation?.id || !isOpen) return;
 
@@ -158,10 +160,12 @@ export default function EventConversationModal({
       loadMessages(conversation.id);
     });
 
-    // 2. Fallback polling every 3.5 seconds
+    // 2. Polite fallback polling every 15s
     pollTimerRef.current = setInterval(() => {
-      loadMessages(conversation.id);
-    }, 3500);
+      if (document.visibilityState === 'visible') {
+        loadMessages(conversation.id);
+      }
+    }, 15000);
 
     return () => {
       unsubscribe();
