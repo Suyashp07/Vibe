@@ -457,10 +457,11 @@ export class ConversationService {
       senderRole: 'GUEST',
     });
 
-    // 4. Dispatch through Host Channel Adapter (Telegram)
-    const adapter = this.getAdapter(conv.host_channel);
+    // 4. Dispatch through Host Channel Adapters (Telegram & WhatsApp)
+    const primaryChannel = conv.host_channel || 'TELEGRAM';
+    const primaryAdapter = this.getAdapter(primaryChannel);
     try {
-      const dispatchResult = await adapter.sendToHost({
+      const dispatchResult = await primaryAdapter.sendToHost({
         conversation: conv,
         message: newMsg,
         event,
@@ -479,8 +480,28 @@ export class ConversationService {
         );
       }
     } catch (dispatchErr: any) {
-      console.error('[ConversationService] Channel adapter dispatch failed:', dispatchErr.message);
+      console.error('[ConversationService] Primary channel dispatch failed:', dispatchErr.message);
       newMsg.delivery_status = 'FAILED';
+    }
+
+    // Also dispatch to WhatsApp Bridge if host phone exists and host_channel was not already WHATSAPP
+    if (primaryChannel !== 'WHATSAPP') {
+      const waPhone = event?.whatsapp_host_phone || event?.theme?.whatsapp_host_phone || process.env.WHATSAPP_HOST_PHONE;
+      if (waPhone) {
+        try {
+          const waResult = await this.getAdapter('WHATSAPP').sendToHost({
+            conversation: conv,
+            message: newMsg,
+            event,
+            guestName: guestName || conv.guest_name,
+          });
+          if (waResult.status === 'SENT') {
+            newMsg.delivery_status = 'SENT';
+          }
+        } catch (waErr: any) {
+          console.warn('[ConversationService] WhatsApp dual-dispatch notice:', waErr.message);
+        }
+      }
     }
 
     // 5. Update last_message_at

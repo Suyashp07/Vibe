@@ -59,10 +59,12 @@ export class WhatsAppAdapter implements CommunicationChannelAdapter {
     const { conversation, message, event, guestName } = params;
     const bridgeUrl = this.getBridgeUrl();
     const bridgeSecret = this.getBridgeSecret();
-    const hostPhone = this.getHostPhone();
+    const hostPhone =
+      normalizePhone(event?.whatsapp_host_phone || event?.theme?.whatsapp_host_phone || '') ||
+      this.getHostPhone();
 
     if (!hostPhone) {
-      console.warn('[WhatsAppAdapter] WHATSAPP_HOST_PHONE not set. Message saved as PENDING.');
+      console.warn('[WhatsAppAdapter] No host WhatsApp number found on event or in env. Message saved as PENDING.');
       return {
         status: 'PENDING',
         error: 'Host WhatsApp number not configured',
