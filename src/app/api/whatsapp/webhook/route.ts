@@ -432,7 +432,7 @@ export async function POST(req: NextRequest) {
         is_flash: isFlashVibe,
         flash_activity: flashActivity,
         whatsapp_host_phone: senderPhone,
-        vibe_cheers_count: 1,
+        vibe_cheers_count: 0,
         spots_limit: isFlashVibe ? 12 : undefined,
         spots_filled: 1,
       },

@@ -430,7 +430,7 @@ export async function POST(req: NextRequest) {
         ...themeConfig,
         is_flash: isFlashVibe,
         flash_activity: flashActivity,
-        vibe_cheers_count: 1,
+        vibe_cheers_count: 0,
         spots_limit: isFlashVibe ? 12 : undefined,
         spots_filled: 1,
       },

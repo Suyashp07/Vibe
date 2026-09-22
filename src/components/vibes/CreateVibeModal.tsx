@@ -104,7 +104,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
       spots_limit: spots,
       spots_filled: 1,
       whatsapp_host_phone: profile?.phone || bridgePhone,
-      vibe_cheers_count: 1,
+      vibe_cheers_count: 0,
       flash_tags: [activity, city, 'Flash Vibe'],
       faq: [
         { q: 'What do I need to bring?', a: 'Just bring your good energy and casual gear!' }

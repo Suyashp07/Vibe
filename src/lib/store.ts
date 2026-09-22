@@ -405,7 +405,7 @@ export const SAMPLE_FLASH_VIBES: EventItem[] = [
     spots_limit: 12,
     spots_filled: 8,
     whatsapp_host_phone: '919820011223',
-    vibe_cheers_count: 42,
+    vibe_cheers_count: 0,
     flash_tags: ['Cricket', 'Box Match', 'Bandra', 'Friendly', 'Under Lights'],
     faq: [
       { q: 'Do I need to bring cricket gear?', a: 'Just wear sneakers or trainers. Tape balls and bats will be provided at the turf.' },
@@ -458,7 +458,7 @@ export const SAMPLE_FLASH_VIBES: EventItem[] = [
     spots_limit: 15,
     spots_filled: 11,
     whatsapp_host_phone: '919820044556',
-    vibe_cheers_count: 58,
+    vibe_cheers_count: 0,
     flash_tags: ['Chai', 'Co-Working', 'Indie Hackers', 'Marine Drive', 'Midnight'],
     faq: [
       { q: 'Are power outlets available?', a: 'We sit on the sea promenade, so please charge your laptop before arriving!' },
@@ -511,7 +511,7 @@ export const SAMPLE_FLASH_VIBES: EventItem[] = [
     spots_limit: 4,
     spots_filled: 2,
     whatsapp_host_phone: '919845099881',
-    vibe_cheers_count: 31,
+    vibe_cheers_count: 0,
     flash_tags: ['Badminton', 'Doubles', 'Indiranagar', 'Wooden Court'],
     faq: [
       { q: 'Do I need my own racket?', a: 'We have 1 spare racket, but please bring your own if you have one!' },
@@ -564,7 +564,7 @@ export const SAMPLE_FLASH_VIBES: EventItem[] = [
     spots_limit: 16,
     spots_filled: 12,
     whatsapp_host_phone: '919845012345',
-    vibe_cheers_count: 67,
+    vibe_cheers_count: 0,
     flash_tags: ['Board Games', 'Catan', 'Gelato', 'Koramangala', 'Social'],
     faq: [
       { q: 'I have never played Catan, can I still join?', a: 'Absolutely! More than half the table are usually first-timers.' }
@@ -616,7 +616,7 @@ export const SAMPLE_FLASH_VIBES: EventItem[] = [
     spots_limit: 20,
     spots_filled: 14,
     whatsapp_host_phone: '919811055443',
-    vibe_cheers_count: 89,
+    vibe_cheers_count: 0,
     flash_tags: ['Acoustic', 'Jam Session', 'Sunset', 'Hauz Khas', 'Singalong'],
     faq: [
       { q: 'Is it free?', a: 'Yes! Completely free community gathering.' },
@@ -669,7 +669,7 @@ export const SAMPLE_FLASH_VIBES: EventItem[] = [
     spots_limit: 8,
     spots_filled: 5,
     whatsapp_host_phone: '919820077889',
-    vibe_cheers_count: 53,
+    vibe_cheers_count: 0,
     flash_tags: ['Pickleball', 'Rally', 'Juhu', 'Paddle Sport', 'Beginner'],
     faq: [
       { q: 'Is coaching included?', a: 'Basic rules and serve technique will be taught during warm-up.' }
