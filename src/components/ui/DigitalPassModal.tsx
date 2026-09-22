@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
 import { formatIST, generateGoogleCalendarUrl, downloadICS, getOrganizers, getEventRSVPs, cancelRSVP } from '@/lib/store';
-import { getLocalAuthSession } from '@/lib/auth';
+import { getLocalAuthSession, isSyntheticAvatar } from '@/lib/auth';
 
 interface DigitalPassModalProps {
   rsvp: RSVPItem;
@@ -121,13 +121,13 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
       o => (event.organizer_id && o.id === event.organizer_id) ||
            (event.organizer_handle && o.handle?.toLowerCase() === event.organizer_handle?.toLowerCase())
     );
-    if (matchedOrg?.logo_url) {
+    if (matchedOrg?.logo_url && !isSyntheticAvatar(matchedOrg.logo_url)) {
       setOrganizerAvatar(matchedOrg.logo_url);
       return;
     }
 
     const session = getLocalAuthSession();
-    if (session?.avatar_url && (
+    if (session?.avatar_url && !isSyntheticAvatar(session.avatar_url) && (
       session.id === event.organizer_id || 
       session.handle === event.organizer_handle ||
       !event.organizer_logo

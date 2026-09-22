@@ -217,8 +217,12 @@ BEGIN
     v_handle,
     COALESCE(new.raw_user_meta_data->>'role', 'organizer'),
     COALESCE(new.raw_user_meta_data->>'brand_color', '#E8621A'),
-    COALESCE(new.raw_user_meta_data->>'brand_font', 'Playfair Display'),
-    COALESCE(new.raw_user_meta_data->>'logo_url', 'https://api.dicebear.com/7.x/identicon/svg?seed=' || split_part(new.email, '@', 1)),
+    COALESCE(
+      new.raw_user_meta_data->>'avatar_url',
+      new.raw_user_meta_data->>'picture',
+      new.raw_user_meta_data->>'logo_url',
+      NULL
+    ),
     false
   )
   ON CONFLICT (id) DO UPDATE SET

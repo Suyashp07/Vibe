@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import { useAuth, updateAuthProfile } from '@/lib/auth';
+import { useAuth, updateAuthProfile, isSyntheticAvatar } from '@/lib/auth';
 import { saveOrganizer } from '@/lib/store';
 
 const BRAND_COLOR_PRESETS = [
@@ -67,17 +67,12 @@ export default function OrganizerOnboardingPage() {
       if (profile.handle && !handle) setHandle(profile.handle);
       if (profile.brand_color && brandColor === '#E8621A') setBrandColor(profile.brand_color);
       if (profile.brand_font && brandFont === 'Playfair Display') setBrandFont(profile.brand_font);
-      if (profile.avatar_url && !logoUrl) setLogoUrl(profile.avatar_url);
+      if (profile.avatar_url && !logoUrl && !isSyntheticAvatar(profile.avatar_url)) {
+        setLogoUrl(profile.avatar_url);
+      }
       if (profile.bio && !bio) setBio(profile.bio);
     }
   }, [profile]);
-
-  // Set initial logo fallback if empty
-  useEffect(() => {
-    if (!logoUrl && name) {
-      setLogoUrl(`https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(name)}`);
-    }
-  }, [name, logoUrl]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,11 +97,15 @@ export default function OrganizerOnboardingPage() {
 
     const cleanHandle = handle.toLowerCase().replace(/[^a-z0-9_]/g, '');
 
+    const resolvedAvatar = (logoUrl && !isSyntheticAvatar(logoUrl))
+      ? logoUrl
+      : (profile?.avatar_url && !isSyntheticAvatar(profile.avatar_url) ? profile.avatar_url : '');
+
     const { error } = await updateAuthProfile({
       name: name.trim(),
       handle: cleanHandle,
       bio: bio.trim(),
-      avatar_url: logoUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${cleanHandle}`,
+      avatar_url: resolvedAvatar,
       brand_color: brandColor,
       brand_font: brandFont,
       onboarded: true,

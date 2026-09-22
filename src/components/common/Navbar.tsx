@@ -31,7 +31,7 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth, setLocalAuthSession, AuthProfile } from '@/lib/auth';
+import { useAuth, setLocalAuthSession, AuthProfile, getInitials, isSyntheticAvatar } from '@/lib/auth';
 import { syncEventsWithSupabase, getRSVPs } from '@/lib/store';
 import { getSupabaseClient } from '@/lib/supabase';
 import LocationModal from '@/components/location/LocationModal';
@@ -53,6 +53,11 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [confirmedPassCount, setConfirmedPassCount] = useState(0);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [profile?.avatar_url]);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -242,17 +247,18 @@ export default function Navbar() {
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] transition-colors cursor-pointer flex items-center justify-center overflow-hidden"
                     title={profile.name}
                   >
-                    {profile.avatar_url && !profile.email?.toLowerCase().includes('pandeysuyash100@gmail.com') ? (
+                    {profile.avatar_url && !imageError && !isSyntheticAvatar(profile.avatar_url) ? (
                       <Image
                         src={profile.avatar_url}
-                        alt={profile.name}
-                        width={36}
-                        height={36}
+                        alt={profile.name || 'User Profile'}
+                        width={40}
+                        height={40}
                         className="object-cover w-full h-full"
+                        onError={() => setImageError(true)}
                       />
                     ) : (
                       <div className="w-full h-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold tracking-tight">
-                        {profile.name?.slice(0, 2).toUpperCase() || 'SP'}
+                        {getInitials(profile.name, profile.email)}
                       </div>
                     )}
                   </button>

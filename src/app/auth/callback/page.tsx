@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
-import { setLocalAuthSession, AuthProfile, ADMIN_EMAILS } from '@/lib/auth';
+import { setLocalAuthSession, AuthProfile, ADMIN_EMAILS, resolveAvatarUrl } from '@/lib/auth';
 import { Sparkles } from 'lucide-react';
 
 function CallbackHandler() {
@@ -33,7 +33,6 @@ function CallbackHandler() {
       const code = searchParams.get('code');
 
       if (client) {
-        // 1. If code in query params, exchange for session directly in the browser!
         let user: any = null;
         if (code) {
           try {
@@ -46,7 +45,15 @@ function CallbackHandler() {
           }
         }
 
-        // 2. Check if session already established
+        if (!user) {
+          try {
+            const { data } = await client.auth.getUser();
+            if (data?.user) {
+              user = data.user;
+            }
+          } catch {}
+        }
+
         if (!user) {
           const { data } = await client.auth.getSession();
           if (data?.session?.user) {
@@ -73,6 +80,13 @@ function CallbackHandler() {
             ? 'super_admin'
             : (dbProf?.role || meta.role || 'organizer');
 
+          const resolvedAvatar = resolveAvatarUrl({
+            dbLogoUrl: dbProf?.logo_url,
+            dbAvatarUrl: dbProf?.avatar_url,
+            metaAvatar: meta.avatar_url,
+            metaPicture: meta.picture,
+          });
+
           const profile: AuthProfile = {
             id: user.id,
             email: cleanEmail,
@@ -80,9 +94,7 @@ function CallbackHandler() {
             role: assignedRole as any,
             handle: dbProf?.handle || meta.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
             bio: dbProf?.bio || meta.bio,
-            avatar_url: cleanEmail.toLowerCase().includes('pandeysuyash100@gmail.com')
-              ? ''
-              : (dbProf?.logo_url || dbProf?.avatar_url || meta.avatar_url || meta.picture),
+            avatar_url: resolvedAvatar,
             brand_color: dbProf?.brand_color || meta.brand_color || '#0A0A0A',
             brand_font: 'Inter',
             phone: dbProf?.phone || meta.phone,
@@ -100,7 +112,7 @@ function CallbackHandler() {
               name: profile.name,
               role: profile.role,
               handle: profile.handle,
-              avatar_url: profile.avatar_url,
+              logo_url: profile.avatar_url || null,
               brand_color: profile.brand_color,
               brand_font: 'Inter',
               onboarded: profile.onboarded,

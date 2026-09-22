@@ -23,6 +23,76 @@ export interface AuthProfile {
 import { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail } from './adminConstants';
 export { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail };
 
+/**
+ * Detect synthetic placeholder or auto-generated random avatars (e.g. Dicebear)
+ */
+export const isSyntheticAvatar = (url?: string | null): boolean => {
+  if (!url || typeof url !== 'string') return true;
+  const trimmed = url.trim().toLowerCase();
+  if (!trimmed) return true;
+  return (
+    trimmed.includes('api.dicebear.com') ||
+    trimmed.includes('dicebear') ||
+    trimmed.includes('avatar.vercel.sh') ||
+    trimmed.includes('ui-avatars.com')
+  );
+};
+
+/**
+ * Resolves a reliable, deterministic user profile avatar URL:
+ * 1. User-uploaded custom logo (if non-synthetic, e.g. Supabase storage or custom hosted image)
+ * 2. Authentic email account linked photo from OAuth (Google picture / avatar)
+ * 3. Non-synthetic local avatar
+ * 4. Fallback to empty string '' (which triggers dynamic initials badge)
+ */
+export const resolveAvatarUrl = (sources: {
+  metaAvatar?: string | null;
+  metaPicture?: string | null;
+  dbLogoUrl?: string | null;
+  dbAvatarUrl?: string | null;
+  localAvatar?: string | null;
+}): string => {
+  const metaPhoto = sources.metaAvatar || sources.metaPicture;
+  const dbPhoto = sources.dbLogoUrl || sources.dbAvatarUrl;
+  const localPhoto = sources.localAvatar;
+
+  // 1. Explicit user-uploaded custom logo
+  if (dbPhoto && !isSyntheticAvatar(dbPhoto)) {
+    return dbPhoto.trim();
+  }
+
+  // 2. Email-linked OAuth profile photo (e.g. Google avatar)
+  if (metaPhoto && !isSyntheticAvatar(metaPhoto)) {
+    return metaPhoto.trim();
+  }
+
+  // 3. Non-synthetic local avatar
+  if (localPhoto && !isSyntheticAvatar(localPhoto)) {
+    return localPhoto.trim();
+  }
+
+  return '';
+};
+
+/**
+ * Generate clean 1-2 letter uppercase initials from name or email (e.g. "SP", "JD", "AK")
+ */
+export const getInitials = (name?: string | null, email?: string | null): string => {
+  if (name && name.trim()) {
+    const clean = name.trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return clean.slice(0, 2).toUpperCase();
+  }
+  if (email && email.trim()) {
+    const local = email.trim().split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+    return local.slice(0, 2).toUpperCase() || 'U';
+  }
+  return 'U';
+};
+
 const LOCAL_STORAGE_AUTH_KEY = 'vibe_auth_session';
 
 /**
@@ -34,7 +104,7 @@ export const getLocalAuthSession = (): AuthProfile | null => {
     const raw = localStorage.getItem(LOCAL_STORAGE_AUTH_KEY);
     if (!raw) return null;
     const profile = JSON.parse(raw);
-    if (profile?.email?.toLowerCase().includes('pandeysuyash100@gmail.com')) {
+    if (profile && isSyntheticAvatar(profile.avatar_url)) {
       profile.avatar_url = '';
     }
     return profile;
@@ -47,7 +117,7 @@ export const setLocalAuthSession = (profile: AuthProfile | null) => {
   if (typeof window === 'undefined') return;
   if (profile) {
     const cleanProfile = { ...profile };
-    if (cleanProfile.email?.toLowerCase().includes('pandeysuyash100@gmail.com')) {
+    if (isSyntheticAvatar(cleanProfile.avatar_url)) {
       cleanProfile.avatar_url = '';
     }
     localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(cleanProfile));
@@ -173,7 +243,11 @@ export const verifyEmailOtp = async (
       name: profileData?.name || pendingSignup?.name || data.user.user_metadata?.name || email.split('@')[0],
       role: profileData?.role || pendingSignup?.role || data.user.user_metadata?.role || role,
       handle: profileData?.handle || pendingSignup?.handle || data.user.user_metadata?.handle || email.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-      avatar_url: profileData?.logo_url || data.user.user_metadata?.avatar_url,
+      avatar_url: resolveAvatarUrl({
+        dbLogoUrl: profileData?.logo_url,
+        metaAvatar: data.user.user_metadata?.avatar_url,
+        metaPicture: data.user.user_metadata?.picture,
+      }),
       bio: profileData?.bio,
       brand_color: profileData?.brand_color || pendingSignup?.brand_color || '#E8621A',
       brand_font: profileData?.brand_font || pendingSignup?.brand_font || 'Playfair Display',
@@ -305,7 +379,7 @@ export const updateAuthProfile = async (updates: Partial<AuthProfile>): Promise<
           role: updated.role,
           handle: updated.handle,
           bio: updated.bio,
-          logo_url: updated.avatar_url,
+          logo_url: isSyntheticAvatar(updated.avatar_url) ? null : updated.avatar_url,
           brand_color: updated.brand_color,
           brand_font: updated.brand_font,
           phone: updated.phone,
@@ -329,7 +403,7 @@ export const createGuestAccountFromRsvp = (email: string, name: string, phone?: 
     email,
     name: name || email.split('@')[0],
     role: 'guest',
-    avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || email)}`,
+    avatar_url: '',
     onboarded: true,
     isDemo: false,
   };
@@ -403,7 +477,12 @@ export const signInWithPassword = async (
       name: dbProfile?.name || meta.name || cleanEmail.split('@')[0],
       role: assignedRole as any,
       handle: dbProfile?.handle || meta.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-      avatar_url: dbProfile?.logo_url || dbProfile?.avatar_url || meta.avatar_url,
+      avatar_url: resolveAvatarUrl({
+        dbLogoUrl: dbProfile?.logo_url,
+        dbAvatarUrl: dbProfile?.avatar_url,
+        metaAvatar: meta.avatar_url,
+        metaPicture: meta.picture,
+      }),
       bio: dbProfile?.bio || meta.bio,
       brand_color: dbProfile?.brand_color || meta.brand_color || '#0A0A0A',
       brand_font: 'Inter',
@@ -630,9 +709,11 @@ export const useAuth = () => {
               role: isSuper ? 'super_admin' : 'organizer',
               handle: meta.handle || safeLocal?.handle || userEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
               bio: meta.bio || safeLocal?.bio || '',
-              avatar_url: (userEmail.includes('pandeysuyash100@gmail.com'))
-                ? ''
-                : (meta.avatar_url || safeLocal?.avatar_url || ''),
+              avatar_url: resolveAvatarUrl({
+                metaAvatar: meta.avatar_url,
+                metaPicture: meta.picture,
+                localAvatar: safeLocal?.avatar_url,
+              }),
               brand_color: meta.brand_color || safeLocal?.brand_color || '#E8621A',
               brand_font: meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
               phone: meta.phone || safeLocal?.phone,
@@ -652,15 +733,21 @@ export const useAuth = () => {
                   ? 'super_admin'
                   : (dbProf.role === 'super_admin' || dbProf.role === 'curator' ? dbProf.role : (dbProf.role || 'organizer'));
 
+                const resolvedAvatar = resolveAvatarUrl({
+                  dbLogoUrl: dbProf.logo_url,
+                  dbAvatarUrl: dbProf.avatar_url,
+                  metaAvatar: meta.avatar_url,
+                  metaPicture: meta.picture,
+                  localAvatar: mergedProfile.avatar_url,
+                });
+
                 mergedProfile = {
                   ...mergedProfile,
                   name: dbProf.name || mergedProfile.name,
                   role: resolvedRole as any,
                   handle: dbProf.handle || mergedProfile.handle,
                   bio: dbProf.bio || mergedProfile.bio,
-                  avatar_url: (mergedProfile.email?.toLowerCase().includes('pandeysuyash100@gmail.com'))
-                    ? ''
-                    : (dbProf.logo_url || dbProf.avatar_url || mergedProfile.avatar_url),
+                  avatar_url: resolvedAvatar,
                   brand_color: dbProf.brand_color || mergedProfile.brand_color,
                   brand_font: dbProf.brand_font || mergedProfile.brand_font,
                   phone: dbProf.phone || mergedProfile.phone,
@@ -702,31 +789,39 @@ export const useAuth = () => {
           const meta = session.user.user_metadata || {};
 
           let resolvedRole: 'super_admin' | 'curator' | 'organizer' | 'guest' = isSuper ? 'super_admin' : 'organizer';
+          let dbProf: any = null;
           try {
-            const { data: dbProf } = await client
+            const { data: prof } = await client
               .from('profiles')
-              .select('role')
+              .select('*')
               .eq('id', session.user.id)
               .single();
+            dbProf = prof;
             if (dbProf?.role) {
               resolvedRole = isSuper ? 'super_admin' : (dbProf.role as any);
             }
           } catch {}
 
+          const resolvedAvatar = resolveAvatarUrl({
+            dbLogoUrl: dbProf?.logo_url,
+            dbAvatarUrl: dbProf?.avatar_url,
+            metaAvatar: meta.avatar_url,
+            metaPicture: meta.picture,
+            localAvatar: safeLocal?.avatar_url,
+          });
+
           const mergedProfile: AuthProfile = {
             id: session.user.id,
             email: userEmail,
-            name: meta.name || safeLocal?.name || session.user.email?.split('@')[0] || 'User',
+            name: dbProf?.name || meta.name || safeLocal?.name || session.user.email?.split('@')[0] || 'User',
             role: resolvedRole,
-            handle: meta.handle || safeLocal?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-            bio: meta.bio || safeLocal?.bio || '',
-            avatar_url: userEmail.includes('pandeysuyash100@gmail.com')
-              ? ''
-              : (meta.avatar_url || safeLocal?.avatar_url || ''),
-            brand_color: meta.brand_color || safeLocal?.brand_color || '#E8621A',
-            brand_font: meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
-            phone: meta.phone || safeLocal?.phone,
-            onboarded: safeLocal?.onboarded ?? meta.onboarded ?? false,
+            handle: dbProf?.handle || meta.handle || safeLocal?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+            bio: dbProf?.bio || meta.bio || safeLocal?.bio || '',
+            avatar_url: resolvedAvatar,
+            brand_color: dbProf?.brand_color || meta.brand_color || safeLocal?.brand_color || '#E8621A',
+            brand_font: dbProf?.brand_font || meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
+            phone: dbProf?.phone || meta.phone || safeLocal?.phone,
+            onboarded: dbProf?.onboarded !== undefined ? dbProf.onboarded : (safeLocal?.onboarded ?? meta.onboarded ?? false),
             isDemo: false,
           };
           setProfile(mergedProfile);

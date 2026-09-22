@@ -30,7 +30,7 @@ import {
   cancelRSVP
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
-import { useAuth } from '@/lib/auth';
+import { useAuth, getInitials, isSyntheticAvatar } from '@/lib/auth';
 
 function PassesInner() {
   const router = useRouter();
@@ -40,6 +40,11 @@ function PassesInner() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [rsvps, setRsvps] = useState<RSVPItem[]>([]);
   const [isSyncing, setIsSyncing] = useState(true);
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [profile?.avatar_url]);
 
   // Sub-filter: upcoming, past, all
   const [passFilter, setPassFilter] = useState<'upcoming' | 'past' | 'all'>('upcoming');
@@ -202,19 +207,18 @@ function PassesInner() {
             {/* User Identity Details */}
             <div className="flex items-start sm:items-center gap-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#0F172A] to-[#334155] text-white flex items-center justify-center font-bold text-xl sm:text-2xl shadow-sm overflow-hidden shrink-0 border-2 border-white">
-                {profile?.avatar_url && !profile?.email?.toLowerCase().includes('pandeysuyash100@gmail.com') ? (
+                {profile?.avatar_url && !avatarError && !isSyntheticAvatar(profile.avatar_url) ? (
                   <Image
                     src={profile.avatar_url}
                     alt={profile.name || 'User'}
                     width={80}
                     height={80}
                     className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
                   />
                 ) : (
                   <span>
-                    {(profile?.name || guestEmail || 'VIBE')
-                      .slice(0, 2)
-                      .toUpperCase()}
+                    {getInitials(profile?.name, profile?.email || guestEmail)}
                   </span>
                 )}
               </div>
