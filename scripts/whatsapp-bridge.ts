@@ -139,24 +139,48 @@ async function startWhatsAppBridge() {
       // If sent by me to another contact, ignore. But allow if it is a self-chat ("Message yourself")
       if (msg.key.fromMe && !isSelfChat) continue;
 
+      // Unwrap all nested WhatsApp message envelopes (ephemeral, view-once, document-with-caption, interactive)
+      let m: any = msg.message;
+      if (m.ephemeralMessage?.message) m = m.ephemeralMessage.message;
+      if (m.viewOnceMessage?.message) m = m.viewOnceMessage.message;
+      if (m.viewOnceMessageV2?.message) m = m.viewOnceMessageV2.message;
+      if (m.documentWithCaptionMessage?.message) m = m.documentWithCaptionMessage.message;
+      if (m.templateMessage?.hydratedTemplate) m = m.templateMessage.hydratedTemplate;
+      if (m.interactiveMessage?.body) m = { conversation: m.interactiveMessage.body.text };
+
       const messageContent =
-        msg.message.conversation ||
-        msg.message.extendedTextMessage?.text ||
-        msg.message.imageMessage?.caption ||
+        m.conversation ||
+        m.extendedTextMessage?.text ||
+        m.imageMessage?.caption ||
+        m.documentMessage?.caption ||
+        m.videoMessage?.caption ||
         '';
 
       const hasImage = Boolean(
-        msg.message.imageMessage ||
-        (msg.message.documentMessage && msg.message.documentMessage.mimetype?.startsWith('image/'))
+        m.imageMessage ||
+        (m.documentMessage && m.documentMessage.mimetype?.startsWith('image/'))
       );
 
       if (!messageContent.trim() && !hasImage) continue;
 
       // Extract quoted message ID (e.g. if host swiped right on Vibe inquiry)
-      const contextInfo = msg.message.extendedTextMessage?.contextInfo;
+      const contextInfo =
+        m.extendedTextMessage?.contextInfo ||
+        m.imageMessage?.contextInfo ||
+        m.documentMessage?.contextInfo;
       const quotedStanzaId = contextInfo?.stanzaId;
 
-      const senderPhone = isSelfChat ? (connectedPhone || '916264984285') : remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace('@lid', '');
+      let senderPhone = '';
+      if (isSelfChat) {
+        senderPhone = connectedPhone || '916264984285';
+      } else if (remoteJid.includes('@s.whatsapp.net')) {
+        senderPhone = remoteJid.replace('@s.whatsapp.net', '');
+      } else if (msg.key.participant && msg.key.participant.includes('@s.whatsapp.net')) {
+        senderPhone = msg.key.participant.replace('@s.whatsapp.net', '');
+      } else {
+        senderPhone = remoteJid.replace(/[^0-9]/g, '');
+      }
+
       const senderName = msg.pushName || 'Host';
 
       // Check if we have this quoted message stored in memory
@@ -181,7 +205,7 @@ async function startWhatsAppBridge() {
             }
           );
           imageBase64 = (buffer as Buffer).toString('base64');
-          imageMimeType = msg.message.imageMessage?.mimetype || msg.message.documentMessage?.mimetype || 'image/jpeg';
+          imageMimeType = m.imageMessage?.mimetype || m.documentMessage?.mimetype || 'image/jpeg';
           console.log('[WhatsApp Bridge] Downloaded attached poster image:', {
             mimeType: imageMimeType,
             sizeBytes: (buffer as Buffer).length,
@@ -201,22 +225,29 @@ async function startWhatsAppBridge() {
       });
 
       // Forward to Vibe Webhook
-      try {
-        const webhookPayload = {
-          messageId: msg.key.id,
-          senderPhone,
-          senderJid: remoteJid,
-          senderName,
-          text: messageContent.trim(),
-          quotedMessageId: quotedStanzaId,
-          conversationId: matchedConversationId,
-          imageBase64,
-          imageMimeType,
-        };
+      const webhookPayload = {
+        messageId: msg.key.id,
+        senderPhone,
+        senderJid: remoteJid,
+        senderName,
+        text: messageContent.trim(),
+        quotedMessageId: quotedStanzaId,
+        conversationId: matchedConversationId,
+        imageBase64,
+        imageMimeType,
+      };
 
-        let res: Response;
+      const candidateUrls = [
+        VIBE_WEBHOOK_URL,
+        'http://localhost:3000/api/whatsapp/webhook',
+        'http://127.0.0.1:3000/api/whatsapp/webhook',
+        'https://vibe-seven-pied.vercel.app/api/whatsapp/webhook',
+      ].filter((u, i, arr) => arr.indexOf(u) === i);
+
+      let forwarded = false;
+      for (const targetUrl of candidateUrls) {
         try {
-          res = await fetch(VIBE_WEBHOOK_URL, {
+          const res = await fetch(targetUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -225,27 +256,22 @@ async function startWhatsAppBridge() {
             },
             body: JSON.stringify(webhookPayload),
           });
-        } catch (localErr: any) {
-          if (!VIBE_WEBHOOK_URL.includes('vercel.app')) {
-            console.warn(`[WhatsApp Bridge] Local webhook failed (${localErr.message}). Retrying on production Vercel...`);
-            res = await fetch('https://vibe-seven-pied.vercel.app/api/whatsapp/webhook', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-whatsapp-webhook-secret': BRIDGE_SECRET,
-                'Authorization': `Bearer ${BRIDGE_SECRET}`,
-              },
-              body: JSON.stringify(webhookPayload),
-            });
-          } else {
-            throw localErr;
-          }
-        }
 
-        const resData = await res.json().catch(() => ({}));
-        console.log('[WhatsApp Bridge] Webhook forward result:', res.status, resData);
-      } catch (err: any) {
-        console.error('[WhatsApp Bridge] Failed to forward webhook to Vibe:', err.message);
+          if (res.ok) {
+            const resData = await res.json().catch(() => ({}));
+            console.log(`[WhatsApp Bridge] Webhook forwarded successfully to ${targetUrl}:`, resData);
+            forwarded = true;
+            break;
+          } else {
+            console.warn(`[WhatsApp Bridge] Webhook ${targetUrl} returned status ${res.status}`);
+          }
+        } catch (err: any) {
+          console.warn(`[WhatsApp Bridge] Webhook attempt to ${targetUrl} failed: ${err.message}`);
+        }
+      }
+
+      if (!forwarded) {
+        console.error('[WhatsApp Bridge] Could not forward message to any Vibe webhook endpoint.');
       }
     }
   });
