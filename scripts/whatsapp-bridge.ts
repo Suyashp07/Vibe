@@ -262,11 +262,20 @@ async function startWhatsAppBridge() {
             console.log(`[WhatsApp Bridge] Webhook forwarded successfully to ${targetUrl}:`, resData);
 
             // Directly send confirmation / reply back to the WhatsApp user
-            if (resData.replyText && sock) {
+            const replyToSend =
+              resData.replyText ||
+              (resData.event
+                ? `⚡ *YOUR FLASH VIBE IS LIVE ON VIBE INSTANT!*\n\n` +
+                  `🔥 *${resData.event.title || 'Your Event'}*\n\n` +
+                  `📱 *Open in Vibe Instant:*\nhttps://vibe-seven-pied.vercel.app/vibes?event=${resData.event.slug}\n\n` +
+                  `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`
+                : null);
+
+            if (replyToSend && sock) {
               try {
                 const targetJid = remoteJid || (senderPhone ? `${senderPhone}@s.whatsapp.net` : '');
                 if (targetJid) {
-                  const sent = await sock.sendMessage(targetJid, { text: resData.replyText });
+                  const sent = await sock.sendMessage(targetJid, { text: replyToSend });
                   if (sent?.key?.id) {
                     sentMessageMap.set(sent.key.id, {
                       conversationId: resData.conversationId || resData.event?.slug,
@@ -274,7 +283,7 @@ async function startWhatsAppBridge() {
                       sentAt: Date.now(),
                     });
                   }
-                  console.log(`[WhatsApp Bridge] ✅ Sent confirmation reply back to ${targetJid}`);
+                  console.log(`[WhatsApp Bridge] ✅ Successfully sent confirmation reply back to ${targetJid}`);
                 }
               } catch (sendReplyErr: any) {
                 console.warn(`[WhatsApp Bridge] Could not send reply back to ${remoteJid}:`, sendReplyErr.message);
