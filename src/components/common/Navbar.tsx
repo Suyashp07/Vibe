@@ -150,7 +150,7 @@ export default function Navbar() {
       <header className="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] shadow-xs">
         {/* District by Zomato Structure: Logo + Location on Left, 3 Core Features in Center, Search + Profile on Right */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
+          <div className="flex items-center justify-between h-16 gap-3 sm:gap-6 relative">
             {/* Left: Brand Logo + Location Selector (District style) */}
             <div className="flex items-center gap-3 sm:gap-6 shrink-0">
               <BrandLogo />
@@ -179,15 +179,15 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Center: The Three Core Features (Events, Vibe Instant, Host an Event) */}
-            <nav className="hidden md:flex items-center gap-1.5 lg:gap-2.5">
+            {/* Center: The Three Core Features (Events, Vibe Instant, Host) - Mathematically centered & equidistant */}
+            <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center p-1 rounded-full bg-[#F1F5F9]/80 border border-[#E2E8F0] shadow-2xs">
               {/* Feature 1: Events */}
               <Link
                 href="/"
-                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all ${
+                className={`w-28 lg:w-32 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center text-center cursor-pointer ${
                   pathname === '/' || pathname.startsWith('/event')
-                    ? 'bg-[#FDF8EE] text-[#9A3412] font-black border border-[#FDE68A]/70 shadow-2xs'
-                    : 'text-[#475569] hover:text-[#0F172A] font-bold hover:bg-[#F8FAFC]'
+                    ? 'bg-white text-[#9A3412] font-black shadow-xs border border-[#FDE68A]/80'
+                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50 border border-transparent'
                 }`}
               >
                 Events
@@ -196,10 +196,10 @@ export default function Navbar() {
               {/* Feature 2: Vibe Instant */}
               <Link
                 href="/vibes"
-                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all inline-flex items-center gap-1.5 ${
+                className={`w-28 lg:w-32 py-1.5 rounded-full text-xs font-bold transition-all inline-flex items-center justify-center gap-1.5 text-center cursor-pointer ${
                   pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-                    ? 'bg-[#FDF8EE] text-[#9A3412] font-black border border-[#FDE68A]/70 shadow-2xs'
-                    : 'text-[#475569] hover:text-[#E8621A] font-bold hover:bg-[#F8FAFC]'
+                    ? 'bg-white text-[#9A3412] font-black shadow-xs border border-[#FDE68A]/80'
+                    : 'text-[#64748B] hover:text-[#E8621A] hover:bg-white/50 border border-transparent'
                 }`}
               >
                 <span>Vibe Instant</span>
@@ -209,16 +209,17 @@ export default function Navbar() {
                 </div>
               </Link>
 
-              {/* Feature 3: Host an Event */}
+              {/* Feature 3: Host */}
               <Link
                 href="/create"
-                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all ${
+                className={`w-28 lg:w-32 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center text-center cursor-pointer ${
                   pathname.startsWith('/create')
-                    ? 'bg-[#FDF8EE] text-[#9A3412] font-black border border-[#FDE68A]/70 shadow-2xs'
-                    : 'text-[#475569] hover:text-[#0F172A] font-bold hover:bg-[#F8FAFC]'
+                    ? 'bg-white text-[#9A3412] font-black shadow-xs border border-[#FDE68A]/80'
+                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50 border border-transparent'
                 }`}
+                title="Host an Event"
               >
-                Host an Event
+                Host
               </Link>
             </nav>
 
