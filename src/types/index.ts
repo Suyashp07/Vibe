@@ -23,6 +23,14 @@ export interface ThemeConfig {
   bg_style: 'solid' | 'gradient' | 'texture';
   button_style: 'solid' | 'pill' | 'outline';
   custom_accent?: string;
+  is_flash?: boolean;
+  flash_activity?: string;
+  whatsapp_host_phone?: string;
+  vibe_cheers_count?: number;
+  flash_tags?: string[];
+  spots_limit?: number;
+  spots_filled?: number;
+  [key: string]: any;
 }
 
 export interface SectionToggles {

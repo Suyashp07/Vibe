@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem } from '@/types';
-import { cheerFlashVibe, getRSVPs } from '@/lib/store';
+import { cheerFlashVibe, isFlashVibeLiked, toggleFlashVibeLike, getRSVPs } from '@/lib/store';
 import QuickJoinModal from './QuickJoinModal';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
 import { useAuth } from '@/lib/auth';
@@ -46,8 +46,12 @@ export default function VibeReelCard({
   total,
 }: VibeReelCardProps) {
   const { profile } = useAuth();
-  const [cheers, setCheers] = useState(event.vibe_cheers_count || 12);
-  const [hasCheered, setHasCheered] = useState(false);
+  const [cheers, setCheers] = useState<number>(() => {
+    return event.vibe_cheers_count ?? event.theme?.vibe_cheers_count ?? 0;
+  });
+  const [hasCheered, setHasCheered] = useState<boolean>(() => {
+    return typeof window !== 'undefined' ? isFlashVibeLiked(event.id, event.slug) : false;
+  });
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [connectHostOpen, setConnectHostOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -56,6 +60,12 @@ export default function VibeReelCard({
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const lastTapRef = useRef<number>(0);
 
+  // Sync like count and status whenever event prop updates or changes
+  useEffect(() => {
+    setHasCheered(isFlashVibeLiked(event.id, event.slug));
+    setCheers(event.vibe_cheers_count ?? event.theme?.vibe_cheers_count ?? 0);
+  }, [event.id, event.slug, event.vibe_cheers_count, event.theme?.vibe_cheers_count]);
+
   // Instagram-style double-tap on card to cheer / like
   const handleCardDoubleTap = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -63,9 +73,12 @@ export default function VibeReelCard({
 
     const now = Date.now();
     if (now - lastTapRef.current < 320) {
-      handleCheer();
-      setShowHeartAnim(true);
-      setTimeout(() => setShowHeartAnim(false), 900);
+      if (!hasCheered) {
+        handleCheer();
+      } else {
+        setShowHeartAnim(true);
+        setTimeout(() => setShowHeartAnim(false), 900);
+      }
       lastTapRef.current = 0;
     } else {
       lastTapRef.current = now;
@@ -83,20 +96,24 @@ export default function VibeReelCard({
     } catch {}
   }, [event.id, event.slug]);
 
-  // Handle cheer / vibe check with confetti
-  const handleCheer = () => {
-    const nextCount = cheerFlashVibe(event.id);
-    setCheers(nextCount || cheers + 1);
-    setHasCheered(true);
+  // Handle cheer / vibe check with toggle and confetti
+  const handleCheer = async () => {
+    const result = await toggleFlashVibeLike(event.id, event.slug);
+    setCheers(result.count);
+    setHasCheered(result.liked);
 
-    try {
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { x: 0.9, y: 0.5 },
-        colors: ['#F97316', '#EC4899', '#FBBF24'],
-      });
-    } catch {}
+    if (result.liked) {
+      setShowHeartAnim(true);
+      setTimeout(() => setShowHeartAnim(false), 900);
+      try {
+        confetti({
+          particleCount: 40,
+          spread: 60,
+          origin: { x: 0.9, y: 0.5 },
+          colors: ['#F97316', '#EC4899', '#FBBF24'],
+        });
+      } catch {}
+    }
   };
 
   // Handle share
@@ -218,7 +235,7 @@ export default function VibeReelCard({
           type="button"
           onClick={handleCheer}
           className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none"
-          title="Vibe Check / Cheer"
+          title={hasCheered ? "Liked! (Click to unlike)" : "Vibe Check / Cheer"}
         >
           <div
             className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all active:scale-90 ${
@@ -227,9 +244,9 @@ export default function VibeReelCard({
                 : 'bg-black/50 border-white/20 text-white hover:bg-black/70 hover:scale-105'
             }`}
           >
-            <Flame className={`w-6 h-6 ${hasCheered ? 'fill-white animate-bounce' : ''}`} />
+            <Flame className={`w-6 h-6 transition-transform ${hasCheered ? 'fill-white scale-110' : ''}`} />
           </div>
-          <span className="text-[11px] font-black text-white drop-shadow-md">
+          <span className={`text-[11px] font-black drop-shadow-md transition-colors ${hasCheered ? 'text-[#FF8C42]' : 'text-white'}`}>
             {cheers}
           </span>
         </button>

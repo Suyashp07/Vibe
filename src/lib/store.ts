@@ -889,21 +889,91 @@ export const getFlashVibeEvents = (): EventItem[] => {
   return combined;
 };
 
-export const cheerFlashVibe = (eventId: string): number => {
-  if (!isClient) return 0;
-  const key = `vibe_cheers_${eventId}`;
-  const current = parseInt(localStorage.getItem(key) || '0', 10);
-  const next = current + 1;
-  localStorage.setItem(key, next.toString());
-  
+export const isFlashVibeLiked = (eventId: string, slug?: string): boolean => {
+  if (!isClient) return false;
+  return (
+    localStorage.getItem(`vibe_liked_${eventId}`) === 'true' ||
+    Boolean(slug && localStorage.getItem(`vibe_liked_${slug}`) === 'true')
+  );
+};
+
+export const toggleFlashVibeLike = async (
+  eventId: string,
+  slug?: string
+): Promise<{ count: number; liked: boolean }> => {
+  if (!isClient) return { count: 0, liked: false };
+
+  const alreadyLiked = isFlashVibeLiked(eventId, slug);
+  const isLiking = !alreadyLiked;
+
+  // 1. Persist local user like state
+  if (isLiking) {
+    localStorage.setItem(`vibe_liked_${eventId}`, 'true');
+    if (slug) localStorage.setItem(`vibe_liked_${slug}`, 'true');
+  } else {
+    localStorage.removeItem(`vibe_liked_${eventId}`);
+    if (slug) localStorage.removeItem(`vibe_liked_${slug}`);
+  }
+
+  // 2. Optimistically update in local event store
   const events = getEvents();
-  const target = events.find(e => e.id === eventId || e.slug === eventId);
+  const target = events.find(e => e.id === eventId || (slug && e.slug === slug) || e.slug === eventId);
+  let newCount = 1;
   if (target) {
-    target.vibe_cheers_count = (target.vibe_cheers_count || 0) + 1;
+    const current = Number(target.vibe_cheers_count || 0);
+    newCount = isLiking ? current + 1 : Math.max(0, current - 1);
+    target.vibe_cheers_count = newCount;
+    if (typeof target.theme === 'object' && target.theme !== null) {
+      target.theme.vibe_cheers_count = newCount;
+    }
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
   }
   notifyListeners();
-  return next;
+
+  // 3. Asynchronously persist in Supabase PostgreSQL
+  try {
+    fetch('/api/events/like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventId,
+        slug: slug || target?.slug,
+        action: isLiking ? 'like' : 'unlike',
+      }),
+    }).catch(err => console.warn('Supabase like sync background error:', err));
+  } catch {}
+
+  return { count: newCount, liked: isLiking };
+};
+
+export const cheerFlashVibe = (eventId: string): number => {
+  if (!isClient) return 0;
+  const events = getEvents();
+  const target = events.find(e => e.id === eventId || e.slug === eventId);
+  const current = Number(target?.vibe_cheers_count || 0);
+  const newCount = current + 1;
+  
+  if (target) {
+    target.vibe_cheers_count = newCount;
+    if (typeof target.theme === 'object' && target.theme !== null) {
+      target.theme.vibe_cheers_count = newCount;
+    }
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+  }
+  
+  localStorage.setItem(`vibe_liked_${eventId}`, 'true');
+  if (target?.slug) localStorage.setItem(`vibe_liked_${target.slug}`, 'true');
+  notifyListeners();
+
+  try {
+    fetch('/api/events/like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId, slug: target?.slug, action: 'like' }),
+    }).catch(() => {});
+  } catch {}
+
+  return newCount;
 };
 
 export const getEventBySlug = (slug: string): EventItem | undefined => {
