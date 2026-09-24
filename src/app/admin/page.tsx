@@ -1314,7 +1314,7 @@ function DetailInspector({
                 target="_blank"
                 className="text-[10px] text-[#2563EB] hover:underline flex items-center gap-0.5"
               >
-                <span>View Live</span>
+                <span>{isPending || (event.status || '').toLowerCase() !== 'live' && (event.status || '').toLowerCase() !== 'published' ? 'View Draft' : 'View Live'}</span>
                 <ExternalLink className="w-2.5 h-2.5" />
               </Link>
             )}
