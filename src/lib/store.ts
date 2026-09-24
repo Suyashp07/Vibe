@@ -990,9 +990,11 @@ import { getSupabaseClient, isSupabaseConfigured } from './supabase';
 export const saveEvent = async (event: EventItem) => {
   if (isClient) {
     const events = getEvents();
-    const index = events.findIndex(e => e.id === event.id || e.slug === event.slug);
+    const index = events.findIndex(
+      (e) => (e.id && event.id && e.id === event.id) || (e.slug && event.slug && e.slug.toLowerCase() === event.slug.toLowerCase())
+    );
     if (index >= 0) {
-      events[index] = { ...event, updated_at: new Date().toISOString() };
+      events[index] = { ...events[index], ...event, updated_at: new Date().toISOString() };
     } else {
       events.unshift(event);
     }
@@ -1005,8 +1007,9 @@ export const saveEvent = async (event: EventItem) => {
   if (client) {
     try {
       const isUUID = Boolean(event.organizer_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.organizer_id));
+      const isEventUUID = Boolean(event.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.id));
       await client.from('events').upsert({
-        id: event.id.startsWith('evt-') || event.id.startsWith('flash-') ? undefined : event.id,
+        id: isEventUUID ? event.id : undefined,
         organizer_id: isUUID ? event.organizer_id : undefined,
         slug: event.slug,
         title: event.title,

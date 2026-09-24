@@ -23,8 +23,14 @@ function getSupabaseAdmin() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { url, imageBase64, imageMimeType, text, isPublic, organizerId, organizerName } =
-      await req.json();
+    const body = await req.json();
+    const url = body.url;
+    const imageBase64 = body.imageBase64 || body.poster_image || body.posterBase64;
+    const imageMimeType = body.imageMimeType;
+    const text = body.text || body.prompt || body.notes;
+    const isPublic = body.isPublic;
+    const organizerId = body.organizerId || body.organizer_id;
+    const organizerName = body.organizerName || body.organizer_name || 'Event Host';
 
     if (!url && !imageBase64 && !text) {
       return NextResponse.json(
@@ -155,13 +161,13 @@ export async function POST(req: NextRequest) {
     });
 
     const suretyScore = surety.score; // 0 to 100%
-    const isAutoApproved = suretyScore >= 90;
-    const approvalStatus: 'approved' | 'pending' = isAutoApproved ? 'approved' : 'pending';
-    const eventStatus: 'live' | 'draft' = isAutoApproved ? 'live' : 'draft';
-    const isEventPublic = isAutoApproved && isPublic !== false;
+    const generatedId = `evt-${Date.now()}-${nanoid(6)}`;
 
     // 2. Build Event Record
     const insertPayload = {
+      id: generatedId,
+      organizer_id: isUUID ? organizerId : 'org-1',
+      organizer_name: organizerName,
       slug: finalSlug,
       title: extracted.title || 'Untitled Gathering',
       tagline: extracted.tagline || `Experience the gathering in ${detectedCity}`,
@@ -179,8 +185,8 @@ export async function POST(req: NextRequest) {
         button_style: 'pill',
         confidence_score: suretyScore / 100,
         missing_aspects: surety.missingAspects,
-        approval_status: approvalStatus,
-        admin_approved: isAutoApproved,
+        approval_status: 'approved',
+        admin_approved: true,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -191,10 +197,10 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: 0, // 0 denotes unlimited
-      is_public: isEventPublic,
+      is_public: isPublic !== false,
       is_private: isPublic === false,
-      visibility: isPublic === false ? 'private' : (isEventPublic ? 'public' : 'private'),
-      status: eventStatus,
+      visibility: isPublic === false ? 'private' : 'public',
+      status: 'live',
       confidence_score: suretyScore / 100,
       ai_generated: true,
       source_type: finalSourceType,
@@ -231,34 +237,54 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    // Save to Supabase if available
+    let createdEventRecord: any = null;
     if (supabase) {
       try {
-        await supabase.from('events').insert({
-          ...insertPayload,
-          id: undefined, // Let Supabase auto-generate UUID or use default
-        });
+        const dbPayload: any = { ...insertPayload };
+        delete dbPayload.id;
+        if (!isUUID) {
+          delete dbPayload.organizer_id;
+        }
+
+        const { data: dbData, error: dbErr } = await supabase
+          .from('events')
+          .insert(dbPayload)
+          .select('*')
+          .maybeSingle();
+
+        if (dbErr) {
+          console.error('[AI Create] Supabase insert error:', dbErr);
+          if (dbPayload.organizer_id) {
+            delete dbPayload.organizer_id;
+            const { data: retryData } = await supabase
+              .from('events')
+              .insert(dbPayload)
+              .select('*')
+              .maybeSingle();
+            if (retryData) {
+              createdEventRecord = retryData;
+            }
+          }
+        } else if (dbData) {
+          createdEventRecord = dbData;
+        }
       } catch (dbErr) {
         console.warn('[AI Create] Supabase insert warning:', dbErr);
       }
     }
 
+    const finalEvent = createdEventRecord || insertPayload;
+
     return NextResponse.json({
       ok: true,
       slug: finalSlug,
-      event: {
-        ...insertPayload,
-        confidence_score: suretyScore / 100,
-        missing_aspects: surety.missingAspects,
-        approval_status: approvalStatus,
-        admin_approved: isAutoApproved,
-      },
+      event: finalEvent,
       surety: {
         score: suretyScore,
         tier: surety.tier,
         missingAspects: surety.missingAspects,
-        autoApproved: isAutoApproved,
-        approvalStatus,
+        autoApproved: true,
+        approvalStatus: 'approved',
         label: surety.approvalLabel,
       },
     });
