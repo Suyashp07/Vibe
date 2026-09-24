@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getSupabaseClient, isSupabaseConfigured } from './supabase';
+export { getSupabaseClient, isSupabaseConfigured };
 import { INITIAL_ORGANIZERS } from './store';
 import { User, Session } from '@supabase/supabase-js';
 
@@ -427,6 +428,43 @@ export const signInWithMagicLink = sendEmailOtp;
 /**
  * Sign in with Email and Password (Host or Guest)
  */
+export const checkEmailAlreadyRegistered = async (email: string): Promise<boolean> => {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail || !cleanEmail.includes('@')) return false;
+
+  try {
+    const res = await fetch('/api/auth/check-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return Boolean(data.exists);
+    }
+  } catch (err) {
+    console.warn('checkEmailAlreadyRegistered fetch error:', err);
+  }
+
+  // Fallback to client query if endpoint fails
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      const { data } = await client
+        .from('profiles')
+        .select('id, email')
+        .ilike('email', cleanEmail)
+        .limit(1);
+      if (data && data.length > 0) return true;
+    } catch {}
+  }
+
+  return false;
+};
+
+/**
+ * Sign in with Email and Password (Host or Guest)
+ */
 export const signInWithPassword = async (
   email: string,
   password: string,
@@ -459,6 +497,22 @@ export const signInWithPassword = async (
   });
 
   if (error) {
+    const isUnconfirmed = error.message?.toLowerCase().includes('not confirmed') || error.message?.toLowerCase().includes('unconfirmed');
+    if (isUnconfirmed) {
+      // Trigger a resend so the user gets an OTP right away
+      try {
+        await client.auth.resend({ type: 'signup', email: cleanEmail });
+      } catch {}
+      return {
+        data: null,
+        error: {
+          message: 'Your email is not verified yet. A verification code has been sent to your inbox.',
+          code: 'EMAIL_NOT_CONFIRMED',
+        },
+        needsConfirmation: true,
+        email: cleanEmail,
+      };
+    }
     return { data: null, error };
   }
 
@@ -470,8 +524,17 @@ export const signInWithPassword = async (
         .from('profiles')
         .select('*')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle();
       dbProfile = prof;
+
+      if (!dbProfile) {
+        const { data: profByEmail } = await client
+          .from('profiles')
+          .select('*')
+          .ilike('email', cleanEmail)
+          .maybeSingle();
+        dbProfile = profByEmail;
+      }
     } catch {}
 
     const meta = data.user.user_metadata || {};
@@ -501,7 +564,7 @@ export const signInWithPassword = async (
 
     setLocalAuthSession(profile);
 
-    if (!dbProfile) {
+    if (!dbProfile || dbProfile.id !== data.user.id) {
       try {
         await client.from('profiles').upsert({
           id: profile.id,
@@ -525,7 +588,10 @@ export const signInWithPassword = async (
 };
 
 /**
- * Sign up with Email and Password (Host or Guest)
+ * Sign up with Email, Password and Name
+ * 1. Checks if email is already registered to avoid duplicates.
+ * 2. Invokes Supabase signUp.
+ * 3. Demands Email OTP verification before logging in.
  */
 export const signUpWithPassword = async (
   email: string,
@@ -538,6 +604,37 @@ export const signUpWithPassword = async (
   const cleanEmail = email.trim().toLowerCase();
   const cleanName = name.trim();
   const cleanHandle = (handle || cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_')).slice(0, 30);
+
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    return { data: null, error: { message: 'Please enter a valid email address.' } };
+  }
+
+  if (password.length < 6) {
+    return { data: null, error: { message: 'Password must be at least 6 characters long.' } };
+  }
+
+  // Pre-check if email already exists
+  const alreadyExists = await checkEmailAlreadyRegistered(cleanEmail);
+  if (alreadyExists) {
+    return {
+      data: null,
+      error: {
+        message: 'An account with this email already exists. Please sign in instead.',
+        code: 'USER_EXISTS',
+      },
+    };
+  }
+
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('vibe_pending_signup', JSON.stringify({
+      email: cleanEmail,
+      name: cleanName,
+      role,
+      handle: cleanHandle,
+      brand_color: '#0A0A0A',
+      brand_font: 'Inter',
+    }));
+  }
 
   if (!client) {
     const isSuper = ADMIN_EMAILS.includes(cleanEmail);
@@ -553,7 +650,7 @@ export const signUpWithPassword = async (
       isDemo: true,
     };
     setLocalAuthSession(profile);
-    return { data: { user: { id: profile.id, email: cleanEmail } }, error: null };
+    return { data: { user: { id: profile.id, email: cleanEmail } }, error: null, needsOtp: false };
   }
 
   const { data, error } = await client.auth.signUp({
@@ -569,23 +666,130 @@ export const signUpWithPassword = async (
   });
 
   if (error) {
+    if (
+      error.message?.toLowerCase().includes('already registered') ||
+      error.message?.toLowerCase().includes('already exists')
+    ) {
+      return {
+        data: null,
+        error: {
+          message: 'An account with this email already exists. Please sign in instead.',
+          code: 'USER_EXISTS',
+        },
+      };
+    }
     return { data: null, error };
+  }
+
+  // If Supabase returns identities: [], user already exists (anti-enumeration behavior)
+  if (data?.user?.identities && data.user.identities.length === 0) {
+    return {
+      data: null,
+      error: {
+        message: 'An account with this email already exists. Please sign in instead.',
+        code: 'USER_EXISTS',
+      },
+    };
+  }
+
+  // Return needsOtp so UI switches to OTP verification screen
+  return {
+    data,
+    error: null,
+    needsOtp: true,
+    email: cleanEmail,
+  };
+};
+
+/**
+ * Verify Signup Email OTP Token
+ */
+export const verifySignupOtp = async (
+  email: string,
+  otpCode: string,
+  role: 'organizer' | 'guest' = 'organizer'
+) => {
+  const client = getSupabaseClient();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanCode = otpCode.trim();
+
+  let pendingSignup: any = null;
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = sessionStorage.getItem('vibe_pending_signup');
+      if (raw) pendingSignup = JSON.parse(raw);
+    } catch {}
+  }
+
+  if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
+    return { data: null, error: { message: 'Please enter the 6-digit verification code.' } };
+  }
+
+  if (!client) {
+    return { data: null, error: { message: 'Supabase client is not configured.' } };
+  }
+
+  // Try 'signup' verification first
+  let { data, error } = await client.auth.verifyOtp({
+    email: cleanEmail,
+    token: cleanCode,
+    type: 'signup',
+  });
+
+  // If 'signup' fails, try 'email'
+  if (error) {
+    const emailRes = await client.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanCode,
+      type: 'email',
+    });
+    if (!emailRes.error) {
+      data = emailRes.data;
+      error = null;
+    } else {
+      // Try 'magiclink'
+      const mlRes = await client.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanCode,
+        type: 'magiclink',
+      });
+      if (!mlRes.error) {
+        data = mlRes.data;
+        error = null;
+      }
+    }
+  }
+
+  if (error) {
+    return { data: null, error: { message: error.message || 'Invalid or expired verification code. Please try again.' } };
   }
 
   if (data?.user) {
     const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+    const meta = data.user.user_metadata || {};
+
     const profile: AuthProfile = {
       id: data.user.id,
       email: data.user.email || cleanEmail,
-      name: cleanName,
-      role: isSuper ? 'super_admin' : role,
-      handle: cleanHandle,
+      name: pendingSignup?.name || meta.name || cleanEmail.split('@')[0],
+      role: isSuper ? 'super_admin' : (pendingSignup?.role || meta.role || role),
+      handle: pendingSignup?.handle || meta.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+      avatar_url: resolveAvatarUrl({
+        metaAvatar: meta.avatar_url,
+        metaPicture: meta.picture,
+      }),
       brand_color: '#0A0A0A',
       brand_font: 'Inter',
-      onboarded: role === 'guest',
+      onboarded: false,
       isDemo: false,
     };
+
     setLocalAuthSession(profile);
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('vibe_pending_signup');
+      window.dispatchEvent(new Event('vibe_auth_changed'));
+    }
 
     try {
       await client.from('profiles').upsert({
@@ -596,13 +800,36 @@ export const signUpWithPassword = async (
         handle: profile.handle,
         brand_color: profile.brand_color,
         brand_font: 'Inter',
-        onboarded: profile.onboarded,
+        onboarded: false,
       });
-    } catch {}
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('vibe_auth_changed'));
+    } catch (upsertErr) {
+      console.warn('Profile upsert warning after OTP verify:', upsertErr);
     }
+
+    return { data, error: null, profile };
+  }
+
+  return { data: null, error: { message: 'Verification failed. Please check the code and try again.' } };
+};
+
+/**
+ * Resend verification OTP code
+ */
+export const resendSignupOtp = async (email: string) => {
+  const client = getSupabaseClient();
+  const cleanEmail = email.trim().toLowerCase();
+
+  if (!client) {
+    return { data: null, error: { message: 'Supabase client is not configured.' } };
+  }
+
+  const { data, error } = await client.auth.resend({
+    type: 'signup',
+    email: cleanEmail,
+  });
+
+  if (error) {
+    return client.auth.signInWithOtp({ email: cleanEmail });
   }
 
   return { data, error: null };

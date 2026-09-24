@@ -50,8 +50,16 @@ function LoginContent() {
     setMessage(null);
 
     try {
-      const { error: signInErr } = await signInWithPassword(email.trim(), password.trim(), 'organizer');
-      if (signInErr) throw signInErr;
+      const res = await signInWithPassword(email.trim(), password.trim(), 'organizer');
+      if (res.error) {
+        if (res.needsConfirmation) {
+          setShowOtpFlow(true);
+          setOtpSent(true);
+          setMessage('Your email is not verified yet. We have sent a 6-digit verification code to your email. Enter it below to sign in:');
+          return;
+        }
+        throw res.error;
+      }
 
       router.push(destination);
     } catch (err: any) {
