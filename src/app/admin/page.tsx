@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
   const [savingAction, setSavingAction] = useState<string | null>(null);
 
   // Tabs: Review (draft/<90% surety), Auto-Approved (>=90%), Live (published), Rejected (cancelled), External, All
-  const [statusFilter, setStatusFilter] = useState<'REVIEW' | 'AUTO_APPROVED' | 'LIVE' | 'REJECTED' | 'EXTERNAL' | 'ALL'>('REVIEW');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'LIVE' | 'AUTO_APPROVED' | 'REVIEW' | 'EXTERNAL' | 'REJECTED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<AdminEvent | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -492,12 +492,12 @@ export default function AdminDashboardPage() {
   };
 
   const STATUS_TABS = [
-    { id: 'REVIEW', label: 'Needs Approval (<90%)', count: counts.pending, alert: counts.pending > 0 },
-    { id: 'AUTO_APPROVED', label: 'Auto-Approved (≥90%)', count: counts.autoApproved },
-    { id: 'LIVE', label: 'Live Published', count: counts.live },
-    { id: 'REJECTED', label: 'Rejected', count: counts.rejected },
-    { id: 'EXTERNAL', label: 'External Aggregated', count: counts.external },
     { id: 'ALL', label: 'All Events', count: counts.total },
+    { id: 'LIVE', label: 'Live Published', count: counts.live },
+    { id: 'AUTO_APPROVED', label: 'Auto-Approved (≥90%)', count: counts.autoApproved },
+    { id: 'REVIEW', label: 'Needs Approval (<90%)', count: counts.pending, alert: counts.pending > 0 },
+    { id: 'EXTERNAL', label: 'External Aggregated', count: counts.external },
+    { id: 'REJECTED', label: 'Rejected', count: counts.rejected },
   ] as const;
 
   return (
