@@ -262,13 +262,23 @@ async function startWhatsAppBridge() {
             console.log(`[WhatsApp Bridge] Webhook forwarded successfully to ${targetUrl}:`, resData);
 
             // Directly send confirmation / reply back to the WhatsApp user
+            const isApproved = resData.event?.status === 'live' || resData.event?.approval_status === 'approved';
+            const suretyPercent = resData.event?.confidence_score ? Math.round(resData.event.confidence_score * 100) : (isApproved ? 95 : 75);
+
             const replyToSend =
               resData.replyText ||
               (resData.event
-                ? `⚡ *YOUR FLASH VIBE IS LIVE ON VIBE INSTANT!*\n\n` +
-                  `🔥 *${resData.event.title || 'Your Event'}*\n\n` +
-                  `📱 *Open in Vibe Instant:*\nhttps://vibe-seven-pied.vercel.app/vibes?event=${resData.event.slug}\n\n` +
-                  `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`
+                ? isApproved
+                  ? `⚡ *YOUR FLASH VIBE IS AUTO-APPROVED & LIVE ON VIBE!* (${suretyPercent}% Surety)\n\n` +
+                    `🔥 *${resData.event.title || 'Your Event'}*\n\n` +
+                    `✅ *Auto-Approved:* Full event details verified\n\n` +
+                    `📱 *Open in Vibe Instant:*\nhttps://vibe-seven-pied.vercel.app/vibes?event=${resData.event.slug}\n\n` +
+                    `📲 _Forward this link to your squad — friends can swipe to your card and tap "I'm In" to join!_`
+                  : `⏳ *EVENT SUBMITTED FOR ADMIN APPROVAL* (${suretyPercent}% Surety)\n\n` +
+                    `🔥 *${resData.event.title || 'Your Event'}*\n\n` +
+                    `⚠️ *Aspects Not Given By User:* Venue place or time details were missing or estimated.\n\n` +
+                    `🛡️ _Because event surety is under 90%, our team has queued your event for quick admin verification before publishing live!_\n\n` +
+                    `🔗 *Review Draft Preview:*\nhttps://vibe-seven-pied.vercel.app/${resData.event.slug}`
                 : null);
 
             if (replyToSend && sock) {

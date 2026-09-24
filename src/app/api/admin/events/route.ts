@@ -78,6 +78,10 @@ export async function GET(req: NextRequest) {
         ticket_link: e.external_ticket_url || e.ticket_link || '',
         price_inr: priceInr || 0,
         price_text: e.external_price_text || (priceInr ? `₹${priceInr}` : 'Free Entry'),
+        confidence_score: e.confidence_score || e.theme?.confidence_score,
+        missing_aspects: e.missing_aspects || e.theme?.missing_aspects,
+        approval_status: e.approval_status || e.theme?.approval_status || ((e.confidence_score || 0) >= 0.9 ? 'approved' : 'pending'),
+        admin_approved: e.admin_approved ?? e.theme?.admin_approved ?? ((e.confidence_score || 0) >= 0.9),
       };
     });
 
@@ -223,9 +227,18 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // 8. Template & layout metadata
+    // 8. Template & layout metadata & approval status
     if (updates.template !== undefined) sanitizedUpdates.template = updates.template;
-    if (updates.theme !== undefined) sanitizedUpdates.theme = updates.theme;
+    if (updates.theme !== undefined) {
+      sanitizedUpdates.theme = updates.theme;
+    } else if (updates.approval_status !== undefined || updates.admin_approved !== undefined || updates.status === 'live') {
+      const existingTheme = existing?.theme || {};
+      sanitizedUpdates.theme = {
+        ...existingTheme,
+        approval_status: updates.approval_status || (updates.status === 'live' ? 'approved' : existingTheme.approval_status),
+        admin_approved: updates.admin_approved ?? (updates.status === 'live' ? true : existingTheme.admin_approved),
+      };
+    }
     if (updates.sections !== undefined) sanitizedUpdates.sections = updates.sections;
     if (updates.faq !== undefined) sanitizedUpdates.faq = updates.faq;
     if (updates.rsvp_form_config !== undefined) sanitizedUpdates.rsvp_form_config = updates.rsvp_form_config;

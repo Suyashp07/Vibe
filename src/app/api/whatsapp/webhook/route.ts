@@ -11,6 +11,7 @@ import {
   detectCategoryFromText,
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
+import { calculateEventSurety } from '@/lib/eventSurety';
 
 export const dynamic = 'force-dynamic';
 
@@ -366,6 +367,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Calculate event completeness and surety percentage
+    const surety = calculateEventSurety({
+      title: extracted.title,
+      venue_name: extracted.venue_name,
+      location_address: extracted.location_address,
+      city: detectedCity,
+      start_at: validStartAt,
+      end_at: validEndAt,
+      cover_image_url: coverImageUrl,
+      price_text: extracted.price_text,
+      description: extracted.description,
+    });
+
+    const suretyScore = surety.score; // 0 to 100%
+    const isAutoApproved = suretyScore >= 90;
+    const approvalStatus: 'approved' | 'pending' = isAutoApproved ? 'approved' : 'pending';
+    const eventStatus: 'live' | 'draft' = isAutoApproved ? 'live' : 'draft';
+    const isPublic = isAutoApproved;
+
     // Insert into Supabase `public.events`
     const insertPayload = {
       slug: finalSlug,
@@ -387,6 +407,10 @@ export async function POST(req: NextRequest) {
         vibe_cheers_count: 0,
         spots_limit: isFlashVibe ? 12 : undefined,
         spots_filled: 1,
+        confidence_score: suretyScore / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: approvalStatus,
+        admin_approved: isAutoApproved,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -397,8 +421,9 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: isFlashVibe ? 12 : 250,
-      is_public: true,
-      status: 'live', // Published live so host can immediately share!
+      is_public: isPublic,
+      status: eventStatus,
+      confidence_score: suretyScore / 100,
       ai_generated: true,
       organizer_id: organizerId,
       source_type: finalSourceType,
@@ -457,22 +482,39 @@ export async function POST(req: NextRequest) {
 
     // Send confirmation message to the organizer's WhatsApp
     let confirmationMsg = '';
-    if (isFlashVibe) {
-      confirmationMsg =
-        `⚡ *YOUR FLASH VIBE IS LIVE ON VIBE INSTANT!*\n\n` +
-        `🔥 *${createdEventTitle}*\n` +
-        `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-        `🕒 ${dateStr}\n\n` +
-        `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
-        `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
+    if (isAutoApproved) {
+      if (isFlashVibe) {
+        confirmationMsg =
+          `⚡ *YOUR FLASH VIBE IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
+          `🔥 *${createdEventTitle}*\n` +
+          `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
+          `🕒 ${dateStr}\n\n` +
+          `✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
+          `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
+          `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
+      } else {
+        confirmationMsg = 
+          `🎉 *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE!* (${suretyScore}% Surety)\n\n` +
+          `📌 *${createdEventTitle}*\n` +
+          `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
+          `🕒 ${dateStr}\n\n` +
+          `✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
+          `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
+          `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
+      }
     } else {
-      confirmationMsg = 
-        `🎉 *YOUR EVENT IS LIVE ON VIBE!*\n\n` +
+      const missingList = surety.missingAspects.length > 0
+        ? surety.missingAspects.map(a => `• ${a}`).join('\n')
+        : '• Place / venue details not fully specified';
+
+      confirmationMsg =
+        `⏳ *EVENT SUBMITTED FOR ADMIN APPROVAL* (${suretyScore}% Surety)\n\n` +
         `📌 *${createdEventTitle}*\n` +
         `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
         `🕒 ${dateStr}\n\n` +
-        `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
-        `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
+        `⚠️ *Aspects Not Given By User:* \n${missingList}\n\n` +
+        `🛡️ _Because event surety is under 90%, our team has queued your event for admin approval. Once approved, it will be published live!_\n\n` +
+        `🔗 *Review Draft Preview:*\n${liveEventUrl}`;
     }
 
     if (replyTarget) {

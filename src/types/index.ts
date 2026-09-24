@@ -131,6 +131,9 @@ export interface EventItem {
   external_price_text?: string;
   category?: string;
   confidence_score?: number;
+  missing_aspects?: string[];
+  approval_status?: 'approved' | 'pending' | 'rejected';
+  admin_approved?: boolean;
   is_flash?: boolean;
   flash_activity?: 'cricket' | 'football' | 'badminton' | 'pickleball' | 'coffee' | 'games' | 'music' | 'sprint' | 'other' | string;
   spots_limit?: number;

@@ -9,6 +9,7 @@ import {
   detectCategoryFromText,
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
+import { calculateEventSurety } from '@/lib/eventSurety';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,13 +141,29 @@ export async function POST(req: NextRequest) {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organizerId)
     );
 
+    // Calculate event completeness and surety percentage
+    const surety = calculateEventSurety({
+      title: extracted.title,
+      venue_name: extracted.venue_name,
+      location_address: extracted.location_address,
+      city: detectedCity,
+      start_at: validStartAt,
+      end_at: validEndAt,
+      cover_image_url: coverImageUrl,
+      price_text: extracted.price_text,
+      description: extracted.description,
+    });
+
+    const suretyScore = surety.score; // 0 to 100%
+    const isAutoApproved = suretyScore >= 90;
+    const approvalStatus: 'approved' | 'pending' = isAutoApproved ? 'approved' : 'pending';
+    const eventStatus: 'live' | 'draft' = isAutoApproved ? 'live' : 'draft';
+    const isEventPublic = isAutoApproved && isPublic !== false;
+
+    // 2. Build Event Record
     const insertPayload = {
-      id: `evt-${Date.now()}`,
-      organizer_id: isUUID ? organizerId : undefined,
-      organizer_name: organizerName || 'Event Host',
-      organizer_handle: 'host',
       slug: finalSlug,
-      title: extracted.title || 'Untitled Event',
+      title: extracted.title || 'Untitled Gathering',
       tagline: extracted.tagline || `Experience the gathering in ${detectedCity}`,
       description:
         extracted.description ||
@@ -160,6 +177,10 @@ export async function POST(req: NextRequest) {
         font: 'Inter',
         bg_style: 'solid',
         button_style: 'pill',
+        confidence_score: suretyScore / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: approvalStatus,
+        admin_approved: isAutoApproved,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -170,17 +191,17 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: 0, // 0 denotes unlimited
-      is_public: false, // Default to unlisted until superadmin approves
+      is_public: isEventPublic,
       is_private: isPublic === false,
-      visibility: isPublic === false ? 'private' : 'public',
-      status: 'draft', // Submitted for superadmin review & approval
+      visibility: isPublic === false ? 'private' : (isEventPublic ? 'public' : 'private'),
+      status: eventStatus,
+      confidence_score: suretyScore / 100,
       ai_generated: true,
       source_type: finalSourceType,
       source_platform: finalSourcePlatform,
       external_ticket_url: finalTicketUrl,
       external_price_text:
         extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
-      confidence_score: extracted.confidence_score || 0.95,
       faq: extracted.faq && extracted.faq.length > 0 ? extracted.faq : [
         {
           q: 'What is the entry policy?',
@@ -225,7 +246,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       slug: finalSlug,
-      event: insertPayload,
+      event: {
+        ...insertPayload,
+        confidence_score: suretyScore / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: approvalStatus,
+        admin_approved: isAutoApproved,
+      },
+      surety: {
+        score: suretyScore,
+        tier: surety.tier,
+        missingAspects: surety.missingAspects,
+        autoApproved: isAutoApproved,
+        approvalStatus,
+        label: surety.approvalLabel,
+      },
     });
   } catch (error: any) {
     console.error('[AI Create] Fatal error:', error);

@@ -26,7 +26,7 @@ export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'review' | 'live' | 'all' | 'external'>('review');
+  const [activeTab, setActiveTab] = useState<'pending' | 'auto-approved' | 'live' | 'all' | 'external'>('pending');
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -53,11 +53,25 @@ export default function AdminEventsPage() {
     fetchEvents();
   }, []);
 
-  // Compute counts
-  const draftsCount = useMemo(
-    () => events.filter((e) => (e.status || '').toLowerCase() === 'draft').length,
-    [events]
-  );
+  // Compute counts with 90% Surety Auto-Approval rule
+  const pendingApprovalCount = useMemo(() => {
+    return events.filter((e) => {
+      const isDraft = (e.status || '').toLowerCase() === 'draft';
+      const surety = calculateEventSurety(e);
+      // Needs admin approval if: draft, or pending approval, or surety < 90%
+      return isDraft || e.approval_status === 'pending' || !surety.autoApproved;
+    }).length;
+  }, [events]);
+
+  const autoApprovedCount = useMemo(() => {
+    return events.filter((e) => {
+      const isDraft = (e.status || '').toLowerCase() === 'draft';
+      const surety = calculateEventSurety(e);
+      // Auto-approved if surety >= 90% and not draft
+      return !isDraft && (surety.autoApproved || e.approval_status === 'approved');
+    }).length;
+  }, [events]);
+
   const liveCount = useMemo(
     () =>
       events.filter(
@@ -65,12 +79,13 @@ export default function AdminEventsPage() {
       ).length,
     [events]
   );
+
   const externalCount = useMemo(
     () => events.filter((e) => e.is_external || e.source_type === 'external' || e.external_ticket_url).length,
     [events]
   );
 
-  // Fast Instant (Optimistic) Status Toggle
+  // Fast Instant (Optimistic) Status & Approval Toggle
   const handleToggleStatus = async (event: any) => {
     const isCurrentlyLive =
       (event.status || '').toLowerCase() === 'live' || (event.status || '').toLowerCase() === 'published';
@@ -85,19 +100,28 @@ export default function AdminEventsPage() {
       event.visibility === 'private'
     );
     const targetIsPublic = newStatus === 'live' ? !isPrivate : false;
+    const targetApprovalStatus = newStatus === 'live' ? 'approved' : 'pending';
 
     // 1. Optimistic instant local update (0ms lag!)
     setEvents((prev) =>
       prev.map((e) =>
-        e.id === event.id ? { ...e, status: newStatus, is_public: targetIsPublic } : e
+        e.id === event.id
+          ? {
+              ...e,
+              status: newStatus,
+              is_public: targetIsPublic,
+              approval_status: targetApprovalStatus,
+              admin_approved: newStatus === 'live',
+            }
+          : e
       )
     );
 
     showToast(
       newStatus === 'live'
         ? targetIsPublic
-          ? `✓ "${event.title}" published live (Public)!`
-          : `✓ "${event.title}" published live (Private / Secret Link)!`
+          ? `✓ Approved "${event.title}"! Published live on Discovery feed.`
+          : `✓ Approved "${event.title}"! Published live (Private Secret Link).`
         : `Moved "${event.title}" to draft.`
     );
 
@@ -108,7 +132,12 @@ export default function AdminEventsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: event.id,
-          updates: { status: newStatus, is_public: targetIsPublic },
+          updates: {
+            status: newStatus,
+            is_public: targetIsPublic,
+            approval_status: targetApprovalStatus,
+            admin_approved: newStatus === 'live',
+          },
         }),
       });
 
@@ -244,8 +273,16 @@ export default function AdminEventsPage() {
       const isLive = (e.status || '').toLowerCase() === 'live' || (e.status || '').toLowerCase() === 'published';
       const isDraft = (e.status || '').toLowerCase() === 'draft';
       const isExt = Boolean(e.is_external || e.source_type === 'external' || e.external_ticket_url);
+      const surety = calculateEventSurety(e);
 
-      if (activeTab === 'review' && !isDraft) return false;
+      if (activeTab === 'pending') {
+        const needsApproval = isDraft || e.approval_status === 'pending' || !surety.autoApproved;
+        if (!needsApproval) return false;
+      }
+      if (activeTab === 'auto-approved') {
+        const isAuto = !isDraft && (surety.autoApproved || e.approval_status === 'approved');
+        if (!isAuto) return false;
+      }
       if (activeTab === 'live' && !isLive) return false;
       if (activeTab === 'external' && !isExt) return false;
 
@@ -280,7 +317,7 @@ export default function AdminEventsPage() {
             Events & Approvals
           </h1>
           <p className="text-xs text-zinc-400 mt-0.5">
-            1-Click approval queue, live status toggles, and metadata curation
+            Auto-approved events (≥90% surety) go live automatically. Events with surety &lt;90% require admin review.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -305,45 +342,45 @@ export default function AdminEventsPage() {
 
       {/* 3 Quick-Click Metric KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Needs Review Card */}
+        {/* Needs Approval (<90% Surety) Card */}
         <button
-          onClick={() => setActiveTab('review')}
+          onClick={() => setActiveTab('pending')}
           className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeTab === 'review'
+            activeTab === 'pending'
               ? 'bg-amber-500/15 border-amber-500/40 shadow-sm shadow-amber-500/10'
               : 'bg-[#0B0F19] border-zinc-800/80 hover:border-zinc-700'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-400">Needs Review</span>
+            <span className="text-xs font-semibold text-zinc-400">Needs Admin Approval</span>
             <span
               className={`w-2.5 h-2.5 rounded-full ${
-                draftsCount > 0 ? 'bg-amber-400 animate-pulse' : 'bg-zinc-600'
+                pendingApprovalCount > 0 ? 'bg-amber-400 animate-pulse' : 'bg-zinc-600'
               }`}
             />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-amber-400 font-mono">{draftsCount}</span>
-            <span className="text-[11px] text-zinc-500">awaiting approval</span>
+            <span className="text-2xl font-black text-amber-400 font-mono">{pendingApprovalCount}</span>
+            <span className="text-[11px] text-zinc-500">&lt;90% surety or draft</span>
           </div>
         </button>
 
-        {/* Live Events Card */}
+        {/* Auto-Approved (>=90% Surety) Card */}
         <button
-          onClick={() => setActiveTab('live')}
+          onClick={() => setActiveTab('auto-approved')}
           className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeTab === 'live'
+            activeTab === 'auto-approved'
               ? 'bg-emerald-500/15 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
               : 'bg-[#0B0F19] border-zinc-800/80 hover:border-zinc-700'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-400">Live on Vibe</span>
+            <span className="text-xs font-semibold text-zinc-400">Auto-Approved (≥90%)</span>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-400 font-mono">{liveCount}</span>
-            <span className="text-[11px] text-zinc-500">publicly listed</span>
+            <span className="text-2xl font-black text-emerald-400 font-mono">{autoApprovedCount}</span>
+            <span className="text-[11px] text-zinc-500">verified complete</span>
           </div>
         </button>
 
@@ -358,7 +395,7 @@ export default function AdminEventsPage() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-400">Total Catalog</span>
-            <span className="text-[10px] text-zinc-500 font-mono">{externalCount} external</span>
+            <span className="text-[10px] text-zinc-500 font-mono">{liveCount} live</span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-white font-mono">{events.length}</span>
@@ -369,22 +406,34 @@ export default function AdminEventsPage() {
 
       {/* Control Bar: Tabs & Search */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0B0F19] p-2 rounded-2xl border border-zinc-800/80">
-        {/* 4 Clean Tabs */}
+        {/* 5 Clean Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('review')}
+            onClick={() => setActiveTab('pending')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'review'
+              activeTab === 'pending'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <span>Review Queue</span>
-            {draftsCount > 0 && (
+            <span>Needs Approval (&lt;90%)</span>
+            {pendingApprovalCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-[10px] font-black">
-                {draftsCount}
+                {pendingApprovalCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('auto-approved')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'auto-approved'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <span>Auto-Approved (≥90%)</span>
+            <span className="text-[10px] text-zinc-400">({autoApprovedCount})</span>
           </button>
 
           <button
@@ -407,7 +456,7 @@ export default function AdminEventsPage() {
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <span>All Events</span>
+            <span>All</span>
             <span className="text-[10px] text-zinc-400">({events.length})</span>
           </button>
 
@@ -455,7 +504,7 @@ export default function AdminEventsPage() {
         ) : filteredEvents.length === 0 ? (
           <div className="py-16 text-center text-zinc-500 text-xs font-medium space-y-2">
             <p>No events found in this view.</p>
-            {activeTab === 'review' && (
+            {activeTab === 'pending' && (
               <p className="text-emerald-400 text-xs font-semibold">
                 ✓ All submissions are up to date and approved!
               </p>
@@ -499,7 +548,7 @@ export default function AdminEventsPage() {
                               </div>
                             )}
                           </div>
-                          <div className="max-w-[240px] min-w-0">
+                          <div className="max-w-[280px] min-w-0">
                             <div className="font-bold text-white truncate hover:text-[#E8621A] transition-colors text-xs">
                               {event.title || 'Untitled Event'}
                             </div>
@@ -510,6 +559,21 @@ export default function AdminEventsPage() {
                               <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[9px] font-mono font-semibold mt-1">
                                 <Sparkles className="w-2.5 h-2.5 text-purple-400" />
                                 <span>AI Ingested</span>
+                              </div>
+                            )}
+                            {/* Missing Aspects Tags */}
+                            {surety.missingAspects && surety.missingAspects.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {surety.missingAspects.map((aspect: string, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25 text-[9px] font-mono"
+                                    title={`Aspect not provided by user: ${aspect}`}
+                                  >
+                                    <AlertCircle className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                                    <span>{aspect}</span>
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </div>
@@ -553,15 +617,28 @@ export default function AdminEventsPage() {
                       {/* Column 4: Surety & 1-Click Fast Approval Action */}
                       <td className="py-3 px-4">
                         <div className="flex flex-col gap-1.5 items-start">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {/* Surety Score Badge */}
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${surety.badgeColor}`}
-                              title={`Event completeness: ${surety.filledCount}/${surety.totalCount} fields verified`}
+                              title={`Event completeness: ${surety.filledCount}/${surety.totalCount} fields verified (${surety.score}% surety)`}
                             >
                               <ShieldCheck className="w-3 h-3 shrink-0" />
                               <span>{surety.score}% Surety</span>
                             </span>
+
+                            {/* Auto-Approved vs Needs Admin Approval Badge */}
+                            {surety.autoApproved ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[9px] font-mono font-semibold">
+                                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                                <span>Auto-Approved</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-semibold">
+                                <AlertCircle className="w-2.5 h-2.5 text-amber-400 animate-pulse" />
+                                <span>Needs Review</span>
+                              </span>
+                            )}
 
                             {/* Privacy Badge & Toggle */}
                             <button
@@ -589,14 +666,14 @@ export default function AdminEventsPage() {
                           </div>
 
                           {/* 1-Click Status Action */}
-                          {isDraft ? (
+                          {isDraft || event.approval_status === 'pending' || (!surety.autoApproved && !isLive) ? (
                             <button
                               onClick={() => handleToggleStatus(event)}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white shadow-sm shadow-emerald-950/40 transition cursor-pointer"
-                              title="Click to instantly approve & publish live"
+                              title="1-Click Admin Approval: Verify details and publish live"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Approve Live</span>
+                              <span>Approve & Publish</span>
                             </button>
                           ) : (
                             <button

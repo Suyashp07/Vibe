@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { nanoid } from 'nanoid';
 import { TemplateType } from '@/types';
 import { INDIAN_CITIES } from '@/lib/location';
+import { calculateEventSurety } from '@/lib/eventSurety';
 
 export type EventCategory =
   | 'tech'
@@ -37,6 +38,9 @@ export interface ExtractedEventData {
   cover_image_url?: string;
   faq: Array<{ q: string; a: string }>;
   suggested_slug: string;
+  missing_aspects?: string[];
+  approval_status?: 'approved' | 'pending';
+  requires_admin_approval?: boolean;
 }
 
 const CANDIDATE_MODELS = [
@@ -462,12 +466,27 @@ export async function extractEventFromImage(
       const detectedCityObj = detectCityFromText(caption || `${parsed.title || ''} ${parsed.venue_name || ''} ${parsed.location_address || ''}`);
       const finalCity = detectedCityObj?.name || parsed.city || 'Mumbai';
 
+      const surety = calculateEventSurety({
+        title: parsed.title,
+        venue_name: parsed.venue_name,
+        location_address: parsed.location_address,
+        city: finalCity,
+        start_at: parsed.start_at,
+        end_at: parsed.end_at,
+        price_text: parsed.price_text,
+        description: parsed.description,
+        cover_image_url: 'data:image/jpeg;base64,custom_poster', // custom user poster provided
+      });
+
       return {
         ...parsed,
         city: finalCity,
         category,
         suggested_slug: generateSlug(parsed.title || 'event'),
-        confidence_score: parsed.confidence_score || 0.95,
+        confidence_score: surety.score / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: surety.approvalStatus,
+        requires_admin_approval: !surety.autoApproved,
       };
     } catch (err: any) {
       console.warn(`[AI Extractor Image] Model ${modelName} warning:`, err?.message || err);
@@ -482,6 +501,15 @@ export async function extractEventFromImage(
   const fallbackCity = detectedCityObj?.name || 'Mumbai';
   const fallbackAddress = detectedCityObj?.state ? `${fallbackCity}, ${detectedCityObj.state}` : `${fallbackCity}, India`;
 
+  const fallbackSurety = calculateEventSurety({
+    title: caption ? caption.slice(0, 50).trim() : 'Live Experience',
+    venue_name: 'City Venue',
+    location_address: fallbackAddress,
+    city: fallbackCity,
+    start_at: new Date(Date.now() + 86400000).toISOString(),
+    description: caption || '',
+  });
+
   return {
     title: caption ? caption.slice(0, 50).trim() : 'Live Experience',
     tagline: 'Experience the vibe in town',
@@ -495,7 +523,10 @@ export async function extractEventFromImage(
     source_platform: 'vibe',
     category: fallbackCategory,
     template: 'ember',
-    confidence_score: 0.7,
+    confidence_score: fallbackSurety.score / 100,
+    missing_aspects: fallbackSurety.missingAspects,
+    approval_status: fallbackSurety.approvalStatus,
+    requires_admin_approval: !fallbackSurety.autoApproved,
     faq: [{ q: 'How do I attend?', a: 'Check venue and ticketing instructions.' }],
     suggested_slug: generateSlug(caption || 'community-event'),
   };
@@ -667,6 +698,20 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
         ? parsed.venue_name
         : deterministicData.venue_name;
 
+      const surety = calculateEventSurety({
+        title: finalTitle,
+        venue_name: finalVenue,
+        location_address: parsed.location_address || deterministicData.location_address,
+        city: finalCity,
+        start_at: parsed.start_at || deterministicData.start_at,
+        end_at: parsed.end_at || deterministicData.end_at,
+        ticket_url: targetUrl || parsed.ticket_url,
+        price_text: scrapedPrice || parsed.price_text,
+        description: parsed.description || text,
+        cover_image_url: finalCover,
+        is_external: Boolean(targetUrl),
+      });
+
       return {
         ...parsed,
         title: finalTitle,
@@ -681,7 +726,10 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
         source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
         cover_image_url: finalCover,
         suggested_slug: generateSlug(finalTitle || 'event'),
-        confidence_score: parsed.confidence_score || 0.90,
+        confidence_score: surety.score / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: surety.approvalStatus,
+        requires_admin_approval: !surety.autoApproved,
       };
     } catch (err: any) {
       console.warn(`[AI Extractor Text] Model ${modelName} warning:`, err?.message || err);
@@ -692,6 +740,20 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
   // High-fidelity fallback using deterministic entity parser
   console.log('[AI Extractor Text] Using deterministic parser fallback for:', text);
   const fallbackCover = extractedCover || getCategoryCover(deterministicData.category, deterministicData.title);
+
+  const fallbackSurety = calculateEventSurety({
+    title: deterministicData.title,
+    venue_name: deterministicData.venue_name,
+    location_address: deterministicData.location_address,
+    city: deterministicData.city,
+    start_at: deterministicData.start_at,
+    end_at: deterministicData.end_at,
+    ticket_url: targetUrl,
+    price_text: scrapedPrice,
+    description: text,
+    cover_image_url: fallbackCover,
+    is_external: Boolean(targetUrl),
+  });
 
   return {
     title: deterministicData.title,
@@ -708,7 +770,10 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : 'vibe',
     cover_image_url: fallbackCover,
     template: 'grove',
-    confidence_score: 0.85,
+    confidence_score: fallbackSurety.score / 100,
+    missing_aspects: fallbackSurety.missingAspects,
+    approval_status: fallbackSurety.approvalStatus,
+    requires_admin_approval: !fallbackSurety.autoApproved,
     faq: [{ q: 'Where do I register?', a: 'Via the official booking link.' }],
     suggested_slug: generateSlug(deterministicData.title),
   };

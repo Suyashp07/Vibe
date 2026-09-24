@@ -98,8 +98,8 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [savingAction, setSavingAction] = useState<string | null>(null);
 
-  // Tabs: Review (draft), Live (published), Rejected (cancelled), External, All
-  const [statusFilter, setStatusFilter] = useState<'REVIEW' | 'LIVE' | 'REJECTED' | 'EXTERNAL' | 'ALL'>('REVIEW');
+  // Tabs: Review (draft/<90% surety), Auto-Approved (>=90%), Live (published), Rejected (cancelled), External, All
+  const [statusFilter, setStatusFilter] = useState<'REVIEW' | 'AUTO_APPROVED' | 'LIVE' | 'REJECTED' | 'EXTERNAL' | 'ALL'>('REVIEW');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<AdminEvent | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -165,23 +165,32 @@ export default function AdminDashboardPage() {
     fetchEvents();
   }, []);
 
-  // Compute status counts
+  // Compute status counts with 90% Surety Auto-Approval rule
   const counts = useMemo(() => {
     let pending = 0;
+    let autoApproved = 0;
     let live = 0;
     let rejected = 0;
     let external = 0;
     events.forEach((ev) => {
       const st = (ev.status || '').toLowerCase();
-      if (st === 'draft' || st === 'review') pending++;
-      else if (st === 'live' || st === 'published') live++;
+      const isDraft = st === 'draft' || st === 'review';
+      const surety = calculateEventSurety(ev);
+
+      if (isDraft || !surety.autoApproved) {
+        pending++;
+      } else {
+        autoApproved++;
+      }
+
+      if (st === 'live' || st === 'published') live++;
       else if (st === 'cancelled' || st === 'rejected') rejected++;
 
       if (ev.is_external || ev.source_type === 'external' || ev.external_ticket_url) {
         external++;
       }
     });
-    return { pending, live, rejected, external, total: events.length };
+    return { pending, autoApproved, live, rejected, external, total: events.length };
   }, [events]);
 
   // Duplicate Finder
@@ -208,7 +217,11 @@ export default function AdminDashboardPage() {
     return events
       .filter((ev) => {
         const st = (ev.status || '').toLowerCase();
-        if (statusFilter === 'REVIEW') return st === 'draft' || st === 'review';
+        const isDraft = st === 'draft' || st === 'review';
+        const surety = calculateEventSurety(ev);
+
+        if (statusFilter === 'REVIEW') return isDraft || !surety.autoApproved;
+        if (statusFilter === 'AUTO_APPROVED') return !isDraft && surety.autoApproved;
         if (statusFilter === 'LIVE') return st === 'live' || st === 'published';
         if (statusFilter === 'REJECTED') return st === 'cancelled' || st === 'rejected';
         if (statusFilter === 'EXTERNAL') return ev.is_external || ev.source_type === 'external' || Boolean(ev.external_ticket_url);
@@ -519,7 +532,8 @@ export default function AdminDashboardPage() {
   };
 
   const STATUS_TABS = [
-    { id: 'REVIEW', label: 'Review Queue', count: counts.pending, alert: counts.pending > 0 },
+    { id: 'REVIEW', label: 'Needs Approval (<90%)', count: counts.pending, alert: counts.pending > 0 },
+    { id: 'AUTO_APPROVED', label: 'Auto-Approved (≥90%)', count: counts.autoApproved },
     { id: 'LIVE', label: 'Live Published', count: counts.live },
     { id: 'REJECTED', label: 'Rejected', count: counts.rejected },
     { id: 'EXTERNAL', label: 'External Aggregated', count: counts.external },

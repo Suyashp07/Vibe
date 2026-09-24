@@ -15,6 +15,7 @@ import {
   detectCategoryFromText,
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
+import { calculateEventSurety } from '@/lib/eventSurety';
 import { nanoid } from 'nanoid';
 import { telegramAdapter } from '@/lib/communication/adapters/telegramAdapter';
 import { conversationService } from '@/lib/communication/conversationService';
@@ -418,21 +419,44 @@ export async function POST(req: NextRequest) {
     // If it's a Flash Vibe / Meetup, it is published immediately live to Vibe Instant!
     const isLiveImmediately = isFlashVibe;
 
-    // 3. Insert into Supabase `public.events`
+    // Calculate event completeness and surety percentage
+    const surety = calculateEventSurety({
+      title: extracted.title,
+      venue_name: extracted.venue_name,
+      location_address: extracted.location_address,
+      city: detectedCity,
+      start_at: validStartAt,
+      end_at: validEndAt,
+      cover_image_url: coverImageUrl,
+      price_text: extracted.price_text,
+      description: extracted.description,
+    });
+
+    const suretyPercent = surety.score; // 0 to 100%
+    const isAutoApproved = suretyPercent >= 90;
+    const approvalStatus: 'approved' | 'pending' = isAutoApproved ? 'approved' : 'pending';
+    const eventStatus: 'live' | 'draft' = isAutoApproved ? 'live' : 'draft';
+    const isPublic = isAutoApproved;
+
+    // 3. Build Event Record for Supabase
     const insertPayload = {
       slug: finalSlug,
-      title: extracted.title || 'Untitled Event',
+      title: extracted.title || 'Untitled Gathering',
       tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
-      description: extracted.description || '',
+      description:
+        extracted.description ||
+        `Join us for ${extracted.title || 'this event'} in ${detectedCity}. An exciting gathering bringing people together.`,
       cover_image_url: coverImageUrl,
       template: isFlashVibe ? 'ember' : (extracted.template || 'grove'),
       theme: {
-        ...themeConfig,
-        is_flash: isFlashVibe,
-        flash_activity: flashActivity,
-        vibe_cheers_count: 0,
-        spots_limit: isFlashVibe ? 12 : undefined,
-        spots_filled: 1,
+        palette: isFlashVibe ? 'sunset' : (extracted.template === 'ember' ? 'sunset' : 'forest'),
+        font: 'Inter',
+        bg_style: 'solid',
+        button_style: 'pill',
+        confidence_score: suretyPercent / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: approvalStatus,
+        admin_approved: isAutoApproved,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -443,14 +467,14 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: isFlashVibe ? 12 : 250,
-      is_public: isLiveImmediately ? true : false,
-      status: isLiveImmediately ? 'live' : 'draft',
+      is_public: isPublic,
+      status: eventStatus,
       ai_generated: true,
       source_type: finalSourceType,
       source_platform: finalSourcePlatform || 'telegram',
       external_ticket_url: finalTicketUrl,
       external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
-      confidence_score: extracted.confidence_score || 0.9,
+      confidence_score: suretyPercent / 100,
       faq: extracted.faq || [],
       rsvp_form_config: {
         ask_plus_one: true,
@@ -491,8 +515,6 @@ export async function POST(req: NextRequest) {
       minute: '2-digit',
     });
 
-    const confidencePercent = Math.round((extracted.confidence_score || 0.9) * 100);
-
     const detectedCategory = (extracted.category || detectCategoryFromText(extracted.title)).toUpperCase();
 
     // 4. Send Confirmation Card with Inline Buttons to Telegram
@@ -502,49 +524,56 @@ export async function POST(req: NextRequest) {
     let previewText: string;
     let inlineKeyboard: any[];
 
-    if (isFlashVibe) {
-      const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
-      previewText = `⚡ <b>YOUR FLASH VIBE IS LIVE ON VIBE INSTANT!</b>\n\n` +
-        `🔥 <b>${extracted.title}</b>\n` +
-        `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
-        `🕒 ${dateStr} IST\n\n` +
-        `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
-        `📲 <i>Forward this link to your group or squad — anyone can swipe to your card and tap "I'm In" to join!</i>`;
+    if (isAutoApproved) {
+      if (isFlashVibe) {
+        const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
+        previewText = `⚡ <b>YOUR FLASH VIBE IS AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
+          `🔥 <b>${extracted.title}</b>\n` +
+          `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
+          `🕒 ${dateStr} IST\n\n` +
+          `✅ <i>Auto-Approved: All required details verified!</i>\n\n` +
+          `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
+          `📲 <i>Forward this link to your squad — anyone can swipe to your card and tap "I'm In" to join!</i>`;
 
-      inlineKeyboard = [
-        [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
-        [{ text: '📋 Copy Link', callback_data: `copy:${instantLink}` }],
-        [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
-      ];
-    } else if (isCurator) {
-      previewText = `✨ <b>EVENT EXTRACTED!</b> (Confidence: ${confidencePercent}%)\n\n` +
-        `📌 <b>Title:</b> ${extracted.title}\n` +
-        `🏷️ <b>Category:</b> ${detectedCategory}\n` +
-        `🗓️ <b>Date:</b> ${dateStr} IST\n` +
-        `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
-        `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n` +
-        `🎟️ <b>Ticketing:</b> ${hasExternalUrl ? `${finalSourcePlatform?.toUpperCase()} (External Link)` : 'RSVP Directly on Vibe (Native QR Pass)'}\n` +
-        (hasExternalUrl ? `🔗 <b>Link:</b> ${finalTicketUrl}\n` : '') +
-        `🖼️ <b>Poster:</b> ${isPhoto ? 'Custom Uploaded Flyer' : `${detectedCategory} Curated Background`}\n\n` +
-        `⚡ <i>Publish live to Vibe Instant stream or review in admin:</i>`;
+        inlineKeyboard = [
+          [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
+          [{ text: '📋 Copy Link', callback_data: `copy:${instantLink}` }],
+          [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
+        ];
+      } else {
+        const liveLink = `${appUrl}/${finalSlug}`;
+        previewText = `🎉 <b>EVENT AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
+          `📌 <b>Title:</b> ${extracted.title}\n` +
+          `🏷️ <b>Category:</b> ${detectedCategory}\n` +
+          `🗓️ <b>Date:</b> ${dateStr} IST\n` +
+          `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
+          `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n` +
+          `✅ <i>Auto-Approved: High completeness surety score.</i>\n\n` +
+          `🔗 <b>Live Link:</b> <a href="${liveLink}">${liveLink}</a>`;
 
-      inlineKeyboard = [
-        [{ text: '⚡ Publish to Vibe Instant Live!', callback_data: `publish_instant:${savedEvent.id}` }],
-        [{ text: '🚀 Publish to Events Feed', callback_data: `publish:${savedEvent.id}` }],
-        [{ text: '🛡️ Review in Admin Command Center ↗', url: adminEventsUrl }],
-        [{ text: '❌ Discard Draft', callback_data: `discard:${savedEvent.id}` }],
-      ];
+        inlineKeyboard = [
+          [{ text: '🌐 View Live Event Page ↗', url: liveLink }],
+          [{ text: '🛡️ Manage in Admin Command Center ↗', url: adminEventsUrl }],
+          [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
+        ];
+      }
     } else {
-      previewText = `🎉 <b>EVENT SUBMITTED FOR REVIEW!</b>\n\n` +
+      const missingList = surety.missingAspects.length > 0
+        ? surety.missingAspects.map(a => `• ${a}`).join('\n')
+        : '• Specific venue place or start time not given';
+
+      previewText = `⏳ <b>EVENT SUBMITTED FOR ADMIN APPROVAL</b> (${suretyPercent}% Surety)\n\n` +
         `📌 <b>Title:</b> ${extracted.title}\n` +
         `🗓️ <b>Date:</b> ${dateStr} IST\n` +
-        `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
+        `📍 <b>Venue:</b> ${extracted.venue_name || 'Not given'} (${detectedCity})\n` +
         `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n\n` +
+        `⚠️ <b>Aspects Not Given By User:</b>\n${missingList}\n\n` +
         `🛡️ <b>STATUS: PENDING ADMIN APPROVAL</b>\n` +
-        `<i>Your event has been submitted to the Vibe team! An administrator will review your event and publish it live on Vibe shortly.</i>`;
+        `<i>Because event surety is under 90%, it requires Admin Approval before going live. An admin can review and approve it with 1 click.</i>`;
 
       inlineKeyboard = [
-        [{ text: '🌐 Browse Live Events ↗', url: `${appUrl}/discover` }],
+        [{ text: '🛡️ Review & Approve in Admin Center ↗', url: adminEventsUrl }],
+        [{ text: '❌ Discard Draft', callback_data: `discard:${savedEvent.id}` }],
       ];
     }
 
