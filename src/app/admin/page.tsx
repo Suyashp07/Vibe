@@ -21,7 +21,6 @@ import {
   Upload,
   Wand2,
   Link2,
-  List,
   Archive,
   Trash2,
   Edit3,
@@ -111,11 +110,6 @@ export default function AdminDashboardPage() {
   const [addingUrl, setAddingUrl] = useState(false);
   const [urlResult, setUrlResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const [showListingModal, setShowListingModal] = useState(false);
-  const [listingUrl, setListingUrl] = useState('');
-  const [listingMax, setListingMax] = useState(15);
-  const [importingListing, setImportingListing] = useState(false);
-  const [listingResult, setListingResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -460,40 +454,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Import Listing Page
-  const handleImportListing = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const url = listingUrl.trim();
-    if (!/^https?:\/\//i.test(url)) {
-      setListingResult({ ok: false, message: 'Enter a valid listing URL starting with http:// or https://' });
-      return;
-    }
-
-    setImportingListing(true);
-    setListingResult(null);
-    try {
-      const res = await fetch('/api/admin/events/import-listing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, max: listingMax }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setListingResult({ ok: false, message: data.error || 'Import listing failed.' });
-      } else {
-        setListingResult({
-          ok: true,
-          message: `Discovered ${data.totalDiscovered || 0} events. Queued for review in the Pending tab!`,
-        });
-        await fetchEvents();
-      }
-    } catch (err: any) {
-      setListingResult({ ok: false, message: err.message || 'Import error' });
-    } finally {
-      setImportingListing(false);
-    }
-  };
-
   // Manual Quick Create
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -563,13 +523,6 @@ export default function AdminDashboardPage() {
             >
               <Link2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Add by URL</span>
-            </button>
-            <button
-              onClick={() => setShowListingModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#0A0A0A] text-[#0A0A0A] text-xs font-semibold rounded-full hover:bg-[#F8FAFC] transition-colors"
-            >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Import Listing</span>
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -985,86 +938,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Modal: Import Event Listing */}
-      {showListingModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg border border-[#E2E8F0] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-              <div>
-                <h2 className="font-bold text-sm text-[#0A0A0A]">Import Event Listing</h2>
-                <p className="text-[11px] text-[#64748B]">Batch harvest city explore pages</p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowListingModal(false);
-                  setListingResult(null);
-                  setListingUrl('');
-                }}
-                className="text-[#94A3B8] hover:text-[#0A0A0A]"
-              >
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleImportListing} className="p-6 space-y-4">
-              <div>
-                <p className="text-xs text-[#64748B] mb-2 leading-relaxed">
-                  Paste a BookMyShow or District explore page (e.g.{' '}
-                  <span className="font-mono text-[#0A0A0A]">https://in.bookmyshow.com/explore/events-mumbai</span>). All child event links will be scraped and queued.
-                </p>
-                <input
-                  type="url"
-                  value={listingUrl}
-                  onChange={(e) => setListingUrl(e.target.value)}
-                  placeholder="https://in.bookmyshow.com/explore/events-mumbai"
-                  className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A] font-mono transition-colors placeholder:text-[#94A3B8]"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-[#64748B] shrink-0">Max events:</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={25}
-                  value={listingMax}
-                  onChange={(e) => setListingMax(Math.max(1, Number(e.target.value) || 15))}
-                  className="w-20 px-3 py-1.5 text-xs border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0A0A0A]"
-                />
-                <span className="text-[10px] text-[#94A3B8]">Limit batch size to prevent rate-limits</span>
-              </div>
-
-              {listingResult && (
-                <div
-                  className={`flex items-start gap-2 p-3 rounded-xl text-xs whitespace-pre-wrap ${
-                    listingResult.ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
-                  }`}
-                >
-                  {listingResult.ok ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />}
-                  <span>{listingResult.message}</span>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={importingListing || !listingUrl.trim()}
-                className="w-full py-2.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-[#262626] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {importingListing ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Scraping Listing Page...</span>
-                  </>
-                ) : (
-                  <>
-                    <List className="w-3.5 h-3.5" />
-                    <span>Harvest Listing to Queue</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Modal: Manual Create Event */}
       {showCreateModal && (
