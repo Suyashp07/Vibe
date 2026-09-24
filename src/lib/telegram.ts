@@ -25,6 +25,7 @@ export async function sendTelegramMessage(
   text: string,
   options?: {
     parse_mode?: 'Markdown' | 'HTML';
+    message_thread_id?: number | string;
     reply_markup?: {
       inline_keyboard?: Array<Array<{ text: string; callback_data?: string; url?: string }>>;
     };
@@ -38,6 +39,10 @@ export async function sendTelegramMessage(
     text,
     parse_mode: options?.parse_mode || 'HTML',
   };
+
+  if (options?.message_thread_id) {
+    payload.message_thread_id = Number(options.message_thread_id);
+  }
 
   if (options?.reply_markup) {
     payload.reply_markup = options.reply_markup;

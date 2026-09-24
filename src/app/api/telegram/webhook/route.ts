@@ -161,6 +161,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (update.message.from?.is_bot) {
+      return NextResponse.json({ ok: true });
+    }
+
     // 2A. Communication Gateway Interception (Host Replies from Telegram Topic)
     const incomingHostMsg = await telegramAdapter.processIncomingMessage(update);
     if (incomingHostMsg) {
@@ -214,15 +218,9 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 2A.3 Unmapped topic handling: Do NOT guess! Safely ignore and log.
+      // 2A.3 Unmapped topic handling: Let message fall through to Event Creation flow
       if (incomingHostMsg.telegramTopicId || incomingHostMsg.isUnmapped) {
-        console.warn('[Telegram Webhook] telegram_webhook_unmapped_topic: Topic cannot be mapped to any Vibe conversation. Safely ignoring without guessing.', {
-          chatId: incomingHostMsg.telegramChatId,
-          topicId: incomingHostMsg.telegramTopicId,
-        });
-        return NextResponse.json({
-          ok: true,
-          ignored: 'unmapped_topic',
+        console.log('[Telegram Webhook] Unmapped topic message, proceeding to AI Event Creation flow:', {
           chatId: incomingHostMsg.telegramChatId,
           topicId: incomingHostMsg.telegramTopicId,
         });
@@ -233,6 +231,13 @@ export async function POST(req: NextRequest) {
     const message = update.message;
     const chatId = message.chat.id;
     const senderId = message.from.id;
+    const threadId = message.message_thread_id;
+
+    const replyTelegram = (text: string, options?: any) =>
+      sendTelegramMessage(chatId, text, {
+        ...options,
+        ...(threadId ? { message_thread_id: threadId } : {}),
+      });
 
     // Every user is authorized to submit events through Telegram bot
     // Handle /start or /help command
@@ -271,7 +276,7 @@ export async function POST(req: NextRequest) {
         `🔗 <b>Send a Link:</b> Paste any Unstop, District, BookMyShow, or Luma URL.\n` +
         `💬 <b>Send a Text:</b> Forward any event details blurb.\n\n` +
         `<i>Gemini AI will extract all details and publish it!</i>`;
-      await sendTelegramMessage(chatId, welcome, { parse_mode: 'HTML' });
+      await replyTelegram(welcome, { parse_mode: 'HTML' });
       return NextResponse.json({ ok: true });
     }
 
@@ -281,7 +286,7 @@ export async function POST(req: NextRequest) {
 
     // CASE A: Flyer Image Provided (as Photo or Document file)
     if (isPhoto || isImageDoc) {
-      await sendTelegramMessage(chatId, '🔍 <i>Analyzing event poster with Gemini Vision...</i>', {
+      await replyTelegram('🔍 <i>Analyzing event poster with Gemini Vision...</i>', {
         parse_mode: 'HTML',
       });
 
@@ -343,7 +348,7 @@ export async function POST(req: NextRequest) {
     }
     // CASE B: Text / Link Provided
     else if (message.text) {
-      await sendTelegramMessage(chatId, '🔍 <i>Extracting event details with AI...</i>', {
+      await replyTelegram('🔍 <i>Extracting event details with AI...</i>', {
         parse_mode: 'HTML',
       });
       extracted = await extractEventFromText(message.text);
@@ -355,8 +360,7 @@ export async function POST(req: NextRequest) {
         extracted.cover_image_url ||
         getCategoryCover(finalCategory, extracted.title);
     } else {
-      await sendTelegramMessage(
-        chatId,
+      await replyTelegram(
         '⚠️ Please send an event flyer photo, an event URL, or a text description.',
         { parse_mode: 'HTML' }
       );
@@ -488,8 +492,7 @@ export async function POST(req: NextRequest) {
 
     if (insertError || !savedEvent) {
       console.error('[Telegram Webhook] Insert error:', insertError);
-      await sendTelegramMessage(
-        chatId,
+      await replyTelegram(
         `❌ <b>Failed to save event draft</b>: ${insertError?.message || 'Unknown database error'}`,
         { parse_mode: 'HTML' }
       );
@@ -569,7 +572,7 @@ export async function POST(req: NextRequest) {
       ];
     }
 
-    await sendTelegramMessage(chatId, previewText, {
+    await replyTelegram(previewText, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: inlineKeyboard,
