@@ -670,7 +670,7 @@ export default function AdminDashboardPage() {
         {/* Master-Detail Two-Pane Workstation */}
         <div className="flex-1 flex gap-6 items-start">
           {/* Left Pane: Queue List */}
-          <div className={`flex flex-col gap-2 ${selectedEvent ? 'hidden lg:flex lg:w-[420px] lg:shrink-0' : 'w-full'}`}>
+          <div className={`flex flex-col gap-2 ${selectedEvent ? 'hidden md:flex md:w-[380px] lg:w-[420px] md:shrink-0 md:max-h-[calc(100vh-160px)] md:overflow-y-auto pr-1' : 'w-full'}`}>
             {loading ? (
               <div className="py-24 flex flex-col items-center justify-center gap-3 text-[#94A3B8]">
                 <Loader2 className="w-6 h-6 animate-spin text-[#0A0A0A]" />
@@ -705,7 +705,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Queue Cards */}
-                <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+                <div className="space-y-2">
                   {filteredEvents.map((event) => {
                     const isSelected = selectedEvent?.id === event.id;
                     const isChecked = selectedIds.has(event.id);
@@ -720,11 +720,11 @@ export default function AdminDashboardPage() {
                     return (
                       <div
                         key={event.id}
-                        onClick={() => setSelectedEvent(event)}
+                        onClick={() => setSelectedEvent(isSelected ? null : event)}
                         className={`group relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-[#0A0A0A] bg-[#F8FAFC] shadow-sm'
-                            : 'border-[#E2E8F0] bg-white hover:border-[#0A0A0A]'
+                            ? 'border-[#0A0A0A] bg-[#F8FAFC] shadow-sm ring-1 ring-[#0A0A0A]'
+                            : 'border-[#E2E8F0] bg-white hover:border-[#0A0A0A] hover:shadow-xs'
                         }`}
                       >
                         {/* Multi-select Checkbox */}
@@ -842,7 +842,7 @@ export default function AdminDashboardPage() {
                             </span>
                           )}
 
-                          <ChevronRight className="w-3.5 h-3.5 text-[#CBD5E1] group-hover:text-[#0A0A0A] transition-colors" />
+                          <ChevronRight className={`w-3.5 h-3.5 transition-colors ${isSelected ? 'text-[#0A0A0A]' : 'text-[#CBD5E1] group-hover:text-[#0A0A0A]'}`} />
                         </div>
                       </div>
                     );
@@ -852,13 +852,9 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* Right Pane: Detail Panel Inspector */}
-          <div
-            className={`flex-1 min-w-0 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm ${
-              selectedEvent ? 'block' : 'hidden lg:flex lg:flex-col lg:items-center lg:justify-center lg:py-32'
-            }`}
-          >
-            {selectedEvent ? (
+          {/* Right Pane: Detail Panel Inspector (Only visible when an event is selected) */}
+          {selectedEvent && (
+            <div className="fixed inset-0 z-40 bg-white md:static md:z-auto md:flex-1 md:min-w-0 md:border md:border-[#E2E8F0] md:rounded-2xl md:p-5 md:shadow-xs md:max-h-[calc(100vh-160px)] md:overflow-y-auto">
               <DetailInspector
                 event={selectedEvent}
                 duplicate={findDuplicateMatch(selectedEvent)}
@@ -872,16 +868,8 @@ export default function AdminDashboardPage() {
                   setSelectedEvent((prev) => (prev ? { ...prev, [field]: value } : null));
                 }}
               />
-            ) : (
-              <div className="text-center p-6 text-[#94A3B8]">
-                <Layers className="w-10 h-10 mx-auto text-[#E2E8F0] mb-3" />
-                <h3 className="text-sm font-bold text-[#0A0A0A]">No Event Selected</h3>
-                <p className="text-xs text-[#64748B] mt-1 max-w-xs mx-auto">
-                  Click any card in the queue to inspect details, preview posters, check duplicates, and edit inline.
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
 
