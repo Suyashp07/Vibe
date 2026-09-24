@@ -586,6 +586,23 @@ export default function AdminDashboardPage() {
               <ExternalLink className="w-3 h-3" />
               <span className="hidden sm:inline">Live Site</span>
             </Link>
+
+            <div className="h-4 w-px bg-[#E2E8F0] mx-1 hidden sm:block" />
+
+            {/* Staff info capsule & Logout */}
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline text-[11px] font-medium text-[#64748B] truncate max-w-[140px]" title={profile?.email || ''}>
+                {profile?.email?.split('@')[0]}
+              </span>
+              <button
+                onClick={() => signOut()}
+                title="Sign out of admin"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E8F0] text-[#64748B] text-xs font-medium rounded-full hover:border-red-300 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="w-3 h-3" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
