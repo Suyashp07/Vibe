@@ -18,7 +18,13 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import { signUpWithPassword, verifySignupOtp, resendSignupOtp, signInWithGoogle } from '@/lib/auth';
+import {
+  signUpWithPassword,
+  verifySignupOtp,
+  resendSignupOtp,
+  signInWithGoogle,
+  validateEmailInput,
+} from '@/lib/auth';
 
 function SignupContent() {
   const router = useRouter();
@@ -34,6 +40,8 @@ function SignupContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExistingUser, setIsExistingUser] = useState(false);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   // Step 2: OTP Verification Screen
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -57,10 +65,20 @@ function SignupContent() {
   const handlePasswordSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setEmailError(null);
     setIsExistingUser(false);
 
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    const cleanEmail = email.trim();
+    if (!name.trim() || !cleanEmail || !password.trim()) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    const emailValidation = validateEmailInput(cleanEmail);
+    if (!emailValidation.isValid) {
+      const err = emailValidation.error || 'Please enter a valid email address.';
+      setError(err);
+      setEmailError(err);
       return;
     }
 
@@ -73,7 +91,7 @@ function SignupContent() {
 
     try {
       const res = await signUpWithPassword(
-        email.trim(),
+        cleanEmail,
         password.trim(),
         name.trim(),
         'organizer'
@@ -82,6 +100,9 @@ function SignupContent() {
       if (res.error) {
         if (res.error.code === 'USER_EXISTS' || res.error.message?.toLowerCase().includes('already exists')) {
           setIsExistingUser(true);
+        }
+        if ((res.error as any).suggestion) {
+          setEmailSuggestion((res.error as any).suggestion);
         }
         throw res.error;
       }
@@ -371,13 +392,57 @@ function SignupContent() {
                       required
                       value={email}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        const val = e.target.value;
+                        setEmail(val);
                         if (isExistingUser) setIsExistingUser(false);
+                        if (error) setError(null);
+                        if (emailError) setEmailError(null);
+                        if (val.trim()) {
+                          const check = validateEmailInput(val.trim());
+                          if (check.suggestion) {
+                            setEmailSuggestion(check.suggestion.suggestedEmail);
+                          } else {
+                            setEmailSuggestion(null);
+                          }
+                        } else {
+                          setEmailSuggestion(null);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (email.trim()) {
+                          const check = validateEmailInput(email.trim());
+                          if (!check.isValid) {
+                            setEmailError(check.error || 'Please enter a valid email address.');
+                          } else {
+                            setEmailError(null);
+                          }
+                        }
                       }}
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                      className={`w-full pl-10 pr-4 py-2.5 bg-white border ${
+                        emailError ? 'border-red-400 focus:border-red-500' : 'border-[#E2E8F0] focus:border-[#0A0A0A]'
+                      } rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none transition-colors`}
                     />
                   </div>
+                  {emailSuggestion && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail(emailSuggestion);
+                        setEmailSuggestion(null);
+                        setEmailError(null);
+                      }}
+                      className="mt-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+                    >
+                      <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
+                    </button>
+                  )}
+                  {emailError && (
+                    <p className="mt-1 text-[11px] text-red-600 font-medium flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span>{emailError}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>

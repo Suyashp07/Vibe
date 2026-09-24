@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
 import { addRSVP, generateGoogleCalendarUrl, downloadICS, getEventRSVPs } from '@/lib/store';
-import { sendEmailOtp, verifyEmailOtp, createGuestAccountFromRsvp, getLocalAuthSession } from '@/lib/auth';
+import { sendEmailOtp, verifyEmailOtp, createGuestAccountFromRsvp, getLocalAuthSession, validateEmailInput } from '@/lib/auth';
 import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import FollowButton from '@/components/ui/FollowButton';
 
@@ -75,6 +75,7 @@ export default function RSVPForm({
   const [otpToken, setOtpToken] = useState('');
   const [otpMessage, setOtpMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRsvp, setSubmittedRsvp] = useState<RSVPItem | null>(null);
 
@@ -131,16 +132,23 @@ export default function RSVPForm({
     e.preventDefault();
     if (!name.trim() || !email.trim() || !phone.trim()) return;
 
+    const cleanEmail = email.trim();
+    const emailValidation = validateEmailInput(cleanEmail);
+    if (!emailValidation.isValid) {
+      setErrorMessage(emailValidation.error || 'Please enter a valid email address.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const { error } = await sendEmailOtp(email.trim(), 'guest');
+    const { error } = await sendEmailOtp(cleanEmail, 'guest');
 
     setIsSubmitting(false);
     if (error) {
       setErrorMessage(error.message || 'Failed to send verification code. Please try again.');
     } else {
-      setOtpMessage(`We sent a 6-digit verification code to ${email.trim()}`);
+      setOtpMessage(`We sent a 6-digit verification code to ${cleanEmail}`);
       setStep('otp');
     }
   };
@@ -523,10 +531,37 @@ export default function RSVPForm({
               required
               placeholder="priya@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEmail(val);
+                if (errorMessage) setErrorMessage(null);
+                if (val.trim()) {
+                  const check = validateEmailInput(val.trim());
+                  if (check.suggestion) {
+                    setEmailSuggestion(check.suggestion.suggestedEmail);
+                  } else {
+                    setEmailSuggestion(null);
+                  }
+                } else {
+                  setEmailSuggestion(null);
+                }
+              }}
               className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors placeholder:text-[#94A3B8]"
             />
           </div>
+          {emailSuggestion && (
+            <button
+              type="button"
+              onClick={() => {
+                setEmail(emailSuggestion);
+                setEmailSuggestion(null);
+                setErrorMessage(null);
+              }}
+              className="mt-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+            >
+              <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
+            </button>
+          )}
           <p className="text-[11px] mt-1 text-[#64748B]">
             A 6-digit OTP code will be sent to verify your pass.
           </p>

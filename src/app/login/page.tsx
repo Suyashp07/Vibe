@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import { signInWithPassword, signInWithGoogle, sendEmailOtp, verifyEmailOtp } from '@/lib/auth';
+import { signInWithPassword, signInWithGoogle, sendEmailOtp, verifyEmailOtp, validateEmailInput } from '@/lib/auth';
 
 function LoginContent() {
   const router = useRouter();
@@ -29,6 +29,8 @@ function LoginContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   
   // 6-digit OTP verification flow (zero magic link)
   const [showOtpFlow, setShowOtpFlow] = useState(false);
@@ -40,17 +42,27 @@ function LoginContent() {
 
   const handlePasswordSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !password.trim()) {
       setError('Please enter your email and password.');
+      return;
+    }
+
+    const emailValidation = validateEmailInput(cleanEmail);
+    if (!emailValidation.isValid) {
+      const err = emailValidation.error || 'Please enter a valid email address.';
+      setError(err);
+      setEmailError(err);
       return;
     }
 
     setLoading(true);
     setError(null);
+    setEmailError(null);
     setMessage(null);
 
     try {
-      const res = await signInWithPassword(email.trim(), password.trim(), 'organizer');
+      const res = await signInWithPassword(cleanEmail, password.trim(), 'organizer');
       if (res.error) {
         if (res.needsConfirmation) {
           setShowOtpFlow(true);
@@ -82,21 +94,32 @@ function LoginContent() {
   };
 
   const handleSendOtpCode = async () => {
-    if (!email.trim()) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
       setError('Please enter your email address to receive a verification code.');
       return;
     }
+
+    const emailValidation = validateEmailInput(cleanEmail);
+    if (!emailValidation.isValid) {
+      const err = emailValidation.error || 'Please enter a valid email address.';
+      setError(err);
+      setEmailError(err);
+      return;
+    }
+
     setOtpLoading(true);
     setError(null);
+    setEmailError(null);
     setMessage(null);
 
-    const { error: otpErr } = await sendEmailOtp(email.trim(), 'organizer');
+    const { error: otpErr } = await sendEmailOtp(cleanEmail, 'organizer');
     setOtpLoading(false);
     if (otpErr) {
       setError(otpErr.message || 'Failed to send verification code. Please try password sign-in.');
     } else {
       setOtpSent(true);
-      setMessage(`6-digit verification code sent to ${email.trim()}. Enter it below to sign in:`);
+      setMessage(`6-digit verification code sent to ${cleanEmail}. Enter it below to sign in:`);
     }
   };
 
@@ -213,11 +236,57 @@ function LoginContent() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEmail(val);
+                    if (error) setError(null);
+                    if (emailError) setEmailError(null);
+                    if (val.trim()) {
+                      const check = validateEmailInput(val.trim());
+                      if (check.suggestion) {
+                        setEmailSuggestion(check.suggestion.suggestedEmail);
+                      } else {
+                        setEmailSuggestion(null);
+                      }
+                    } else {
+                      setEmailSuggestion(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (email.trim()) {
+                      const check = validateEmailInput(email.trim());
+                      if (!check.isValid) {
+                        setEmailError(check.error || 'Please enter a valid email address.');
+                      } else {
+                        setEmailError(null);
+                      }
+                    }
+                  }}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-white border ${
+                    emailError ? 'border-red-400 focus:border-red-500' : 'border-[#E2E8F0] focus:border-[#0A0A0A]'
+                  } rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none transition-colors`}
                 />
               </div>
+              {emailSuggestion && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(emailSuggestion);
+                    setEmailSuggestion(null);
+                    setEmailError(null);
+                  }}
+                  className="mt-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+                >
+                  <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
+                </button>
+              )}
+              {emailError && (
+                <p className="mt-1 text-[11px] text-red-600 font-medium flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3 shrink-0" />
+                  <span>{emailError}</span>
+                </p>
+              )}
             </div>
 
             <div>

@@ -97,6 +97,23 @@ export const getInitials = (name?: string | null, email?: string | null): string
   return 'U';
 };
 
+import {
+  type EmailValidationResult,
+  COMMON_DOMAIN_MAPPINGS,
+  validateEmailInput,
+  normalizeEmail,
+  isEmailValid,
+} from './emailValidation';
+
+export type { EmailValidationResult };
+export {
+  COMMON_DOMAIN_MAPPINGS,
+  validateEmailInput,
+  normalizeEmail,
+  isEmailValid,
+};
+
+
 const LOCAL_STORAGE_AUTH_KEY = 'vibe_auth_session';
 
 /**
@@ -149,6 +166,12 @@ export const setLocalAuthSession = (profile: AuthProfile | null) => {
  * Send Supabase Email OTP (also provides magic link)
  */
 export const sendEmailOtp = async (email: string, role: 'organizer' | 'guest' = 'organizer') => {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const validation = validateEmailInput(cleanEmail);
+  if (!validation.isValid) {
+    return { data: null, error: { message: validation.error || 'Please enter a valid email address.' } };
+  }
+
   const client = getSupabaseClient();
   if (!client) {
     return { data: null, error: { message: 'Supabase client is not configured. Check your environment variables.' } };
@@ -159,12 +182,12 @@ export const sendEmailOtp = async (email: string, role: 'organizer' | 'guest' = 
     : undefined;
 
   const { data, error } = await client.auth.signInWithOtp({
-    email,
+    email: cleanEmail,
     options: {
       emailRedirectTo: redirectUrl,
       data: {
         role,
-        name: email.split('@')[0],
+        name: cleanEmail.split('@')[0],
       },
     },
   });
@@ -296,7 +319,14 @@ export const signUpWithEmailOtp = async (
   handle?: string
 ) => {
   const client = getSupabaseClient();
-  const cleanEmail = email.trim().toLowerCase();
+  const cleanEmail = normalizeEmail(email);
+  const validation = validateEmailInput(cleanEmail);
+  if (!validation.isValid) {
+    return {
+      data: null,
+      error: { message: validation.error || 'Please enter a valid email address.' },
+    };
+  }
   const cleanName = name.trim();
   const cleanHandle = (handle || cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_')).slice(0, 30);
 
@@ -429,8 +459,8 @@ export const signInWithMagicLink = sendEmailOtp;
  * Sign in with Email and Password (Host or Guest)
  */
 export const checkEmailAlreadyRegistered = async (email: string): Promise<boolean> => {
-  const cleanEmail = email.trim().toLowerCase();
-  if (!cleanEmail || !cleanEmail.includes('@')) return false;
+  const cleanEmail = normalizeEmail(email);
+  if (!isEmailValid(cleanEmail)) return false;
 
   try {
     const res = await fetch('/api/auth/check-email', {
@@ -470,8 +500,18 @@ export const signInWithPassword = async (
   password: string,
   intendedRole?: 'organizer' | 'guest'
 ) => {
+  const cleanEmail = normalizeEmail(email);
+  const validation = validateEmailInput(cleanEmail);
+  if (!validation.isValid) {
+    return {
+      data: null,
+      error: {
+        message: validation.error || 'Please enter a valid email address.',
+      },
+    };
+  }
+
   const client = getSupabaseClient();
-  const cleanEmail = email.trim().toLowerCase();
 
   if (!client) {
     // Local fallback if Supabase not configured
@@ -605,8 +645,15 @@ export const signUpWithPassword = async (
   const cleanName = name.trim();
   const cleanHandle = (handle || cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_')).slice(0, 30);
 
-  if (!cleanEmail || !cleanEmail.includes('@')) {
-    return { data: null, error: { message: 'Please enter a valid email address.' } };
+  const emailValidation = validateEmailInput(cleanEmail);
+  if (!emailValidation.isValid) {
+    return {
+      data: null,
+      error: {
+        message: emailValidation.error || 'Please enter a valid email address.',
+        suggestion: emailValidation.suggestion?.suggestedEmail,
+      },
+    };
   }
 
   if (password.length < 6) {
@@ -816,8 +863,18 @@ export const verifySignupOtp = async (
  * Resend verification OTP code
  */
 export const resendSignupOtp = async (email: string) => {
+  const cleanEmail = normalizeEmail(email);
+  const validation = validateEmailInput(cleanEmail);
+  if (!validation.isValid) {
+    return {
+      data: null,
+      error: {
+        message: validation.error || 'Please enter a valid email address.',
+      },
+    };
+  }
+
   const client = getSupabaseClient();
-  const cleanEmail = email.trim().toLowerCase();
 
   if (!client) {
     return { data: null, error: { message: 'Supabase client is not configured.' } };

@@ -23,7 +23,8 @@ import {
   resendSignupOtp,
   signInWithGoogle,
   getSupabaseClient,
-  useAuth
+  useAuth,
+  validateEmailInput
 } from '@/lib/auth';
 
 type AuthMode = 'signin' | 'signup';
@@ -56,6 +57,7 @@ export default function AuthModal({
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isExistingUser, setIsExistingUser] = useState(false);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
 
   // OTP Verification Mode
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -121,8 +123,15 @@ export default function AuthModal({
     setMessage('');
     setIsExistingUser(false);
 
-    if (!email.trim() || !password.trim()) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !password.trim()) {
       setError('Please enter your email and password.');
+      return;
+    }
+
+    const emailValidation = validateEmailInput(cleanEmail);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error || 'Please enter a valid email address.');
       return;
     }
 
@@ -149,6 +158,9 @@ export default function AuthModal({
         if (res.error) {
           if (res.error.code === 'USER_EXISTS' || res.error.message?.toLowerCase().includes('already exists')) {
             setIsExistingUser(true);
+          }
+          if ((res.error as any).suggestion) {
+            setEmailSuggestion((res.error as any).suggestion);
           }
           throw res.error;
         }
@@ -432,13 +444,33 @@ export default function AuthModal({
                     required
                     value={email}
                     onChange={(e) => {
-                      setEmail(e.target.value);
+                      const val = e.target.value;
+                      setEmail(val);
                       if (isExistingUser) setIsExistingUser(false);
+                      if (error) setError('');
+                      const check = validateEmailInput(val.trim());
+                      if (check.suggestion) {
+                        setEmailSuggestion(check.suggestion.suggestedEmail);
+                      } else {
+                        setEmailSuggestion(null);
+                      }
                     }}
                     placeholder="you@example.com"
                     className={inputCls}
                   />
                 </div>
+                {emailSuggestion && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(emailSuggestion);
+                      setEmailSuggestion(null);
+                    }}
+                    className="mt-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+                  >
+                    <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
+                  </button>
+                )}
               </div>
 
               <div>
