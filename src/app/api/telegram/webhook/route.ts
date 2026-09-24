@@ -425,10 +425,10 @@ export async function POST(req: NextRequest) {
     });
 
     const suretyPercent = surety.score; // 0 to 100%
-    const isAutoApproved = suretyPercent >= 90;
-    const approvalStatus: 'approved' | 'pending' = isAutoApproved ? 'approved' : 'pending';
-    const eventStatus: 'live' | 'draft' = isAutoApproved ? 'live' : 'draft';
-    const isPublic = isAutoApproved;
+    const isAutoApproved = true;
+    const approvalStatus = 'approved';
+    const eventStatus = 'live';
+    const isPublic = true;
 
     // 3. Build Event Record for Supabase
     const insertPayload = {
@@ -448,7 +448,7 @@ export async function POST(req: NextRequest) {
         confidence_score: suretyPercent / 100,
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
-        admin_approved: isAutoApproved,
+        admin_approved: true,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -459,8 +459,8 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: isFlashVibe ? 12 : 250,
-      is_public: isPublic,
-      status: eventStatus,
+      is_public: true,
+      status: 'live',
       ai_generated: true,
       source_type: finalSourceType,
       source_platform: finalSourcePlatform || 'telegram',
