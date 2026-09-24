@@ -10,42 +10,9 @@ export function getBotToken(): string {
   return token;
 }
 
-export async function isAuthorizedCurator(senderId: string | number): Promise<boolean> {
-  const idStr = String(senderId).trim();
-  const idNum = parseInt(idStr, 10);
-
-  // 1. Check environment variable whitelist first (zero latency)
-  const envAllowed = process.env.TELEGRAM_ADMIN_CHAT_ID;
-  if (envAllowed) {
-    const allowedList = envAllowed
-      .replace(/['"\r\n]/g, '')
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
-    if (allowedList.includes(idStr)) return true;
-  }
-
-  // 2. Check dynamic telegram_curators table in Supabase
-  try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (url && key && !isNaN(idNum)) {
-      const { createClient } = await import('@supabase/supabase-js');
-      const client = createClient(url, key, { auth: { persistSession: false } });
-      const { data } = await client
-        .from('telegram_curators')
-        .select('id')
-        .eq('telegram_user_id', idNum)
-        .eq('is_active', true)
-        .maybeSingle();
-      if (data) return true;
-    }
-  } catch (err) {
-    console.warn('[Telegram] Dynamic curator check warning:', err);
-  }
-
-  // 3. Strict Fail-Secure: If not found in env whitelist or database table, strictly deny access
-  return false;
+export async function isAuthorizedCurator(_senderId?: string | number): Promise<boolean> {
+  // All users are allowed to submit events through Telegram bot
+  return true;
 }
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';

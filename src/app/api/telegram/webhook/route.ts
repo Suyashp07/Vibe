@@ -5,7 +5,6 @@ import {
   editTelegramMessage,
   answerTelegramCallback,
   downloadTelegramFileBuffer,
-  isAuthorizedCurator,
 } from '@/lib/telegram';
 import {
   extractEventFromImage,
@@ -61,11 +60,6 @@ export async function POST(req: NextRequest) {
       const chatId = cq.message.chat.id;
       const messageId = cq.message.message_id;
       const data = cq.data || '';
-
-      if (!(await isAuthorizedCurator(senderId))) {
-        await answerTelegramCallback(cq.id, 'Unauthorized curator', true);
-        return NextResponse.json({ ok: true });
-      }
 
       const supabase = getSupabaseAdmin();
       const appUrl = getAppUrl();
@@ -240,9 +234,7 @@ export async function POST(req: NextRequest) {
     const chatId = message.chat.id;
     const senderId = message.from.id;
 
-    // Check if sender has curator / admin privileges
-    const isCurator = await isAuthorizedCurator(senderId);
-
+    // Every user is authorized to submit events through Telegram bot
     // Handle /start or /help command
     const textContent = message.text || message.caption || '';
     const lowerText = textContent.toLowerCase();
