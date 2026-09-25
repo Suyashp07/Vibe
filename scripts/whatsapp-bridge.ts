@@ -33,7 +33,7 @@ function loadEnvLocal() {
 }
 loadEnvLocal();
 
-const PORT = Number(process.env.WHATSAPP_BRIDGE_PORT || 3002);
+const PORT = Number(process.env.PORT || process.env.WHATSAPP_BRIDGE_PORT || 3002);
 const BRIDGE_SECRET = process.env.WHATSAPP_BRIDGE_SECRET || 'vibe_wa_sec_99a8b7c6d5e4f3a2b1';
 function getWebhookUrl(): string {
   if (process.env.VIBE_WEBHOOK_URL) {
