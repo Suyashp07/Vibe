@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "whatsapp:bridge": "tsx scripts/whatsapp-bridge.ts"
+    "whatsapp:bridge": "tsx --tsconfig tsconfig.scripts.json scripts/whatsapp-bridge.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
@@ -28,7 +31,9 @@
     "qrcode-terminal": "^0.12.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.5.4"
+    "tailwind-merge": "^2.5.4",
+    "tsx": "^4.23.13",
+    "typescript": "^5.6.3"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
@@ -39,8 +44,6 @@
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.14",
-    "tsx": "^4.23.13",
-    "typescript": "^5.6.3"
+    "tailwindcss": "^3.4.14"
   }
 }
