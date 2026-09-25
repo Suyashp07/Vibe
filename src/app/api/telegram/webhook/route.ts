@@ -99,7 +99,6 @@ export async function POST(req: NextRequest) {
           reply_markup: {
             inline_keyboard: [
               [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
-              [{ text: '📋 Copy Link', callback_data: `copy:${instantLink}` }],
             ],
           },
         });
@@ -131,7 +130,6 @@ export async function POST(req: NextRequest) {
           reply_markup: {
             inline_keyboard: [
               [{ text: '🌐 View Live Page ↗', url: eventLink }],
-              [{ text: '📋 Copy Link', callback_data: `copy:${eventLink}` }],
             ],
           },
         });
@@ -529,11 +527,11 @@ export async function POST(req: NextRequest) {
           `🕒 ${dateStr} IST\n\n` +
           `✅ <i>Auto-Approved: All required details verified!</i>\n\n` +
           `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
+          `📋 <b>Tap to copy link:</b> <code>${instantLink}</code>\n\n` +
           `📲 <i>Forward this link to your squad — anyone can swipe to your card and tap "I'm In" to join!</i>`;
 
         inlineKeyboard = [
           [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
-          [{ text: '📋 Copy Link', callback_data: `copy:${instantLink}` }],
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       } else {
@@ -545,7 +543,8 @@ export async function POST(req: NextRequest) {
           `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
           `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n` +
           `✅ <i>Auto-Approved: High completeness surety score.</i>\n\n` +
-          `🔗 <b>Live Link:</b> <a href="${liveLink}">${liveLink}</a>`;
+          `🔗 <b>Live Link:</b> <a href="${liveLink}">${liveLink}</a>\n\n` +
+          `📋 <b>Tap to copy link:</b> <code>${liveLink}</code>`;
 
         inlineKeyboard = [
           [{ text: '🌐 View Live Event Page ↗', url: liveLink }],

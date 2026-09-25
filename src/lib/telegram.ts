@@ -44,8 +44,22 @@ export async function sendTelegramMessage(
     payload.message_thread_id = Number(options.message_thread_id);
   }
 
-  if (options?.reply_markup) {
-    payload.reply_markup = options.reply_markup;
+  if (options?.reply_markup?.inline_keyboard) {
+    // Sanitize callback_data to adhere to Telegram's strict 1-64 byte limit
+    const safeKeyboard = options.reply_markup.inline_keyboard.map((row) =>
+      row.map((btn) => {
+        if (btn.callback_data && Buffer.byteLength(btn.callback_data, 'utf8') > 64) {
+          console.warn('[Telegram] Truncating oversized callback_data (exceeds 64 bytes):', btn.callback_data);
+          return {
+            text: btn.text,
+            callback_data: btn.callback_data.slice(0, 64),
+            url: btn.url,
+          };
+        }
+        return btn;
+      })
+    );
+    payload.reply_markup = { inline_keyboard: safeKeyboard };
   }
 
   const res = await fetch(url, {
@@ -54,7 +68,22 @@ export async function sendTelegramMessage(
     body: JSON.stringify(payload),
   });
 
-  return res.json();
+  const data = await res.json();
+  if (!data.ok) {
+    console.error('[sendTelegramMessage] Telegram API error:', data, 'payload was:', payload);
+    // If rejected due to reply_markup or button formatting, automatically retry sending the message without reply_markup
+    if (payload.reply_markup) {
+      delete payload.reply_markup;
+      const retryRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return retryRes.json();
+    }
+  }
+
+  return data;
 }
 
 /**
@@ -81,8 +110,20 @@ export async function editTelegramMessage(
     parse_mode: options?.parse_mode || 'HTML',
   };
 
-  if (options?.reply_markup) {
-    payload.reply_markup = options.reply_markup;
+  if (options?.reply_markup?.inline_keyboard) {
+    const safeKeyboard = options.reply_markup.inline_keyboard.map((row) =>
+      row.map((btn) => {
+        if (btn.callback_data && Buffer.byteLength(btn.callback_data, 'utf8') > 64) {
+          return {
+            text: btn.text,
+            callback_data: btn.callback_data.slice(0, 64),
+            url: btn.url,
+          };
+        }
+        return btn;
+      })
+    );
+    payload.reply_markup = { inline_keyboard: safeKeyboard };
   }
 
   const res = await fetch(url, {
@@ -91,7 +132,21 @@ export async function editTelegramMessage(
     body: JSON.stringify(payload),
   });
 
-  return res.json();
+  const data = await res.json();
+  if (!data.ok) {
+    console.error('[editTelegramMessage] Telegram API error:', data);
+    if (payload.reply_markup) {
+      delete payload.reply_markup;
+      const retryRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return retryRes.json();
+    }
+  }
+
+  return data;
 }
 
 /**
