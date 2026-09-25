@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "whatsapp:bridge": "tsx --tsconfig tsconfig.scripts.json scripts/whatsapp-bridge.ts"
+    "build:whatsapp": "tsc scripts/whatsapp-bridge.ts --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck --outDir dist",
+    "whatsapp:bridge": "node dist/whatsapp-bridge.js"
   },
   "engines": {
     "node": ">=20.0.0"
