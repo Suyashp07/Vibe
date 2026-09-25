@@ -28,11 +28,28 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-function getAppUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://vibe-seven-pied.vercel.app')
-  );
+function getAppUrl(req?: Request): string {
+  if (req) {
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      const proto = req.headers.get('x-forwarded-proto') || 'https';
+      return `${proto}://${host}`;
+    }
+  }
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  if (envUrl && !envUrl.includes('vibe-by-swaniki.vercel.app') && !envUrl.includes('localhost')) {
+    return envUrl.replace(/\/$/, '');
+  }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  return 'https://vibe-seven-pied.vercel.app';
 }
 
 export async function GET() {
@@ -63,7 +80,7 @@ export async function POST(req: NextRequest) {
       const data = cq.data || '';
 
       const supabase = getSupabaseAdmin();
-      const appUrl = getAppUrl();
+      const appUrl = getAppUrl(req);
 
       if (data.startsWith('publish_instant:')) {
         const eventId = data.replace('publish_instant:', '');
@@ -443,6 +460,8 @@ export async function POST(req: NextRequest) {
         `Join us for ${extracted.title || 'this event'} in ${detectedCity}. An exciting gathering bringing people together.`,
       cover_image_url: coverImageUrl,
       template: isFlashVibe ? 'ember' : (extracted.template || 'grove'),
+      category: isFlashVibe ? 'Flash Vibe' : (extracted.category || 'Tech & AI'),
+      is_flash: isFlashVibe,
       theme: {
         palette: isFlashVibe ? 'sunset' : (extracted.template === 'ember' ? 'sunset' : 'forest'),
         font: 'Inter',
@@ -452,6 +471,7 @@ export async function POST(req: NextRequest) {
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
         admin_approved: isAutoApproved,
+        is_flash: isFlashVibe,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -512,7 +532,7 @@ export async function POST(req: NextRequest) {
     const detectedCategory = (extracted.category || detectCategoryFromText(extracted.title)).toUpperCase();
 
     // 4. Send Confirmation Card with Inline Buttons to Telegram
-    const appUrl = getAppUrl();
+    const appUrl = getAppUrl(req);
     const adminEventsUrl = `${appUrl}/admin/events`;
 
     let previewText: string;
@@ -521,17 +541,20 @@ export async function POST(req: NextRequest) {
     if (isAutoApproved) {
       if (isFlashVibe) {
         const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
+        const liveLink = `${appUrl}/${finalSlug}`;
         previewText = `⚡ <b>YOUR FLASH VIBE IS AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
           `🔥 <b>${extracted.title}</b>\n` +
           `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
           `🕒 ${dateStr} IST\n\n` +
           `✅ <i>Auto-Approved: All required details verified!</i>\n\n` +
           `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
+          `🌐 <b>Full Event & RSVP Pass:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
           `📋 <b>Tap to copy link:</b> <code>${instantLink}</code>\n\n` +
           `📲 <i>Forward this link to your squad — anyone can swipe to your card and tap "I'm In" to join!</i>`;
 
         inlineKeyboard = [
           [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
+          [{ text: '🌐 View Event & RSVP ↗', url: liveLink }],
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       } else {

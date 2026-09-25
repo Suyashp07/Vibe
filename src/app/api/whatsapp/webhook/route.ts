@@ -23,23 +23,28 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-function getAppUrl(): string {
-  if (process.env.NEXT_PUBLIC_PRODUCTION_URL) {
-    return process.env.NEXT_PUBLIC_PRODUCTION_URL.replace(/\/$/, '');
+function getAppUrl(req?: Request): string {
+  if (req) {
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      const proto = req.headers.get('x-forwarded-proto') || 'https';
+      return `${proto}://${host}`;
+    }
   }
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  if (envUrl && !envUrl.includes('vibe-by-swaniki.vercel.app') && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl.replace(/\/$/, '');
+  }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   }
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, '');
+    return `https://${process.env.VERCEL_URL}`;
   }
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  if (!appUrl || appUrl.includes('localhost') || appUrl.includes('127.0.0.1')) {
-    // WhatsApp messages are sent to real phones that cannot connect to localhost.
-    // Always use the live production URL for all WhatsApp links.
-    return 'https://vibe-seven-pied.vercel.app';
-  }
-  return appUrl.replace(/\/$/, '');
+
+  return 'https://vibe-seven-pied.vercel.app';
 }
 
 /**

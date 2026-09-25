@@ -44,10 +44,13 @@ export interface ExtractedEventData {
 }
 
 const CANDIDATE_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3-flash-preview',
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash',
+  'gemini-flash-latest',
 ];
 
 export function detectCityFromText(text: string): { name: string; state?: string } | null {
@@ -59,6 +62,24 @@ export function detectCityFromText(text: string): { name: string; state?: string
       return { name: val.name, state: val.state };
     }
   }
+
+  // Micro-location landmarks mapping to major cities
+  if (/\b(lalghati|mp nagar|new market|arera|kolar|db mall|bhojpur)\b/i.test(lower)) {
+    return { name: 'Bhopal', state: 'Madhya Pradesh' };
+  }
+  if (/\b(bandra|andheri|juhu|worli|powai|dadar|colaba|lower parel|chembur|navi mumbai|thane)\b/i.test(lower)) {
+    return { name: 'Mumbai', state: 'Maharashtra' };
+  }
+  if (/\b(koramangala|indiranagar|whitefield|hsr|bellandur|jayanagar|mg road)\b/i.test(lower)) {
+    return { name: 'Bengaluru', state: 'Karnataka' };
+  }
+  if (/\b(koregaon park|kothrud|viman nagar|baner|wakad|hinjewadi|shivajinagar)\b/i.test(lower)) {
+    return { name: 'Pune', state: 'Maharashtra' };
+  }
+  if (/\b(cp|connaught place|hauz khas|saket|gurugram|gurgaon|noida|cyber hub)\b/i.test(lower)) {
+    return { name: 'Delhi NCR', state: 'Delhi' };
+  }
+
   return null;
 }
 
@@ -668,17 +689,29 @@ export function parseEventDeterministic(text: string): {
     state = cityObj.state || '';
   }
 
-  // 2. Extract Named Title e.g. "Named Tedxtalk", "called TedX", "title: Startup Meetup"
-  const namedMatch = text.match(/(?:named|called|titled|topic)[:\s]+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|timing|$|\.|\,))/i) ||
-                     text.match(/(?:named|called|titled|topic)[:\s]+([^\n\.,]+)/i);
-  if (namedMatch && namedMatch[1].trim()) {
-    title = namedMatch[1].trim();
+  // 2. Extract Named Title
+  // e.g. "Dosti Milan Samaroh is the event name", "Named Tedxtalk", "called TedX", "title: Startup Meetup"
+  const isEventNameMatch = text.match(/^(.+?)\s+is\s+the\s+event(?:\s+name)?\b/i) ||
+                           text.match(/event(?:\s+name)?\s+is\s+[:\s]+([^\n\.,]+)/i);
+  if (isEventNameMatch && isEventNameMatch[1].trim()) {
+    title = isEventNameMatch[1].trim();
+  } else {
+    const namedMatch = text.match(/(?:named|called|titled|topic)[:\s]+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|timing|$|\.|\,))/i) ||
+                       text.match(/(?:named|called|titled|topic)[:\s]+([^\n\.,]+)/i);
+    if (namedMatch && namedMatch[1].trim()) {
+      title = namedMatch[1].trim();
+    }
   }
 
-  // 3. Extract Venue e.g. "at RGPV Bhopal", "at Subko Cafe", "in Cyber Hub"
-  const venueMatch = text.match(/\b(?:at|in)\s+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|named|called|timing|$|\.|\,))/i);
-  if (venueMatch && venueMatch[1].trim()) {
-    venue = venueMatch[1].trim();
+  // 3. Extract Venue e.g. "at Lalghati Choupati", "at Subko Cafe", "in Cyber Hub"
+  // Prioritize "at <venue>" (excluding time like "at 9 pm"), then "in <venue>" (excluding dates)
+  const atVenueMatch = text.match(/\bat\s+(?!\d{1,2}(?::\d{2})?\s*(?:am|pm)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
+  const inVenueMatch = text.match(/\bin\s+(?!\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
+
+  if (atVenueMatch && atVenueMatch[1].trim()) {
+    venue = atVenueMatch[1].trim();
+  } else if (inVenueMatch && inVenueMatch[1].trim()) {
+    venue = inVenueMatch[1].trim();
   } else {
     venue = `${city} Venue`;
   }

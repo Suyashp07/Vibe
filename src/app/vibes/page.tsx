@@ -129,9 +129,77 @@ function VibesReelsContent() {
     };
   }, []);
 
+  // Fetch target event directly if requested in query param and not found yet
+  useEffect(() => {
+    if (!targetSlug) return;
+    setActiveCity('All Cities');
+    setSelectedActivity('all');
+
+    const checkAndFetchTarget = async () => {
+      try {
+        const res = await fetch(`/api/events/by-slug?slug=${encodeURIComponent(targetSlug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.event) {
+            const r = data.event;
+            const orgProfile = r.profiles || {};
+            const targetEvent: EventItem = {
+              id: r.id,
+              organizer_id: r.organizer_id || orgProfile.id || 'org-1',
+              organizer_name: orgProfile.name || r.organizer_name || 'Host',
+              organizer_handle: orgProfile.handle || r.organizer_handle || 'host',
+              organizer_logo: orgProfile.logo_url || r.organizer_logo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+              organizer_brand_color: orgProfile.brand_color || '#E8621A',
+              slug: r.slug,
+              title: r.title,
+              tagline: r.tagline || '',
+              description: r.description || '',
+              cover_image_url: r.cover_image_url,
+              template: r.template || 'ember',
+              theme: r.theme || {},
+              sections: r.sections || {},
+              event_type: r.event_type || 'in-person',
+              location_name: r.location_name,
+              location_address: r.location_address,
+              city: r.city || 'Mumbai',
+              start_at: r.start_at,
+              end_at: r.end_at,
+              timezone: r.timezone || 'Asia/Kolkata',
+              capacity: r.capacity || 20,
+              is_public: true,
+              status: r.status || 'live',
+              ai_generated: r.ai_generated || false,
+              is_flash: true,
+              flash_activity: r.flash_activity || 'other',
+              faq: r.faq || [],
+              rsvp_form_config: r.rsvp_form_config || { ask_plus_one: true, waitlist_enabled: true },
+              created_at: r.created_at,
+              updated_at: r.updated_at || r.created_at,
+            } as EventItem;
+
+            setEvents((prev) => {
+              const filtered = prev.filter((e) => e.slug !== targetEvent.slug && e.id !== targetEvent.id);
+              return [targetEvent, ...filtered];
+            });
+            setCurrentIndex(0);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load target vibe event:', err);
+      }
+    };
+
+    checkAndFetchTarget();
+  }, [targetSlug]);
+
   // Filter events by City & Activity
   const filteredEvents = useMemo(() => {
     const filtered = events.filter((e) => {
+      // If targetSlug is specified, always keep the target event regardless of city or activity filter
+      if (targetSlug && (e.slug?.toLowerCase() === targetSlug.toLowerCase() || e.id === targetSlug)) {
+        return true;
+      }
+
       // City filter
       if (!matchesCityFilter(e, activeCity)) {
         return false;
@@ -154,13 +222,13 @@ function VibesReelsContent() {
     });
 
     return filtered;
-  }, [events, activeCity, selectedActivity]);
+  }, [events, activeCity, selectedActivity, targetSlug]);
 
   // Scroll to target event if requested in query params
   useEffect(() => {
     if (targetSlug && filteredEvents.length > 0) {
       const idx = filteredEvents.findIndex(
-        (e) => e.slug === targetSlug || e.id === targetSlug
+        (e) => e.slug?.toLowerCase() === targetSlug.toLowerCase() || e.id === targetSlug
       );
       if (idx >= 0 && containerRef.current) {
         const container = containerRef.current;
