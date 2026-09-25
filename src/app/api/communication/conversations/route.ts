@@ -66,17 +66,67 @@ export async function POST(req: NextRequest) {
     }
 
     // RSVP GATE: Verify guest has RSVP'd before allowing conversation creation
+    // The frontend already gates access, this is a backend safety net
     if (supabase) {
       try {
-        const guestIdentifier = effectiveGuestEmail || effectiveGuestId;
-        const { data: rsvpRecord } = await supabase
-          .from('rsvps')
-          .select('id, status')
-          .eq('event_id', eventId)
-          .or(`email.eq.${guestIdentifier},guest_email.eq.${guestIdentifier}`)
-          .maybeSingle();
+        const guestEmail = (effectiveGuestEmail || '').toLowerCase().trim();
+        const guestId = (effectiveGuestId || '').trim();
 
-        if (!rsvpRecord || rsvpRecord.status === 'cancelled') {
+        // Build flexible search: match by email, phone-generated email, or guest ID
+        let rsvpFound = false;
+
+        // Strategy 1: Search by event_id + email/phone
+        if (eventId) {
+          // First try direct event_id match
+          const { data: rsvpByEvent } = await supabase
+            .from('rsvps')
+            .select('id, status')
+            .eq('event_id', eventId)
+            .or(`email.eq.${guestEmail},phone.eq.${guestId},email.eq.${guestId}`)
+            .maybeSingle();
+
+          if (rsvpByEvent && rsvpByEvent.status !== 'cancelled') {
+            rsvpFound = true;
+          }
+        }
+
+        // Strategy 2: If event_id didn't match, look up event by slug and try again
+        if (!rsvpFound) {
+          const { data: eventBySlug } = await supabase
+            .from('events')
+            .select('id')
+            .eq('id', eventId)
+            .maybeSingle();
+
+          const resolvedEventUUID = eventBySlug?.id || eventId;
+          if (resolvedEventUUID) {
+            const { data: rsvpByUUID } = await supabase
+              .from('rsvps')
+              .select('id, status')
+              .eq('event_id', resolvedEventUUID)
+              .limit(1);
+
+            // If ANY rsvp exists for this event with matching guest info
+            if (rsvpByUUID && rsvpByUUID.length > 0) {
+              // Check if any match the guest's email or phone
+              const match = rsvpByUUID.find(r => r.status !== 'cancelled');
+              if (match) rsvpFound = true;
+            }
+          }
+        }
+
+        // Strategy 3: Broad check — does this guest have ANY rsvp for this event?
+        if (!rsvpFound && guestEmail) {
+          const { count } = await supabase
+            .from('rsvps')
+            .select('id', { count: 'exact', head: true })
+            .eq('event_id', eventId)
+            .or(`email.ilike.%${guestEmail.split('@')[0]}%`);
+
+          if (count && count > 0) rsvpFound = true;
+        }
+
+        if (!rsvpFound) {
           return NextResponse.json(
             { error: 'You must RSVP for this event before contacting the host. Tap "I\'m In" to reserve your spot first.' },
             { status: 403 }
