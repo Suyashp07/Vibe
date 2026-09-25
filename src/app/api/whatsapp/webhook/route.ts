@@ -490,12 +490,13 @@ export async function POST(req: NextRequest) {
     if (isAutoApproved) {
       if (isFlashVibe) {
         confirmationMsg =
-          `⚡ *YOUR FLASH VIBE IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
+          `⚡ *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
           `🔥 *${createdEventTitle}*\n` +
           `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
           `🕒 ${dateStr}\n\n` +
           `✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
           `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
+          `🌐 *Full Event & RSVP Pass:*\n${liveEventUrl}\n\n` +
           `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
       } else {
         confirmationMsg = 
