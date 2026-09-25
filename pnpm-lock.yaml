@@ -65,6 +65,12 @@ importers:
       tailwind-merge:
         specifier: ^2.5.4
         version: 2.6.1
+      tsx:
+        specifier: ^4.23.13
+        version: 4.23.13
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
     devDependencies:
       '@types/canvas-confetti':
         specifier: ^1.9.0
@@ -93,12 +99,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.14
         version: 3.4.19(tsx@4.23.13)
-      tsx:
-        specifier: ^4.23.13
-        version: 4.23.13
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
 
 packages:
 
