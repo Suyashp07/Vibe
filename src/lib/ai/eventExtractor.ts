@@ -237,6 +237,31 @@ export function extractPriceFromContent(content: string): string | null {
  * Scrape OpenGraph and page metadata from an external event URL
  * Uses direct fetch with fallback to Jina Reader proxy for Cloudflare-protected sites (e.g. BookMyShow)
  */
+export function parseJsonLdEvent(html: string): any | null {
+  if (!html) return null;
+  const regex = /<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (parsed['@type'] === 'Event') return parsed;
+      if (Array.isArray(parsed)) {
+        const ev = parsed.find((item: any) => item && item['@type'] === 'Event');
+        if (ev) return ev;
+      }
+      if (parsed['@graph'] && Array.isArray(parsed['@graph'])) {
+        const ev = parsed['@graph'].find((item: any) => item && item['@type'] === 'Event');
+        if (ev) return ev;
+      }
+    } catch {}
+  }
+  return null;
+}
+
+/**
+ * Scrape OpenGraph, Schema.org JSON-LD, and page metadata from an external event URL
+ * Uses direct fetch with fallback to Jina Reader proxy for Cloudflare-protected sites (e.g. BookMyShow)
+ */
 export async function scrapeUrlMetadata(url: string): Promise<{
   title?: string;
   description?: string;
@@ -245,6 +270,11 @@ export async function scrapeUrlMetadata(url: string): Promise<{
   price?: string;
   platform: string;
   cleanUrl: string;
+  venue_name?: string;
+  location_address?: string;
+  city?: string;
+  start_at?: string;
+  end_at?: string;
 }> {
   let platform = 'telegram';
   const lower = url.toLowerCase();
@@ -297,47 +327,126 @@ export async function scrapeUrlMetadata(url: string): Promise<{
   }
 
   // Step 3: Extract accurate ticket price deterministically
-  const detectedPrice = extractPriceFromContent(rawContent);
+  let detectedPrice = extractPriceFromContent(rawContent);
 
   // Step 4: Parse Title, Description, and Images
   let title: string | undefined;
   let description: string | undefined;
   let image: string | undefined;
+  let venueName: string | undefined;
+  let locationAddress: string | undefined;
+  let eventCity: string | undefined;
+  let startAt: string | undefined;
+  let endAt: string | undefined;
 
+  // Step 4A: Check for Schema.org JSON-LD Event metadata (District, BookMyShow, Luma, etc.)
+  const jsonLd = parseJsonLdEvent(rawContent);
+  if (jsonLd) {
+    if (jsonLd.name && typeof jsonLd.name === 'string') {
+      title = jsonLd.name.trim();
+    }
+    if (jsonLd.description && typeof jsonLd.description === 'string') {
+      description = jsonLd.description.trim();
+    }
+    if (jsonLd.image) {
+      image = typeof jsonLd.image === 'string' ? jsonLd.image : (jsonLd.image?.url || image);
+    }
+    if (jsonLd.location) {
+      if (typeof jsonLd.location === 'string') {
+        venueName = jsonLd.location.trim();
+      } else if (typeof jsonLd.location === 'object') {
+        venueName = jsonLd.location.name?.trim() || undefined;
+        if (typeof jsonLd.location.address === 'string') {
+          locationAddress = jsonLd.location.address.trim();
+        } else if (jsonLd.location.address && typeof jsonLd.location.address === 'object') {
+          const addr = jsonLd.location.address;
+          locationAddress = [addr.streetAddress, addr.addressLocality, addr.addressRegion, addr.postalCode, addr.addressCountry]
+            .filter(Boolean)
+            .join(', ');
+          if (addr.addressLocality) {
+            eventCity = addr.addressLocality.trim();
+          }
+        }
+      }
+    }
+    if (jsonLd.startDate) {
+      try {
+        const d = new Date(jsonLd.startDate);
+        if (!isNaN(d.getTime())) startAt = d.toISOString();
+      } catch {}
+    }
+    if (jsonLd.endDate) {
+      try {
+        const d = new Date(jsonLd.endDate);
+        if (!isNaN(d.getTime())) endAt = d.toISOString();
+      } catch {}
+    }
+    if (!detectedPrice && jsonLd.offers) {
+      const lowPrice = jsonLd.offers.lowPrice ?? jsonLd.offers.price;
+      if (lowPrice !== undefined && lowPrice !== null) {
+        detectedPrice = Number(lowPrice) === 0 ? 'Free Entry' : `₹${lowPrice} onwards`;
+      }
+    }
+  }
+
+  // Step 4B: Parse OpenGraph / Markdown tags if not already found via JSON-LD
   if (usedReaderProxy) {
-    // Parse from reader markdown
-    const titleMatch = rawContent.match(/^Title:\s*(.+)$/m);
-    if (titleMatch) {
-      title = titleMatch[1]
-        .replace(/\s*(?:Music Shows|Plays|Events|Concerts|Event Tickets|Tickets|- BookMyShow).*$/i, '')
-        .trim();
+    if (!title) {
+      const titleMatch = rawContent.match(/^Title:\s*(.+)$/m);
+      if (titleMatch) {
+        title = titleMatch[1]
+          .replace(/\s*(?:Music Shows|Plays|Events|Concerts|Event Tickets|Tickets|- BookMyShow).*$/i, '')
+          .trim();
+      }
     }
-    const imgMatch =
-      rawContent.match(/!\[.*?\]\((https?:\/\/[^\s\)]+bmscdn\.com[^\s\)]+)\)/i) ||
-      rawContent.match(/!\[.*?\]\((https?:\/\/[^\s\)]+\.(?:jpg|jpeg|png|webp)[^\s\)]*)\)/i);
-    if (imgMatch) {
-      image = imgMatch[1];
+    if (!image) {
+      const imgMatch =
+        rawContent.match(/!\[.*?\]\((https?:\/\/[^\s\)]+bmscdn\.com[^\s\)]+)\)/i) ||
+        rawContent.match(/!\[.*?\]\((https?:\/\/[^\s\)]+\.(?:jpg|jpeg|png|webp)[^\s\)]*)\)/i);
+      if (imgMatch) {
+        image = imgMatch[1];
+      }
     }
-    description = rawContent.slice(0, 1500).trim();
+    if (!description) {
+      description = rawContent.slice(0, 1500).trim();
+    }
   } else {
-    // Parse from raw HTML
-    const titleMatch =
-      rawContent.match(/<meta property="og:title" content="([^"]+)"/i) ||
-      rawContent.match(/<meta name="twitter:title" content="([^"]+)"/i) ||
-      rawContent.match(/<title>([^<]+)<\/title>/i);
+    if (!title) {
+      const titleMatch =
+        rawContent.match(/<meta property="og:title" content="([^"]+)"/i) ||
+        rawContent.match(/<meta name="twitter:title" content="([^"]+)"/i) ||
+        rawContent.match(/<title>([^<]+)<\/title>/i);
+      title = titleMatch ? titleMatch[1].trim() : undefined;
+    }
 
-    const descMatch =
-      rawContent.match(/<meta property="og:description" content="([^"]+)"/i) ||
-      rawContent.match(/<meta name="description" content="([^"]+)"/i) ||
-      rawContent.match(/<meta name="twitter:description" content="([^"]+)"/i);
+    if (!description) {
+      const descMatch =
+        rawContent.match(/<meta property="og:description" content="([^"]+)"/i) ||
+        rawContent.match(/<meta name="description" content="([^"]+)"/i) ||
+        rawContent.match(/<meta name="twitter:description" content="([^"]+)"/i);
+      description = descMatch ? descMatch[1].trim() : undefined;
+    }
 
-    const imageMatch =
-      rawContent.match(/<meta property="og:image" content="([^"]+)"/i) ||
-      rawContent.match(/<meta name="twitter:image" content="([^"]+)"/i);
+    if (!image) {
+      const imageMatch =
+        rawContent.match(/<meta property="og:image" content="([^"]+)"/i) ||
+        rawContent.match(/<meta name="twitter:image" content="([^"]+)"/i);
+      image = imageMatch ? imageMatch[1].trim() : undefined;
+    }
+  }
 
-    title = titleMatch ? titleMatch[1].trim() : undefined;
-    description = descMatch ? descMatch[1].trim() : undefined;
-    image = imageMatch ? imageMatch[1].trim() : undefined;
+  // Detect venue from meta tags if not already extracted
+  if (!venueName) {
+    const venueMatch =
+      rawContent.match(/<meta\s+property="(?:event:location|og:locality|place:name)"\s+content="([^"]+)"/i) ||
+      rawContent.match(/class=["'][^"']*venue[^"']*["'][^>]*>([^<]+)</i);
+    if (venueMatch) venueName = venueMatch[1].trim();
+  }
+
+  // Detect city from address, venue, or title
+  if (!eventCity) {
+    const detectedCityObj = detectCityFromText(`${locationAddress || ''} ${venueName || ''} ${title || ''}`);
+    if (detectedCityObj) eventCity = detectedCityObj.name;
   }
 
   // Fallback title from URL slug if still missing
@@ -360,16 +469,21 @@ export async function scrapeUrlMetadata(url: string): Promise<{
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 2000);
+    .slice(0, 3000);
 
   return {
     title,
-    description: description || textSnippet.slice(0, 300),
+    description: description || textSnippet.slice(0, 400),
     image,
     bodySnippet: textSnippet,
     price: detectedPrice || undefined,
     platform,
     cleanUrl: url,
+    venue_name: venueName,
+    location_address: locationAddress,
+    city: eventCity,
+    start_at: startAt,
+    end_at: endAt,
   };
 }
 
@@ -606,12 +720,31 @@ export function parseEventDeterministic(text: string): {
   // 5. Clean Fallback Title if not yet found
   if (!title) {
     let clean = text
+      .replace(/^source url:\s*/i, '')
       .replace(/^(?:event|gathering|meetup|live)\s+/i, '')
       .replace(/\s+at\s+[\w\s]+?(?=\s+on|\s+at|$)/gi, '')
       .replace(/\s+on\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+/gi, '')
       .replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)/gi, '')
       .trim();
     title = clean.length > 5 ? clean.slice(0, 50) : (text.slice(0, 50).trim() || 'Curated Gathering');
+  }
+
+  if (title.toLowerCase().startsWith('source url:')) {
+    title = title.replace(/^source url:\s*/i, '').trim();
+  }
+  if (/^https?:\/\//i.test(title)) {
+    try {
+      const parsed = new URL(title);
+      const pathParts = parsed.pathname.split('/').filter(Boolean);
+      const lastPart = pathParts[pathParts.length - 1] || '';
+      const cleanSlug = decodeURIComponent(lastPart)
+        .replace(/[-_]/g, ' ')
+        .replace(/\b(?:buy tickets?|tickets?|ep|oct\d*|nov\d*|dec\d*|\d{4,})\b/gi, '')
+        .trim();
+      title = cleanSlug || 'Curated Gathering';
+    } catch {
+      title = 'Curated Gathering';
+    }
   }
 
   title = capitalizeWords(title);
@@ -644,6 +777,11 @@ export async function extractEventFromText(text: string): Promise<ExtractedEvent
   let detectedPlatform = 'telegram';
   let targetUrl: string | undefined = undefined;
   let scrapedPrice: string | undefined = undefined;
+  let scrapedVenue: string | undefined = undefined;
+  let scrapedAddress: string | undefined = undefined;
+  let scrapedCity: string | undefined = undefined;
+  let scrapedStartAt: string | undefined = undefined;
+  let scrapedEndAt: string | undefined = undefined;
 
   if (urlMatch) {
     const rawUrl = urlMatch[1].trim();
@@ -652,11 +790,27 @@ export async function extractEventFromText(text: string): Promise<ExtractedEvent
     detectedPlatform = scraped.platform;
     extractedCover = scraped.image;
     scrapedPrice = scraped.price;
+    scrapedVenue = scraped.venue_name;
+    scrapedAddress = scraped.location_address;
+    scrapedCity = scraped.city;
+    scrapedStartAt = scraped.start_at;
+    scrapedEndAt = scraped.end_at;
+
+    if (scraped.title) deterministicData.title = scraped.title;
+    if (scraped.venue_name) deterministicData.venue_name = scraped.venue_name;
+    if (scraped.location_address) deterministicData.location_address = scraped.location_address;
+    if (scraped.city) deterministicData.city = scraped.city;
+    if (scraped.start_at) deterministicData.start_at = scraped.start_at;
+    if (scraped.end_at) deterministicData.end_at = scraped.end_at;
 
     scrapedContext = `
 Detected Event URL: ${rawUrl}
 Platform: ${scraped.platform.toUpperCase()}
 Page Title: ${scraped.title || 'Unknown'}
+Detected Venue / Place: ${scraped.venue_name || 'Unknown'}
+Detected Address: ${scraped.location_address || 'Unknown'}
+Detected City: ${scraped.city || 'Unknown'}
+Detected Start Time: ${scraped.start_at || 'Unknown'}
 Page Description: ${scraped.description || 'Unknown'}
 Detected Ticket Price: ${scraped.price || 'Not mentioned in page metadata'}
 Page Content Excerpt: ${scraped.bodySnippet || 'None'}
@@ -685,25 +839,32 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
         parsed.cover_image_url ||
         getCategoryCover(category, parsed.title || text);
 
-      const finalTitle = parsed.title && parsed.title !== 'Live Experience' && parsed.title !== 'Community Gathering'
+      const finalTitle = parsed.title && parsed.title !== 'Live Experience' && parsed.title !== 'Community Gathering' && !parsed.title.toLowerCase().startsWith('source url:')
         ? parsed.title
         : deterministicData.title;
 
       const finalCity = parsed.city && parsed.city !== 'Pune'
         ? parsed.city
-        : deterministicData.city;
+        : (scrapedCity || deterministicData.city);
 
-      const finalVenue = parsed.venue_name && parsed.venue_name !== 'City Venue'
+      const finalVenue = parsed.venue_name && parsed.venue_name !== 'City Venue' && !parsed.venue_name.toLowerCase().includes('venue tba')
         ? parsed.venue_name
-        : deterministicData.venue_name;
+        : (scrapedVenue || deterministicData.venue_name);
+
+      const finalAddress = parsed.location_address && !parsed.location_address.includes('City Venue')
+        ? parsed.location_address
+        : (scrapedAddress || deterministicData.location_address);
+
+      const finalStartAt = parsed.start_at || scrapedStartAt || deterministicData.start_at;
+      const finalEndAt = parsed.end_at || scrapedEndAt || deterministicData.end_at;
 
       const surety = calculateEventSurety({
         title: finalTitle,
         venue_name: finalVenue,
-        location_address: parsed.location_address || deterministicData.location_address,
+        location_address: finalAddress,
         city: finalCity,
-        start_at: parsed.start_at || deterministicData.start_at,
-        end_at: parsed.end_at || deterministicData.end_at,
+        start_at: finalStartAt,
+        end_at: finalEndAt,
         ticket_url: targetUrl || parsed.ticket_url,
         price_text: scrapedPrice || parsed.price_text,
         description: parsed.description || text,
@@ -715,11 +876,11 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
         ...parsed,
         title: finalTitle,
         venue_name: finalVenue,
-        location_address: parsed.location_address || deterministicData.location_address,
+        location_address: finalAddress,
         city: finalCity,
         category,
-        start_at: parsed.start_at || deterministicData.start_at,
-        end_at: parsed.end_at || deterministicData.end_at,
+        start_at: finalStartAt,
+        end_at: finalEndAt,
         ticket_url: targetUrl || parsed.ticket_url,
         price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
         source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',

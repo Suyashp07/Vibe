@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaffSession } from '@/lib/adminAuth';
 import { logAuditEvent } from '@/lib/audit';
 import { getSupabaseAdmin } from '@/lib/adminSupabase';
-import { fetchListingPage, detectPlatform } from '@/lib/aggregation/crawler';
+import { detectPlatform } from '@/lib/aggregation/crawler';
 import { areDuplicates } from '@/lib/aggregation/dedup';
 import { extractEventFromText } from '@/lib/ai/eventExtractor';
+import { calculateEventSurety } from '@/lib/eventSurety';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,20 +24,16 @@ export async function POST(req: NextRequest) {
     const platform = detectPlatform(url);
     const supabase = getSupabaseAdmin();
 
-    // 1. Fetch raw page text using Jina Reader proxy fallback
-    const rawContent = await fetchListingPage(url);
-
-    // 2. Extract structured fields with Gemini AI
-    const extracted = await extractEventFromText(
-      `Source URL: ${url}\nPlatform: ${platform}\n\nPage Content:\n${rawContent.slice(0, 12000)}`
-    );
+    // 1. Extract structured fields with Schema.org JSON-LD and Gemini AI
+    const extracted = await extractEventFromText(url.trim());
 
     const title = extracted.title || 'Extracted Event';
     const city = extracted.city || 'Mumbai';
     const venue = extracted.venue_name || `${city} Venue`;
+    const venueAddress = extracted.location_address || `${venue}, ${city}, India`;
     const date = extracted.start_at ? new Date(extracted.start_at).toISOString().split('T')[0] : null;
 
-    // 3. Duplicate check against existing events
+    // 2. Duplicate check against existing events
     let isDuplicate = false;
     let duplicateMatchName: string | null = null;
 
@@ -64,7 +61,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Save to database as draft / review
+    // 3. Save to database with surety calculation
     const slugBase = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -76,6 +73,26 @@ export async function POST(req: NextRequest) {
       ? new Date(extracted.start_at).toISOString()
       : new Date(Date.now() + 86400000).toISOString();
 
+    const validEndAt = extracted.end_at && !isNaN(new Date(extracted.end_at).getTime())
+      ? new Date(extracted.end_at).toISOString()
+      : null;
+
+    const surety = calculateEventSurety({
+      title,
+      venue_name: venue,
+      location_address: venueAddress,
+      city,
+      start_at: validStartAt,
+      end_at: validEndAt,
+      price_text: extracted.price_text,
+      description: extracted.description,
+      cover_image_url: extracted.cover_image_url,
+      external_ticket_url: url,
+      is_external: true,
+    });
+
+    const isAutoApproved = surety.autoApproved;
+
     const insertPayload = {
       slug: uniqueSlug,
       title,
@@ -83,17 +100,27 @@ export async function POST(req: NextRequest) {
       description: extracted.description || `Event curated from ${platform}. Direct registration available.`,
       cover_image_url: extracted.cover_image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
       template: 'grove',
-      theme: { palette: 'forest', font: 'Inter', bg_style: 'solid', button_style: 'solid' },
+      theme: {
+        palette: 'forest',
+        font: 'Inter',
+        bg_style: 'solid',
+        button_style: 'solid',
+        confidence_score: surety.score / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: isAutoApproved ? 'approved' : 'pending',
+        admin_approved: isAutoApproved,
+      },
       sections: { speakers: false, agenda: false, gallery: false, faq: false },
       event_type: 'in-person',
       location_name: venue,
-      location_address: `${venue}, ${city}, India`,
+      location_address: venueAddress,
       city: city,
       start_at: validStartAt,
-      end_at: extracted.end_at && !isNaN(new Date(extracted.end_at).getTime()) ? new Date(extracted.end_at).toISOString() : null,
+      end_at: validEndAt,
       timezone: 'Asia/Kolkata',
-      is_public: false,
-      status: 'draft',
+      confidence_score: surety.score / 100,
+      is_public: isAutoApproved,
+      status: isAutoApproved ? 'live' : 'draft',
       ai_generated: true,
       source_type: 'external',
       source_platform: platform,
@@ -116,7 +143,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Audit log
+    // 4. Audit log
     await logAuditEvent({
       actorId: auth.user.id,
       actorEmail: auth.user.email,
@@ -137,6 +164,7 @@ export async function POST(req: NextRequest) {
       success: true,
       ok: true,
       event: savedEvent,
+      extracted,
       isDuplicate,
       duplicateWarning: isDuplicate ? `Potential duplicate of "${duplicateMatchName}"` : null,
     });

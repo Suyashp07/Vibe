@@ -1138,13 +1138,43 @@ function DetailInspector({
         body: JSON.stringify({ url: refetchUrl.trim() }),
       });
       const data = await res.json();
-      if (res.ok && data.extracted) {
-        if (data.extracted.title) onChange('title', data.extracted.title);
-        if (data.extracted.city) onChange('city', data.extracted.city);
-        if (data.extracted.venue_name) onChange('venue_name', data.extracted.venue_name);
-        if (data.extracted.cover_image_url) onChange('cover_image_url', data.extracted.cover_image_url);
-        if (data.extracted.description) onChange('description', data.extracted.description);
-        if (data.extracted.price_text) onChange('price_text', data.extracted.price_text);
+      const ext = data.extracted || data.event;
+      if (res.ok && ext) {
+        if (ext.title) onChange('title', ext.title);
+        if (ext.city) onChange('city', ext.city);
+        if (ext.venue_name || ext.location_name) {
+          onChange('venue_name', ext.venue_name || ext.location_name);
+          onChange('location_name', ext.venue_name || ext.location_name);
+        }
+        if (ext.venue_address || ext.location_address) {
+          onChange('venue_address', ext.venue_address || ext.location_address);
+          onChange('location_address', ext.venue_address || ext.location_address);
+        }
+        if (ext.cover_image_url || ext.cover_image) {
+          onChange('cover_image_url', ext.cover_image_url || ext.cover_image);
+          onChange('cover_image', ext.cover_image_url || ext.cover_image);
+        }
+        if (ext.description) onChange('description', ext.description);
+        if (ext.price_text || ext.external_price_text) {
+          onChange('price_text', ext.price_text || ext.external_price_text);
+          onChange('external_price_text', ext.price_text || ext.external_price_text);
+        }
+        if (ext.external_ticket_url || ext.ticket_link) {
+          onChange('external_ticket_url', ext.external_ticket_url || ext.ticket_link);
+        }
+        if (ext.date) onChange('date', ext.date);
+        if (ext.time) onChange('time', ext.time);
+        if (ext.start_at) {
+          onChange('start_at', ext.start_at);
+          const d = new Date(ext.start_at);
+          if (!isNaN(d.getTime())) {
+            const dateStr = d.toISOString().split('T')[0];
+            const timeStr = d.toTimeString().slice(0, 5);
+            if (!ext.date) onChange('date', dateStr);
+            if (!ext.time) onChange('time', timeStr);
+          }
+        }
+        if (ext.category) onChange('category', ext.category);
         alert('Refreshed fields from URL.');
       } else {
         alert(data.error || 'Rescan failed');
@@ -1483,7 +1513,25 @@ function DetailInspector({
           <input
             type="text"
             value={event.venue_name || event.location_name || ''}
-            onChange={(e) => onChange('venue_name', e.target.value)}
+            onChange={(e) => {
+              onChange('venue_name', e.target.value);
+              onChange('location_name', e.target.value);
+            }}
+            placeholder="e.g. The Mills"
+            className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Venue Address / Landmark</label>
+          <input
+            type="text"
+            value={event.venue_address || event.location_address || ''}
+            onChange={(e) => {
+              onChange('venue_address', e.target.value);
+              onChange('location_address', e.target.value);
+            }}
+            placeholder="Detailed street address or landmark"
             className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
           />
         </div>
