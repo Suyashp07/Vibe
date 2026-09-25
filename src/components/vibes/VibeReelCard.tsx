@@ -99,8 +99,8 @@ export default function VibeReelCard({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Flash Vibe: ${event.title}`,
-          text: `Check out this spontaneous flash meetup: ${event.title} in ${event.city}! Contact host:`,
+          title: event.title,
+          text: `Check out ${event.title} in ${event.city}! Contact host:`,
           url: shareUrl,
         });
         return;
@@ -190,13 +190,7 @@ export default function VibeReelCard({
       )}
 
       {/* Top Bar Clearance */}
-      <div className="relative z-10 pt-16 sm:pt-20 px-4 sm:px-6 pb-2 flex items-center justify-between">
-        {/* Flash Vibe Badge */}
-        <span className="px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black tracking-wider uppercase bg-[#E8621A] text-white flex items-center gap-1.5 shadow-lg shadow-[#E8621A]/30">
-          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-          <span>FLASH VIBE</span>
-        </span>
-
+      <div className="relative z-10 pt-16 sm:pt-20 px-4 sm:px-6 pb-2 flex items-center justify-end">
         {/* Reel Counter */}
         <span className="text-[10px] sm:text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/80 border border-white/10">
           {index + 1} / {total}
@@ -231,7 +225,7 @@ export default function VibeReelCard({
           type="button"
           onClick={handleShare}
           className="group flex flex-col items-center gap-1 cursor-pointer"
-          title="Share Flash Vibe"
+          title="Share"
         >
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-105 active:scale-90">
             <Share2 className="w-5 h-5" />
@@ -363,7 +357,7 @@ export default function VibeReelCard({
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
               <span className="text-xs font-bold uppercase tracking-wider text-[#E8621A]">
-                ⚡ Flash Vibe Details
+                ⚡ Event Details
               </span>
               <button
                 type="button"

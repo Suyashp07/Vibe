@@ -478,7 +478,7 @@ function VibesReelsContent() {
                 <Flame className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-black text-white mb-2">
-                No Flash Vibes in {activeCity} yet!
+                No Vibes in {activeCity} yet!
               </h3>
               <p className="text-xs text-white/60 max-w-xs mb-6 leading-relaxed">
                 Be the trendsetter! Post a pickup game, casual hangout, or sprint in seconds.
@@ -489,7 +489,7 @@ function VibesReelsContent() {
                 className="py-3 px-6 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs shadow-lg shadow-[#E8621A]/30 flex items-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Post a Flash Vibe</span>
+                <span>Post a Vibe</span>
               </button>
             </div>
           )}

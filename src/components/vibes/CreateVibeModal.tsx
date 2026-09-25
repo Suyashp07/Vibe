@@ -154,7 +154,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
         <div className="flex items-center gap-2 mb-2">
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
             <Zap className="w-3 h-3 fill-white" />
-            <span>Flash Vibe Creator</span>
+            <span>Vibe Creator</span>
           </span>
           {bridgeConnected && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
@@ -359,7 +359,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                   disabled={submitting}
                   className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {submitting ? 'Publishing Flash Vibe...' : '⚡ Post to Vibe Instant Stream'}
+                  {submitting ? 'Publishing Vibe...' : '⚡ Post to Vibe Instant Stream'}
                 </button>
               </form>
             ) : (
@@ -367,7 +367,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h4 className="text-lg font-black text-white mb-1">Flash Vibe is Live!</h4>
+                <h4 className="text-lg font-black text-white mb-1">Vibe is Live!</h4>
                 <p className="text-xs text-white/70 mb-4">
                   Your event is now showing in the Vibe Instant feed for users in {city}.
                 </p>
