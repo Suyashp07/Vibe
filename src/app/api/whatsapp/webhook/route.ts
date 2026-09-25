@@ -381,10 +381,10 @@ export async function POST(req: NextRequest) {
     });
 
     const suretyScore = surety.score; // 0 to 100%
-    const isAutoApproved = true;
-    const approvalStatus = 'approved';
-    const eventStatus = 'live';
-    const isPublic = true;
+    const isAutoApproved = surety.autoApproved;
+    const approvalStatus = isAutoApproved ? 'approved' : 'pending';
+    const eventStatus = isAutoApproved ? 'live' : 'draft';
+    const isPublic = isAutoApproved;
 
     // Insert into Supabase `public.events`
     const insertPayload = {
@@ -410,7 +410,7 @@ export async function POST(req: NextRequest) {
         confidence_score: suretyScore / 100,
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
-        admin_approved: true,
+        admin_approved: isAutoApproved,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -421,8 +421,8 @@ export async function POST(req: NextRequest) {
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
       capacity: isFlashVibe ? 12 : 250,
-      is_public: true,
-      status: 'live',
+      is_public: isPublic,
+      status: eventStatus,
       confidence_score: suretyScore / 100,
       ai_generated: true,
       organizer_id: organizerId,

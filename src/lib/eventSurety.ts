@@ -220,7 +220,7 @@ export function calculateEventSurety(event: any): EventSuretyReport {
   const isManuallyApproved =
     event.approval_status === 'approved' ||
     event.admin_approved === true ||
-    ((event.status || '').toLowerCase() === 'live' && event.approval_status !== 'pending');
+    event.theme?.admin_approved === true;
 
   const autoApproved = finalScore >= 90 || isManuallyApproved;
   const approvalStatus: 'approved' | 'pending' = autoApproved ? 'approved' : 'pending';

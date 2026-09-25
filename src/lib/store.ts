@@ -810,6 +810,18 @@ export const isPublicLiveEvent = (e: any): boolean => {
     return false;
   }
 
+  // Strict Admin Approval Guard:
+  // Events pending admin approval, or with confidence score < 0.9 that haven't been approved by an admin,
+  // are strictly prohibited from appearing in public feeds.
+  const approvalStatus = e.approval_status || e.theme?.approval_status;
+  if (approvalStatus === 'pending') return false;
+
+  const isAdminApproved = e.admin_approved === true || e.theme?.admin_approved === true;
+  const confidenceScore = e.confidence_score ?? e.theme?.confidence_score;
+  if (confidenceScore !== undefined && confidenceScore !== null && confidenceScore < 0.9 && !isAdminApproved) {
+    return false;
+  }
+
   // Must be affirmatively public
   return e.is_public === true || String(e.is_public) === 'true';
 };

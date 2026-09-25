@@ -48,7 +48,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ events: events || [] });
+    // Filter out unapproved events:
+    // If an event has approval_status === 'pending' or (confidence_score < 0.9 and not admin approved),
+    // it must not be visible on the public site until an admin approves it.
+    const publicEvents = (events || []).filter((e) => {
+      const approvalStatus = e.approval_status || e.theme?.approval_status;
+      if (approvalStatus === 'pending') return false;
+      const isAdminApproved = e.admin_approved === true || e.theme?.admin_approved === true;
+      const score = e.confidence_score ?? e.theme?.confidence_score;
+      if (score !== undefined && score !== null && score < 0.9 && !isAdminApproved) {
+        return false;
+      }
+      return true;
+    });
+
+    return NextResponse.json({ events: publicEvents });
   } catch (err: any) {
     console.error('Error in /api/events/list:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
