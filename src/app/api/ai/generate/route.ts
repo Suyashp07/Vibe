@@ -65,7 +65,7 @@ Return ONLY a valid raw JSON object (no backticks, no markdown) with:
   "rsvp_confirmation": "Warm thank you message for guests after RSVPing"
 }`;
 
-        const candidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
+        const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 
         for (const modelName of candidateModels) {
           try {

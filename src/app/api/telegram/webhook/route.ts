@@ -44,6 +44,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  let update: any = null;
   try {
     // 0. Verify Telegram Webhook Secret Token if configured (Security Requirement 11)
     if (!telegramAdapter.verifyWebhook(req)) {
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const update = await req.json();
+    update = await req.json();
 
     // 1. Handle Inline Button Callback Queries (Approve / Discard)
     if (update.callback_query) {
@@ -582,6 +583,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     console.error('[Telegram Webhook] Error:', error);
+    try {
+      if (update?.message?.chat?.id) {
+        const threadId = update.message.message_thread_id;
+        await sendTelegramMessage(
+          update.message.chat.id,
+          `⚠️ <b>Failed to process event:</b> ${error.message || 'Unknown processing error'}`,
+          { parse_mode: 'HTML', ...(threadId ? { message_thread_id: threadId } : {}) }
+        );
+      }
+    } catch (sendErr) {
+      console.error('[Telegram Webhook] Failed to send error message to Telegram:', sendErr);
+    }
     return NextResponse.json({ ok: true, error: error.message });
   }
 }
