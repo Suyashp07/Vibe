@@ -108,12 +108,39 @@ export class WhatsAppAdapter implements CommunicationChannelAdapter {
       conversation.guest_email
     );
 
+    // Look up guest's RSVP status for this event to tag the message
+    let rsvpBadge = '❓ Not RSVP\'d';
+    let rsvpPhone = '';
+    const supabase = getSupabaseServerClient();
+    if (supabase && event?.id) {
+      try {
+        const guestIdentifier = conversation.guest_email || conversation.guest_id;
+        const { data: rsvpData } = await supabase
+          .from('rsvps')
+          .select('name, phone, status, created_at')
+          .eq('event_id', event.id)
+          .or(`email.eq.${guestIdentifier},guest_email.eq.${guestIdentifier}`)
+          .maybeSingle();
+
+        if (rsvpData) {
+          rsvpBadge = rsvpData.status === 'confirmed'
+            ? `✅ RSVP'd (${rsvpData.name || guestDisplayName})`
+            : `⏳ Waitlisted`;
+          if (rsvpData.phone) {
+            rsvpPhone = `\n📱 ${rsvpData.phone}`;
+          }
+        }
+      } catch {
+        // Silently continue — RSVP lookup is non-critical
+      }
+    }
+
     const formattedText = 
-      `*VIBE*\n\n` +
-      `*Event:* ${event.title || 'Event'}\n\n` +
-      `*Guest:*\n${guestDisplayName}\n\n` +
-      `*Message:*\n${message.content}\n\n` +
-      `👉 _Swipe right and reply to this message to respond directly to the guest._`;
+      `📩 *VIBE — Guest Message*\n\n` +
+      `🎟️ *Event:* ${event.title || 'Event'}\n` +
+      `${rsvpBadge}${rsvpPhone}\n\n` +
+      `👤 *${guestDisplayName}:*\n${message.content}\n\n` +
+      `👉 _Reply to this message to respond directly to the guest._`;
 
     try {
       const headers: Record<string, string> = {

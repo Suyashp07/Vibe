@@ -1211,6 +1211,16 @@ export const getEventRSVPs = (eventIdOrSlug: string): RSVPItem[] => {
 };
 export const getRSVPsByEvent = getEventRSVPs;
 
+/**
+ * Check if the current browser user has already RSVP'd for a given event.
+ * Matches by event_id or event_slug, and returns the RSVP record if found.
+ */
+export const hasUserRSVP = (eventIdOrSlug: string): RSVPItem | null => {
+  const rsvps = getEventRSVPs(eventIdOrSlug);
+  if (rsvps.length > 0) return rsvps[0];
+  return null;
+};
+
 export const addRSVP = (rsvp: Omit<RSVPItem, 'id' | 'created_at'>): RSVPItem => {
   const newRsvp: RSVPItem = {
     ...rsvp,

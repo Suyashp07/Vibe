@@ -221,17 +221,34 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
               You're in, {name.split(' ')[0]}!
             </h3>
 
-            <p className="text-xs text-white/70 max-w-xs mx-auto mb-6">
+            <p className="text-xs text-white/70 max-w-xs mx-auto mb-2">
               Your spot is reserved for <strong className="text-white">{event.title}</strong> at {event.location_name}.
+            </p>
+
+            <p className="text-[10px] text-white/50 max-w-xs mx-auto mb-6">
+              💬 Chat with the host is now unlocked — ask about logistics, parking, or anything else!
             </p>
 
             <div className="space-y-2.5">
               <button
                 type="button"
-                onClick={onClose}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#E8621A]/30"
+                onClick={() => {
+                  onClose();
+                  // Slight delay so the parent can open ConnectHostModal
+                  setTimeout(() => {
+                    if (onSuccess) onSuccess();
+                  }, 100);
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2"
               >
-                Done
+                <span>💬 Ask Host a Question</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 font-bold text-sm transition-all cursor-pointer"
+              >
+                Done — I'm All Set
               </button>
             </div>
           </div>

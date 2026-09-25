@@ -65,6 +65,29 @@ export async function POST(req: NextRequest) {
       resolvedHostId = 'swaniki';
     }
 
+    // RSVP GATE: Verify guest has RSVP'd before allowing conversation creation
+    if (supabase) {
+      try {
+        const guestIdentifier = effectiveGuestEmail || effectiveGuestId;
+        const { data: rsvpRecord } = await supabase
+          .from('rsvps')
+          .select('id, status')
+          .eq('event_id', eventId)
+          .or(`email.eq.${guestIdentifier},guest_email.eq.${guestIdentifier}`)
+          .maybeSingle();
+
+        if (!rsvpRecord || rsvpRecord.status === 'cancelled') {
+          return NextResponse.json(
+            { error: 'You must RSVP for this event before contacting the host. Tap "I\'m In" to reserve your spot first.' },
+            { status: 403 }
+          );
+        }
+      } catch (rsvpErr) {
+        // If RSVP check fails (e.g. table doesn't exist), allow conversation to proceed
+        console.warn('[Conversations API] RSVP gate check warning (non-blocking):', rsvpErr);
+      }
+    }
+
     const conversation = await conversationService.findOrCreateConversation({
       eventId,
       guestId: effectiveGuestId,
