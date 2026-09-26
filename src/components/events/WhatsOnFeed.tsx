@@ -262,6 +262,35 @@ export default function WhatsOnFeed() {
     }
   };
 
+  // Handle tag click directly from any event card (acting as an interactive filter)
+  const handleTagClick = (tag: string, type: 'mood' | 'category' | 'source') => {
+    if (type === 'category') {
+      const matched = CATEGORY_FILTERS.find((c) => c.toLowerCase() === tag.toLowerCase());
+      if (matched) {
+        setCategoryFilter((prev) => (prev === matched ? 'All' : matched));
+      } else {
+        setCategoryFilter('All');
+        setSearchQuery((prev) => (prev.toLowerCase() === tag.toLowerCase() ? '' : tag));
+      }
+    } else if (type === 'source') {
+      const sourceQuery = tag === 'vibe' ? 'vibe' : tag;
+      setSearchQuery((prev) => (prev.toLowerCase() === sourceQuery.toLowerCase() ? '' : sourceQuery));
+    } else {
+      // Mood / Attribute tag
+      const matchedMood = MOOD_TAGS.find((m) => m.toLowerCase() === tag.toLowerCase());
+      const targetMood = matchedMood || tag;
+      setSelectedMoods((prev) =>
+        prev.includes(targetMood) ? prev.filter((t) => t !== targetMood) : [...prev, targetMood]
+      );
+    }
+
+    // Smooth scroll to feed controls to clearly show active filter state
+    const feedElem = document.getElementById('whats-on-feed');
+    if (feedElem) {
+      feedElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   // 3 to 4 prominent events for the BookMyShow-style flashcard slider (strictly public events only)
   const prominentEvents = useMemo(() => {
     const valid = eventsWithDistance.filter(isPublicLiveEvent).filter((e) => !isFlashVibeEvent(e));
@@ -561,7 +590,7 @@ export default function WhatsOnFeed() {
       {/* ========================================================================= */}
       {/* 2. TAGS & FILTERS CONSOLE — ELEVATED CARD WITH DISTINCT VISUAL BOUNDARY   */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E2E8F0] shadow-xs space-y-5">
+      <div id="whats-on-feed" className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E2E8F0] shadow-xs space-y-5">
         {/* Category Filter Pills (Explicitly Mentioned, Flex-Wrap) */}
         <div>
           <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-2.5">
@@ -698,7 +727,13 @@ export default function WhatsOnFeed() {
                 style={{ transformPerspective: 1000 }}
                 className="h-full flex flex-col"
               >
-                <EventCard event={event} distanceKm={event.distanceKm} />
+                <EventCard
+                  event={event}
+                  distanceKm={event.distanceKm}
+                  activeMoods={selectedMoods}
+                  activeCategory={categoryFilter}
+                  onTagClick={handleTagClick}
+                />
               </motion.div>
             ))}
           </div>
