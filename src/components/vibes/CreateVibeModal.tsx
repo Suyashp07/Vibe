@@ -24,6 +24,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
   const [city, setCity] = useState(() => (typeof window !== 'undefined' ? getUserCity() || 'Mumbai' : 'Mumbai'));
+  const [limitSpots, setLimitSpots] = useState(false);
   const [spots, setSpots] = useState(8);
   const [timeText, setTimeText] = useState('Today in 2 hours');
   const [submitting, setSubmitting] = useState(false);
@@ -100,14 +101,14 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
       start_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
       end_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
       timezone: 'Asia/Kolkata',
-      capacity: spots,
+      capacity: limitSpots ? spots : null,
       is_public: true,
       status: 'live',
       ai_generated: false,
       is_flash: true,
       flash_activity: activity,
-      spots_limit: spots,
-      spots_filled: 1,
+      spots_limit: limitSpots ? spots : undefined,
+      spots_filled: limitSpots ? 1 : 0,
       whatsapp_host_phone: profile?.phone || bridgePhone,
       vibe_cheers_count: 0,
       flash_tags: [activity, city, 'Flash Vibe'],
@@ -330,33 +331,46 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                      Spots / Max Players
-                    </label>
-                    <input
-                      type="number"
-                      min={2}
-                      max={50}
-                      value={spots}
-                      onChange={(e) => setSpots(parseInt(e.target.value, 10) || 8)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E8621A]"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                    When?
+                  </label>
+                  <input
+                    type="text"
+                    value={timeText}
+                    onChange={(e) => setTimeText(e.target.value)}
+                    placeholder="e.g. Tonight at 8 PM"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E8621A]"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                      When?
-                    </label>
+                {/* Optional Spots / Max Persons Limit */}
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
-                      type="text"
-                      value={timeText}
-                      onChange={(e) => setTimeText(e.target.value)}
-                      placeholder="e.g. Tonight at 8 PM"
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E8621A]"
+                      type="checkbox"
+                      checked={limitSpots}
+                      onChange={(e) => setLimitSpots(e.target.checked)}
+                      className="rounded accent-[#E8621A] w-4 h-4 cursor-pointer"
                     />
-                  </div>
+                    <span className="text-xs text-white/90 font-semibold">
+                      Need a specific number of players / persons?
+                    </span>
+                  </label>
+
+                  {limitSpots && (
+                    <div className="mt-2.5 pt-2.5 border-t border-white/10 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                      <span className="text-xs text-white/60">How many spots / players needed?</span>
+                      <input
+                        type="number"
+                        min={2}
+                        max={100}
+                        value={spots}
+                        onChange={(e) => setSpots(parseInt(e.target.value, 10) || 8)}
+                        className="w-20 px-3 py-1.5 rounded-lg bg-black/40 border border-white/20 text-white text-sm text-center font-bold focus:outline-none focus:border-[#E8621A]"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <button

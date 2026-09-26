@@ -219,11 +219,36 @@ export default function VibeReelCard({
     }
   };
 
-  // Calculate spots progress
-  const limit = event.spots_limit || 12;
-  const filled = Math.min(event.spots_filled || 6, limit);
+  // Real RSVP count from database
+  const [realRsvpCount, setRealRsvpCount] = useState<number | null>(null);
+
+  // ONLY treat as spots-limited if the creator/host explicitly asked for a specific number of spots/persons
+  const hasSpotsLimit = Boolean(
+    (event.spots_limit && event.spots_limit > 0) ||
+    (event.capacity && event.capacity > 0 && event.capacity < 500)
+  );
+  const limit = event.spots_limit || (event.capacity && event.capacity < 500 ? event.capacity : 0);
+
+  // Fetch real confirmed RSVP count from database only if this activity has a spots limit
+  useEffect(() => {
+    if (!event.id || !hasSpotsLimit) return;
+    let isMounted = true;
+    fetch(`/api/rsvps/list?eventId=${encodeURIComponent(event.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && typeof data.count === 'number') {
+          setRealRsvpCount(data.count);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [event.id, hasSpotsLimit]);
+
+  const filled = Math.min(realRsvpCount ?? event.spots_filled ?? 0, limit);
   const remaining = Math.max(0, limit - filled);
-  const percent = Math.round((filled / limit) * 100);
+  const percent = limit > 0 ? Math.min(100, Math.round((filled / limit) * 100)) : 0;
 
   // Activity icon/emoji
   const activityEmojis: Record<string, string> = {
@@ -399,24 +424,26 @@ export default function VibeReelCard({
           {event.tagline || event.description}
         </p>
 
-        {/* Spots Progress Bar */}
-        <div className="bg-black/50 backdrop-blur-md border border-white/10 rounded-xl p-2 mb-3 max-w-sm">
-          <div className="flex items-center justify-between text-[11px] mb-1">
-            <span className="font-bold text-white flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-[#E8621A]" />
-              <span>{filled}/{limit} spots filled</span>
-            </span>
-            <span className={`text-[10px] font-black ${remaining <= 3 ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`}>
-              {remaining > 0 ? `⚡ ${remaining} spots left` : 'Full House'}
-            </span>
+        {/* Spots Progress Bar - ONLY shown when host explicitly asked for a specific number of spots/persons */}
+        {hasSpotsLimit && limit > 0 && (
+          <div className="bg-black/50 backdrop-blur-md border border-white/10 rounded-xl p-2 mb-3 max-w-sm">
+            <div className="flex items-center justify-between text-[11px] mb-1">
+              <span className="font-bold text-white flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-[#E8621A]" />
+                <span>{filled}/{limit} spots filled</span>
+              </span>
+              <span className={`text-[10px] font-black ${remaining <= 3 ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`}>
+                {remaining > 0 ? `⚡ ${remaining} spots left` : 'Full House'}
+              </span>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] rounded-full transition-all duration-500"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] rounded-full transition-all duration-500"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* RSVP-Gated CTA: "I'm In" before RSVP, "Ask Host" after */}
         <div className="w-full pr-12 sm:pr-14 flex gap-2">
@@ -564,6 +591,7 @@ export default function VibeReelCard({
         onClose={() => setQuickJoinOpen(false)}
         onSuccess={() => {
           setHasRSVPd(true);
+          setRealRsvpCount((prev) => (prev !== null ? prev + 1 : (event.spots_filled || 0) + 1));
           setQuickJoinOpen(false);
         }}
       />

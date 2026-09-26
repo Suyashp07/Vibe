@@ -1161,7 +1161,7 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
         admin_approved: row.admin_approved ?? row.theme?.admin_approved ?? ((row.confidence_score || 0) >= 0.9),
         is_flash: Boolean(row.is_flash || row.category === 'Flash Vibe' || row.theme?.is_flash || row.rsvp_form_config?.is_flash),
         flash_activity: row.flash_activity || row.theme?.flash_activity || 'other',
-        spots_limit: row.spots_limit || row.theme?.spots_limit || row.capacity || 10,
+        spots_limit: row.spots_limit || row.theme?.spots_limit || (row.capacity && row.capacity < 1000 ? row.capacity : undefined),
         spots_filled: row.spots_filled || row.theme?.spots_filled || 0,
         whatsapp_host_phone: row.whatsapp_host_phone || row.theme?.whatsapp_host_phone || orgProfile.phone || '',
         vibe_cheers_count: row.vibe_cheers_count || row.theme?.vibe_cheers_count || 0,

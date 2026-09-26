@@ -391,6 +391,22 @@ export async function POST(req: NextRequest) {
     const eventStatus = isAutoApproved ? 'live' : 'draft';
     const isPublic = isAutoApproved;
 
+    // Detect if user explicitly asked for a specific number of spots/people/players
+    let requestedSpots: number | undefined = undefined;
+    const spotsMatch =
+      textContent.match(/\b(?:need|looking for|for|capacity|limit of|max|only)\s+(\d{1,2})\s*(?:players?|people|persons?|members?|spots?|folks?|friends?|guys?|heads?)\b/i) ||
+      textContent.match(/\b(\d{1,2})\s*(?:players?|people|persons?|members?|spots?)\s*(?:needed|wanted|open|left|only)\b/i) ||
+      textContent.match(/\b(\d{1,2})\s*v\s*(\d{1,2})\b/i);
+
+    if (spotsMatch) {
+      if (spotsMatch[0].toLowerCase().includes('v')) {
+        const parts = spotsMatch[0].split(/v/i);
+        requestedSpots = (parseInt(parts[0]) || 6) + (parseInt(parts[1]) || 6);
+      } else {
+        requestedSpots = parseInt(spotsMatch[1]);
+      }
+    }
+
     // Insert into Supabase `public.events`
     const insertPayload = {
       slug: finalSlug,
@@ -410,8 +426,8 @@ export async function POST(req: NextRequest) {
         flash_activity: flashActivity,
         whatsapp_host_phone: senderPhone,
         vibe_cheers_count: 0,
-        spots_limit: isFlashVibe ? 12 : undefined,
-        spots_filled: 1,
+        spots_limit: requestedSpots,
+        spots_filled: requestedSpots ? 1 : 0,
         confidence_score: suretyScore / 100,
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
@@ -425,7 +441,7 @@ export async function POST(req: NextRequest) {
       start_at: validStartAt,
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
-      capacity: isFlashVibe ? 12 : 250,
+      capacity: requestedSpots || null,
       is_public: isPublic,
       status: eventStatus,
       confidence_score: suretyScore / 100,
