@@ -267,7 +267,7 @@ export default function VibeReelCard({
   return (
     <div
       onClick={handleCardDoubleTap}
-      className="relative w-full h-full snap-start snap-always flex flex-col justify-between overflow-hidden select-none bg-black cursor-pointer"
+      className="relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-black cursor-pointer"
     >
       {/* Background Image with Dark Reels Gradient Overlays */}
       <div className="absolute inset-0 z-0">
@@ -299,12 +299,7 @@ export default function VibeReelCard({
       )}
 
       {/* Top Bar Clearance */}
-      <div className="relative z-10 pt-16 sm:pt-20 px-4 sm:px-6 pb-2 flex items-center justify-end">
-        {/* Reel Counter */}
-        <span className="text-[10px] sm:text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/80 border border-white/10">
-          {index + 1} / {total}
-        </span>
-      </div>
+      <div className="relative z-10 pt-16 sm:pt-20 px-4 sm:px-6 pb-2" />
 
       {/* Right Side: Streamlined Reels Action Rail */}
       <div className="absolute right-3 sm:right-4 bottom-20 sm:bottom-24 z-20 flex flex-col items-center gap-3.5">
@@ -399,10 +394,14 @@ export default function VibeReelCard({
 
         {/* Activity, Time & Venue Pills */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 text-xs">
-          <span className="px-2.5 py-0.5 rounded-lg bg-white/10 backdrop-blur-md text-white/90 border border-white/15 font-bold flex items-center gap-1 capitalize">
-            <span>{emoji}</span>
-            <span>{event.flash_activity || 'Meetup'}</span>
-          </span>
+          {event.flash_activity &&
+            event.flash_activity.toLowerCase() !== 'other' &&
+            event.flash_activity.toLowerCase() !== 'meetup' && (
+              <span className="px-2.5 py-0.5 rounded-lg bg-white/10 backdrop-blur-md text-white/90 border border-white/15 font-bold flex items-center gap-1 capitalize">
+                <span>{emoji}</span>
+                <span>{event.flash_activity}</span>
+              </span>
+            )}
 
           <span className="px-2.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[#FF8C42] border border-white/10 font-bold flex items-center gap-1">
             <Clock className="w-3 h-3" />

@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronDown,
+  ChevronUp,
   Filter,
   Flame,
   Plus,
@@ -76,7 +77,6 @@ function VibesReelsContent() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
-  const touchStartY = useRef<number | null>(null);
 
   // Load initial events from store & auto-detect location strictly
   useEffect(() => {
@@ -256,6 +256,7 @@ function VibesReelsContent() {
   const handleScroll = () => {
     if (!containerRef.current) return;
     const { scrollTop, clientHeight } = containerRef.current;
+    if (clientHeight <= 0) return;
     const index = Math.round(scrollTop / clientHeight);
     if (index !== currentIndex && index >= 0 && index < filteredEvents.length) {
       setCurrentIndex(index);
@@ -264,27 +265,6 @@ function VibesReelsContent() {
         window.history.replaceState(null, '', `/vibes?event=${cur.slug}`);
       }
     }
-  };
-
-  // Touch swipe support for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY.current === null || !containerRef.current) return;
-    const touchEndY = e.changedTouches[0].clientY;
-    const diff = touchStartY.current - touchEndY;
-    const threshold = 40;
-
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        scrollToNext();
-      } else {
-        scrollToPrev();
-      }
-    }
-    touchStartY.current = null;
   };
 
   // Keyboard navigation (Arrow keys, Space) - only when not typing in an input
@@ -327,6 +307,53 @@ function VibesReelsContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Smooth wheel navigation on desktop with debounce protection
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isWheeling = false;
+    let wheelTimeout: NodeJS.Timeout;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Allow internal scrolling in modals, comments drawer, or dropdowns
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('.overflow-y-auto') && target.closest('.overflow-y-auto') !== container) {
+        return;
+      }
+      if (target?.closest('textarea, input, select')) {
+        return;
+      }
+
+      if (Math.abs(e.deltaY) < 25) return;
+
+      if (isWheeling) {
+        e.preventDefault();
+        return;
+      }
+
+      isWheeling = true;
+      clearTimeout(wheelTimeout);
+
+      const height = container.clientHeight;
+      if (e.deltaY > 0) {
+        container.scrollBy({ top: height, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ top: -height, behavior: 'smooth' });
+      }
+
+      wheelTimeout = setTimeout(() => {
+        isWheeling = false;
+      }, 420);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      clearTimeout(wheelTimeout);
+    };
   }, []);
 
   // Close category dropdown when clicking outside
@@ -439,12 +466,11 @@ function VibesReelsContent() {
             <div
               ref={containerRef}
               onScroll={handleScroll}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              className="w-full h-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+              style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+              className="w-full h-full overflow-y-auto snap-y snap-mandatory overscroll-y-contain scroll-smooth no-scrollbar touch-pan-y"
             >
               {filteredEvents.map((evt, idx) => (
-                <div key={evt.id} className="w-full h-full snap-start snap-always relative">
+                <div key={evt.id} className="w-full h-full snap-start snap-always shrink-0 relative overflow-hidden">
                   <VibeReelCard
                     event={evt}
                     isActive={idx === currentIndex}
@@ -481,6 +507,38 @@ function VibesReelsContent() {
             </div>
           )}
         </div>
+
+        {/* Desktop Navigation Chevrons */}
+        {filteredEvents.length > 1 && (
+          <div className="hidden lg:flex flex-col gap-3 absolute right-6 xl:right-16 top-1/2 -translate-y-1/2 z-30">
+            <button
+              type="button"
+              onClick={scrollToPrev}
+              disabled={currentIndex === 0}
+              className={`w-11 h-11 rounded-full border flex items-center justify-center backdrop-blur-xl transition-all ${
+                currentIndex === 0
+                  ? 'bg-black/30 border-white/5 text-white/20 cursor-not-allowed'
+                  : 'bg-black/60 hover:bg-[#E8621A] border-white/20 hover:border-[#E8621A] text-white shadow-xl hover:scale-110 cursor-pointer'
+              }`}
+              title="Previous Vibe (Up Arrow / Key ↑)"
+            >
+              <ChevronUp className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={scrollToNext}
+              disabled={currentIndex >= filteredEvents.length - 1}
+              className={`w-11 h-11 rounded-full border flex items-center justify-center backdrop-blur-xl transition-all ${
+                currentIndex >= filteredEvents.length - 1
+                  ? 'bg-black/30 border-white/5 text-white/20 cursor-not-allowed'
+                  : 'bg-black/60 hover:bg-[#E8621A] border-white/20 hover:border-[#E8621A] text-white shadow-xl hover:scale-110 cursor-pointer'
+              }`}
+              title="Next Vibe (Down Arrow / Key ↓)"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </main>
 
       {/* Create Vibe Modal */}
