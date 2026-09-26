@@ -286,9 +286,32 @@ function VibesReelsContent() {
     touchStartY.current = null;
   };
 
-  // Keyboard navigation (Arrow keys, Space)
+  // Keyboard navigation (Arrow keys, Space) - only when not typing in an input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is focused inside an input, textarea, select, or contenteditable element
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.tagName === 'SELECT' ||
+          activeEl.isContentEditable)
+      ) {
+        return;
+      }
+
       if (!containerRef.current) return;
       const height = containerRef.current.clientHeight;
 

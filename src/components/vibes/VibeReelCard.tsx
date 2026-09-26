@@ -652,6 +652,7 @@ export default function VibeReelCard({
                   type="text"
                   value={commentName}
                   onChange={(e) => setCommentName(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   placeholder="Your name"
                   maxLength={50}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 mb-2 focus:outline-none focus:border-[#E8621A]/50"
@@ -663,6 +664,7 @@ export default function VibeReelCard({
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => {
+                    e.stopPropagation();
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       handlePostComment();
