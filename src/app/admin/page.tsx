@@ -88,6 +88,17 @@ const CATEGORIES = [
   'Other'
 ];
 
+function isIngestedEvent(ev: AdminEvent): boolean {
+  if (ev.is_external || ev.source_type === 'external' || Boolean(ev.external_ticket_url)) {
+    return true;
+  }
+  const platform = (ev.source_platform || '').toLowerCase().trim();
+  if (platform && platform !== 'vibe' && platform !== 'internal' && platform !== 'native') {
+    return true;
+  }
+  return false;
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { profile, isStaff, signOut } = useAuth();
@@ -97,8 +108,10 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [savingAction, setSavingAction] = useState<string | null>(null);
 
-  // Tabs: Review (draft/<90% surety), Auto-Approved (>=90%), Live (published), Rejected (cancelled), External, All
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'LIVE' | 'AUTO_APPROVED' | 'REVIEW' | 'EXTERNAL' | 'REJECTED'>('ALL');
+  // Tabs: Review (draft/<90% surety), Auto-Approved (>=90%), Live (published), Rejected (cancelled), All
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'LIVE' | 'AUTO_APPROVED' | 'REVIEW' | 'REJECTED'>('ALL');
+  // Source Filter: All Events, Vibe Specific Events, Ingested Events
+  const [sourceFilter, setSourceFilter] = useState<'ALL' | 'VIBE' | 'INGESTED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<AdminEvent | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -159,13 +172,14 @@ export default function AdminDashboardPage() {
     fetchEvents();
   }, []);
 
-  // Compute status counts with 90% Surety Auto-Approval rule
+  // Compute status counts with 90% Surety Auto-Approval rule and source counts
   const counts = useMemo(() => {
     let pending = 0;
     let autoApproved = 0;
     let live = 0;
     let rejected = 0;
-    let external = 0;
+    let vibe = 0;
+    let ingested = 0;
     events.forEach((ev) => {
       const st = (ev.status || '').toLowerCase();
       const isDraft = st === 'draft' || st === 'review';
@@ -180,11 +194,13 @@ export default function AdminDashboardPage() {
       if (st === 'live' || st === 'published') live++;
       else if (st === 'cancelled' || st === 'rejected') rejected++;
 
-      if (ev.is_external || ev.source_type === 'external' || ev.external_ticket_url) {
-        external++;
+      if (isIngestedEvent(ev)) {
+        ingested++;
+      } else {
+        vibe++;
       }
     });
-    return { pending, autoApproved, live, rejected, external, total: events.length };
+    return { pending, autoApproved, live, rejected, vibe, ingested, total: events.length };
   }, [events]);
 
   // Duplicate Finder
@@ -206,7 +222,7 @@ export default function AdminDashboardPage() {
     });
   };
 
-  // Filtered Events
+  // Filtered Events with Status, Source (Vibe vs Ingested), and Search
   const filteredEvents = useMemo(() => {
     return events
       .filter((ev) => {
@@ -218,7 +234,11 @@ export default function AdminDashboardPage() {
         if (statusFilter === 'AUTO_APPROVED') return !isDraft && surety.autoApproved;
         if (statusFilter === 'LIVE') return st === 'live' || st === 'published';
         if (statusFilter === 'REJECTED') return st === 'cancelled' || st === 'rejected';
-        if (statusFilter === 'EXTERNAL') return ev.is_external || ev.source_type === 'external' || Boolean(ev.external_ticket_url);
+        return true;
+      })
+      .filter((ev) => {
+        if (sourceFilter === 'VIBE') return !isIngestedEvent(ev);
+        if (sourceFilter === 'INGESTED') return isIngestedEvent(ev);
         return true;
       })
       .filter((ev) => {
@@ -232,7 +252,7 @@ export default function AdminDashboardPage() {
           (ev.source_platform || '').toLowerCase().includes(q)
         );
       });
-  }, [events, statusFilter, searchQuery]);
+  }, [events, statusFilter, sourceFilter, searchQuery]);
 
   // Selection handlers
   const toggleSelect = (id: string) => {
@@ -496,7 +516,6 @@ export default function AdminDashboardPage() {
     { id: 'LIVE', label: 'Live Published', count: counts.live },
     { id: 'AUTO_APPROVED', label: 'Auto-Approved (≥90%)', count: counts.autoApproved },
     { id: 'REVIEW', label: 'Needs Approval (<90%)', count: counts.pending, alert: counts.pending > 0 },
-    { id: 'EXTERNAL', label: 'External Aggregated', count: counts.external },
     { id: 'REJECTED', label: 'Rejected', count: counts.rejected },
   ] as const;
 
@@ -563,60 +582,139 @@ export default function AdminDashboardPage() {
       {/* Main Container */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col">
         {/* Navigation & Controls Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {STATUS_TABS.map((tab) => {
-              const active = statusFilter === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setStatusFilter(tab.id);
-                    setSelectedEvent(null);
-                  }}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all ${
-                    active ? 'bg-[#0A0A0A] text-white' : 'text-[#64748B] hover:text-[#0A0A0A] hover:bg-[#F8FAFC]'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                      active ? 'bg-white/20 text-white' : 'bg-[#F1F5F9] text-[#475569]'
+        <div className="flex flex-col gap-3.5 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Status Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {STATUS_TABS.map((tab) => {
+                const active = statusFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setStatusFilter(tab.id);
+                      setSelectedEvent(null);
+                    }}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all ${
+                      active ? 'bg-[#0A0A0A] text-white' : 'text-[#64748B] hover:text-[#0A0A0A] hover:bg-[#F8FAFC]'
                     }`}
                   >
-                    {tab.count}
-                  </span>
-                </button>
-              );
-            })}
+                    <span>{tab.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                        active ? 'bg-white/20 text-white' : 'bg-[#F1F5F9] text-[#475569]'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search & Refresh */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" />
+                <input
+                  type="text"
+                  placeholder="Search events, venues..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-full focus:outline-none focus:border-[#0A0A0A] transition-colors placeholder:text-[#94A3B8]"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0A0A0A]">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={fetchEvents}
+                disabled={loading}
+                title="Refresh queue"
+                className="p-2 border border-[#E2E8F0] rounded-full text-[#64748B] hover:text-[#0A0A0A] hover:border-[#0A0A0A] transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
 
-          {/* Search & Refresh */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" />
-              <input
-                type="text"
-                placeholder="Search events, venues..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-full focus:outline-none focus:border-[#0A0A0A] transition-colors placeholder:text-[#94A3B8]"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0A0A0A]">
-                  <X className="w-3 h-3" />
+          {/* Event Source Filter: All Events, Vibe Specific Events, Ingested Events */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[#F1F5F9]">
+            <div className="flex items-center gap-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">
+                Event Type:
+              </span>
+              <div className="inline-flex p-0.5 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceFilter('ALL');
+                    setSelectedEvent(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                    sourceFilter === 'ALL'
+                      ? 'bg-white text-[#0A0A0A] shadow-xs'
+                      : 'text-[#64748B] hover:text-[#0A0A0A]'
+                  }`}
+                >
+                  <span>All Events</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'ALL' ? 'bg-[#0A0A0A] text-white' : 'bg-white/80 text-[#64748B]'}`}>
+                    {counts.total}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceFilter('VIBE');
+                    setSelectedEvent(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                    sourceFilter === 'VIBE'
+                      ? 'bg-white text-[#E8621A] shadow-xs'
+                      : 'text-[#64748B] hover:text-[#0A0A0A]'
+                  }`}
+                >
+                  <span>⚡ Vibe Specific</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'VIBE' ? 'bg-[#E8621A] text-white' : 'bg-white/80 text-[#64748B]'}`}>
+                    {counts.vibe}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceFilter('INGESTED');
+                    setSelectedEvent(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                    sourceFilter === 'INGESTED'
+                      ? 'bg-white text-blue-700 shadow-xs'
+                      : 'text-[#64748B] hover:text-[#0A0A0A]'
+                  }`}
+                >
+                  <span>📥 Ingested Events</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'INGESTED' ? 'bg-blue-600 text-white' : 'bg-white/80 text-[#64748B]'}`}>
+                    {counts.ingested}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-[#64748B] flex items-center gap-2">
+              <span>
+                Showing <strong className="text-[#0A0A0A]">{filteredEvents.length}</strong> {sourceFilter === 'VIBE' ? 'Vibe specific' : sourceFilter === 'INGESTED' ? 'ingested' : ''} events
+              </span>
+              {sourceFilter !== 'ALL' && (
+                <button
+                  type="button"
+                  onClick={() => setSourceFilter('ALL')}
+                  className="text-[11px] text-[#E8621A] hover:underline font-bold cursor-pointer"
+                >
+                  Reset filter
                 </button>
               )}
             </div>
-            <button
-              onClick={fetchEvents}
-              disabled={loading}
-              title="Refresh queue"
-              className="p-2 border border-[#E2E8F0] rounded-full text-[#64748B] hover:text-[#0A0A0A] hover:border-[#0A0A0A] transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
           </div>
         </div>
 
@@ -733,9 +831,13 @@ export default function AdminDashboardPage() {
                               <span>{surety.score}% Surety</span>
                             </span>
 
-                            {event.source_platform && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F1F5F9] text-[#475569]">
-                                {event.source_platform}
+                            {isIngestedEvent(event) ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                                📥 {event.source_platform || 'Ingested'}
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#E8621A]/10 text-[#E8621A] border border-[#E8621A]/20">
+                                ⚡ Vibe Specific
                               </span>
                             )}
                             {event.category && (
@@ -1206,9 +1308,13 @@ function DetailInspector({
             >
               {event.status || 'Draft'}
             </span>
-            {event.source_platform && (
-              <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-full font-medium">
-                {event.source_platform}
+            {isIngestedEvent(event) ? (
+              <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
+                📥 Ingested ({event.source_platform || 'External'})
+              </span>
+            ) : (
+              <span className="text-[10px] text-[#E8621A] bg-[#E8621A]/10 border border-[#E8621A]/20 px-2 py-0.5 rounded-full font-bold">
+                ⚡ Vibe Specific Event
               </span>
             )}
             {event.slug && (
