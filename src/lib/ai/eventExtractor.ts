@@ -366,25 +366,27 @@ export async function scrapeUrlMetadata(url: string): Promise<{
   let rawContent = '';
   let usedReaderProxy = false;
 
-  // Step 1: Attempt direct HTTP fetch (3.5s timeout)
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      signal: AbortSignal.timeout(3500),
-    });
+  // Step 1: Attempt direct HTTP fetch (except for BookMyShow which always returns 403 Cloudflare blocks)
+  if (!lower.includes('bookmyshow.com')) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        signal: AbortSignal.timeout(3500),
+      });
 
-    if (res.ok) {
-      rawContent = await res.text();
-    } else {
-      console.warn(`[ScrapeUrl] Direct fetch returned HTTP ${res.status}, trying reader proxy...`);
+      if (res.ok) {
+        rawContent = await res.text();
+      } else {
+        usedReaderProxy = true;
+      }
+    } catch (err: any) {
       usedReaderProxy = true;
     }
-  } catch (err: any) {
-    console.warn('[ScrapeUrl] Direct fetch failed/timed out, trying reader proxy:', err?.message || err);
+  } else {
     usedReaderProxy = true;
   }
 
@@ -393,7 +395,7 @@ export async function scrapeUrlMetadata(url: string): Promise<{
     try {
       const proxyRes = await fetch(`https://r.jina.ai/${url}`, {
         headers: { Accept: 'text/plain' },
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(16000),
       });
       if (proxyRes.ok) {
         rawContent = await proxyRes.text();
@@ -502,11 +504,19 @@ export async function scrapeUrlMetadata(url: string): Promise<{
       }
     }
 
-    // 4. BMS Real Desktop Banner (exclude share buttons and icons)
-    const bmsImages = Array.from(rawContent.matchAll(/!\[.*?\]\((https?:\/\/[^\s\)]+bmscdn\.com[^\s\)]+)\)/gi))
+    // 4. BMS Real Desktop Banner (match markdown, HTML, or raw URLs)
+    const bmsImages = Array.from(
+      rawContent.matchAll(/(https?:\/\/[^\s"'<>()]+bmscdn\.com[^\s"'<>()]+\.(?:jpg|jpeg|png|webp)[^\s"'<>()]*)/gi)
+    )
       .map((m) => m[1])
       .filter(isValidEventPoster);
-    const banner = bmsImages.find((img) => img.includes('events/banner/desktop/') || img.includes('media-desktop-')) || bmsImages[0];
+    const banner =
+      bmsImages.find(
+        (img) =>
+          img.includes('events/banner/desktop/') ||
+          img.includes('media-desktop-') ||
+          img.includes('events/banner/weblisting/')
+      ) || bmsImages[0];
     if (banner) {
       image = banner;
     }
@@ -520,8 +530,10 @@ export async function scrapeUrlMetadata(url: string): Promise<{
       title = districtHeadingMatch[1].trim();
     }
 
-    // 2. High-res gallery poster
-    const districtGallery = Array.from(rawContent.matchAll(/!\[.*?\]\((https?:\/\/[^\s\)]*cdn\.district\.in\/assets\/events\/[^\s\)]+)\)/gi))
+    // 2. High-res gallery poster (match any cdn.district.in image URL)
+    const districtGallery = Array.from(
+      rawContent.matchAll(/(https?:\/\/[^\s"'<>()]*cdn\.district\.in[^\s"'<>()]+\.(?:jpg|jpeg|png|webp)[^\s"'<>()]*)/gi)
+    )
       .map((m) => m[1])
       .filter(isValidEventPoster);
     if (districtGallery.length > 0) {
@@ -531,7 +543,9 @@ export async function scrapeUrlMetadata(url: string): Promise<{
 
   // Step 4D: General OpenGraph / Markdown tags if still missing
   if (!image) {
-    const allImages = Array.from(rawContent.matchAll(/!\[.*?\]\((https?:\/\/[^\s\)]+\.(?:jpg|jpeg|png|webp)[^\s\)]*)\)/gi))
+    const allImages = Array.from(
+      rawContent.matchAll(/(https?:\/\/[^\s"'<>()]+\.(?:jpg|jpeg|png|webp)[^\s"'<>()]*)/gi)
+    )
       .map((m) => m[1])
       .filter(isValidEventPoster);
     if (allImages.length > 0) {
@@ -1003,6 +1017,7 @@ export async function extractEventFromText(text: string): Promise<ExtractedEvent
 Detected Event URL: ${rawUrl}
 Platform: ${scraped.platform.toUpperCase()}
 Page Title: ${scraped.title || 'Unknown'}
+Detected Real Poster / Banner: ${scraped.image || 'None'}
 Detected Venue / Place: ${scraped.venue_name || 'Unknown'}
 Detected Address: ${scraped.location_address || 'Unknown'}
 Detected City: ${scraped.city || 'Unknown'}
@@ -1015,7 +1030,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
 
   const prompt = getSystemExtractionPrompt(
     scrapedContext
-      ? `User provided an event link. Here are the scraped page details:\n${scrapedContext}\nUser's message: "${cleanInputText}"\n\nCRITICAL: Extract complete event details for this ${detectedPlatform} listing. Set ticket_url to "${targetUrl}". Set source_platform to "${detectedPlatform}". Output strictly valid JSON.`
+      ? `User provided an event link. Here are the scraped page details:\n${scrapedContext}\nUser's message: "${cleanInputText}"\n\nCRITICAL: Extract complete event details for this ${detectedPlatform} listing. Set ticket_url to "${targetUrl}". Set source_platform to "${detectedPlatform}". If "Detected Real Poster / Banner" is provided, set cover_image_url to that EXACT URL. NEVER invent or fabricate a fictional image URL. Output strictly valid JSON.`
       : `Message content:\n${cleanInputText}`
   );
 
@@ -1031,11 +1046,22 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
 
       const category = parsed.category || deterministicData.category;
 
-      // Validate cover image: never accept share buttons or icons
+      // Validate cover image: Priority 1: Exact scraped banner from the real page
       let finalCover = isValidEventPoster(extractedCover) ? extractedCover : undefined;
+
+      // Priority 2: Parsed cover from AI ONLY IF it actually exists in the scraped page
       if (!finalCover && isValidEventPoster(parsed.cover_image_url)) {
-        finalCover = parsed.cover_image_url;
+        const urlStr = parsed.cover_image_url.trim();
+        const isHallucinated =
+          (urlStr.includes('bmscdn.com') || urlStr.includes('district.in')) &&
+          (!scrapedContext || !scrapedContext.includes(urlStr));
+
+        if (!isHallucinated) {
+          finalCover = urlStr;
+        }
       }
+
+      // Priority 3: Fall back to beautiful high-res curated Unsplash category banner
       if (!finalCover) {
         finalCover = getCategoryCover(category, parsed.title || cleanInputText);
       }

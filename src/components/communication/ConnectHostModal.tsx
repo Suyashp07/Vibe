@@ -57,8 +57,10 @@ export default function ConnectHostModal({
   if (!isOpen || !event) return null;
 
   // Telegram Group invite link directly for Vibe Host Console
+  const telegramInviteCode = '4g5bx3Sp2Y41YmM1';
   const telegramGroupUrl =
-    process.env.NEXT_PUBLIC_TELEGRAM_GROUP_URL || 'https://t.me/+4g5bx3Sp2Y41YmM1';
+    process.env.NEXT_PUBLIC_TELEGRAM_GROUP_URL || `https://t.me/+${telegramInviteCode}`;
+  const telegramWebUrl = `https://web.telegram.org/a/#?tgaddr=tg%3A%2F%2Fjoin%3Finvite%3D${telegramInviteCode}`;
 
   const handleOpenTelegram = () => {
     window.open(telegramGroupUrl, '_blank', 'noopener,noreferrer');
@@ -131,8 +133,7 @@ export default function ConnectHostModal({
         <div className="space-y-3.5 relative z-10">
           {/* Option 1: Telegram Subgroup */}
           <div
-            onClick={handleOpenTelegram}
-            className="group relative p-4 rounded-2xl bg-gradient-to-r from-sky-950/40 to-cyan-950/20 hover:from-sky-950/60 hover:to-cyan-950/40 border border-sky-500/30 hover:border-sky-400 transition-all cursor-pointer shadow-lg"
+            className="group relative p-4 rounded-2xl bg-gradient-to-r from-sky-950/40 to-cyan-950/20 hover:from-sky-950/60 hover:to-cyan-950/40 border border-sky-500/30 hover:border-sky-400 transition-all shadow-lg"
           >
             <div className="flex items-start gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
@@ -153,9 +154,24 @@ export default function ConnectHostModal({
                   Join the official <strong>Vibe Host Console</strong> Telegram group. Admission is host-approved and your mobile number remains <strong>100% private</strong>.
                 </p>
 
-                <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-sky-400 group-hover:text-sky-300">
-                  <span>Open Vibe Host Console in Telegram</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => window.open(telegramWebUrl, '_blank', 'noopener,noreferrer')}
+                    className="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95"
+                  >
+                    <span>Open in Telegram Web</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenTelegram}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs flex items-center gap-1.5 transition-all border border-white/10 cursor-pointer active:scale-95"
+                  >
+                    <span>Open Telegram App</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
