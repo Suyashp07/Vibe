@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   ShieldCheck,
@@ -35,6 +36,23 @@ export default function ConnectHostModal({
   guestName = '',
 }: ConnectHostModalProps) {
   const [activeView, setActiveView] = useState<'channel_select' | 'web_chat'>('channel_select');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Close on Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !event) return null;
 
@@ -61,9 +79,21 @@ export default function ConnectHostModal({
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-[#0E1118] border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white overflow-hidden">
+  const modalBody = (
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="relative w-full max-w-lg bg-[#0E1118] border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Ambient background glows */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#E8621A]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -71,14 +101,19 @@ export default function ConnectHostModal({
         {/* Modal Close Button */}
         <button
           type="button"
-          onClick={onClose}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer z-10"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer z-50 pointer-events-auto border border-white/10"
+          aria-label="Close modal"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5 pointer-events-none" />
         </button>
 
-        {/* Header */}
-        <div className="mb-6 relative z-10">
+        {/* Header with right padding to never overlap close button */}
+        <div className="mb-6 relative z-10 pr-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-3">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Anti-Scam • Zero Phone Number Leakage</span>
@@ -170,5 +205,7 @@ export default function ConnectHostModal({
       </div>
     </div>
   );
+
+  return mounted ? createPortal(modalBody, document.body) : null;
 }
 
