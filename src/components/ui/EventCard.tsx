@@ -104,39 +104,18 @@ export default function EventCard({ event, showStatus = true, distanceKm }: Even
           </p>
         </div>
 
-        {/* Organizer & Action */}
-        <div className="pt-4 mt-4 border-t border-border flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {event.organizer_logo ? (
-              <Image
-                src={event.organizer_logo}
-                alt={event.organizer_name}
-                width={26}
-                height={26}
-                className="rounded-full object-cover border border-border shrink-0"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                {(event.organizer_name || event.source_platform || 'V')[0]?.toUpperCase()}
-              </div>
-            )}
-            <span className="text-xs font-medium text-ink-secondary truncate max-w-[110px] sm:max-w-[130px]">
-              {event.organizer_name || (event.source_platform ? `Via ${event.source_platform}` : 'Curated by Vibe')}
+        {/* Action */}
+        <div className="pt-4 mt-4 border-t border-border flex items-center justify-end gap-2">
+          {hasExternalLink ? (
+            <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+              Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Partner'}
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {hasExternalLink ? (
-              <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
-                Book on {event.source_platform ? event.source_platform.toUpperCase() : 'Partner'}
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </span>
-            ) : (
-              <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
-                RSVP on Vibe →
-              </span>
-            )}
-          </div>
+          ) : (
+            <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
+              View Details →
+            </span>
+          )}
         </div>
       </div>
     </>
