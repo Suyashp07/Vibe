@@ -107,19 +107,19 @@ export default function ConnectHostModal({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
-                    Join Telegram Event Group
+                    Join Vibe Host Console on Telegram
                   </h3>
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                    Host Moderated
+                    @VibeConsoleBot
                   </span>
                 </div>
 
                 <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                  Admission requires host approval. Your mobile number remains <strong>100% private</strong> from all other attendees.
+                  Admission requires host approval via Vibe Host Console. Your phone number remains <strong>100% private</strong> and hidden from attendees.
                 </p>
 
                 <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-sky-400 group-hover:text-sky-300">
-                  <span>Request Admission in Telegram</span>
+                  <span>Open Vibe Host Console in Telegram</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </div>
               </div>

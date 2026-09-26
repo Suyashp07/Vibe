@@ -40,15 +40,8 @@ function getAppUrl(req?: Request): string {
   }
 
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  if (envUrl && !envUrl.includes('vibe-by-swaniki.vercel.app') && !envUrl.includes('localhost')) {
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1') && !envUrl.includes('vibe-by-swaniki.vercel.app')) {
     return envUrl.replace(/\/$/, '');
-  }
-
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
   }
 
   return 'https://vibe-seven-pied.vercel.app';
@@ -320,13 +313,13 @@ export async function POST(req: NextRequest) {
     else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
 
     if (lowerText.startsWith('/start') || lowerText.startsWith('/help') || lowerText === 'hi') {
-      const welcome = `👋 <b>Welcome to Vibe Event Bot!</b>\n\n` +
-        `You can submit formal events or post spontaneous meetups straight to Vibe:\n\n` +
-        `⚡ <b>Post to Vibe Instant:</b> Send "/vibe &lt;details&gt;" (e.g. <i>"/vibe Box cricket at Bandra Turf tonight 8 PM. Need 4 players"</i>) to post immediately live to the <b>Vibe Instant</b> stream!\n` +
+      const welcome = `👋 <b>Welcome to Vibe Host Console (@VibeConsoleBot)!</b>\n\n` +
+        `You can submit events or post spontaneous meetups straight to Vibe:\n\n` +
+        `⚡ <b>Post to Vibe Instant:</b> Send details (e.g. <i>"Box cricket at Bandra Turf tonight 8 PM. Need 4 players"</i>) to post immediately live to the <b>Vibe Instant</b> stream!\n` +
         `📸 <b>Send a Poster Image:</b> Forward any event flyer or Instagram screenshot.\n` +
         `🔗 <b>Send a Link:</b> Paste any Unstop, District, BookMyShow, or Luma URL.\n` +
         `💬 <b>Send a Text:</b> Forward any event details blurb.\n\n` +
-        `<i>Gemini AI will extract all details and publish it!</i>`;
+        `<i>All meetups posted through Vibe Host Console go straight to full-screen Vibe Instant reels!</i>`;
       await replyTelegram(welcome, { parse_mode: 'HTML' });
       return NextResponse.json({ ok: true });
     }
