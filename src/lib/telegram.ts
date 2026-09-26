@@ -223,3 +223,89 @@ export async function downloadTelegramFileBuffer(fileId: string): Promise<{
     downloadUrl,
   };
 }
+
+/**
+ * Create a Telegram invite link that requires host approval (anti-scam gate)
+ */
+export async function createJoinRequestInviteLink(
+  chatId: string | number,
+  name?: string
+): Promise<string | null> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API_BASE}/bot${token}/createChatInviteLink`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        name: (name || 'Vibe Event').slice(0, 32),
+        creates_join_request: true,
+      }),
+    });
+    const data = await res.json();
+    if (data.ok && data.result?.invite_link) {
+      return data.result.invite_link;
+    }
+    console.warn('[createJoinRequestInviteLink] Failed to create invite link:', data);
+  } catch (err) {
+    console.error('[createJoinRequestInviteLink] Network error:', err);
+  }
+  return null;
+}
+
+/**
+ * Approve a Telegram chat join request
+ */
+export async function approveChatJoinRequest(
+  chatId: string | number,
+  userId: number
+): Promise<boolean> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API_BASE}/bot${token}/approveChatJoinRequest`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        user_id: userId,
+      }),
+    });
+    const data = await res.json();
+    return Boolean(data.ok);
+  } catch (err) {
+    console.error('[approveChatJoinRequest] Network error:', err);
+    return false;
+  }
+}
+
+/**
+ * Decline a Telegram chat join request
+ */
+export async function declineChatJoinRequest(
+  chatId: string | number,
+  userId: number
+): Promise<boolean> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API_BASE}/bot${token}/declineChatJoinRequest`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        user_id: userId,
+      }),
+    });
+    const data = await res.json();
+    return Boolean(data.ok);
+  } catch (err) {
+    console.error('[declineChatJoinRequest] Network error:', err);
+    return false;
+  }
+}
+

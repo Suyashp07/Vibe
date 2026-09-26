@@ -5,6 +5,8 @@ import {
   editTelegramMessage,
   answerTelegramCallback,
   downloadTelegramFileBuffer,
+  approveChatJoinRequest,
+  declineChatJoinRequest,
 } from '@/lib/telegram';
 import {
   extractEventFromImage,
@@ -164,12 +166,79 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
+      if (data.startsWith('admit_guest:')) {
+        const parts = data.replace('admit_guest:', '').split(':');
+        const targetUserId = Number(parts[0]);
+        const targetChatId = parts[1] || chatId;
+
+        const approved = await approveChatJoinRequest(targetChatId, targetUserId);
+        await answerTelegramCallback(cq.id, approved ? '✅ Guest admitted to event chat!' : 'Failed to admit guest');
+        await editTelegramMessage(
+          chatId,
+          messageId,
+          `${cq.message.text}\n\n✅ <b>ADMITTED by host</b>`,
+          { parse_mode: 'HTML' }
+        );
+        return NextResponse.json({ ok: true });
+      }
+
+      if (data.startsWith('reject_guest:')) {
+        const parts = data.replace('reject_guest:', '').split(':');
+        const targetUserId = Number(parts[0]);
+        const targetChatId = parts[1] || chatId;
+
+        await declineChatJoinRequest(targetChatId, targetUserId);
+        await answerTelegramCallback(cq.id, '❌ Guest admission declined');
+        await editTelegramMessage(
+          chatId,
+          messageId,
+          `${cq.message.text}\n\n❌ <b>DECLINED by host</b>`,
+          { parse_mode: 'HTML' }
+        );
+        return NextResponse.json({ ok: true });
+      }
+
       if (data.startsWith('copy:')) {
         await answerTelegramCallback(cq.id, 'Link ready to share!');
         return NextResponse.json({ ok: true });
       }
 
       return NextResponse.json({ ok: true });
+    }
+
+    // 1B. Handle Native Telegram Chat Join Requests (creates_join_request=True anti-scam gate)
+    if (update.chat_join_request) {
+      const cjr = update.chat_join_request;
+      const targetChatId = cjr.chat.id;
+      const user = cjr.from;
+      const userId = user.id;
+      const userFullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+      const username = user.username ? `@${user.username}` : userFullName;
+
+      console.log('[Telegram Webhook] Received Chat Join Request:', {
+        targetChatId,
+        userId,
+        username,
+      });
+
+      // Send admission prompt with 1-click Approve / Reject buttons
+      await sendTelegramMessage(
+        targetChatId,
+        `🛡️ <b>New Group Admission Request</b>\n\n👤 <b>Attendee:</b> ${userFullName} (${username})\n🆔 <b>User ID:</b> <code>${userId}</code>\n\n<i>Host, do you approve this attendee joining the event group?</i>`,
+        {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '✅ Approve Entry', callback_data: `admit_guest:${userId}:${targetChatId}` },
+                { text: '❌ Reject', callback_data: `reject_guest:${userId}:${targetChatId}` },
+              ],
+            ],
+          },
+        }
+      );
+
+      return NextResponse.json({ ok: true, handled: 'chat_join_request' });
     }
 
     // 2. Handle Incoming Messages
