@@ -38,12 +38,12 @@ export default function ConnectHostModal({
 
   if (!isOpen || !event) return null;
 
-  // Telegram bot link with deep-linked event payload
-  const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'VibeConsoleBot';
-  const telegramJoinUrl = `https://t.me/${telegramBotUsername}?start=event_${event.slug || event.id}`;
+  // Telegram Group invite link directly for Vibe Host Console
+  const telegramGroupUrl =
+    process.env.NEXT_PUBLIC_TELEGRAM_GROUP_URL || 'https://t.me/+4g5bx3Sp2Y41YmM1';
 
   const handleOpenTelegram = () => {
-    window.open(telegramJoinUrl, '_blank', 'noopener,noreferrer');
+    window.open(telegramGroupUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (activeView === 'web_chat') {
@@ -110,12 +110,12 @@ export default function ConnectHostModal({
                     Join Vibe Host Console on Telegram
                   </h3>
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                    @VibeConsoleBot
+                    Host Console
                   </span>
                 </div>
 
                 <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                  Admission requires host approval via Vibe Host Console. Your phone number remains <strong>100% private</strong> and hidden from attendees.
+                  Join the official <strong>Vibe Host Console</strong> Telegram group. Admission is host-approved and your mobile number remains <strong>100% private</strong>.
                 </p>
 
                 <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-sky-400 group-hover:text-sky-300">
