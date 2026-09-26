@@ -851,18 +851,32 @@ export const getEvents = (): EventItem[] => {
 };
 
 /**
- * Strict check if an event is a spontaneous/flash event belonging to the Vibe Instant section.
+ * Strict check if an event is a spontaneous/flash/bot-created event belonging exclusively to the Vibe Instant section.
+ * All events made via Telegram and WhatsApp bots are strictly listed in Vibe Instant and excluded from Events Discovery.
  */
 export const isFlashVibeEvent = (e: any): boolean => {
   if (!e) return false;
+  const platform = (e.source_platform || '').toLowerCase().trim();
+  const sourceType = (e.source_type || '').toLowerCase().trim();
+  const category = (e.category || '').toLowerCase().trim();
+  const createdVia = (e.created_via || e.theme?.created_via || '').toLowerCase().trim();
+
   return Boolean(
     e.is_flash === true ||
     String(e.is_flash) === 'true' ||
-    e.category === 'Flash Vibe' ||
+    category === 'flash vibe' ||
+    category === 'flash' ||
     e.theme?.is_flash === true ||
     e.rsvp_form_config?.is_flash === true ||
-    e.source_platform === 'whatsapp' ||
-    e.source_platform === 'telegram'
+    platform === 'telegram' ||
+    platform === 'whatsapp' ||
+    platform === 'bot' ||
+    sourceType === 'telegram' ||
+    sourceType === 'whatsapp' ||
+    sourceType === 'bot' ||
+    createdVia === 'bot' ||
+    createdVia === 'telegram' ||
+    createdVia === 'whatsapp'
   );
 };
 
@@ -1158,8 +1172,17 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
         confidence_score: row.confidence_score || row.theme?.confidence_score || undefined,
         missing_aspects: row.missing_aspects || row.theme?.missing_aspects || undefined,
         approval_status: row.approval_status || row.theme?.approval_status || ((row.confidence_score || 0) >= 0.9 ? 'approved' : 'pending'),
-        admin_approved: row.admin_approved ?? row.theme?.admin_approved ?? ((row.confidence_score || 0) >= 0.9),
-        is_flash: Boolean(row.is_flash || row.category === 'Flash Vibe' || row.theme?.is_flash || row.rsvp_form_config?.is_flash),
+        is_flash: Boolean(
+          row.is_flash ||
+          row.category === 'Flash Vibe' ||
+          (row.category && row.category.toLowerCase() === 'flash vibe') ||
+          row.theme?.is_flash ||
+          row.rsvp_form_config?.is_flash ||
+          (row.source_platform && ['telegram', 'whatsapp', 'bot'].includes(row.source_platform.toLowerCase().trim())) ||
+          (row.source_type && ['telegram', 'whatsapp', 'bot'].includes(row.source_type.toLowerCase().trim())) ||
+          (row.created_via && ['bot', 'telegram', 'whatsapp'].includes(row.created_via.toLowerCase().trim())) ||
+          row.theme?.created_via === 'bot'
+        ),
         flash_activity: row.flash_activity || row.theme?.flash_activity || 'other',
         spots_limit: row.spots_limit || row.theme?.spots_limit || (row.capacity && row.capacity < 1000 ? row.capacity : undefined),
         spots_filled: row.spots_filled || row.theme?.spots_filled || 0,

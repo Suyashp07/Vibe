@@ -84,52 +84,18 @@ export async function POST(req: NextRequest) {
       const supabase = getSupabaseAdmin();
       const appUrl = getAppUrl(req);
 
-      if (data.startsWith('publish_instant:')) {
-        const eventId = data.replace('publish_instant:', '');
-        const { data: current, error } = await supabase
-          .from('events')
-          .select('id, slug, title, theme, rsvp_form_config')
-          .eq('id', eventId)
-          .single();
-
-        if (error || !current) {
-          await answerTelegramCallback(cq.id, 'Failed to publish event', true);
-          return NextResponse.json({ ok: true });
-        }
-
-        await supabase
+      if (data.startsWith('publish:') || data.startsWith('publish_instant:')) {
+        const eventId = data.replace(/^publish(_instant)?:/, '');
+        const { data: updatedEvent, error } = await supabase
           .from('events')
           .update({
             status: 'live',
             is_public: true,
-            theme: { ...(current.theme || {}), is_flash: true },
-            rsvp_form_config: { ...(current.rsvp_form_config || {}), is_flash: true },
+            is_flash: true,
+            category: 'Flash Vibe',
+            source_platform: 'telegram',
             updated_at: new Date().toISOString(),
           })
-          .eq('id', eventId);
-
-        await answerTelegramCallback(cq.id, '⚡ Published to Vibe Instant!');
-
-        const instantLink = `${appUrl}/vibes?event=${current.slug}`;
-        const publishedText = `⚡ <b>EVENT IS LIVE ON VIBE INSTANT!</b>\n\n📌 <b>${current.title}</b>\n🔗 <a href="${instantLink}">${instantLink}</a>\n\n<i>Swipe full-screen in Vibe Instant stream right now!</i>`;
-
-        await editTelegramMessage(chatId, messageId, publishedText, {
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
-            ],
-          },
-        });
-
-        return NextResponse.json({ ok: true });
-      }
-
-      if (data.startsWith('publish:')) {
-        const eventId = data.replace('publish:', '');
-        const { data: updatedEvent, error } = await supabase
-          .from('events')
-          .update({ status: 'live', is_public: true, updated_at: new Date().toISOString() })
           .eq('id', eventId)
           .select('id, title, slug, start_at, location_name')
           .single();
@@ -139,16 +105,16 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ ok: true });
         }
 
-        await answerTelegramCallback(cq.id, '🚀 Published Live!');
+        await answerTelegramCallback(cq.id, '⚡ Published to Vibe Instant!');
 
-        const eventLink = `${appUrl}/${updatedEvent.slug}`;
-        const publishedText = `🎉 <b>EVENT IS LIVE ON VIBE!</b>\n\n📌 <b>${updatedEvent.title}</b>\n📍 ${updatedEvent.location_name}\n🔗 <a href="${eventLink}">${eventLink}</a>\n\n<i>Anyone can now discover and view this event on Vibe!</i>`;
+        const instantLink = `${appUrl}/vibes?event=${updatedEvent.slug}`;
+        const publishedText = `⚡ <b>EVENT IS LIVE ON VIBE INSTANT!</b>\n\n📌 <b>${updatedEvent.title}</b>\n📍 ${updatedEvent.location_name}\n🔗 <a href="${instantLink}">${instantLink}</a>\n\n<i>Swipe full-screen in the Vibe Instant reels stream right now!</i>`;
 
         await editTelegramMessage(chatId, messageId, publishedText, {
           parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
-              [{ text: '🌐 View Live Page ↗', url: eventLink }],
+              [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
             ],
           },
         });
@@ -528,11 +494,12 @@ export async function POST(req: NextRequest) {
         extracted.description ||
         `Join us for ${extracted.title || 'this event'} in ${detectedCity}. An exciting gathering bringing people together.`,
       cover_image_url: coverImageUrl,
-      template: isFlashVibe ? 'ember' : (extracted.template || 'grove'),
-      category: isFlashVibe ? 'Flash Vibe' : (extracted.category || 'Tech & AI'),
-      is_flash: isFlashVibe,
+      // All events submitted via Telegram bot are designated strictly for Vibe Instant stream
+      template: 'ember',
+      category: 'Flash Vibe',
+      is_flash: true,
       theme: {
-        palette: isFlashVibe ? 'sunset' : (extracted.template === 'ember' ? 'sunset' : 'forest'),
+        palette: 'sunset',
         font: 'Inter',
         bg_style: 'solid',
         button_style: 'pill',
@@ -540,7 +507,10 @@ export async function POST(req: NextRequest) {
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
         admin_approved: isAutoApproved,
-        is_flash: isFlashVibe,
+        is_flash: true,
+        created_via: 'bot',
+        source_platform: 'telegram',
+        flash_activity: flashActivity,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -550,12 +520,12 @@ export async function POST(req: NextRequest) {
       start_at: validStartAt,
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
-      capacity: isFlashVibe ? 12 : 250,
+      capacity: (extracted as any).capacity || (isFlashVibe ? 12 : 50),
       is_public: isPublic,
       status: eventStatus,
       ai_generated: true,
-      source_type: finalSourceType,
-      source_platform: finalSourcePlatform || 'telegram',
+      source_type: 'bot',
+      source_platform: 'telegram',
       external_ticket_url: finalTicketUrl,
       external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
       confidence_score: suretyPercent / 100,
@@ -565,10 +535,8 @@ export async function POST(req: NextRequest) {
         ask_dietary: false,
         ask_tshirt: false,
         waitlist_enabled: true,
-        is_flash: isFlashVibe,
-        confirmation_message: isFlashVibe
-          ? `You're confirmed for ${extracted.title || 'this flash meetup'}! Coordinate directly with other guests on Vibe.`
-          : (hasExternalUrl ? 'Redirecting to ticketing platform' : 'Your spot is confirmed! Present your pass with QR code at the entrance.'),
+        is_flash: true,
+        confirmation_message: `You're confirmed for ${extracted.title || 'this flash meetup'}! Coordinate directly with other guests on Vibe.`,
       },
     };
 

@@ -408,6 +408,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert into Supabase `public.events`
+    // All events created via WhatsApp bot belong strictly to the Vibe Instant stream
     const insertPayload = {
       slug: finalSlug,
       title: extracted.title || 'Untitled Event',
@@ -416,13 +417,17 @@ export async function POST(req: NextRequest) {
         extracted.description ||
         `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
       cover_image_url: coverImageUrl,
-      template: isFlashVibe ? 'ember' : (extracted.template || 'grove'),
+      template: 'ember',
+      category: 'Flash Vibe',
+      is_flash: true,
       theme: {
-        palette: isFlashVibe ? 'sunset' : (extracted.template === 'ember' ? 'sunset' : 'forest'),
+        palette: 'sunset',
         font: 'Inter',
         bg_style: 'solid',
         button_style: 'pill',
-        is_flash: isFlashVibe,
+        is_flash: true,
+        created_via: 'bot',
+        source_platform: 'whatsapp',
         flash_activity: flashActivity,
         whatsapp_host_phone: senderPhone,
         vibe_cheers_count: 0,
@@ -441,14 +446,14 @@ export async function POST(req: NextRequest) {
       start_at: validStartAt,
       end_at: validEndAt,
       timezone: 'Asia/Kolkata',
-      capacity: requestedSpots || null,
+      capacity: requestedSpots || 12,
       is_public: isPublic,
       status: eventStatus,
       confidence_score: suretyScore / 100,
       ai_generated: true,
       organizer_id: organizerId,
-      source_type: finalSourceType,
-      source_platform: finalSourcePlatform,
+      source_type: 'bot',
+      source_platform: 'whatsapp',
       external_ticket_url: finalTicketUrl,
       external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
       faq: extracted.faq || [],
@@ -457,10 +462,8 @@ export async function POST(req: NextRequest) {
         ask_dietary: false,
         ask_tshirt: false,
         waitlist_enabled: true,
-        is_flash: isFlashVibe,
-        confirmation_message: isFlashVibe
-          ? `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`
-          : (hasExternalUrl ? 'Redirecting to ticketing platform' : 'Your spot is confirmed! Present your pass with QR code at the entrance.'),
+        is_flash: true,
+        confirmation_message: `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`,
       },
     };
 
