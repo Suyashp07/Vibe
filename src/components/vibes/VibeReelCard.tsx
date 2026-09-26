@@ -283,7 +283,7 @@ export default function VibeReelCard({
 
       {/* Right Side: Streamlined Reels Action Rail */}
       <div className="absolute right-3 sm:right-4 bottom-20 sm:bottom-24 z-20 flex flex-col items-center gap-3.5">
-        {/* 1. Cheer / Vibe Check */}
+        {/* 1. Cheer / Like Button */}
         <button
           type="button"
           onClick={handleCheer}
@@ -304,34 +304,7 @@ export default function VibeReelCard({
           </span>
         </button>
 
-        {/* 2. Share */}
-        <button
-          type="button"
-          onClick={handleShare}
-          className="group flex flex-col items-center gap-1 cursor-pointer"
-          title="Share"
-        >
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-105 active:scale-90">
-            <Share2 className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] sm:text-[11px] font-bold text-white drop-shadow-md">Share</span>
-        </button>
-
-        {/* 3. Google Maps */}
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex flex-col items-center gap-1 cursor-pointer"
-          title="Directions on Google Maps"
-        >
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-105 active:scale-90">
-            <MapPin className="w-5 h-5 text-[#E8621A]" />
-          </div>
-          <span className="text-[10px] sm:text-[11px] font-bold text-white drop-shadow-md">Maps</span>
-        </a>
-
-        {/* 4. Comments */}
+        {/* 2. Comments - Just below Like Icon */}
         <button
           type="button"
           onClick={() => setCommentsOpen(true)}
@@ -346,7 +319,20 @@ export default function VibeReelCard({
           </span>
         </button>
 
-        {/* 5. Info / Details toggle */}
+        {/* 3. Share */}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="group flex flex-col items-center gap-1 cursor-pointer"
+          title="Share"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-105 active:scale-90">
+            <Share2 className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] sm:text-[11px] font-bold text-white drop-shadow-md">Share</span>
+        </button>
+
+        {/* 4. Info / Details toggle */}
         <button
           type="button"
           onClick={() => setDetailsOpen(!detailsOpen)}
@@ -402,9 +388,8 @@ export default function VibeReelCard({
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-white/90 hover:text-white border border-white/10 font-medium flex items-center gap-1 transition-colors truncate max-w-[160px]"
+            className="px-2.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-white/90 hover:text-white border border-white/10 font-medium flex items-center transition-colors truncate max-w-[160px]"
           >
-            <MapPin className="w-3 h-3 text-[#E8621A] shrink-0" />
             <span className="truncate">{event.location_name}</span>
           </a>
         </div>

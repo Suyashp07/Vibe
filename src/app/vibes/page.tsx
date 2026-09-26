@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Filter,
   Flame,
-  MapPin,
   Plus,
   RefreshCw,
   Zap,
@@ -382,7 +381,7 @@ function VibesReelsContent() {
           </div>
         </div>
 
-        {/* Right: Category Dropdown, Location Badge & Post Vibe */}
+        {/* Right: Category Dropdown Filter */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Category Dropdown Filter */}
           <div className="relative" ref={categoryDropdownRef}>
@@ -393,7 +392,7 @@ function VibesReelsContent() {
               title="Filter by Category"
             >
               <Filter className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
-              <span className="max-w-[70px] sm:max-w-[120px] truncate">
+              <span className="max-w-[80px] sm:max-w-[130px] truncate">
                 {ACTIVITY_FILTERS.find((f) => f.id === selectedActivity)?.label || 'All Vibes'}
               </span>
               <ChevronDown className="w-3 h-3 text-white/60 shrink-0" />
@@ -427,27 +426,6 @@ function VibesReelsContent() {
               </div>
             )}
           </div>
-
-          {/* User's Auto-Detected City Pill (No manual dropdown) */}
-          <div
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-black/60 border border-white/20 text-xs font-bold text-white backdrop-blur-xl shadow-md"
-            title={activeCity ? `Showing vibes for ${activeCity}` : 'Detecting your city...'}
-          >
-            <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
-            <span className="max-w-[70px] sm:max-w-[110px] truncate">
-              {activeCity || 'Locating...'}
-            </span>
-          </div>
-
-          {/* Create / Post Vibe CTA */}
-          <button
-            type="button"
-            onClick={() => setCreateModalOpen(true)}
-            className="flex items-center gap-1 px-3 sm:px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-[#E8621A]/30 transition-all cursor-pointer shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="hidden sm:inline">Post Vibe</span>
-          </button>
         </div>
       </header>
 
