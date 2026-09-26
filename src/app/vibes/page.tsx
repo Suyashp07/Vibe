@@ -15,28 +15,9 @@ import {
 } from 'lucide-react';
 import { EventItem } from '@/types';
 import { getFlashVibeEvents, subscribeToStore, syncEventsWithSupabase, SAMPLE_FLASH_VIBES } from '@/lib/store';
-import { getUserCity } from '@/lib/location';
+import { getUserCity, setUserLocation, reverseGeocodeCoords, findNearestCity } from '@/lib/location';
 import VibeReelCard from '@/components/vibes/VibeReelCard';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
-
-const CITIES = [
-  'All Cities',
-  'Bhopal',
-  'Indore',
-  'Satna',
-  'Mumbai',
-  'Pune',
-  'Delhi NCR',
-  'Bengaluru',
-  'Hyderabad',
-  'Goa',
-  'Jaipur',
-  'Chandigarh',
-  'Kolkata',
-  'Chennai',
-  'Ahmedabad',
-  'Lucknow'
-];
 
 const ACTIVITY_FILTERS = [
   { id: 'all', label: '⚡ All Vibes' },
@@ -47,8 +28,8 @@ const ACTIVITY_FILTERS = [
 ];
 
 function matchesCityFilter(event: EventItem, filterCity: string): boolean {
-  if (!filterCity || filterCity === 'All Cities' || filterCity === 'All India' || filterCity === 'all') {
-    return true;
+  if (!filterCity) {
+    return false;
   }
   const cleanTarget = filterCity.toLowerCase().trim();
   const eventCity = (event.city || '').toLowerCase().trim();
@@ -88,19 +69,17 @@ function VibesReelsContent() {
   const targetSlug = searchParams.get('event') || searchParams.get('id');
 
   const [events, setEvents] = useState<EventItem[]>(SAMPLE_FLASH_VIBES);
-  const [activeCity, setActiveCity] = useState<string>('All Cities');
+  const [activeCity, setActiveCity] = useState<string>(() => (typeof window !== 'undefined' ? getUserCity() || '' : ''));
   const [selectedActivity, setSelectedActivity] = useState<string>('all');
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
-  const [cityDropdownOpen, setCityDropdownOpen] = useState<boolean>(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const cityDropdownRef = useRef<HTMLDivElement | null>(null);
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
 
-  // Load initial events from store & fetch fresh from Supabase
+  // Load initial events from store & auto-detect location strictly
   useEffect(() => {
     const loadEvents = () => {
       const vibes = getFlashVibeEvents();
@@ -111,15 +90,47 @@ function VibesReelsContent() {
     syncEventsWithSupabase().then(() => loadEvents()).catch(() => {});
     const unsubscribe = subscribeToStore(loadEvents);
 
-    // City sync
+    // Auto-detect and sync user's city based on location
     const syncCity = () => {
       const userCity = getUserCity();
-      if (!userCity || userCity === 'All India' || userCity === 'all') {
-        setActiveCity('All Cities');
-      } else {
+      if (userCity && userCity !== 'All India' && userCity !== 'all') {
         setActiveCity(userCity);
+      } else {
+        // Auto-detect via browser GPS
+        if (typeof window !== 'undefined' && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                const { latitude, longitude } = pos.coords;
+                let detectedCityName = '';
+                try {
+                  const geocoded = await reverseGeocodeCoords(latitude, longitude);
+                  detectedCityName = geocoded.cityName;
+                } catch {
+                  const nearest = findNearestCity(latitude, longitude);
+                  detectedCityName = nearest.city.name;
+                }
+                if (detectedCityName) {
+                  setUserLocation(detectedCityName, { lat: latitude, lng: longitude });
+                  setActiveCity(detectedCityName);
+                }
+              } catch (err) {
+                console.warn('[Vibes] Location resolution error:', err);
+              }
+            },
+            (err) => {
+              console.warn('[Vibes] Geolocation response:', err.message);
+              // Fallback default city if location denied
+              setActiveCity((prev) => prev || 'Bhopal');
+            },
+            { timeout: 8000 }
+          );
+        } else {
+          setActiveCity((prev) => prev || 'Bhopal');
+        }
       }
     };
+
     syncCity();
     window.addEventListener('vibe:location_changed', syncCity);
 
@@ -132,7 +143,6 @@ function VibesReelsContent() {
   // Fetch target event directly if requested in query param and not found yet
   useEffect(() => {
     if (!targetSlug) return;
-    setActiveCity('All Cities');
     setSelectedActivity('all');
 
     const checkAndFetchTarget = async () => {
@@ -295,12 +305,9 @@ function VibesReelsContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Close city or category dropdown when clicking outside
+  // Close category dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
-        setCityDropdownOpen(false);
-      }
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
         setCategoryDropdownOpen(false);
       }
@@ -352,7 +359,7 @@ function VibesReelsContent() {
           </div>
         </div>
 
-        {/* Right: Category Dropdown, City Selector & Post Vibe */}
+        {/* Right: Category Dropdown, Location Badge & Post Vibe */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Category Dropdown Filter */}
           <div className="relative" ref={categoryDropdownRef}>
@@ -398,40 +405,15 @@ function VibesReelsContent() {
             )}
           </div>
 
-          {/* City Dropdown Selector */}
-          <div className="relative" ref={cityDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-xs font-bold text-white backdrop-blur-xl transition-all cursor-pointer shadow-md"
-            >
-              <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
-              <span className="max-w-[70px] sm:max-w-[100px] truncate">{activeCity}</span>
-              <ChevronDown className="w-3 h-3 text-white/60 shrink-0" />
-            </button>
-
-            {cityDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-[#14171F] border border-white/15 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
-                {CITIES.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => {
-                      setActiveCity(c);
-                      setCityDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                      activeCity === c
-                        ? 'bg-[#E8621A]/20 text-[#E8621A] font-bold'
-                        : 'text-white/80 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <span>{c}</span>
-                    {activeCity === c && <span className="w-1.5 h-1.5 rounded-full bg-[#E8621A]" />}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* User's Auto-Detected City Pill (No manual dropdown) */}
+          <div
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-black/60 border border-white/20 text-xs font-bold text-white backdrop-blur-xl shadow-md"
+            title={activeCity ? `Showing vibes for ${activeCity}` : 'Detecting your city...'}
+          >
+            <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
+            <span className="max-w-[70px] sm:max-w-[110px] truncate">
+              {activeCity || 'Locating...'}
+            </span>
           </div>
 
           {/* Create / Post Vibe CTA */}
@@ -478,10 +460,12 @@ function VibesReelsContent() {
                 <Flame className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-black text-white mb-2">
-                No Vibes in {activeCity} yet!
+                {activeCity ? `No Vibes in ${activeCity} yet!` : 'Looking for Vibes near you...'}
               </h3>
               <p className="text-xs text-white/60 max-w-xs mb-6 leading-relaxed">
-                Be the trendsetter! Post a pickup game, casual hangout, or sprint in seconds.
+                {activeCity
+                  ? `Be the first to host a pickup game, casual chai hangout, or sprint in ${activeCity}!`
+                  : 'Detecting spontaneous meetups and flash vibes in your city.'}
               </p>
               <button
                 type="button"

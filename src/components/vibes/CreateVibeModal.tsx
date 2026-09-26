@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Sparkles, MessageSquare, Zap, Plus, MapPin, Clock, Users, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { saveEvent } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
+import { getUserCity } from '@/lib/location';
 import { nanoid } from 'nanoid';
 
 interface CreateVibeModalProps {
@@ -22,7 +23,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
   const [activity, setActivity] = useState('cricket');
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
-  const [city, setCity] = useState('Mumbai');
+  const [city, setCity] = useState(() => (typeof window !== 'undefined' ? getUserCity() || 'Mumbai' : 'Mumbai'));
   const [spots, setSpots] = useState(8);
   const [timeText, setTimeText] = useState('Today in 2 hours');
   const [submitting, setSubmitting] = useState(false);
@@ -30,6 +31,10 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
 
   useEffect(() => {
     if (isOpen) {
+      const userCity = getUserCity();
+      if (userCity && userCity !== 'All India' && userCity !== 'all') {
+        setCity(userCity);
+      }
       fetch('/api/whatsapp/bridge-info')
         .then((res) => res.json())
         .then((data) => {

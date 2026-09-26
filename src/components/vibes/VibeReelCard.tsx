@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import {
   Flame,
   MessageSquare,
+  MessageCircle,
   Share2,
   MapPin,
   Info,
@@ -12,7 +13,9 @@ import {
   Users,
   X,
   Sparkles,
-  TicketCheck
+  TicketCheck,
+  Send,
+  Loader2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem } from '@/types';
@@ -55,11 +58,85 @@ export default function VibeReelCard({
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const lastTapRef = useRef<number>(0);
 
+  // Comment state
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [commentText, setCommentText] = useState('');
+  const [commentName, setCommentName] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
   // Sync like count and status whenever event prop updates or changes
   useEffect(() => {
     setHasCheered(isFlashVibeLiked(event.id, event.slug));
     setCheers(event.vibe_cheers_count ?? event.theme?.vibe_cheers_count ?? 0);
   }, [event.id, event.slug, event.vibe_cheers_count, event.theme?.vibe_cheers_count]);
+
+  // Fetch comment count on mount
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(`/api/events/comments?eventId=${encodeURIComponent(event.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCommentCount(data.count || 0);
+        }
+      } catch {}
+    };
+    fetchCount();
+  }, [event.id]);
+
+  // Fetch full comments when drawer opens
+  const loadComments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/events/comments?eventId=${encodeURIComponent(event.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data.comments || []);
+        setCommentCount(data.count || data.comments?.length || 0);
+        setCommentsLoaded(true);
+      }
+    } catch {
+      setCommentsLoaded(true);
+    }
+  }, [event.id]);
+
+  useEffect(() => {
+    if (commentsOpen && !commentsLoaded) {
+      loadComments();
+    }
+  }, [commentsOpen, commentsLoaded, loadComments]);
+
+  // Post a new comment
+  const handlePostComment = async () => {
+    if (!commentText.trim() || postingComment) return;
+
+    setPostingComment(true);
+    try {
+      const res = await fetch('/api/events/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event.id,
+          content: commentText.trim(),
+          userName: commentName.trim() || profile?.name || 'Guest',
+          userEmail: profile?.email || undefined,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comment) {
+          setComments((prev) => [data.comment, ...prev]);
+          setCommentCount((c) => c + 1);
+        }
+        setCommentText('');
+      }
+    } catch {}
+    setPostingComment(false);
+  };
 
   // Instagram-style double-tap on card to cheer / like
   const handleCardDoubleTap = (e: React.MouseEvent) => {
@@ -254,7 +331,22 @@ export default function VibeReelCard({
           <span className="text-[10px] sm:text-[11px] font-bold text-white drop-shadow-md">Maps</span>
         </a>
 
-        {/* 4. Info / Details toggle */}
+        {/* 4. Comments */}
+        <button
+          type="button"
+          onClick={() => setCommentsOpen(true)}
+          className="group flex flex-col items-center gap-1 cursor-pointer"
+          title="Comments"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-105 active:scale-90">
+            <MessageCircle className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] sm:text-[11px] font-bold text-white drop-shadow-md">
+            {commentCount || 0}
+          </span>
+        </button>
+
+        {/* 5. Info / Details toggle */}
         <button
           type="button"
           onClick={() => setDetailsOpen(!detailsOpen)}
@@ -490,6 +582,115 @@ export default function VibeReelCard({
           setQuickJoinOpen(false);
         }}
       />
+
+      {/* ========== COMMENTS DRAWER ========== */}
+      {commentsOpen && (
+        <div className="absolute inset-0 z-50 flex flex-col" onClick={(e) => { if (e.target === e.currentTarget) setCommentsOpen(false); }}>
+          {/* Backdrop */}
+          <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={() => setCommentsOpen(false)} />
+
+          {/* Drawer */}
+          <div className="bg-[#0D0F14] border-t border-white/10 rounded-t-3xl max-h-[65vh] flex flex-col animate-in slide-in-from-bottom duration-300">
+            {/* Handle + Header */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#E8621A]/20 flex items-center justify-center">
+                  <MessageCircle className="w-4 h-4 text-[#E8621A]" />
+                </div>
+                <span className="text-sm font-black text-white">
+                  Comments <span className="text-white/50 font-normal">({commentCount})</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCommentsOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Comments List */}
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 no-scrollbar min-h-[120px] max-h-[35vh]">
+              {!commentsLoaded ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-[#E8621A]" />
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-white/40 text-xs">No comments yet. Be the first! 🎉</p>
+                </div>
+              ) : (
+                comments.map((cmt) => (
+                  <div key={cmt.id} className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#E8621A] to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                      {(cmt.user_name || 'G')[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-bold text-white truncate">
+                          {cmt.user_name || 'Guest'}
+                        </span>
+                        <span className="text-[10px] text-white/30 shrink-0">
+                          {new Date(cmt.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/80 leading-relaxed mt-0.5 break-words">
+                        {cmt.content}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Comment Input */}
+            <div className="px-4 py-3 border-t border-white/10 bg-[#0D0F14]">
+              {/* Name field (only if not logged in) */}
+              {!profile?.name && (
+                <input
+                  type="text"
+                  value={commentName}
+                  onChange={(e) => setCommentName(e.target.value)}
+                  placeholder="Your name"
+                  maxLength={50}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 mb-2 focus:outline-none focus:border-[#E8621A]/50"
+                />
+              )}
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={commentInputRef}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handlePostComment();
+                    }
+                  }}
+                  placeholder="Add a comment..."
+                  maxLength={500}
+                  rows={1}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#E8621A]/50 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={handlePostComment}
+                  disabled={!commentText.trim() || postingComment}
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0"
+                >
+                  {postingComment ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] text-white/20 mt-1 text-right">{commentText.length}/500</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Connect with Host Modal (only accessible after RSVP) */}
       {hasRSVPd && (
