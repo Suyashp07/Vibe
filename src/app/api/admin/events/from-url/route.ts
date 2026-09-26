@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
     }
 
-    const { url } = await req.json();
+    const body = await req.json();
+    const { url, extractOnly } = body;
     if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'Valid URL is required' }, { status: 400 });
     }
@@ -26,6 +27,17 @@ export async function POST(req: NextRequest) {
 
     // 1. Extract structured fields with Schema.org JSON-LD and Gemini AI
     const extracted = await extractEventFromText(url.trim());
+
+    if (extractOnly) {
+      return NextResponse.json({
+        success: true,
+        extracted: {
+          ...extracted,
+          source_platform: platform,
+          external_ticket_url: url,
+        },
+      });
+    }
 
     const title = extracted.title || 'Extracted Event';
     const city = extracted.city || 'Mumbai';

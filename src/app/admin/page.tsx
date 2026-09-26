@@ -99,6 +99,64 @@ function isIngestedEvent(ev: AdminEvent): boolean {
   return false;
 }
 
+function toDateInputValue(val?: string | null, startAt?: string | null): string {
+  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  if (startAt) {
+    try {
+      const d = new Date(startAt);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    } catch {}
+  }
+  if (val) {
+    try {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    } catch {}
+  }
+  return '';
+}
+
+function toTimeInputValue(val?: string | null, startAt?: string | null): string {
+  if (val && /^\d{2}:\d{2}$/.test(val)) return val;
+  if (startAt) {
+    try {
+      const d = new Date(startAt);
+      if (!isNaN(d.getTime())) {
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+      }
+    } catch {}
+  }
+  if (val) {
+    try {
+      const d = new Date(`1970-01-01 ${val}`);
+      if (!isNaN(d.getTime())) {
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+      }
+    } catch {}
+  }
+  return '';
+}
+
+function getCategoryValue(cat?: string | null): string {
+  if (!cat) return 'Tech & AI';
+  const match = CATEGORIES.find(
+    (c) => c.toLowerCase() === cat.toLowerCase() || cat.toLowerCase().includes(c.toLowerCase())
+  );
+  if (match) return match;
+  if (/music|concert|dj|band|singer|live/i.test(cat)) return 'Music & Concerts';
+  if (/tech|ai|code|hackathon|developer|crypto/i.test(cat)) return 'Tech & AI';
+  if (/comedy|standup|laugh/i.test(cat)) return 'Comedy & Standup';
+  if (/party|nightlife|mixer|social/i.test(cat)) return 'Social & Mixers';
+  if (/art|design|creative|photo/i.test(cat)) return 'Design & Creative';
+  if (/yoga|fitness|wellness|run|marathon|badminton|sports/i.test(cat)) return 'Wellness & Fitness';
+  if (/food|drink|chai|coffee|dinner/i.test(cat)) return 'Food & Drinks';
+  return 'Other';
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { profile, isStaff, signOut } = useAuth();
@@ -349,20 +407,33 @@ export default function AdminDashboardPage() {
     if (!selectedEvent) return;
     setSavingAction('saving-edits');
     try {
+      const dateVal = toDateInputValue(selectedEvent.date, selectedEvent.start_at);
+      const timeVal = toTimeInputValue(selectedEvent.time, selectedEvent.start_at) || '18:00';
+      let validStartAt = selectedEvent.start_at;
+      if (dateVal) {
+        try {
+          const combined = new Date(`${dateVal}T${timeVal}:00`);
+          if (!isNaN(combined.getTime())) {
+            validStartAt = combined.toISOString();
+          }
+        } catch {}
+      }
+
       const res = await fetch('/api/admin/events', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedEvent.id,
           updates: {
-            title: selectedEvent.title,
-            date: selectedEvent.date,
-            time: selectedEvent.time,
+            title: selectedEvent.title || selectedEvent.name,
+            start_at: validStartAt,
+            date: dateVal,
+            time: timeVal,
             city: selectedEvent.city,
-            venue_name: selectedEvent.venue_name,
-            location_name: selectedEvent.venue_name,
-            venue_address: selectedEvent.venue_address,
-            location_address: selectedEvent.venue_address,
+            venue_name: selectedEvent.venue_name || selectedEvent.location_name,
+            location_name: selectedEvent.venue_name || selectedEvent.location_name,
+            venue_address: selectedEvent.venue_address || selectedEvent.location_address,
+            location_address: selectedEvent.venue_address || selectedEvent.location_address,
             category: selectedEvent.category,
             price_text: selectedEvent.price_text || selectedEvent.external_price_text,
             external_price_text: selectedEvent.price_text || selectedEvent.external_price_text,
@@ -372,7 +443,16 @@ export default function AdminDashboardPage() {
           },
         }),
       });
-      if (!res.ok) throw new Error('Failed to save changes');
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to save changes');
+      }
+
+      const data = await res.json();
+      if (data?.event) {
+        setSelectedEvent((prev) => (prev ? { ...prev, ...data.event } : data.event));
+      }
       await fetchEvents();
       alert('Event changes saved successfully.');
     } catch (err: any) {
@@ -1229,7 +1309,7 @@ function DetailInspector({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Rescan from URL
+  // Rescan from URL (extractOnly to avoid creating duplicate events)
   const handleRescan = async () => {
     if (!refetchUrl.trim()) return;
     setRefetching(true);
@@ -1237,7 +1317,7 @@ function DetailInspector({
       const res = await fetch('/api/admin/events/from-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: refetchUrl.trim() }),
+        body: JSON.stringify({ url: refetchUrl.trim(), extractOnly: true }),
       });
       const data = await res.json();
       const ext = data.extracted || data.event;
@@ -1272,12 +1352,12 @@ function DetailInspector({
           if (!isNaN(d.getTime())) {
             const dateStr = d.toISOString().split('T')[0];
             const timeStr = d.toTimeString().slice(0, 5);
-            if (!ext.date) onChange('date', dateStr);
-            if (!ext.time) onChange('time', timeStr);
+            onChange('date', dateStr);
+            onChange('time', timeStr);
           }
         }
-        if (ext.category) onChange('category', ext.category);
-        alert('Refreshed fields from URL.');
+        if (ext.category) onChange('category', getCategoryValue(ext.category));
+        alert('Refreshed fields from URL. Click "Save Changes" below to apply.');
       } else {
         alert(data.error || 'Rescan failed');
       }
@@ -1547,12 +1627,15 @@ function DetailInspector({
             type="button"
             onClick={handleRescan}
             disabled={refetching || !refetchUrl.trim()}
-            className="shrink-0 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="shrink-0 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
           >
             {refetching ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-            <span>{refetching ? 'Scanning...' : 'Update'}</span>
+            <span>{refetching ? 'Scanning...' : 'Auto-fill Fields'}</span>
           </button>
         </div>
+        <p className="text-[10px] text-[#64748B]">
+          Extracts and populates fields into this form without creating duplicates. Click &quot;Save Changes&quot; below to apply.
+        </p>
       </div>
 
       {/* Editable Fields */}
@@ -1572,7 +1655,7 @@ function DetailInspector({
             <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Date</label>
             <input
               type="date"
-              value={event.date || ''}
+              value={toDateInputValue(event.date, event.start_at)}
               onChange={(e) => onChange('date', e.target.value)}
               className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
             />
@@ -1581,7 +1664,7 @@ function DetailInspector({
             <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Time</label>
             <input
               type="time"
-              value={event.time || ''}
+              value={toTimeInputValue(event.time, event.start_at)}
               onChange={(e) => onChange('time', e.target.value)}
               className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
             />
@@ -1601,7 +1684,7 @@ function DetailInspector({
           <div>
             <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Category</label>
             <select
-              value={event.category || 'Tech & AI'}
+              value={getCategoryValue(event.category)}
               onChange={(e) => onChange('category', e.target.value)}
               className="w-full px-3 py-2 text-xs border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0A0A0A]"
             >
