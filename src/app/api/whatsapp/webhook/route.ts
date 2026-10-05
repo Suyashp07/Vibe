@@ -418,8 +418,6 @@ export async function POST(req: NextRequest) {
         `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
       cover_image_url: coverImageUrl,
       template: 'ember',
-      category: 'Flash Vibe',
-      is_flash: true,
       theme: {
         palette: 'sunset',
         font: 'Inter',

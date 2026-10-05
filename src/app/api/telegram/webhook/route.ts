@@ -84,8 +84,6 @@ export async function POST(req: NextRequest) {
           .update({
             status: 'live',
             is_public: true,
-            is_flash: true,
-            category: 'Flash Vibe',
             source_platform: 'telegram',
             updated_at: new Date().toISOString(),
           })
@@ -411,18 +409,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Validate timestamps safely for PostgreSQL timestamptz
+    // Validate timestamps safely for PostgreSQL timestamptz in IST (+05:30)
     let validStartAt = new Date(Date.now() + 86400000).toISOString();
     try {
-      if (extracted.start_at && !isNaN(new Date(extracted.start_at).getTime())) {
-        validStartAt = new Date(extracted.start_at).toISOString();
+      if (extracted.start_at) {
+        let rawStart = String(extracted.start_at).trim();
+        // If string has date and time without explicit timezone (e.g. "2026-11-26T21:00:00" without Z or +), append +05:30
+        if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(rawStart)) {
+          rawStart = rawStart.replace(' ', 'T') + '+05:30';
+        }
+        if (!isNaN(new Date(rawStart).getTime())) {
+          validStartAt = new Date(rawStart).toISOString();
+        }
       }
     } catch {}
 
     let validEndAt = new Date(new Date(validStartAt).getTime() + 10800000).toISOString();
     try {
-      if (extracted.end_at && !isNaN(new Date(extracted.end_at).getTime())) {
-        validEndAt = new Date(extracted.end_at).toISOString();
+      if (extracted.end_at) {
+        let rawEnd = String(extracted.end_at).trim();
+        if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(rawEnd)) {
+          rawEnd = rawEnd.replace(' ', 'T') + '+05:30';
+        }
+        if (!isNaN(new Date(rawEnd).getTime())) {
+          validEndAt = new Date(rawEnd).toISOString();
+        }
       }
     } catch {}
 
@@ -478,7 +489,7 @@ export async function POST(req: NextRequest) {
     const eventStatus = isAutoApproved ? 'live' : 'draft';
     const isPublic = isAutoApproved;
 
-    // 3. Build Event Record for Supabase
+    // 3. Build Event Record for Supabase (only existing schema columns)
     const insertPayload = {
       slug: finalSlug,
       title: extracted.title || 'Untitled Gathering',
@@ -487,10 +498,7 @@ export async function POST(req: NextRequest) {
         extracted.description ||
         `Join us for ${extracted.title || 'this event'} in ${detectedCity}. An exciting gathering bringing people together.`,
       cover_image_url: coverImageUrl,
-      // All events submitted via Telegram bot are designated strictly for Vibe Instant stream
       template: 'ember',
-      category: 'Flash Vibe',
-      is_flash: true,
       theme: {
         palette: 'sunset',
         font: 'Inter',
@@ -541,8 +549,12 @@ export async function POST(req: NextRequest) {
 
     if (insertError || !savedEvent) {
       console.error('[Telegram Webhook] Insert error:', insertError);
+      const safeErrorMsg = (insertError?.message || 'Unknown database error')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
       await replyTelegram(
-        `❌ <b>Failed to save event draft</b>: ${insertError?.message || 'Unknown database error'}`,
+        `❌ <b>Failed to save event draft</b>: ${safeErrorMsg}`,
         { parse_mode: 'HTML' }
       );
       return NextResponse.json({ ok: true });

@@ -400,19 +400,17 @@ function DashboardInner() {
                   <button
                     key={tab.id}
                     onClick={() => setHostFilter(tab.id as any)}
-                    className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                      isActive
+                    className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all cursor-pointer ${isActive
                         ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-white text-slate-600 border border-slate-200/90 hover:text-slate-900 hover:border-slate-300'
-                    }`}
+                      }`}
                   >
                     <span>{tab.label}</span>
                     <span
-                      className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${
-                        isActive
+                      className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${isActive
                           ? 'bg-white/20 text-white'
                           : 'bg-slate-100 text-slate-600'
-                      }`}
+                        }`}
                     >
                       {tab.count}
                     </span>
@@ -679,11 +677,10 @@ function DashboardInner() {
                     </div>
                     <div className="shrink-0">
                       <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
-                          r.status === 'confirmed'
+                        className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${r.status === 'confirmed'
                             ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                             : 'bg-amber-100 text-amber-800 border border-amber-200'
-                        }`}
+                          }`}
                       >
                         {r.status}
                       </span>

@@ -105,20 +105,32 @@ export async function POST(req: NextRequest) {
         extracted.cover_image_url || getCategoryCover(finalCategory, extracted.title);
     }
 
-    // Validate timestamps safely
+    // Validate timestamps safely in IST (+05:30)
     let validStartAt = new Date(Date.now() + 86400000).toISOString();
     try {
-      if (extracted.start_at && !isNaN(new Date(extracted.start_at).getTime())) {
-        validStartAt = new Date(extracted.start_at).toISOString();
+      if (extracted.start_at) {
+        let rawStart = String(extracted.start_at).trim();
+        if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(rawStart)) {
+          rawStart = rawStart.replace(' ', 'T') + '+05:30';
+        }
+        if (!isNaN(new Date(rawStart).getTime())) {
+          validStartAt = new Date(rawStart).toISOString();
+        }
       }
-    } catch {}
+    } catch { }
 
     let validEndAt = new Date(new Date(validStartAt).getTime() + 10800000).toISOString();
     try {
-      if (extracted.end_at && !isNaN(new Date(extracted.end_at).getTime())) {
-        validEndAt = new Date(extracted.end_at).toISOString();
+      if (extracted.end_at) {
+        let rawEnd = String(extracted.end_at).trim();
+        if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(rawEnd)) {
+          rawEnd = rawEnd.replace(' ', 'T') + '+05:30';
+        }
+        if (!isNaN(new Date(rawEnd).getTime())) {
+          validEndAt = new Date(rawEnd).toISOString();
+        }
       }
-    } catch {}
+    } catch { }
 
     // Unique Slug
     const finalSlug = `${extracted.suggested_slug || 'event'}-${nanoid(4)}`;
@@ -134,8 +146,8 @@ export async function POST(req: NextRequest) {
 
     const hasExternalUrl = Boolean(
       normalizedTicketUrl &&
-        extracted.source_platform &&
-        !['vibe', 'telegram', 'manual'].includes(extracted.source_platform.toLowerCase())
+      extracted.source_platform &&
+      !['vibe', 'telegram', 'manual'].includes(extracted.source_platform.toLowerCase())
     );
 
     const finalSourceType: 'native' | 'external' = hasExternalUrl ? 'external' : 'native';
@@ -144,7 +156,7 @@ export async function POST(req: NextRequest) {
 
     const isUUID = Boolean(
       organizerId &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organizerId)
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organizerId)
     );
 
     // Calculate event completeness and surety percentage

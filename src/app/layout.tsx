@@ -63,6 +63,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Vibe',
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   applicationName: 'Vibe by Swaniki',
   openGraph: {
     title: 'Vibe by Swaniki — Create events that feel alive',

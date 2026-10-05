@@ -1472,7 +1472,7 @@ export const syncDatePollsWithSupabase = async (): Promise<DatePoll[]> => {
     if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project')) {
       return getDatePolls();
     }
-    const res = await fetch(`${supabaseUrl}/rest/v1/date_polls?select=*,profiles:organizer_id(id,name,handle,avatar_url)&order=created_at.desc`, {
+    const res = await fetch(`${supabaseUrl}/rest/v1/date_polls?select=*,profiles:organizer_id(id,name,handle,logo_url)&order=created_at.desc`, {
       headers: {
         apikey: supabaseAnonKey,
         Authorization: `Bearer ${supabaseAnonKey}`,
@@ -1519,7 +1519,7 @@ export const fetchDatePollBySlug = async (slug: string): Promise<DatePoll | unde
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('your-project')) {
-      const res = await fetch(`${supabaseUrl}/rest/v1/date_polls?slug=eq.${encodeURIComponent(slug)}&select=*,profiles:organizer_id(id,name,handle,avatar_url)&limit=1`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/date_polls?slug=eq.${encodeURIComponent(slug)}&select=*,profiles:organizer_id(id,name,handle,logo_url)&limit=1`, {
         headers: {
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${supabaseAnonKey}`,

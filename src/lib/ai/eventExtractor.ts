@@ -902,10 +902,16 @@ export function parseEventDeterministic(text: string): {
         if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
         if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
       }
-      startAt = new Date(currentYear, monthIndex, day, hours, minutes);
+      const y = currentYear;
+      const m = String(monthIndex + 1).padStart(2, '0');
+      const d = String(day).padStart(2, '0');
+      const h = String(hours).padStart(2, '0');
+      const min = String(minutes).padStart(2, '0');
+      startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
     }
   } else if (/tomorrow/i.test(cleanInput)) {
-    const tm = new Date(Date.now() + 86400000);
+    const nowIst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const tmIst = new Date(nowIst.getTime() + 86400000);
     let hours = 19;
     let minutes = 0;
     if (timeMatch) {
@@ -914,8 +920,28 @@ export function parseEventDeterministic(text: string): {
       if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
       if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
     }
-    tm.setHours(hours, minutes, 0, 0);
-    startAt = tm;
+    const y = tmIst.getFullYear();
+    const m = String(tmIst.getMonth() + 1).padStart(2, '0');
+    const d = String(tmIst.getDate()).padStart(2, '0');
+    const h = String(hours).padStart(2, '0');
+    const min = String(minutes).padStart(2, '0');
+    startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
+  } else if (/\b(?:today|tonight)\b/i.test(cleanInput)) {
+    const nowIst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    let hours = /\btonight\b/i.test(cleanInput) ? 20 : 19;
+    let minutes = 0;
+    if (timeMatch) {
+      hours = parseInt(timeMatch[1]);
+      if (timeMatch[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
+      if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
+      if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
+    }
+    const y = nowIst.getFullYear();
+    const m = String(nowIst.getMonth() + 1).padStart(2, '0');
+    const d = String(nowIst.getDate()).padStart(2, '0');
+    const h = String(hours).padStart(2, '0');
+    const min = String(minutes).padStart(2, '0');
+    startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
   }
 
   // 5. Clean Fallback Title if not yet found
@@ -972,7 +998,12 @@ export function parseEventDeterministic(text: string): {
  * Extract event data from text or forwarded link
  */
 export async function extractEventFromText(text: string): Promise<ExtractedEventData> {
-  const genAI = getGenAI();
+  let genAI: GoogleGenerativeAI | null = null;
+  try {
+    genAI = getGenAI();
+  } catch (e: any) {
+    console.warn('[AI Extractor Text] GoogleGenerativeAI not configured or unavailable:', e?.message);
+  }
   const cleanInputText = text.replace(/^source\s+url:\s*/i, '').trim();
   const deterministicData = parseEventDeterministic(cleanInputText);
 
@@ -1036,113 +1067,139 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
 
   let lastError: any = null;
 
-  for (const modelName of CANDIDATE_MODELS) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const rawText = result.response.text();
-      const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const parsed = JSON.parse(cleaned);
+  if (genAI) {
+    for (const modelName of CANDIDATE_MODELS) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const rawText = result.response.text();
+        const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleaned);
 
-      const category = parsed.category || deterministicData.category;
+        const category = parsed.category || deterministicData.category;
 
-      // Validate cover image: Priority 1: Exact scraped banner from the real page
-      let finalCover = isValidEventPoster(extractedCover) ? extractedCover : undefined;
+        // Validate cover image: Priority 1: Exact scraped banner from the real page
+        let finalCover = isValidEventPoster(extractedCover) ? extractedCover : undefined;
 
-      // Priority 2: Parsed cover from AI ONLY IF it actually exists in the scraped page
-      if (!finalCover && isValidEventPoster(parsed.cover_image_url)) {
-        const urlStr = parsed.cover_image_url.trim();
-        const isHallucinated =
-          (urlStr.includes('bmscdn.com') || urlStr.includes('district.in')) &&
-          (!scrapedContext || !scrapedContext.includes(urlStr));
+        // Priority 2: Parsed cover from AI ONLY IF it actually exists in the scraped page
+        if (!finalCover && isValidEventPoster(parsed.cover_image_url)) {
+          const urlStr = parsed.cover_image_url.trim();
+          const isHallucinated =
+            (urlStr.includes('bmscdn.com') || urlStr.includes('district.in')) &&
+            (!scrapedContext || !scrapedContext.includes(urlStr));
 
-        if (!isHallucinated) {
-          finalCover = urlStr;
+          if (!isHallucinated) {
+            finalCover = urlStr;
+          }
         }
+
+        // Priority 3: Fall back to beautiful high-res curated Unsplash category banner
+        if (!finalCover) {
+          finalCover = getCategoryCover(category, parsed.title || cleanInputText);
+        }
+
+        // Title validation: reject generic titles or raw URLs
+        const isBadTitle = (t?: string) =>
+          !t ||
+          t === 'Live Experience' ||
+          t === 'Community Gathering' ||
+          t === 'Curated Gathering' ||
+          t.toLowerCase().startsWith('source url:') ||
+          /^https?:\/\//i.test(t);
+
+        let resolvedTitle = !isBadTitle(parsed.title)
+          ? parsed.title
+          : (!isBadTitle(scrapedTitle) ? scrapedTitle : deterministicData.title);
+
+        const phraseMatch = resolvedTitle.match(/^(.+?)\s+is\s+the\s+event(?:\s+name)?\b/i);
+        if (phraseMatch && phraseMatch[1].trim()) {
+          resolvedTitle = phraseMatch[1].trim();
+        }
+        const whereMatch = resolvedTitle.match(/^(.+?)\s+where\s+(?:batch|we|people|everyone|friends)\b/i);
+        if (whereMatch && whereMatch[1].trim()) {
+          resolvedTitle = whereMatch[1].trim();
+        }
+
+        const finalTitle = resolvedTitle;
+
+        // City validation: prioritize detected city, then parsed, then scraped
+        const finalCity = (parsed.city && parsed.city.toLowerCase() !== 'unknown' ? parsed.city : null) ||
+          scrapedCity ||
+          deterministicData.city ||
+          'Mumbai';
+
+        // Venue validation: NEVER allow "City Venue" or "Mumbai Venue" when scrapedVenue exists
+        const isPlaceholderVenue = (v?: string) =>
+          !v ||
+          /^(?:city|mumbai|pune|delhi|bhopal|bangalore|bengaluru)?\s*venue\b/i.test(v) ||
+          /venue\s+tba/i.test(v) ||
+          /unknown/i.test(v);
+
+        const finalVenue =
+          (!isPlaceholderVenue(scrapedVenue) ? scrapedVenue : undefined) ||
+          (!isPlaceholderVenue(parsed.venue_name) ? parsed.venue_name : undefined) ||
+          (!isPlaceholderVenue(deterministicData.venue_name) ? deterministicData.venue_name : undefined) ||
+          `${finalCity} Venue`;
+
+        const finalAddress =
+          (scrapedAddress && !scrapedAddress.includes('City Venue') ? scrapedAddress : undefined) ||
+          (parsed.location_address && !parsed.location_address.includes('City Venue') ? parsed.location_address : undefined) ||
+          deterministicData.location_address;
+
+        // Date & Time validation: prefer exact scraped start_at when available from platform
+        let finalStartAt = scrapedStartAt || parsed.start_at || deterministicData.start_at;
+        let finalEndAt = scrapedEndAt || parsed.end_at || deterministicData.end_at;
+
+        if (typeof finalStartAt === 'string') {
+          const trimmed = finalStartAt.trim();
+          if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)) {
+            finalStartAt = trimmed.replace(' ', 'T') + '+05:30';
+          }
+        }
+        if (typeof finalEndAt === 'string') {
+          const trimmed = finalEndAt.trim();
+          if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)) {
+            finalEndAt = trimmed.replace(' ', 'T') + '+05:30';
+          }
+        }
+
+        const surety = calculateEventSurety({
+          title: finalTitle,
+          venue_name: finalVenue,
+          location_address: finalAddress,
+          city: finalCity,
+          start_at: finalStartAt,
+          end_at: finalEndAt,
+          ticket_url: targetUrl || parsed.ticket_url,
+          price_text: scrapedPrice || parsed.price_text,
+          description: parsed.description || scrapedDescription || cleanInputText,
+          cover_image_url: finalCover,
+          is_external: Boolean(targetUrl),
+        });
+
+        return {
+          ...parsed,
+          title: finalTitle,
+          venue_name: finalVenue,
+          location_address: finalAddress,
+          city: finalCity,
+          category,
+          start_at: finalStartAt,
+          end_at: finalEndAt,
+          ticket_url: targetUrl || parsed.ticket_url,
+          price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
+          source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
+          cover_image_url: finalCover,
+          suggested_slug: generateSlug(finalTitle || 'event'),
+          confidence_score: surety.score / 100,
+          missing_aspects: surety.missingAspects,
+          approval_status: surety.approvalStatus,
+          requires_admin_approval: !surety.autoApproved,
+        };
+      } catch (err: any) {
+        console.warn(`[AI Extractor Text] Model ${modelName} warning:`, err?.message || err);
+        lastError = err;
       }
-
-      // Priority 3: Fall back to beautiful high-res curated Unsplash category banner
-      if (!finalCover) {
-        finalCover = getCategoryCover(category, parsed.title || cleanInputText);
-      }
-
-      // Title validation: reject generic titles or raw URLs
-      const isBadTitle = (t?: string) =>
-        !t ||
-        t === 'Live Experience' ||
-        t === 'Community Gathering' ||
-        t === 'Curated Gathering' ||
-        t.toLowerCase().startsWith('source url:') ||
-        /^https?:\/\//i.test(t);
-
-      const finalTitle = !isBadTitle(parsed.title)
-        ? parsed.title
-        : (!isBadTitle(scrapedTitle) ? scrapedTitle : deterministicData.title);
-
-      // City validation: prioritize detected city, then parsed, then scraped
-      const finalCity = (parsed.city && parsed.city.toLowerCase() !== 'unknown' ? parsed.city : null) ||
-        scrapedCity ||
-        deterministicData.city ||
-        'Mumbai';
-
-      // Venue validation: NEVER allow "City Venue" or "Mumbai Venue" when scrapedVenue exists
-      const isPlaceholderVenue = (v?: string) =>
-        !v ||
-        /^(?:city|mumbai|pune|delhi|bhopal|bangalore|bengaluru)?\s*venue\b/i.test(v) ||
-        /venue\s+tba/i.test(v) ||
-        /unknown/i.test(v);
-
-      const finalVenue =
-        (!isPlaceholderVenue(scrapedVenue) ? scrapedVenue : undefined) ||
-        (!isPlaceholderVenue(parsed.venue_name) ? parsed.venue_name : undefined) ||
-        (!isPlaceholderVenue(deterministicData.venue_name) ? deterministicData.venue_name : undefined) ||
-        `${finalCity} Venue`;
-
-      const finalAddress =
-        (scrapedAddress && !scrapedAddress.includes('City Venue') ? scrapedAddress : undefined) ||
-        (parsed.location_address && !parsed.location_address.includes('City Venue') ? parsed.location_address : undefined) ||
-        deterministicData.location_address;
-
-      // Date & Time validation: prefer exact scraped start_at when available from platform
-      const finalStartAt = scrapedStartAt || parsed.start_at || deterministicData.start_at;
-      const finalEndAt = scrapedEndAt || parsed.end_at || deterministicData.end_at;
-
-      const surety = calculateEventSurety({
-        title: finalTitle,
-        venue_name: finalVenue,
-        location_address: finalAddress,
-        city: finalCity,
-        start_at: finalStartAt,
-        end_at: finalEndAt,
-        ticket_url: targetUrl || parsed.ticket_url,
-        price_text: scrapedPrice || parsed.price_text,
-        description: parsed.description || scrapedDescription || cleanInputText,
-        cover_image_url: finalCover,
-        is_external: Boolean(targetUrl),
-      });
-
-      return {
-        ...parsed,
-        title: finalTitle,
-        venue_name: finalVenue,
-        location_address: finalAddress,
-        city: finalCity,
-        category,
-        start_at: finalStartAt,
-        end_at: finalEndAt,
-        ticket_url: targetUrl || parsed.ticket_url,
-        price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
-        source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
-        cover_image_url: finalCover,
-        suggested_slug: generateSlug(finalTitle || 'event'),
-        confidence_score: surety.score / 100,
-        missing_aspects: surety.missingAspects,
-        approval_status: surety.approvalStatus,
-        requires_admin_approval: !surety.autoApproved,
-      };
-    } catch (err: any) {
-      console.warn(`[AI Extractor Text] Model ${modelName} warning:`, err?.message || err);
-      lastError = err;
     }
   }
 
@@ -1155,8 +1212,20 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
   const fallbackVenue = scrapedVenue || deterministicData.venue_name;
   const fallbackCity = scrapedCity || deterministicData.city;
   const fallbackAddress = scrapedAddress || deterministicData.location_address;
-  const fallbackStartAt = scrapedStartAt || deterministicData.start_at;
-  const fallbackEndAt = scrapedEndAt || deterministicData.end_at;
+  let fallbackStartAt = scrapedStartAt || deterministicData.start_at;
+  let fallbackEndAt = scrapedEndAt || deterministicData.end_at;
+  if (typeof fallbackStartAt === 'string') {
+    const trimmed = fallbackStartAt.trim();
+    if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)) {
+      fallbackStartAt = trimmed.replace(' ', 'T') + '+05:30';
+    }
+  }
+  if (typeof fallbackEndAt === 'string') {
+    const trimmed = fallbackEndAt.trim();
+    if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)) {
+      fallbackEndAt = trimmed.replace(' ', 'T') + '+05:30';
+    }
+  }
   const fallbackTitle = scrapedTitle || deterministicData.title;
 
   const fallbackSurety = calculateEventSurety({
