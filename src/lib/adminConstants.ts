@@ -2,6 +2,7 @@ export const ADMIN_EMAILS: string[] = [
   'pandeysuyash100@gmail.com',
   'suyashpersonal@gmail.com',
   'suyashpersonal100@gmail.com',
+  'mail.jaiswal@gmail.com',
   ...(process.env.ADMIN_EMAILS
     ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
     : []),

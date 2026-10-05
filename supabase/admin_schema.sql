@@ -19,7 +19,8 @@ WHERE email IN (
   'suyashpersonal@gmail.com',
   'suyashpandey4002@gmail.com',
   'pandeysuyash100@gmail.com',
-  'suyashpersonal100@gmail.com'
+  'suyashpersonal100@gmail.com',
+  'mail.jaiswal@gmail.com'
 );
 
 -- 2. CREATE IMMUTABLE AUDIT LOGS TABLE
