@@ -14,7 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { EventItem } from '@/types';
-import { getFlashVibeEvents, subscribeToStore, syncEventsWithSupabase, SAMPLE_FLASH_VIBES } from '@/lib/store';
+import { getFlashVibeEvents, subscribeToStore, syncEventsWithSupabase, SAMPLE_FLASH_VIBES, isEventExpired } from '@/lib/store';
 import { getUserCity, setUserLocation, reverseGeocodeCoords, findNearestCity } from '@/lib/location';
 import VibeReelCard from '@/components/vibes/VibeReelCard';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
@@ -81,7 +81,7 @@ function VibesReelsContent() {
   // Load initial events from store & auto-detect location strictly
   useEffect(() => {
     const loadEvents = () => {
-      const vibes = getFlashVibeEvents();
+      const vibes = getFlashVibeEvents().filter((e) => !isEventExpired(e));
       setEvents(vibes);
     };
 
@@ -206,6 +206,11 @@ function VibesReelsContent() {
   // Filter events by City & Activity
   const filteredEvents = useMemo(() => {
     const filtered = events.filter((e) => {
+      // Exclude expired events
+      if (isEventExpired(e)) {
+        return false;
+      }
+
       // If targetSlug is specified, always keep the target event regardless of city or activity filter
       if (targetSlug && (e.slug?.toLowerCase() === targetSlug.toLowerCase() || e.id === targetSlug)) {
         return true;

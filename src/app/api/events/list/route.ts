@@ -48,7 +48,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Filter out unapproved events:
+    const includePast = searchParams.get('include_past') === 'true';
+    const now = Date.now();
+
+    // Filter out unapproved and expired events:
     // If an event has approval_status === 'pending' or (confidence_score < 0.9 and not admin approved),
     // it must not be visible on the public site until an admin approves it.
     const publicEvents = (events || []).filter((e) => {
@@ -59,6 +62,19 @@ export async function GET(request: Request) {
       if (score !== undefined && score !== null && score < 0.9 && !isAdminApproved) {
         return false;
       }
+
+      // Exclude expired / past events from public discovery feeds unless explicitly requested
+      if (!includePast) {
+        if (e.status === 'past' || e.status === 'cancelled') return false;
+        if (e.end_at) {
+          const endTime = new Date(e.end_at).getTime();
+          if (!isNaN(endTime) && endTime < now) return false;
+        } else if (e.start_at) {
+          const startTime = new Date(e.start_at).getTime();
+          if (!isNaN(startTime) && (startTime + 4 * 60 * 60 * 1000) < now) return false;
+        }
+      }
+
       return true;
     });
 

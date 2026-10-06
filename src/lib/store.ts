@@ -73,8 +73,8 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
     location_name: 'Subko Specialty Coffee & Craftery',
     location_address: '2-B, Perry Cross Rd, Bandra West, Mumbai, Maharashtra 400050',
     city: 'Mumbai',
-    start_at: '2026-09-19T18:30:00+05:30',
-    end_at: '2026-09-19T21:30:00+05:30',
+    start_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 7 * 60 * 60 * 1000).toISOString(),
     timezone: 'Asia/Kolkata',
     capacity: 45,
     is_public: true,
@@ -144,8 +144,8 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
     location_name: 'Cubbon Park (Queen Victoria Statue)',
     location_address: 'Kasturba Road, Sampangi Rama Nagara, Bengaluru, Karnataka 560001',
     city: 'Bengaluru',
-    start_at: '2026-09-20T06:00:00+05:30',
-    end_at: '2026-09-20T10:30:00+05:30',
+    start_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 10 * 60 * 60 * 1000).toISOString(),
     timezone: 'Asia/Kolkata',
     capacity: 35,
     is_public: true,
@@ -210,8 +210,8 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
     location_name: 'The Haveli Terrace, Hauz Khas Village',
     location_address: 'Hauz Khas Village, New Delhi, Delhi 110016',
     city: 'New Delhi',
-    start_at: '2026-09-26T17:30:00+05:30',
-    end_at: '2026-09-26T21:00:00+05:30',
+    start_at: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000).toISOString(),
     timezone: 'Asia/Kolkata',
     capacity: 50,
     is_public: true,
@@ -272,8 +272,8 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
     location_address: 'VR Bengaluru, Whitefield Main Rd, Bengaluru, Karnataka 560048',
     city: 'Bengaluru',
     online_link: 'https://meet.google.com/xyz-swaniki-demo',
-    start_at: '2026-10-03T10:00:00+05:30',
-    end_at: '2026-10-03T17:00:00+05:30',
+    start_at: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000 + 7 * 60 * 60 * 1000).toISOString(),
     timezone: 'Asia/Kolkata',
     capacity: 80,
     is_public: true,
@@ -336,8 +336,8 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
     location_name: 'The Banyan Haven',
     location_address: 'St. Michael Vaddo, Anjuna, Goa 403509',
     city: 'Goa',
-    start_at: '2026-10-10T16:30:00+05:30',
-    end_at: '2026-10-10T22:00:00+05:30',
+    start_at: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(),
+    end_at: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000 + 8 * 60 * 60 * 1000).toISOString(),
     timezone: 'Asia/Kolkata',
     capacity: 40,
     is_public: true,
@@ -792,6 +792,41 @@ const notifyListeners = () => {
   listeners.forEach(fn => fn());
 };
 
+/**
+ * Strict Expiration Guard:
+ * Determines if an event has already concluded (past / expired).
+ * An event is considered expired if:
+ * 1. Status is explicitly 'past' or 'cancelled'.
+ * 2. end_at timestamp is valid and in the past (< Date.now()).
+ * 3. Or if end_at is missing, start_at + estimated duration (4 hours) is in the past.
+ */
+export const isEventExpired = (e: any): boolean => {
+  if (!e) return true;
+  const status = (e.status || '').toLowerCase();
+  if (status === 'past' || status === 'cancelled') return true;
+
+  const now = Date.now();
+
+  // 1. Explicit end_at timestamp
+  if (e.end_at) {
+    const endTime = new Date(e.end_at).getTime();
+    if (!isNaN(endTime)) {
+      return endTime < now;
+    }
+  }
+
+  // 2. Fallback to start_at + default duration
+  if (e.start_at) {
+    const startTime = new Date(e.start_at).getTime();
+    if (!isNaN(startTime)) {
+      const defaultDurationMs = 4 * 60 * 60 * 1000;
+      return (startTime + defaultDurationMs) < now;
+    }
+  }
+
+  return false;
+};
+
 // Strict Privacy Guard: Verifies if an event is legitimately public and live.
 // Private gatherings (is_public: false, is_private: true, or visibility: 'private')
 // are NEVER public and are strictly restricted to direct secret invite link access.
@@ -799,6 +834,9 @@ export const isPublicLiveEvent = (e: any): boolean => {
   if (!e) return false;
   const status = (e.status || '').toLowerCase();
   if (status !== 'live' && status !== 'published') return false;
+
+  // Strict Expiration Guard: concluded events must never appear in live feeds
+  if (isEventExpired(e)) return false;
 
   // Explicit privacy signals
   if (e.is_public === false || String(e.is_public) === 'false') return false;
@@ -908,7 +946,7 @@ export const getFlashVibeEvents = (): EventItem[] => {
   
   const combined = [...flashFromStore];
   for (const sample of SAMPLE_FLASH_VIBES) {
-    if (!existingIds.has(sample.id) && !existingSlugs.has(sample.slug)) {
+    if (!existingIds.has(sample.id) && !existingSlugs.has(sample.slug) && !isEventExpired(sample)) {
       combined.push(sample);
     }
   }

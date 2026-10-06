@@ -36,7 +36,8 @@ import {
   syncDatePollsWithSupabase,
   subscribeToStore,
   SAMPLE_TEMPLATE_EVENTS,
-  formatIST
+  formatIST,
+  isEventExpired
 } from '@/lib/store';
 import { EventItem, DatePoll } from '@/types';
 
@@ -291,10 +292,10 @@ export default function WhatsOnFeed() {
     }
   };
 
-  // 3 to 4 prominent events for the BookMyShow-style flashcard slider (strictly public events only)
+  // 3 to 4 prominent events for the BookMyShow-style flashcard slider (strictly upcoming public events only)
   const prominentEvents = useMemo(() => {
-    const valid = eventsWithDistance.filter(isPublicLiveEvent).filter((e) => !isFlashVibeEvent(e));
-    const pool = valid.length > 0 ? valid : SAMPLE_TEMPLATE_EVENTS.filter(isPublicLiveEvent);
+    const valid = eventsWithDistance.filter(isPublicLiveEvent).filter((e) => !isFlashVibeEvent(e) && !isEventExpired(e));
+    const pool = valid.length > 0 ? valid : SAMPLE_TEMPLATE_EVENTS.filter((e) => isPublicLiveEvent(e) && !isEventExpired(e));
     return pool.slice(0, 4);
   }, [eventsWithDistance]);
 
