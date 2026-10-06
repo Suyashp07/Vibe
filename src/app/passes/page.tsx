@@ -17,7 +17,9 @@ import {
   X,
   Mail,
   RefreshCw,
-  Plus
+  Plus,
+  Scan,
+  ShieldCheck
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -31,6 +33,7 @@ import {
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
 import { useAuth, getInitials, isSyntheticAvatar } from '@/lib/auth';
+import { getSecondsRemainingInSlice } from '@/lib/ticketSecurity';
 
 function PassesInner() {
   const router = useRouter();
@@ -52,6 +55,15 @@ function PassesInner() {
 
   // Selected Pass for Digital Pass Modal with QR
   const [selectedPass, setSelectedPass] = useState<{ rsvp: RSVPItem; event: EventItem } | null>(null);
+
+  // 30-Second Dynamic Hash countdown
+  const [secondsRemaining, setSecondsRemaining] = useState(() => getSecondsRemainingInSlice());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsRemaining(getSecondsRemainingInSlice());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Guest email switcher
   const [guestEmail, setGuestEmail] = useState('');
@@ -246,6 +258,14 @@ function PassesInner() {
 
             {/* Top Quick Actions */}
             <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+              <Link
+                href="/organizer/check-in"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-950 transition-all shadow-xs"
+              >
+                <Scan className="w-4 h-4 text-emerald-600" />
+                <span>Gate Scanner</span>
+              </Link>
+
               <Link
                 href="/discover"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-bold text-[#0F172A] transition-all hover:border-[#0F172A]"
@@ -526,6 +546,17 @@ function PassesInner() {
 
                       {/* Card Action Buttons */}
                       <div className="space-y-2 pt-2">
+                        {/* Dynamic 30-Second Security Indicator */}
+                        {isConfirmed && (
+                          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[10px] font-mono text-emerald-800">
+                            <span className="flex items-center gap-1.5 font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
+                              <span>Dynamic Pass</span>
+                            </span>
+                            <span className="text-emerald-700">Refreshes in {secondsRemaining}s</span>
+                          </div>
+                        )}
+
                         <button
                           onClick={() => setSelectedPass({ rsvp, event })}
                           className="w-full py-2.5 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-black flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
