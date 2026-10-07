@@ -158,7 +158,9 @@ export interface RSVPItem {
   plus_one_name?: string;
   dietary?: string;
   tshirt_size?: string;
-  custom_responses?: Record<string, string | boolean>;
+  custom_responses?: Record<string, any>;
+  pass_serial?: string;
+  enrollment_number?: number;
   created_at: string;
 }
 

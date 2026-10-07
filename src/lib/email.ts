@@ -1,5 +1,6 @@
 import { EventItem } from '@/types';
 import { formatIST, generateGoogleCalendarUrl } from '@/lib/store';
+import { getPassSerialNumber } from '@/lib/ticketSecurity';
 import nodemailer from 'nodemailer';
 
 export interface EmailSendResult {
@@ -318,15 +319,9 @@ export async function sendRsvpConfirmedEmail({
   const formattedTime = formatIST(event.start_at);
   const brandColor = organizer?.brand_color || event.organizer_brand_color || '#E8621A';
 
-  // Compute deterministic serial matching DigitalPassModal.tsx
+  // Compute structured sequential serial matching DigitalPassModal.tsx
   const rsvpId = rsvp?.id || `r-${Date.now()}`;
-  const cityCode = (event.city || 'IND').slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'DEL');
-  const cleanId = String(rsvpId).replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || 'PASS';
-  const hash = Math.abs(
-    (rsvpId + (to || '') + event.slug).split('').reduce((acc, char) => ((acc << 5) - acc) + char.charCodeAt(0) | 0, 0)
-  ).toString(36).toUpperCase().padStart(4, '0').slice(-4);
-
-  const ticketSerial = `VB-${cityCode}-${cleanId}-${hash}`;
+  const ticketSerial = getPassSerialNumber(rsvp, event);
   const digitalPassUrl = `${baseUrl}/${event.slug}?ticket=${encodeURIComponent(ticketSerial)}&guest=${encodeURIComponent(rsvpId)}`;
   
   // High-reliability QR Code image URL (works natively across Gmail, Outlook, Apple Mail)

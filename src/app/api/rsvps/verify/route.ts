@@ -88,16 +88,16 @@ export async function POST(req: Request) {
     // 1. Fetch the RSVP record
     let rsvpQuery = supabase
       .from('rsvps')
-      .select('*, events:event_id(id, title, start_at, location_name, city, organizer_id)')
-      .or(`id.eq.${rsvpId},phone.eq.${rsvpId},email.ilike.${rsvpId}`);
+      .select('*, events:event_id(id, title, start_at, location_name, city, organizer_id)');
 
-    // If it looks like a standard UUID
+    // Check UUID, Pass Serial (VB-...), Phone, Email, or raw ID
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rsvpId);
     if (isUuid) {
-      rsvpQuery = supabase
-        .from('rsvps')
-        .select('*, events:event_id(id, title, start_at, location_name, city, organizer_id)')
-        .eq('id', rsvpId);
+      rsvpQuery = rsvpQuery.eq('id', rsvpId);
+    } else if (rsvpId.startsWith('VB-')) {
+      rsvpQuery = rsvpQuery.eq('custom_responses->>pass_serial', rsvpId);
+    } else {
+      rsvpQuery = rsvpQuery.or(`id.eq.${rsvpId},phone.eq.${rsvpId},email.ilike.${rsvpId},custom_responses->>pass_serial.eq.${rsvpId}`);
     }
 
     const { data: rows, error: fetchErr } = await rsvpQuery.limit(1);
@@ -171,8 +171,33 @@ export async function POST(req: Request) {
       });
     }
 
-    // 4. Check if already attended
+    // 4. Handle unattend action
     const customResp = rsvp.custom_responses || {};
+    if (action === 'unattend') {
+      const updatedResponses = {
+        ...customResp,
+        attended: false,
+        attended_at: null,
+      };
+      await supabase.from('rsvps').update({ custom_responses: updatedResponses }).eq('id', rsvp.id);
+      return NextResponse.json({
+        valid: true,
+        already_attended: false,
+        status: 'unattended',
+        message: 'Guest entry reverted. Ticket marked as not entered.',
+        rsvp: {
+          id: rsvp.id,
+          name: rsvp.name,
+          email: rsvp.email,
+          phone: rsvp.phone,
+          status: rsvp.status,
+          attended: false,
+          attended_at: null,
+          event_title: resolvedEvent?.title,
+        },
+      });
+    }
+
     const alreadyAttended = customResp.attended === true || rsvp.status === 'attended';
     const attendedAt = customResp.attended_at;
 

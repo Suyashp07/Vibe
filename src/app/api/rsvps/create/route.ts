@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { generatePassSerial } from '@/lib/ticketSecurity';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     if (event_slug || (event_id && (event_id.startsWith('evt-') || event_id.length !== 36))) {
       const query = supabase
         .from('events')
-        .select('id, slug, status, source_type, source_platform, external_ticket_url')
+        .select('id, slug, status, source_type, source_platform, external_ticket_url, city, event_type')
         .limit(1);
       if (event_slug) {
         query.eq('slug', event_slug);
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
     } else if (targetEventId && targetEventId.length === 36) {
       const { data: matched } = await supabase
         .from('events')
-        .select('id, slug, status, source_type, source_platform, external_ticket_url')
+        .select('id, slug, status, source_type, source_platform, external_ticket_url, city, event_type')
         .eq('id', targetEventId)
         .maybeSingle();
       if (matched) {
@@ -84,36 +85,56 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Insert into public.rsvps
+    // 2. Resolve event_id
+    let resolvedEventId = targetEventId && targetEventId.length === 36 ? targetEventId : null;
+    if (!resolvedEventId && event_slug) {
+      const { data: evBySlug } = await supabase.from('events').select('id').eq('slug', event_slug).maybeSingle();
+      if (evBySlug) {
+        resolvedEventId = evBySlug.id;
+      }
+    }
+    if (!resolvedEventId) {
+      const { data: firstEv } = await supabase.from('events').select('id').limit(1).maybeSingle();
+      if (firstEv) {
+        resolvedEventId = firstEv.id;
+      }
+    }
+
+    // 3. Assign structured sequential pass serial number
+    let passSerial = body.pass_serial || custom_responses?.pass_serial;
+    let enrollmentNumber = custom_responses?.enrollment_number;
+
+    if (!passSerial && resolvedEventId) {
+      // Count existing RSVPs in Supabase for this event to get the next sequential number
+      const { count } = await supabase
+        .from('rsvps')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_id', resolvedEventId);
+
+      enrollmentNumber = (count || 0) + 1;
+      passSerial = generatePassSerial({
+        city: targetEvent?.city,
+        sequenceNumber: enrollmentNumber,
+        status: status || 'confirmed',
+        isOnline: targetEvent?.event_type === 'online',
+      });
+    }
+
+    const mergedCustomResponses = {
+      ...(custom_responses || {}),
+      pass_serial: passSerial,
+      enrollment_number: enrollmentNumber || 1,
+    };
+
     const insertPayload: any = {
+      event_id: resolvedEventId,
       name: name.trim(),
       email: email.trim(),
       phone: phone || '',
       status: status || 'confirmed',
       plus_one_name: plus_one_name ? plus_one_name.trim() : null,
-      custom_responses: custom_responses || {}
+      custom_responses: mergedCustomResponses,
     };
-
-    // If valid UUID format, attach event_id
-    if (targetEventId && targetEventId.length === 36) {
-      insertPayload.event_id = targetEventId;
-    } else {
-      // Fallback lookup: find any event by slug if available
-      if (event_slug) {
-        const { data: evBySlug } = await supabase.from('events').select('id').eq('slug', event_slug).maybeSingle();
-        if (evBySlug) {
-          insertPayload.event_id = evBySlug.id;
-        }
-      }
-    }
-
-    if (!insertPayload.event_id) {
-      console.warn('Could not resolve UUID event_id for RSVP, finding first matching event');
-      const { data: firstEv } = await supabase.from('events').select('id').limit(1).maybeSingle();
-      if (firstEv) {
-        insertPayload.event_id = firstEv.id;
-      }
-    }
 
     const { data: insertedRsvp, error: insertError } = await supabase
       .from('rsvps')

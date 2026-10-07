@@ -28,7 +28,8 @@ import {
   Disc3,
   Compass,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  QrCode
 } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST, getRSVPsByEvent, subscribeToStore, syncRSVPsWithSupabase } from '@/lib/store';
@@ -266,13 +267,22 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
             </div>
 
             <div className="flex items-center gap-2">
+              <Link
+                href={`/organizer/check-in?eventId=${event.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold border border-emerald-400/40 transition-all cursor-pointer shadow-xs"
+                title="Launch Gate Scanner & Live Admission Sheet"
+              >
+                <QrCode className="w-3.5 h-3.5 text-white" />
+                <span>Gate Scanner</span>
+              </Link>
+
               <button
                 type="button"
                 onClick={() => setShowGuestListModal(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white font-semibold border border-white/20 transition-all cursor-pointer"
               >
                 <Users className="w-3.5 h-3.5 text-gold" />
-                <span>View RSVPs & Guests</span>
+                <span>Guests</span>
               </button>
 
               <Link
@@ -733,14 +743,25 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
                     )}
 
                     <div className="space-y-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowGuestListModal(true)}
-                        className={`w-full inline-flex items-center justify-center gap-2 py-3 px-4 ${templateConfig.buttonPrimary}`}
-                      >
-                        <Users className="w-4 h-4" />
-                        <span>View Attendee Roster ({confirmedCount})</span>
-                      </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowGuestListModal(true)}
+                          className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${templateConfig.innerCardClass}`}
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span>Guest List ({confirmedCount})</span>
+                        </button>
+
+                        <Link
+                          href={`/organizer/check-in?eventId=${event.id}`}
+                          className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          title="Open Gate Scanner & Admission Sheet"
+                        >
+                          <QrCode className="w-3.5 h-3.5 text-white" />
+                          <span>Gate Scanner</span>
+                        </Link>
+                      </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <Link

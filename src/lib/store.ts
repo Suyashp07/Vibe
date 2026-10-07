@@ -1,4 +1,5 @@
 import { EventItem, Profile, RSVPItem, CommentItem, DatePoll, TemplateType, FollowerItem, EventAnnouncement, EventDirectMessage } from '@/types';
+import { generatePassSerial, getPassSerialNumber, getCityCode } from '@/lib/ticketSecurity';
 
 export const INITIAL_ORGANIZERS: Profile[] = [
   {
@@ -1283,13 +1284,45 @@ export const hasUserRSVP = (eventIdOrSlug: string): RSVPItem | null => {
 };
 
 export const addRSVP = (rsvp: Omit<RSVPItem, 'id' | 'created_at'>): RSVPItem => {
+  const all = isClient ? getRSVPs() : [];
+
+  // Determine sequence number by counting existing guests for this specific event
+  const existingForEvent = all.filter(
+    (r) => r.event_id === rsvp.event_id || (rsvp.event_slug && r.event_slug === rsvp.event_slug)
+  );
+  const nextSeq = existingForEvent.length + 1;
+
+  // Resolve matching event to get city and online/in-person status
+  const allEvents = isClient ? getEvents() : [];
+  const matchedEvent = allEvents.find(
+    (e) => e.id === rsvp.event_id || (rsvp.event_slug && e.slug === rsvp.event_slug)
+  );
+
+  const passSerial =
+    rsvp.pass_serial ||
+    rsvp.custom_responses?.pass_serial ||
+    generatePassSerial({
+      city: matchedEvent?.city,
+      sequenceNumber: nextSeq,
+      status: rsvp.status,
+      isOnline: matchedEvent?.event_type === 'online',
+    });
+
+  const updatedCustomResponses = {
+    ...(rsvp.custom_responses || {}),
+    pass_serial: passSerial,
+    enrollment_number: nextSeq,
+  };
+
   const newRsvp: RSVPItem = {
     ...rsvp,
     id: `r-${Date.now()}`,
+    pass_serial: passSerial,
+    enrollment_number: nextSeq,
+    custom_responses: updatedCustomResponses,
     created_at: new Date().toISOString()
   };
   if (isClient) {
-    const all = getRSVPs();
     all.unshift(newRsvp);
     localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(all));
     notifyListeners();
@@ -1300,13 +1333,23 @@ export const addRSVP = (rsvp: Omit<RSVPItem, 'id' | 'created_at'>): RSVPItem => 
     fetch('/api/rsvps/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(rsvp)
+      body: JSON.stringify({
+        ...rsvp,
+        pass_serial: passSerial,
+        custom_responses: updatedCustomResponses
+      })
     })
       .then(res => res.json())
       .then(data => {
         if (data?.rsvp?.id) {
           const current = getRSVPs();
-          const mapped = current.map(r => r.id === newRsvp.id ? { ...r, id: data.rsvp.id, event_id: data.rsvp.event_id } : r);
+          const mapped = current.map(r => r.id === newRsvp.id ? {
+            ...r,
+            id: data.rsvp.id,
+            event_id: data.rsvp.event_id,
+            pass_serial: data.rsvp.custom_responses?.pass_serial || passSerial,
+            custom_responses: data.rsvp.custom_responses || updatedCustomResponses
+          } : r);
           localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(mapped));
           notifyListeners();
         }
@@ -1337,6 +1380,8 @@ export const syncRSVPsWithSupabase = async (): Promise<RSVPItem[]> => {
       dietary: row.custom_responses?.dietary,
       tshirt_size: row.custom_responses?.tshirt,
       custom_responses: row.custom_responses || {},
+      pass_serial: row.custom_responses?.pass_serial,
+      enrollment_number: row.custom_responses?.enrollment_number,
       created_at: row.created_at || new Date().toISOString()
     }));
 
@@ -1445,6 +1490,44 @@ export const approveAllWaitlist = async (eventId?: string) => {
 
 export const cancelRSVP = (rsvpId: string) => {
   updateRSVPStatus(rsvpId, 'cancelled');
+};
+
+/**
+ * Mark or unmark a guest as attended at the event gate
+ */
+export const markRSVPAttended = (rsvpId: string, attended = true, attendedAt = new Date().toISOString()) => {
+  if (isClient) {
+    const all = getRSVPs();
+    const updated = all.map(r => {
+      if (r.id === rsvpId) {
+        return {
+          ...r,
+          status: 'confirmed' as const,
+          custom_responses: {
+            ...(r.custom_responses || {}),
+            attended,
+            attended_at: attended ? attendedAt : null,
+            checked_in_via: 'organizer_scanner_pwa',
+          }
+        };
+      }
+      return r;
+    });
+    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(updated));
+    notifyListeners();
+  }
+
+  // Sync to database
+  if (typeof window !== 'undefined') {
+    fetch('/api/rsvps/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rsvpId,
+        action: attended ? 'force' : 'unattend',
+      })
+    }).catch(console.warn);
+  }
 };
 
 export const getComments = (eventId: string): CommentItem[] => {
@@ -2183,3 +2266,5 @@ export const markEventMessageRead = (messageId: string): boolean => {
   } catch {}
   return false;
 };
+
+export { getPassSerialNumber, generatePassSerial, getCityCode } from '@/lib/ticketSecurity';

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   X, 
   Search, 
@@ -16,7 +17,8 @@ import {
   Sparkles,
   Check,
   CheckCheck,
-  Megaphone
+  Megaphone,
+  QrCode
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
 import HostBroadcastModal from '@/components/communication/HostBroadcastModal';
@@ -27,7 +29,8 @@ import {
   formatIST, 
   approveWaitlistGuest, 
   rejectWaitlistGuest, 
-  approveAllWaitlist 
+  approveAllWaitlist,
+  getPassSerialNumber 
 } from '@/lib/store';
 
 interface EventGuestListModalProps {
@@ -68,10 +71,12 @@ export default function EventGuestListModal({
   if (!isOpen) return null;
 
   const filtered = rsvps.filter((r) => {
+    const passSerial = getPassSerialNumber(r, event, rsvps);
     const matchesSearch =
       r.name.toLowerCase().includes(search.toLowerCase()) ||
       r.email.toLowerCase().includes(search.toLowerCase()) ||
-      (r.phone && r.phone.includes(search));
+      (r.phone && r.phone.includes(search)) ||
+      passSerial.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -127,8 +132,9 @@ export default function EventGuestListModal({
   const exportCSV = () => {
     if (filtered.length === 0) return;
 
-    const headers = ['Name', 'Email', 'Phone', 'Status', 'Plus One', 'Dietary', 'Registered At'];
+    const headers = ['Pass Serial', 'Name', 'Email', 'Phone', 'Status', 'Plus One', 'Dietary', 'Registered At'];
     const rows = filtered.map((r) => [
+      `"${getPassSerialNumber(r, event, rsvps)}"`,
       `"${r.name.replace(/"/g, '""')}"`,
       `"${r.email.replace(/"/g, '""')}"`,
       `"${r.phone || ''}"`,
@@ -220,7 +226,17 @@ export default function EventGuestListModal({
             />
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Launch Gate Scanner */}
+            <Link
+              href={`/organizer/check-in?eventId=${event.id}`}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-sm"
+              title="Open Gate Scanner & Admission Sheet"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Gate Scanner</span>
+            </Link>
+
             {/* Broadcast Announcement to Attendees */}
             <button
               onClick={() => setIsBroadcastOpen(true)}
@@ -334,9 +350,12 @@ export default function EventGuestListModal({
                     </div>
 
                     <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-ink truncate">
                           {rsvp.name}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-surface-2 border border-border text-ink-muted">
+                          {getPassSerialNumber(rsvp, event, rsvps)}
                         </span>
                         {isCancelled ? (
                           <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-red-100 text-red-700">
@@ -347,9 +366,20 @@ export default function EventGuestListModal({
                             <Clock className="w-2.5 h-2.5 text-amber-700" /> Waitlist
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> Confirmed Pass
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> Confirmed
+                            </span>
+                            {rsvp.custom_responses?.attended === true ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                <Check className="w-2.5 h-2.5 stroke-[3]" /> Admitted
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-ink-muted px-2 py-0.2 rounded-full bg-surface-2 border border-border">
+                                <Clock className="w-2.5 h-2.5" /> Not Entered
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
 

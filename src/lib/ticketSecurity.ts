@@ -121,3 +121,171 @@ export function verifyTicketHash(
 
   return { valid: false, timeDiff: 'invalid' };
 }
+
+/**
+ * Standard Indian and global city 3-letter codes for official event passes
+ */
+const CITY_CODE_MAP: Record<string, string> = {
+  bhopal: 'BHO',
+  mumbai: 'MUM',
+  bombay: 'BOM',
+  delhi: 'DEL',
+  'new delhi': 'DEL',
+  bengaluru: 'BLR',
+  bangalore: 'BLR',
+  pune: 'PUN',
+  hyderabad: 'HYD',
+  jaipur: 'JAI',
+  kolkata: 'CCU',
+  calcutta: 'CCU',
+  chennai: 'MAA',
+  madras: 'MAA',
+  ahmedabad: 'AMD',
+  goa: 'GOA',
+  indore: 'IDR',
+  lucknow: 'LKO',
+  chandigarh: 'IXC',
+  gurgaon: 'GGN',
+  gurugram: 'GGN',
+  noida: 'NOI',
+  kochi: 'COK',
+  cochin: 'COK',
+  varanasi: 'VNS',
+  banaras: 'VNS',
+  agra: 'AGR',
+  surat: 'STV',
+  kanpur: 'KNP',
+  patna: 'PAT',
+  vadodara: 'BDQ',
+  baroda: 'BDQ',
+  nagpur: 'NAG',
+  london: 'LDN',
+  'new york': 'NYC',
+  singapore: 'SIN',
+  dubai: 'DXB',
+  sanfrancisco: 'SFO',
+  berlin: 'BER',
+  paris: 'PAR',
+  tokyo: 'TYO',
+};
+
+/**
+ * Extract canonical 3-letter city code for pass serial numbers
+ */
+export function getCityCode(cityName?: string): string {
+  if (!cityName) return 'IND';
+  const clean = cityName.trim().toLowerCase();
+  if (CITY_CODE_MAP[clean]) return CITY_CODE_MAP[clean];
+
+  for (const [key, code] of Object.entries(CITY_CODE_MAP)) {
+    if (clean.includes(key)) return code;
+  }
+
+  const alpha = cityName.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  return alpha.slice(0, 3) || 'IND';
+}
+
+/**
+ * Generate structured, sequential pass serial number
+ * Format:
+ * - Confirmed: VB-BHO-0001
+ * - Waitlist:  VB-BHO-WL-0001
+ * - Void:      VB-BHO-VOID-0001
+ */
+export function generatePassSerial(options: {
+  city?: string;
+  sequenceNumber: number;
+  status?: string;
+  isOnline?: boolean;
+}): string {
+  const { city, sequenceNumber, status, isOnline } = options;
+  const cityCode = isOnline ? 'WEB' : getCityCode(city);
+  const seqStr = String(Math.max(1, sequenceNumber)).padStart(4, '0');
+
+  if (status === 'waitlisted') {
+    return `VB-${cityCode}-WL-${seqStr}`;
+  }
+  if (status === 'cancelled') {
+    return `VB-${cityCode}-VOID-${seqStr}`;
+  }
+  return `VB-${cityCode}-${seqStr}`;
+}
+
+/**
+ * Deterministically resolve an RSVP's pass serial number:
+ * 1. Checks rsvp.custom_responses.pass_serial
+ * 2. Checks rsvp.pass_serial
+ * 3. Uses chronological index in allEventRSVPs
+ * 4. Fallback to stable deterministic seed from RSVP identifier
+ */
+export function getPassSerialNumber(
+  rsvp?: {
+    id?: string;
+    status?: string;
+    custom_responses?: Record<string, any>;
+    created_at?: string;
+    [key: string]: any;
+  } | null,
+  event?: {
+    city?: string;
+    event_type?: string;
+    [key: string]: any;
+  } | null,
+  allEventRSVPs?: Array<{
+    id?: string;
+    created_at?: string;
+    [key: string]: any;
+  }> | null
+): string {
+  if (!rsvp) return 'VB-IND-0001';
+
+  // 1. Existing stored pass serial
+  if (rsvp.custom_responses?.pass_serial) {
+    return rsvp.custom_responses.pass_serial;
+  }
+  if ((rsvp as any).pass_serial) {
+    return (rsvp as any).pass_serial;
+  }
+
+  // 2. Sequential enrollment position
+  let seqNumber = 1;
+  if (
+    rsvp.custom_responses?.enrollment_number &&
+    typeof rsvp.custom_responses.enrollment_number === 'number'
+  ) {
+    seqNumber = rsvp.custom_responses.enrollment_number;
+  } else if (allEventRSVPs && allEventRSVPs.length > 0 && rsvp.id) {
+    // Sort all RSVPs chronologically by created_at
+    const sorted = [...allEventRSVPs].sort((a, b) => {
+      const tA = new Date(a.created_at || 0).getTime();
+      const tB = new Date(b.created_at || 0).getTime();
+      if (tA !== tB) return tA - tB;
+      return (a.id || '').localeCompare(b.id || '');
+    });
+    const foundIndex = sorted.findIndex((r) => r.id === rsvp.id);
+    if (foundIndex >= 0) {
+      seqNumber = foundIndex + 1;
+    }
+  } else if (rsvp.id) {
+    // Deterministic fallback derived from timestamp/id so it never changes for this pass
+    const numericPart = rsvp.id.replace(/\D/g, '');
+    if (numericPart.length >= 4) {
+      seqNumber = (parseInt(numericPart.slice(-4), 10) % 5000) + 1;
+    } else {
+      let hash = 0;
+      for (let i = 0; i < rsvp.id.length; i++) {
+        hash = (hash * 31 + rsvp.id.charCodeAt(i)) & 0xffff;
+      }
+      seqNumber = (Math.abs(hash) % 999) + 1;
+    }
+  }
+
+  const isOnline = event?.event_type === 'online';
+  return generatePassSerial({
+    city: event?.city,
+    sequenceNumber: seqNumber,
+    status: rsvp.status,
+    isOnline,
+  });
+}
+

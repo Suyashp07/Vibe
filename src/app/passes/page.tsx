@@ -33,7 +33,7 @@ import {
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
 import { useAuth, getInitials, isSyntheticAvatar } from '@/lib/auth';
-import { getSecondsRemainingInSlice } from '@/lib/ticketSecurity';
+import { getSecondsRemainingInSlice, getPassSerialNumber } from '@/lib/ticketSecurity';
 
 function PassesInner() {
   const router = useRouter();
@@ -452,6 +452,7 @@ function PassesInner() {
                 const isWaitlisted = rsvp.status === 'waitlisted';
                 const isCancelled = rsvp.status === 'cancelled';
                 const dateBadge = formatBookMyShowDate(event.start_at);
+                const passSerial = getPassSerialNumber(rsvp, event, rsvps);
 
                 return (
                   <div
@@ -500,8 +501,8 @@ function PassesInner() {
 
                       {/* Pass Serial Top Right */}
                       <div className="absolute top-3 right-3 z-10">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/60 text-white/90 backdrop-blur-md">
-                          #{rsvp.id.slice(-6).toUpperCase()}
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/70 text-white/95 backdrop-blur-md border border-white/10 tracking-wider">
+                          {passSerial}
                         </span>
                       </div>
 

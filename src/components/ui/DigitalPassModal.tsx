@@ -31,7 +31,7 @@ import {
 import { EventItem, RSVPItem } from '@/types';
 import { formatIST, generateGoogleCalendarUrl, downloadICS, getOrganizers, getEventRSVPs, cancelRSVP } from '@/lib/store';
 import { getLocalAuthSession, isSyntheticAvatar } from '@/lib/auth';
-import { generateDynamicQRPayload, getCurrentTimeSlice, getSecondsRemainingInSlice } from '@/lib/ticketSecurity';
+import { generateDynamicQRPayload, getCurrentTimeSlice, getSecondsRemainingInSlice, getPassSerialNumber } from '@/lib/ticketSecurity';
 
 interface DigitalPassModalProps {
   rsvp: RSVPItem;
@@ -161,18 +161,14 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
     return generateDynamicQRPayload(currentRsvp.id, event.id, Date.now());
   }, [currentRsvp.id, event.id, timeSlice]);
 
-  // Formulate unique, verifiable encoded ticket serial & dynamic checksum
+  // Formulate stable, structured ticket serial & dynamic TOTP verification checksum
   const { ticketSerial, passHash, verificationUrl } = useMemo(() => {
-    const cityCode = (event.city || 'IND').replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'VB';
-    const cleanId = (currentRsvp.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '01';
-
-    const prefix = isWaitlisted ? 'WAIT' : isCancelled ? 'VOID' : cityCode;
-    const serial = `VB-${prefix}-${cleanId}-${dynamicSecurity.hash}`;
+    const serial = getPassSerialNumber(currentRsvp, event);
     const tokenHash = `TOTP:${dynamicSecurity.hash}`;
     const url = dynamicSecurity.qrPayloadUrl;
 
     return { ticketSerial: serial, passHash: tokenHash, verificationUrl: url };
-  }, [currentRsvp, event, isWaitlisted, isCancelled, dynamicSecurity]);
+  }, [currentRsvp, event, dynamicSecurity]);
 
   // 3. Generate REAL dynamic scannable QR Code Data URL ONLY FOR CONFIRMED GUESTS
   useEffect(() => {

@@ -24,7 +24,8 @@ import {
   TrendingUp,
   RefreshCw,
   Megaphone,
-  MessageSquare
+  MessageSquare,
+  QrCode
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -555,21 +556,32 @@ function DashboardInner() {
 
                       {/* Host Actions */}
                       <div className="space-y-2 pt-3 border-t border-slate-100">
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-1.5">
                           <button
                             onClick={() => setGuestListEvent(event)}
-                            className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                            className="py-2 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs truncate"
+                            title="Manage Guests"
                           >
-                            <Users className="w-3.5 h-3.5" />
-                            <span>Guest List</span>
+                            <Users className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Guests</span>
                           </button>
+
+                          <Link
+                            href={`/organizer/check-in?eventId=${event.id}`}
+                            className="py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs truncate"
+                            title="Gate Scanner & Live Admission Sheet"
+                          >
+                            <QrCode className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Scanner</span>
+                          </Link>
 
                           <button
                             onClick={() => setBroadcastEvent(event)}
-                            className="py-2 px-3 rounded-xl border border-slate-200/90 hover:border-slate-400 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer bg-white"
+                            className="py-2 px-2 rounded-xl border border-slate-200/90 hover:border-slate-400 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer bg-white truncate"
+                            title="Broadcast Announcement"
                           >
-                            <Megaphone className="w-3.5 h-3.5 text-[#E8621A]" />
-                            <span>Broadcast</span>
+                            <Megaphone className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
+                            <span className="truncate">Broadcast</span>
                           </button>
                         </div>
 
