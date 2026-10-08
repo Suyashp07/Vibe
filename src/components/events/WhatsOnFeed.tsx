@@ -458,41 +458,7 @@ export default function WhatsOnFeed() {
   return (
     <div className="w-full space-y-8 sm:space-y-12">
       {/* ========================================================================= */}
-      {/* 1. TOP HERO: "A little less scrolling. A lot more living."                */}
-      {/* ========================================================================= */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-2">
-        <div className="space-y-2">
-          {/* Tagline pill */}
-          <div className="flex items-center gap-2 text-[11px] font-black tracking-widest text-[#FF5500] uppercase">
-            <span className="w-2 h-2 rounded-full bg-[#FF5500] animate-pulse" />
-            <span>GO OUT. FIND YOUR PEOPLE.</span>
-          </div>
-
-          {/* Master Headline */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08]">
-            A little less scrolling.<br />
-            A lot more <span className="text-[#FF5500] drop-shadow-[0_0_24px_rgba(255,85,0,0.6)]">living.</span>
-          </h1>
-
-          <p className="text-white/60 text-xs sm:text-sm font-medium">
-            Discover experiences worth showing up for.
-          </p>
-        </div>
-
-        {/* Sunburst Asterisk & Tagline (Matching reference image top-right) */}
-        <div className="hidden md:flex items-center gap-3.5 self-end pb-1 text-right">
-          <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#FF5500] shadow-[0_0_15px_rgba(255,85,0,0.2)]">
-            <Sparkles className="w-5 h-5 fill-[#FF5500]/20" />
-          </div>
-          <div className="text-xs text-white/70 leading-snug">
-            <p className="font-bold text-white/90">Your city. Your people.</p>
-            <p className="text-white/50">Your kind of vibe.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 2. SPOTLIGHT HERO BILLBOARD CAROUSEL (Matching reference image)            */}
+      {/* SPOTLIGHT HERO BILLBOARD CAROUSEL (Matching reference image)              */}
       {/* ========================================================================= */}
       {currentFlashEvent && (
         <div
