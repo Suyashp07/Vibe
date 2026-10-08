@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Process incoming message through adapter
     const incomingHostMsg = await whatsappAdapter.processIncomingMessage(payload);
-    if (!incomingHostMsg && !payload.imageBase64) {
+    if (!incomingHostMsg && !payload.imageBase64 && !payload.imageUrl) {
       return NextResponse.json({ ok: true, status: 'ignored_empty' });
     }
 
@@ -161,31 +161,17 @@ export async function POST(req: NextRequest) {
     // -------------------------------------------------------------
     const lowerText = textContent.toLowerCase();
 
-    // Detect Flash Vibe intent:
-    // Triggered if text starts with /vibe, /flash, vibe:, flash:, contains spontaneous meetup/sports keywords,
-    // or is an informal text message without external ticketing links or flyer poster
-    const hasExternalLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
-    const isFlashVibe =
-      lowerText.startsWith('/vibe') ||
-      lowerText.startsWith('/flash') ||
-      lowerText.startsWith('vibe:') ||
-      lowerText.startsWith('flash:') ||
-      lowerText.startsWith('⚡') ||
-      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging)\b/i.test(textContent) ||
-      (!payload.imageBase64 && !hasExternalLink && textContent.length < 350);
-
-    let flashActivity: string = 'other';
-    if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
-    else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
-    else if (/\b(pickleball|paddle)\b/i.test(textContent)) flashActivity = 'pickleball';
-    else if (/\b(football|futsal|soccer)\b/i.test(textContent)) flashActivity = 'football';
-    else if (/\b(chai|coffee|cafe|tea)\b/i.test(textContent)) flashActivity = 'coffee';
-    else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
-    else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
-    else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
-
     // Handle greeting or help command
-    if (lowerText === '/start' || lowerText === '/help' || lowerText === 'help' || lowerText === 'hi') {
+    const isGreeting =
+      lowerText === '/start' ||
+      lowerText === '/help' ||
+      lowerText === 'help' ||
+      lowerText === 'hi' ||
+      lowerText === 'hello' ||
+      lowerText === 'hey' ||
+      lowerText === 'start';
+
+    if (isGreeting) {
       const welcome = 
         `👋 *Welcome to Vibe Event Creator!*\n\n` +
         `You can create and publish events directly from WhatsApp:\n\n` +
@@ -204,16 +190,67 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Check if there is enough content to create an event
-    const hasImage = Boolean(payload.imageBase64);
-    const hasText = textContent.length > 5;
+    // Check flyer image presence
+    const hasImage = Boolean(payload.imageBase64 || payload.imageUrl);
 
-    if (!hasImage && !hasText) {
-      return NextResponse.json({ ok: true, status: 'ignored_insufficient_content' });
+    // Check ticketing URLs
+    const hasTicketingLink = Boolean(
+      textContent.match(/\b(lu\.ma|bookmyshow\.com|district\.in|insider\.in|unstop\.com|eventbrite\.com|meetup\.com|allevents\.in)\b/i)
+    );
+    const hasAnyLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
+
+    // Explicit command prefix
+    const hasCommandPrefix =
+      lowerText.startsWith('/vibe') ||
+      lowerText.startsWith('/flash') ||
+      lowerText.startsWith('/event') ||
+      lowerText.startsWith('/create') ||
+      lowerText.startsWith('vibe:') ||
+      lowerText.startsWith('flash:') ||
+      lowerText.startsWith('event:') ||
+      lowerText.startsWith('⚡');
+
+    // Event keywords
+    const hasEventKeywords =
+      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging|tournament|rsvp|tickets?|registration|venue|timing|entry free|entry fee|curated by|hosted by|doors open|lineup|line-up|hackathon|workshop|standup|comedy|concert|gig|party)\b/i.test(textContent);
+
+    const isExplicitEvent = hasImage || hasCommandPrefix || hasTicketingLink;
+    const isImplicitEvent = (textContent.length >= 25 && hasEventKeywords) || (hasAnyLink && textContent.length >= 20);
+
+    if (!isExplicitEvent && !isImplicitEvent) {
+      const hint =
+        `💡 *Want to create an event on Vibe?*\n\n` +
+        `• Send */vibe <details>* (e.g. \`/vibe Turf cricket tonight 8 PM at Bandra\`)\n` +
+        `• Or send/forward any *event flyer poster*\n` +
+        `• Or paste an event link from Luma, BookMyShow, or District!`;
+      if (replyTarget && textContent.length > 0) {
+        await sendWhatsAppReply(replyTarget, hint);
+      }
+      return NextResponse.json({
+        ok: true,
+        handledBy: 'guidance_hint',
+        replyText: hint,
+      });
     }
+
+    // Detect Flash Vibe intent
+    const isFlashVibe =
+      hasCommandPrefix ||
+      (!hasImage && !hasTicketingLink && textContent.length < 400);
+
+    let flashActivity: string = 'other';
+    if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
+    else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
+    else if (/\b(pickleball|paddle)\b/i.test(textContent)) flashActivity = 'pickleball';
+    else if (/\b(football|futsal|soccer)\b/i.test(textContent)) flashActivity = 'football';
+    else if (/\b(chai|coffee|cafe|tea)\b/i.test(textContent)) flashActivity = 'coffee';
+    else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
+    else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
+    else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
 
     console.log('[WhatsApp Webhook] Event creation request received from:', replyTarget, {
       hasImage,
+      hasImageUrl: Boolean(payload.imageUrl),
       textLength: textContent.length,
       isFlashVibe,
       flashActivity,
@@ -229,16 +266,30 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseAdmin();
     let extracted: ExtractedEventData;
-    let coverImageUrl: string | undefined = undefined;
+    let coverImageUrl: string | undefined = payload.imageUrl || undefined;
 
     // A. Flyer Image Provided
     if (hasImage) {
-      const cleanBase64 = payload.imageBase64.replace(/^data:[^;]+;base64,/, '');
-      const buffer = Buffer.from(cleanBase64, 'base64');
+      let buffer: Buffer;
       const mime = payload.imageMimeType || 'image/jpeg';
 
-      // Upload poster to Supabase storage if available
-      if (supabase) {
+      if (payload.imageBase64) {
+        const cleanBase64 = payload.imageBase64.replace(/^data:[^;]+;base64,/, '');
+        buffer = Buffer.from(cleanBase64, 'base64');
+      } else if (payload.imageUrl) {
+        try {
+          const imgRes = await fetch(payload.imageUrl);
+          const arrayBuf = await imgRes.arrayBuffer();
+          buffer = Buffer.from(arrayBuf);
+        } catch {
+          buffer = Buffer.alloc(0);
+        }
+      } else {
+        buffer = Buffer.alloc(0);
+      }
+
+      // Upload poster to Supabase storage if not yet uploaded
+      if (!coverImageUrl && buffer.length > 0 && supabase) {
         try {
           const fileExt = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
           const fileName = `whatsapp-${Date.now()}-${nanoid(6)}.${fileExt}`;
@@ -258,7 +309,11 @@ export async function POST(req: NextRequest) {
       }
 
       // Extract details via Gemini Vision OCR
-      extracted = await extractEventFromImage(buffer, mime, textContent || undefined);
+      if (buffer.length > 0) {
+        extracted = await extractEventFromImage(buffer, mime, textContent || undefined);
+      } else {
+        extracted = await extractEventFromText(textContent || 'Event');
+      }
 
       // Scrape any URL present in caption
       const captionUrlMatch = textContent.match(/(https?:\/\/[^\s]+)/i);
@@ -306,21 +361,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Validate timestamps safely
+    // Validate timestamps safely — ensure events are NEVER placed in the past
     let validStartAt = isFlashVibe
       ? new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // Flash vibes default to starting in 2 hours
       : new Date(Date.now() + 86400000).toISOString();
 
     try {
       if (extracted.start_at && !isNaN(new Date(extracted.start_at).getTime())) {
-        validStartAt = new Date(extracted.start_at).toISOString();
+        const parsedTime = new Date(extracted.start_at).getTime();
+        // If extracted start date is in the past by > 1 hour, shift forward to future
+        if (parsedTime < Date.now() - 3600000) {
+          console.log('[WhatsApp Webhook] Extracted start_at is in past, adjusting forward:', extracted.start_at);
+          validStartAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+        } else {
+          validStartAt = new Date(extracted.start_at).toISOString();
+        }
       }
     } catch {}
 
     let validEndAt = new Date(new Date(validStartAt).getTime() + (isFlashVibe ? 7200000 : 10800000)).toISOString();
     try {
       if (extracted.end_at && !isNaN(new Date(extracted.end_at).getTime())) {
-        validEndAt = new Date(extracted.end_at).toISOString();
+        const parsedEndTime = new Date(extracted.end_at).getTime();
+        if (parsedEndTime > new Date(validStartAt).getTime()) {
+          validEndAt = new Date(extracted.end_at).toISOString();
+        }
       }
     } catch {}
 

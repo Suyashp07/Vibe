@@ -89,23 +89,23 @@ export default function Footer() {
   };
 
   return (
-    <footer className="border-t border-[#E2E8F0] bg-[#F8FAFC] mt-6 sm:mt-16 pt-8 sm:pt-14 pb-12 text-[#475569] font-sans">
+    <footer className="border-t border-white/10 bg-[#050505] mt-12 sm:mt-20 pt-10 sm:pt-16 pb-12 text-white/60 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-[#E2E8F0]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-white/10">
           {/* Column 1: Brand Info & Social Media Links (Spans 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
             <BrandLogo />
 
-            <p className="text-xs sm:text-sm text-[#64748B] max-w-sm leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/60 max-w-sm leading-relaxed">
               India's premier whitelabel event network. Curating cultural gatherings, tech summits, live concerts, and social mixers with AI-streamed verification and pass distribution.
             </p>
 
             {/* Social Media Section */}
             <div className="pt-2 space-y-2.5">
-              <div className="text-[11px] font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
+              <div className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                 <span>Connect With Us</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E8621A]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
               </div>
 
               {/* Social Media Icon Buttons */}
@@ -120,7 +120,7 @@ export default function Footer() {
                       rel={item.href !== '#' ? 'noopener noreferrer' : undefined}
                       aria-label={item.ariaLabel}
                       title={item.name}
-                      className={`w-9 h-9 rounded-full bg-white border border-[#E2E8F0] text-[#64748B] flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-110 active:scale-95 ${item.brandColor}`}
+                      className="w-9 h-9 rounded-full bg-white/5 border border-white/10 text-white/70 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-110 active:scale-95 hover:bg-[#FF5500] hover:text-white hover:border-[#FF5500]"
                     >
                       {Icon ? <Icon className="w-4 h-4" /> : item.customIcon}
                     </a>
@@ -128,14 +128,14 @@ export default function Footer() {
                 })}
               </div>
 
-              <p className="text-[11px] text-[#94A3B8]">
+              <p className="text-[11px] text-white/40">
                 Official community handles & social links will connect soon.
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-[#64748B] pt-1">
+            <div className="flex items-center gap-1.5 text-xs text-white/40 pt-1">
               <span>Crafted with</span>
-              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
+              <Heart className="w-3.5 h-3.5 text-[#FF5500] fill-[#FF5500] animate-pulse" />
               <span>in Mumbai & Bengaluru</span>
             </div>
           </div>
@@ -260,19 +260,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar: Copyright & System Status */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
-          <div className="flex flex-wrap items-center gap-2">
-            <span>© {new Date().getFullYear()} Vibe by Swaniki.</span>
-            <span className="hidden sm:inline text-[#CBD5E1]">·</span>
-            <span>Free in v1 · Zero ticket fees.</span>
+        {/* Bottom Bar: Copyright & Tagline matching reference screenshot */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/50">
+          <div className="flex items-center gap-3">
+            <span className="font-semibold text-white/70">Good people. Real connections.</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-xs font-semibold shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>All systems live · Asia/Kolkata (IST)</span>
-            </span>
+          <div className="flex items-center gap-2">
+            <span>© {new Date().getFullYear()} Vibe by Swaniki</span>
+            <span className="text-[#FF5500]">↗</span>
           </div>
         </div>
       </div>

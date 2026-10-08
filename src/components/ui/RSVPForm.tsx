@@ -226,7 +226,7 @@ export default function RSVPForm({
     if (error) {
       setErrorMessage(error.message || 'Failed to send verification code. Please try again.');
     } else {
-      setOtpMessage(`We sent a 6-digit verification code to ${cleanEmail}`);
+      setOtpMessage(`We sent a verification code to ${cleanEmail}`);
       setResendCooldown(30);
       setStep('otp');
     }
@@ -244,20 +244,21 @@ export default function RSVPForm({
     if (error) {
       setErrorMessage(error.message || 'Failed to resend code. Please try again.');
     } else {
-      setOtpMessage(`A new 6-digit verification code was sent to ${cleanEmail}`);
+      setOtpMessage(`A new verification code was sent to ${cleanEmail}`);
       setResendCooldown(30);
     }
   };
 
-  // 2. OTP Verification & RSVP Confirmation
+  // 2. OTP Verification & RSVP Confirmation (Supports 6 to 8 digit codes)
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpToken.trim() || otpToken.length < 6) return;
+    const cleanToken = otpToken.trim();
+    if (!cleanToken || cleanToken.length < 6 || cleanToken.length > 8) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const { error } = await verifyEmailOtp(email.trim(), otpToken.trim(), 'guest');
+    const { error } = await verifyEmailOtp(email.trim(), cleanToken, 'guest');
 
     if (error) {
       setIsSubmitting(false);
@@ -433,7 +434,7 @@ export default function RSVPForm({
             Enter Verification Code
           </h3>
           <p className="text-xs mt-1 text-[#64748B] leading-relaxed">
-            We sent a 6-digit verification code to{' '}
+            We sent a verification code to{' '}
             <strong className="text-[#0F172A] font-semibold">{email}</strong>
           </p>
         </div>
@@ -452,13 +453,15 @@ export default function RSVPForm({
             </label>
             <input
               type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
               required
               autoFocus
-              maxLength={6}
+              maxLength={8}
               value={otpToken}
               onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
-              className="w-full text-center text-2xl font-mono font-bold tracking-[0.35em] py-3.5 px-4 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-all placeholder:text-[#94A3B8]"
+              placeholder="••••••••"
+              className="w-full text-center text-xl sm:text-2xl font-mono font-bold tracking-[0.25em] sm:tracking-[0.35em] py-3.5 px-4 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-all placeholder:text-[#94A3B8]"
             />
 
             <div className="flex items-center justify-between mt-2.5 text-xs text-[#64748B]">
@@ -606,7 +609,7 @@ export default function RSVPForm({
             </button>
           )}
           <p className="text-[11px] mt-1 text-[#64748B]">
-            A 6-digit OTP code will be sent to verify your pass.
+            An OTP verification code will be sent to verify your pass.
           </p>
         </div>
 

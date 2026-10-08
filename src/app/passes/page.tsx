@@ -33,7 +33,7 @@ import {
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
 import { useAuth, getInitials, isSyntheticAvatar } from '@/lib/auth';
-import { getSecondsRemainingInSlice, getPassSerialNumber } from '@/lib/ticketSecurity';
+import { getPassSerialNumber } from '@/lib/ticketSecurity';
 
 function PassesInner() {
   const router = useRouter();
@@ -55,15 +55,6 @@ function PassesInner() {
 
   // Selected Pass for Digital Pass Modal with QR
   const [selectedPass, setSelectedPass] = useState<{ rsvp: RSVPItem; event: EventItem } | null>(null);
-
-  // 30-Second Dynamic Hash countdown
-  const [secondsRemaining, setSecondsRemaining] = useState(() => getSecondsRemainingInSlice());
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsRemaining(getSecondsRemainingInSlice());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Guest email switcher
   const [guestEmail, setGuestEmail] = useState('');
@@ -547,14 +538,14 @@ function PassesInner() {
 
                       {/* Card Action Buttons */}
                       <div className="space-y-2 pt-2">
-                        {/* Dynamic 30-Second Security Indicator */}
+                        {/* Digital Pass Status Indicator */}
                         {isConfirmed && (
                           <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[10px] font-mono text-emerald-800">
                             <span className="flex items-center gap-1.5 font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
-                              <span>Dynamic Pass</span>
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Digital Pass</span>
                             </span>
-                            <span className="text-emerald-700">Refreshes in {secondsRemaining}s</span>
+                            <span className="text-emerald-700 font-sans font-semibold">Active &amp; Ready</span>
                           </div>
                         )}
 

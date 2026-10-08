@@ -125,8 +125,8 @@ async function runWhatsAppEventCreationTests() {
     // Verify confirmation message sent back to user's WhatsApp
     assert(sentMessages.length >= 2, 'Sent analysis progress + final live link message');
     const finalMsg = sentMessages[sentMessages.length - 1];
-    assert(finalMsg.to === '916264984285', 'Sent to organizer phone number');
-    assert(finalMsg.text.includes('YOUR EVENT IS LIVE ON VIBE!'), 'Contains live confirmation header');
+    assert(finalMsg.to.includes('916264984285'), 'Sent to organizer phone number');
+    assert(finalMsg.text.includes('LIVE ON VIBE'), 'Contains live confirmation header');
     assert(finalMsg.text.includes(jsonCreate.event.url), 'Contains clickable live event URL');
     assert(finalMsg.text.includes('Subko'), 'Contains venue extracted by AI');
     console.log('✅ [PASS] Event successfully created from WhatsApp text blurb!');

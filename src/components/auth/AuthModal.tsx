@@ -168,7 +168,7 @@ export default function AuthModal({
         if (res.needsOtp) {
           setIsVerifyingOtp(true);
           setResendCooldown(30);
-          setMessage(`We sent a 6-digit verification code to ${email.trim()}`);
+          setMessage(`We sent a verification code to ${email.trim()}`);
         } else {
           if (onAuthenticated) onAuthenticated();
           onClose();
@@ -205,8 +205,8 @@ export default function AuthModal({
   async function handleVerifyOtp(e: FormEvent) {
     e.preventDefault();
     const cleanCode = otpCode.trim();
-    if (!cleanCode || cleanCode.length < 6) {
-      setError('Please enter the 6-digit verification code.');
+    if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
+      setError('Please enter the 6 to 8 digit verification code.');
       return;
     }
 
@@ -300,7 +300,7 @@ export default function AuthModal({
               <div>
                 <h2 className="font-bold text-base text-gray-900">Verify your email</h2>
                 <p className="text-[11px] text-gray-500">
-                  Enter the 6-digit code sent to <span className="font-semibold text-gray-800">{email}</span>
+                  Enter the verification code sent to <span className="font-semibold text-gray-800">{email}</span>
                 </p>
               </div>
             </div>
@@ -330,8 +330,8 @@ export default function AuthModal({
                   required
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                  placeholder="123456"
-                  className="w-full text-center tracking-[0.4em] text-lg font-mono font-bold py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-gray-900 focus:outline-none focus:border-[#0A0A0A]"
+                  placeholder="••••••••"
+                  className="w-full text-center tracking-[0.3em] sm:tracking-[0.4em] text-lg font-mono font-bold py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-gray-900 focus:outline-none focus:border-[#0A0A0A]"
                 />
               </div>
 

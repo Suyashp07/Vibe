@@ -671,8 +671,8 @@ export async function sendVerificationOtpEmail({
   const isLogin = purpose === 'login';
   const heading = isLogin ? 'Your Sign-In Verification Code' : 'Confirm your registration';
   const subtext = isLogin
-    ? 'Here is your single-use 6-digit login code to securely sign in to your Vibe account:'
-    : 'Welcome to Vibe by Swaniki! To finish activating your account, please enter the single-use 6-digit verification code below:';
+    ? 'Here is your single-use verification code to securely sign in to your Vibe account:'
+    : 'Welcome to Vibe by Swaniki! To finish activating your account, please enter the single-use verification code below:';
 
   const html = `
 <!DOCTYPE html>
@@ -721,7 +721,7 @@ export async function sendVerificationOtpEmail({
         <div class="otp-meta">⏱ Valid for 10 minutes · Single-use code</div>
       </div>
       <div class="instruction-box">
-        <strong>Next step:</strong> Enter this 6-digit code in your browser tab. To safeguard your account, we do not send clickable login links.
+        <strong>Next step:</strong> Enter this verification code in your browser tab. To safeguard your account, we do not send clickable login links.
       </div>
       <div class="security-note">
         <p style="margin: 0 0 4px 0;"><strong>Security Reminder:</strong></p>

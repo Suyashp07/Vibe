@@ -206,14 +206,14 @@ function VibesReelsContent() {
   // Filter events by City & Activity
   const filteredEvents = useMemo(() => {
     const filtered = events.filter((e) => {
-      // Exclude expired events
-      if (isEventExpired(e)) {
-        return false;
-      }
-
       // If targetSlug is specified, always keep the target event regardless of city or activity filter
       if (targetSlug && (e.slug?.toLowerCase() === targetSlug.toLowerCase() || e.id === targetSlug)) {
         return true;
+      }
+
+      // Exclude expired events
+      if (isEventExpired(e)) {
+        return false;
       }
 
       // City filter

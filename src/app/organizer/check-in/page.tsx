@@ -287,7 +287,7 @@ function OrganizerCheckInContent() {
         }
       } else if (data.already_attended) {
         playSound('warning');
-        triggerHaptic([200, 100, 200]);
+        // No vibration on rescan
       } else {
         playSound('error');
         triggerHaptic([300]);
@@ -920,8 +920,8 @@ function OrganizerCheckInContent() {
 
                   {/* Badge Top Left */}
                   <div className="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-md">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Dynamic TOTP 30s Ready</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Instant Gate Scanner Ready</span>
                   </div>
                 </>
               )}

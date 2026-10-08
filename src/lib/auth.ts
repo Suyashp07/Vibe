@@ -768,7 +768,7 @@ export const verifySignupOtp = async (
   }
 
   if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
-    return { data: null, error: { message: 'Please enter the 6-digit verification code.' } };
+    return { data: null, error: { message: 'Please enter the 6 to 8 digit verification code from your email.' } };
   }
 
   if (!client) {

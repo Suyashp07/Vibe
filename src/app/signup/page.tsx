@@ -199,7 +199,7 @@ function SignupContent() {
                 </div>
                 <h1 className="font-black text-2xl tracking-tight text-[#0A0A0A]">Verify your email</h1>
                 <p className="text-xs text-[#64748B] mt-1">
-                  We sent a 6-digit verification code to <span className="font-bold text-[#0A0A0A]">{email}</span>. Enter the code below to complete your registration.
+                  We sent a verification code to <span className="font-bold text-[#0A0A0A]">{email}</span>. Enter the code below to complete your registration.
                 </p>
               </>
             ) : (
@@ -245,7 +245,7 @@ function SignupContent() {
             <form onSubmit={handleVerifyOtp} className="space-y-5 animate-in fade-in">
               <div>
                 <label className="block text-xs font-bold text-[#475569] mb-1.5">
-                  6-Digit Verification Code
+                  Verification Code
                 </label>
                 <div className="relative">
                   <input
@@ -257,8 +257,8 @@ function SignupContent() {
                     required
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="123456"
-                    className="w-full text-center tracking-[0.35em] text-lg font-mono font-bold py-3 bg-white border border-[#E2E8F0] rounded-xl text-[#0A0A0A] placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                    placeholder="••••••••"
+                    className="w-full text-center tracking-[0.3em] sm:tracking-[0.35em] text-lg font-mono font-bold py-3 bg-white border border-[#E2E8F0] rounded-xl text-[#0A0A0A] placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#0A0A0A] transition-colors"
                   />
                 </div>
                 <p className="text-[11px] text-[#64748B] mt-1.5 text-center">

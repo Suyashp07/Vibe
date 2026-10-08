@@ -363,7 +363,7 @@ function LoginContent() {
                         <span>Sending Code...</span>
                       </>
                     ) : (
-                      <span>Send 6-Digit Code to Email</span>
+                      <span>Send Code to Email</span>
                     )}
                   </button>
                 </div>
@@ -371,17 +371,19 @@ function LoginContent() {
                 <form onSubmit={handleVerifyOtp} className="space-y-3">
                   <div>
                     <label className="text-xs font-bold text-[#0F172A] block mb-1">
-                      Enter 6-Digit Code
+                      Enter Verification Code
                     </label>
                     <input
                       type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
                       maxLength={8}
                       required
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="123456"
+                      placeholder="••••••••"
                       autoFocus
-                      className="w-full text-center tracking-[8px] font-mono text-xl py-2.5 bg-white border-2 border-[#0F172A] rounded-xl text-[#0F172A] placeholder:text-[#CBD5E1] focus:outline-none transition-colors"
+                      className="w-full text-center tracking-[6px] sm:tracking-[8px] font-mono text-xl py-2.5 bg-white border-2 border-[#0F172A] rounded-xl text-[#0F172A] placeholder:text-[#CBD5E1] focus:outline-none transition-colors"
                     />
                   </div>
 

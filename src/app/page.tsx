@@ -23,7 +23,7 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-texture-paper text-[#0F172A] font-sans selection:bg-[#0F172A] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#FF5500] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full">

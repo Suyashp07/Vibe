@@ -40,13 +40,14 @@ const fraunces = Fraunces({
 
 import PWARegister from '@/components/pwa/PWARegister';
 import AutoLocationDetector from '@/components/location/AutoLocationDetector';
+import CustomCursor from '@/components/common/CustomCursor';
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#E8621A',
+  themeColor: '#000000',
 };
 
 export const metadata: Metadata = {
@@ -82,8 +83,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}>
-      <body className="min-h-screen bg-surface-2 text-ink antialiased pb-16 md:pb-0">
+    <html lang="en" className={`dark ${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}>
+      <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white">
+        <CustomCursor />
         {children}
         <PWARegister />
         <AutoLocationDetector />

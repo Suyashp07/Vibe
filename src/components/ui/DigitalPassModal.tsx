@@ -31,7 +31,7 @@ import {
 import { EventItem, RSVPItem } from '@/types';
 import { formatIST, generateGoogleCalendarUrl, downloadICS, getOrganizers, getEventRSVPs, cancelRSVP } from '@/lib/store';
 import { getLocalAuthSession, isSyntheticAvatar } from '@/lib/auth';
-import { generateDynamicQRPayload, getCurrentTimeSlice, getSecondsRemainingInSlice, getPassSerialNumber } from '@/lib/ticketSecurity';
+import { getPassSerialNumber } from '@/lib/ticketSecurity';
 
 interface DigitalPassModalProps {
   rsvp: RSVPItem;
@@ -143,32 +143,14 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
     setOrganizerAvatar(fallback);
   }, [event]);
 
-  // 2. 30-Second Dynamic Cryptographic TOTP Hash Generator
-  const [timeSlice, setTimeSlice] = useState(() => getCurrentTimeSlice());
-  const [secondsRemaining, setSecondsRemaining] = useState(() => getSecondsRemainingInSlice());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const remaining = getSecondsRemainingInSlice();
-      setSecondsRemaining(remaining);
-      const current = getCurrentTimeSlice();
-      setTimeSlice((prev) => (prev !== current ? current : prev));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const dynamicSecurity = useMemo(() => {
-    return generateDynamicQRPayload(currentRsvp.id, event.id, Date.now());
-  }, [currentRsvp.id, event.id, timeSlice]);
-
-  // Formulate stable, structured ticket serial & dynamic TOTP verification checksum
+  // 2. Formulate stable, structured ticket serial & verified digital pass payload
   const { ticketSerial, passHash, verificationUrl } = useMemo(() => {
     const serial = getPassSerialNumber(currentRsvp, event);
-    const tokenHash = `TOTP:${dynamicSecurity.hash}`;
-    const url = dynamicSecurity.qrPayloadUrl;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://vibe-seven-pied.vercel.app';
+    const url = `${origin}/organizer/check-in?rsvpId=${encodeURIComponent(currentRsvp.id)}&eventId=${encodeURIComponent(event.id)}`;
 
-    return { ticketSerial: serial, passHash: tokenHash, verificationUrl: url };
-  }, [currentRsvp, event, dynamicSecurity]);
+    return { ticketSerial: serial, passHash: 'Verified Pass', verificationUrl: url };
+  }, [currentRsvp, event]);
 
   // 3. Generate REAL dynamic scannable QR Code Data URL ONLY FOR CONFIRMED GUESTS
   useEffect(() => {
@@ -593,29 +575,18 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
             {/* ========================================================= */}
             {isConfirmed && (
               <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-surface-2 border border-border text-center space-y-3.5">
-                {/* Dynamic 30-Second Security Header */}
-                <div className="w-full space-y-2">
-                  <div className="flex items-center justify-between w-full px-1">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-                      <span>LIVE DYNAMIC PASS</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] font-mono text-ink-muted">
-                      <RotateCw className="w-3 h-3 text-accent animate-spin" />
-                      <span>Refreshes in {secondsRemaining}s</span>
-                    </div>
+                {/* Verified Digital Pass Header */}
+                <div className="flex items-center justify-between w-full px-1 pb-0.5">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>DIGITAL ADMISSION PASS</span>
                   </div>
-
-                  {/* 30-Second Progress Bar */}
-                  <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-500 h-full transition-all duration-1000 ease-linear rounded-full"
-                      style={{ width: `${(secondsRemaining / 30) * 100}%` }}
-                    />
-                  </div>
+                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
+                    ACTIVE ENTRY QR
+                  </span>
                 </div>
 
-                {/* REAL SCANNABLE QR CODE CONTAINER WITH LASER SWEEP ANIMATION */}
+                {/* SCANNABLE QR CODE CONTAINER */}
                 <div className="relative p-3 bg-white rounded-2xl shadow-md border border-slate-200 group">
                   {qrDataUrl ? (
                     <div className="relative overflow-hidden rounded-xl">
@@ -624,8 +595,6 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                         alt={`Admission Pass QR Code for ${currentRsvp.name}`}
                         className="w-36 h-36 sm:w-40 sm:h-40 block mx-auto object-contain select-none"
                       />
-                      {/* Live Laser Scan Sweep Line */}
-                      <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent shadow-[0_0_8px_rgba(232,98,26,0.8)] pointer-events-none animate-qr-scan" />
                     </div>
                   ) : (
                     <div className="w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center text-ink-muted">
@@ -634,16 +603,14 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                   )}
                 </div>
 
-                {/* Dynamic Hash Display & Anti-Screenshot security note */}
+                {/* Pass Verification Note */}
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-mono font-bold">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>HASH: {dynamicSecurity.hash}</span>
-                    <span>•</span>
-                    <span>SLOT: {dynamicSecurity.timeSlice.toString(36).toUpperCase()}</span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-mono font-bold">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>VERIFIED PASS • {ticketSerial}</span>
                   </div>
                   <div className="text-[10px] text-ink-muted">
-                    Anti-screenshot protection • Validated by gate scanner
+                    Official digital pass • Scannable at venue entrance
                   </div>
                 </div>
 
