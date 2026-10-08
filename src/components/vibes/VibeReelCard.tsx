@@ -267,7 +267,7 @@ export default function VibeReelCard({
   return (
     <div
       onClick={handleCardDoubleTap}
-      className="relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-black cursor-pointer"
+      className="vibe-reel-card relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-black cursor-pointer"
     >
       {/* Background Image with Dark Reels Gradient Overlays */}
       <div className="absolute inset-0 z-0">

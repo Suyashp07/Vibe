@@ -344,43 +344,330 @@ html.light .border-white\/20 {
 }
 
 /* Buttons, Chips, and Sub-elements in Light Mode */
-html.light .bg-white\/5 {
+html.light .bg-white\/5:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-html.light .bg-white\/10 {
+html.light .bg-white\/10:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.07) !important;
 }
 
-html.light .hover\:bg-white\/10:hover {
+html.light .hover\:bg-white\/10:hover:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-html.light .hover\:bg-white\/20:hover {
+html.light .hover\:bg-white\/20:hover:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.12) !important;
 }
 
-/* Text Overrides for Light Mode */
-html.light .text-white:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]):not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not([data-cursor="view"] [class*="text-"]):not(.pointer-events-none *) {
-  color: #0F172A;
+html.light .border-white\/10:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+  border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-html.light .text-white\/90 {
+html.light .border-white\/15:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *),
+html.light .border-white\/20:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Text Overrides for Light Mode (applied ONLY to regular light content) */
+html.light .text-white:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]):not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not([class*="bg-black"] *):not(.pointer-events-none *):not(.pwa-install-banner *) {
+  color: #0F172A !important;
+}
+
+html.light .text-white\/90:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
+  color: #0F172A !important;
+}
+
+html.light .text-white\/80:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
   color: #1E293B !important;
 }
 
-html.light .text-white\/80 {
+html.light .text-white\/70:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *),
+html.light .text-white\/60:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
   color: #334155 !important;
 }
 
-html.light .text-white\/70,
-html.light .text-white\/60 {
+html.light .text-white\/50:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
+  color: #475569 !important;
+}
+
+html.light .text-white\/40:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
   color: #64748B !important;
 }
 
-html.light .text-white\/50,
-html.light .text-white\/40 {
-  color: #94A3B8 !important;
+/* =========================================================================
+   IMMERSIVE DARK SURFACES (Vibe Instant, Reels, Dark Modals, Hero Overlays)
+   Retain 100% crisp white text, glowing accents, and translucent dark styling
+   ========================================================================= */
+html.light .vibe-instant-container,
+html.light .vibe-reel-card,
+html.light .dark-dialog,
+html.light .dark-canvas {
+  color: #FFFFFF !important;
+}
+
+html.light .vibe-instant-container h1,
+html.light .vibe-instant-container h2,
+html.light .vibe-instant-container h3,
+html.light .vibe-reel-card h1,
+html.light .vibe-reel-card h2,
+html.light .vibe-reel-card h3,
+html.light .dark-dialog h1,
+html.light .dark-dialog h2,
+html.light .dark-dialog h3 {
+  color: #FFFFFF !important;
+}
+
+html.light .vibe-instant-container .text-white,
+html.light .vibe-reel-card .text-white,
+html.light .dark-dialog .text-white,
+html.light .dark-canvas .text-white {
+  color: #FFFFFF !important;
+}
+
+html.light .vibe-instant-container .text-white\/90,
+html.light .vibe-reel-card .text-white\/90,
+html.light .dark-dialog .text-white\/90,
+html.light .dark-canvas .text-white\/90 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+html.light .vibe-instant-container .text-white\/80,
+html.light .vibe-reel-card .text-white\/80,
+html.light .dark-dialog .text-white\/80,
+html.light .dark-canvas .text-white\/80 {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+html.light .vibe-instant-container .text-white\/70,
+html.light .vibe-reel-card .text-white\/70,
+html.light .dark-dialog .text-white\/70,
+html.light .dark-canvas .text-white\/70 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+html.light .vibe-instant-container .text-white\/60,
+html.light .vibe-reel-card .text-white\/60,
+html.light .dark-dialog .text-white\/60,
+html.light .dark-canvas .text-white\/60 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+html.light .vibe-instant-container .text-white\/50,
+html.light .vibe-reel-card .text-white\/50,
+html.light .dark-dialog .text-white\/50,
+html.light .dark-canvas .text-white\/50 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+html.light .vibe-instant-container .text-white\/40,
+html.light .vibe-reel-card .text-white\/40,
+html.light .dark-dialog .text-white\/40,
+html.light .dark-canvas .text-white\/40 {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+html.light .vibe-instant-container .text-white\/30,
+html.light .vibe-reel-card .text-white\/30,
+html.light .dark-dialog .text-white\/30,
+html.light .dark-canvas .text-white\/30 {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+html.light .vibe-instant-container .text-white\/20,
+html.light .vibe-reel-card .text-white\/20,
+html.light .dark-dialog .text-white\/20,
+html.light .dark-canvas .text-white\/20 {
+  color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Backgrounds in Vibe Instant & Dark Dialogs */
+html.light .vibe-instant-container .bg-white\/5,
+html.light .vibe-reel-card .bg-white\/5,
+html.light .dark-dialog .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.light .vibe-instant-container .bg-white\/10,
+html.light .vibe-reel-card .bg-white\/10,
+html.light .dark-dialog .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.light .vibe-instant-container .bg-white\/15,
+html.light .vibe-reel-card .bg-white\/15,
+html.light .dark-dialog .bg-white\/15 {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.light .vibe-instant-container .bg-white\/20,
+html.light .vibe-reel-card .bg-white\/20,
+html.light .dark-dialog .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.20) !important;
+}
+
+html.light .vibe-instant-container .bg-black\/40,
+html.light .vibe-reel-card .bg-black\/40,
+html.light .dark-dialog .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.40) !important;
+}
+
+html.light .vibe-instant-container .bg-black\/50,
+html.light .vibe-reel-card .bg-black\/50,
+html.light .dark-dialog .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.50) !important;
+}
+
+html.light .vibe-instant-container .bg-black\/60,
+html.light .vibe-reel-card .bg-black\/60,
+html.light .dark-dialog .bg-black\/60 {
+  background-color: rgba(0, 0, 0, 0.60) !important;
+}
+
+html.light .vibe-instant-container .bg-black\/70,
+html.light .vibe-reel-card .bg-black\/70,
+html.light .dark-dialog .bg-black\/70 {
+  background-color: rgba(0, 0, 0, 0.70) !important;
+}
+
+html.light .vibe-instant-container .bg-black\/80,
+html.light .vibe-reel-card .bg-black\/80,
+html.light .dark-dialog .bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.80) !important;
+}
+
+html.light .vibe-instant-container .bg-black\/90,
+html.light .vibe-reel-card .bg-black\/90,
+html.light .dark-dialog .bg-black\/90 {
+  background-color: rgba(0, 0, 0, 0.90) !important;
+}
+
+/* Borders in Vibe Instant & Dark Dialogs */
+html.light .vibe-instant-container .border-white\/5,
+html.light .vibe-reel-card .border-white\/5,
+html.light .dark-dialog .border-white\/5 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.light .vibe-instant-container .border-white\/10,
+html.light .vibe-reel-card .border-white\/10,
+html.light .dark-dialog .border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.light .vibe-instant-container .border-white\/15,
+html.light .vibe-reel-card .border-white\/15,
+html.light .dark-dialog .border-white\/15 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.light .vibe-instant-container .border-white\/20,
+html.light .vibe-reel-card .border-white\/20,
+html.light .dark-dialog .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.20) !important;
+}
+
+html.light .vibe-instant-container .border-white\/30,
+html.light .vibe-reel-card .border-white\/30,
+html.light .dark-dialog .border-white\/30 {
+  border-color: rgba(255, 255, 255, 0.30) !important;
+}
+
+/* Hovers in Vibe Instant */
+html.light .vibe-instant-container .hover\:bg-white\/10:hover,
+html.light .vibe-reel-card .hover\:bg-white\/10:hover {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.light .vibe-instant-container .hover\:bg-white\/20:hover,
+html.light .vibe-reel-card .hover\:bg-white\/20:hover {
+  background-color: rgba(255, 255, 255, 0.20) !important;
+}
+
+html.light .vibe-instant-container .hover\:text-white:hover,
+html.light .vibe-reel-card .hover\:text-white:hover,
+html.light .dark-dialog .hover\:text-white:hover {
+  color: #FFFFFF !important;
+}
+
+/* Inputs & Form Elements in Vibe Instant & Dark Modals */
+html.light .vibe-instant-container input,
+html.light .vibe-instant-container textarea,
+html.light .vibe-instant-container select,
+html.light .vibe-reel-card textarea,
+html.light .dark-dialog input,
+html.light .dark-dialog textarea,
+html.light .dark-dialog select {
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.light .vibe-instant-container input::placeholder,
+html.light .vibe-instant-container textarea::placeholder,
+html.light .dark-dialog input::placeholder,
+html.light .dark-dialog textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* SVG stroke/fill preservation */
+html.light .vibe-instant-container svg:not([class*="text-"]),
+html.light .vibe-reel-card svg:not([class*="text-"]),
+html.light .dark-dialog svg:not([class*="text-"]) {
+  stroke: currentColor;
+}
+
+/* Event Card Details & Surface Overrides in Light Mode */
+html.light .event-card-body,
+html.light .event-card-body h3,
+html.light .bg-\[\#0D0D10\] h3,
+html.light .bg-\[\#111114\] h3 {
+  color: #0F172A !important;
+}
+
+html.light .event-card-body .text-white\/50,
+html.light .event-card-body .text-white\/60,
+html.light .bg-\[\#0D0D10\] .text-white\/50,
+html.light .bg-\[\#0D0D10\] .text-white\/60 {
+  color: #475569 !important;
+}
+
+html.light .event-card-body .text-white,
+html.light .bg-\[\#0D0D10\] .text-white {
+  color: #0F172A !important;
+}
+
+html.light .event-card-body .text-white\/40,
+html.light .bg-\[\#0D0D10\] .text-white\/40 {
+  color: #64748B !important;
+}
+
+html.light .event-card-body .border-white\/10,
+html.light .bg-\[\#0D0D10\] .border-white\/10 {
+  border-color: #E2E8F0 !important;
+}
+
+/* Tag pills inside event cards in Light Mode */
+html.light .event-card-body button.bg-white\/5,
+html.light .event-card-body .bg-white\/5,
+html.light .bg-\[\#0D0D10\] button.bg-white\/5,
+html.light .bg-\[\#0D0D10\] .bg-white\/5 {
+  background-color: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #334155 !important;
+}
+
+html.light .event-card-body button.bg-white\/5:hover,
+html.light .bg-\[\#0D0D10\] button.bg-white\/5:hover {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+/* Verified Pill in Light Mode */
+html.light .event-card-body .bg-emerald-500\/10,
+html.light .bg-\[\#0D0D10\] .bg-emerald-500\/10 {
+  background-color: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+  color: #047857 !important;
 }
 
 /* Brand Logo Text */
@@ -393,12 +680,27 @@ html.light button.bg-\[\#FF5500\],
 html.light a.bg-\[\#FF5500\],
 html.light button.bg-\[\#FF5500\] *,
 html.light a.bg-\[\#FF5500\] *,
-html.light .shadow-\[0_0_25px_rgba\(255\,85\,0\,0\.45\)\],
-html.light [data-cursor="view"] .text-white,
-html.light [data-cursor="view"] [class*="text-white"],
-html.light [data-cursor="view"] h2,
-html.light [data-cursor="view"] p {
+html.light .shadow-\[0_0_25px_rgba\(255\,85\,0\,0\.45\)\] {
   color: #FFFFFF !important;
+}
+
+/* Ensure Photo Overlays & Dark Hero Banners STAY Crisp White */
+html.light .event-card-cover,
+html.light .event-card-cover *,
+html.light .event-cover-overlay,
+html.light .event-cover-overlay *,
+html.light .flashcard-hero-overlay,
+html.light .flashcard-hero-overlay * {
+  color: #FFFFFF !important;
+}
+
+html.light .flashcard-hero-overlay .text-amber-300 {
+  color: #FCD34D !important;
+}
+
+html.light .event-card-cover .text-\[\#FF5500\],
+html.light .flashcard-hero-overlay .text-\[\#FF5500\] {
+  color: #FF5500 !important;
 }
 
 /* Search input on feed */

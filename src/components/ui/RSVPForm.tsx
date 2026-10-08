@@ -302,9 +302,9 @@ export default function RSVPForm({
               : (event.rsvp_form_config.confirmation_message || `A pass has been registered for ${submittedRsvp.email}. We will ping you on WhatsApp with access details.`)}
           </p>
 
-          <div className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs text-[#475569] bg-[#F8FAFC] py-1.5 px-3.5 rounded-full border border-[#E2E8F0]">
-            <Mail className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
-            <span>Digital pass emailed to <strong className="text-[#0F172A]">{submittedRsvp.email}</strong></span>
+          <div className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs text-white/70 bg-[#111114] py-1.5 px-3.5 rounded-full border border-white/10">
+            <Mail className="w-3.5 h-3.5 text-white/60 shrink-0" />
+            <span>Digital pass emailed to <strong className="text-white">{submittedRsvp.email}</strong></span>
           </div>
         </div>
 
@@ -314,7 +314,7 @@ export default function RSVPForm({
             type="button"
             onClick={() => setShowPassModal(true)}
             className={`w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-white text-xs font-bold shadow-sm hover-lift transition-all cursor-pointer ${
-              isWaitlist ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#0F172A] hover:bg-black'
+              isWaitlist ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#FF5500] hover:bg-[#E04B00] shadow-lg shadow-[#FF5500]/25'
             }`}
           >
             {isWaitlist ? (
@@ -324,7 +324,7 @@ export default function RSVPForm({
               </>
             ) : (
               <>
-                <Ticket className="w-4 h-4 text-[#E8621A]" />
+                <Ticket className="w-4 h-4 text-white" />
                 <span>View Digital Admission Pass</span>
               </>
             )}
@@ -337,27 +337,27 @@ export default function RSVPForm({
             href={generateGoogleCalendarUrl(event)}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-[#0F172A] text-xs font-semibold shadow-xs transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-white text-xs font-semibold shadow-xs transition-all"
           >
-            <Calendar className="w-3.5 h-3.5 text-[#E8621A]" />
+            <Calendar className="w-3.5 h-3.5 text-[#FF5500]" />
             <span>Add to Google Calendar</span>
           </a>
           <button
             onClick={() => downloadICS(event)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-[#0F172A] text-xs font-semibold transition-all cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-white text-xs font-semibold transition-all cursor-pointer"
           >
             <span>Download .ICS File</span>
           </button>
         </div>
 
         {/* Follow Host Community */}
-        <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-left space-y-2">
+        <div className="p-4 rounded-2xl bg-[#111114] border border-white/10 text-left space-y-2">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold text-[#0F172A] block">
+              <span className="text-xs font-bold text-white block">
                 Follow {event.organizer_name}
               </span>
-              <span className="text-[11px] text-[#64748B] block">
+              <span className="text-[11px] text-white/50 block">
                 @{event.organizer_handle}
               </span>
             </div>
@@ -368,24 +368,24 @@ export default function RSVPForm({
               variant="pill"
             />
           </div>
-          <p className="text-[11px] text-[#64748B] leading-relaxed">
+          <p className="text-[11px] text-white/60 leading-relaxed">
             Stay in the loop when {event.organizer_name} drops secret gatherings and tickets.
           </p>
         </div>
 
         {/* Soft prompt to create guest account */}
-        <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-left space-y-2.5">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
-            <Sparkles className="w-4 h-4 text-[#E8621A] shrink-0" />
+        <div className="p-4 rounded-2xl bg-[#111114] border border-white/10 text-left space-y-2.5">
+          <div className="flex items-center gap-2 text-xs font-bold text-white">
+            <Sparkles className="w-4 h-4 text-[#FF5500] shrink-0" />
             <span>Save pass to your personal Pass Wallet</span>
           </div>
-          <p className="text-[11px] text-[#64748B] leading-relaxed">
+          <p className="text-[11px] text-white/60 leading-relaxed">
             Access your pass anytime, cancel bookings, get directions, and follow {event.organizer_name} for future gatherings.
           </p>
           <button
             type="button"
             onClick={handleActivateGuestAccount}
-            className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#0F172A] hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold transition-all shadow-md shadow-[#FF5500]/20 cursor-pointer"
           >
             <span>View Digital Pass &amp; Bookings →</span>
           </button>
@@ -398,7 +398,7 @@ export default function RSVPForm({
               setStep('details');
               setSubmittedRsvp(null);
             }}
-            className="text-[11px] text-[#64748B] hover:text-[#0F172A] underline transition-colors cursor-pointer"
+            className="text-[11px] text-white/60 hover:text-white underline transition-colors cursor-pointer"
           >
             RSVP another guest or edit details
           </button>
@@ -419,23 +419,23 @@ export default function RSVPForm({
   // STEP 2: EMAIL OTP VERIFICATION VIEW
   if (step === 'otp') {
     return (
-      <div className={`${cardClass ? `${cardClass} space-y-5` : 'bg-white text-[#0F172A] border border-[#E2E8F0] shadow-xl rounded-2xl p-6 space-y-5'} animate-in fade-in`}>
+      <div className={`${cardClass ? `${cardClass} space-y-5` : 'bg-[#0D0D10] text-white border border-white/10 shadow-xl rounded-2xl p-6 space-y-5'} animate-in fade-in`}>
         {/* Header */}
-        <div className="border-b border-[#E2E8F0] pb-4">
+        <div className="border-b border-white/10 pb-4">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] uppercase font-bold tracking-wider text-[#E8621A]">
+            <span className="text-[11px] uppercase font-bold tracking-wider text-[#FF5500]">
               Verification
             </span>
-            <span className="text-xs font-semibold text-[#64748B]">
+            <span className="text-xs font-semibold text-white/60">
               Step 2 of 2
             </span>
           </div>
-          <h3 className="font-display font-black text-2xl text-[#0F172A] tracking-tight">
+          <h3 className="font-display font-black text-2xl text-white tracking-tight">
             Enter Verification Code
           </h3>
-          <p className="text-xs mt-1 text-[#64748B] leading-relaxed">
+          <p className="text-xs mt-1 text-white/60 leading-relaxed">
             We sent a verification code to{' '}
-            <strong className="text-[#0F172A] font-semibold">{email}</strong>
+            <strong className="text-white font-semibold">{email}</strong>
           </p>
         </div>
 
@@ -448,7 +448,7 @@ export default function RSVPForm({
 
         <form onSubmit={handleOtpSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#475569]">
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-white/70">
               Verification Code *
             </label>
             <input
@@ -461,23 +461,23 @@ export default function RSVPForm({
               value={otpToken}
               onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
               placeholder="••••••••"
-              className="w-full text-center text-xl sm:text-2xl font-mono font-bold tracking-[0.25em] sm:tracking-[0.35em] py-3.5 px-4 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-all placeholder:text-[#94A3B8]"
+              className="w-full text-center text-xl sm:text-2xl font-mono font-bold tracking-[0.25em] sm:tracking-[0.35em] py-3.5 px-4 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-all placeholder:text-white/30"
             />
 
-            <div className="flex items-center justify-between mt-2.5 text-xs text-[#64748B]">
+            <div className="flex items-center justify-between mt-2.5 text-xs text-white/60">
               <span>Didn&apos;t receive code?</span>
               <button
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isSubmitting || resendCooldown > 0}
-                className="hover:underline inline-flex items-center gap-1 font-bold text-[#E8621A] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="hover:underline inline-flex items-center gap-1 font-bold text-[#FF5500] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
                 <span>{resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : 'Resend Code'}</span>
               </button>
             </div>
 
-            <p className="mt-3 text-[11px] text-[#94A3B8] text-center leading-relaxed">
+            <p className="mt-3 text-[11px] text-white/40 text-center leading-relaxed">
               💡 Tip: Check your <strong>Spam</strong> or <strong>Promotions</strong> folder if the code doesn&apos;t arrive immediately.
             </p>
           </div>
@@ -489,7 +489,7 @@ export default function RSVPForm({
                 setStep('details');
                 setErrorMessage(null);
               }}
-              className="py-3 px-4 rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-bold text-[#0F172A] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="py-3 px-4 rounded-xl border border-white/15 bg-[#111114] hover:bg-white/10 text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -498,7 +498,7 @@ export default function RSVPForm({
             <button
               type="submit"
               disabled={isSubmitting || otpToken.length < 6}
-              className="flex-1 py-3.5 px-4 rounded-xl bg-[#0F172A] hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-3.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -520,28 +520,28 @@ export default function RSVPForm({
 
   // STEP 1: GUEST DETAILS VIEW
   return (
-    <div className={`${cardClass ? `${cardClass} space-y-5` : 'bg-white text-[#0F172A] border border-[#E2E8F0] shadow-xl rounded-2xl p-6 space-y-5'}`}>
+    <div className={`${cardClass ? `${cardClass} space-y-5` : 'bg-[#0D0D10] text-white border border-white/10 shadow-xl rounded-2xl p-6 space-y-5'}`}>
       {/* Header */}
-      <div className="border-b border-[#E2E8F0] pb-4">
+      <div className="border-b border-white/10 pb-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] uppercase font-bold tracking-wider text-[#E8621A]">
+          <span className="text-[11px] uppercase font-bold tracking-wider text-[#FF5500]">
             {isFull ? 'Waitlist Open' : 'Register to Attend'}
           </span>
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
             {event.external_price_text || 'Free Admission'}
           </span>
         </div>
-        <h3 className="font-display font-black text-2xl text-[#0F172A] tracking-tight">
+        <h3 className="font-display font-black text-2xl text-white tracking-tight">
           {isFull ? 'Join the Guest Waitlist' : 'Claim Your Pass'}
         </h3>
-        <p className="text-xs mt-0.5 text-[#64748B]">
+        <p className="text-xs mt-0.5 text-white/60">
           Email OTP verified · Instant digital admission pass
         </p>
       </div>
 
       {errorMessage && (
-        <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+        <div className="flex items-start gap-2.5 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -549,29 +549,29 @@ export default function RSVPForm({
       <form onSubmit={handleDetailsSubmit} className="space-y-4">
         {/* Full Name */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
+          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
             Full Name *
           </label>
           <div className="relative">
-            <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
+            <User className="w-4 h-4 text-white/40 absolute left-3.5 top-3" />
             <input
               type="text"
               required
               placeholder="e.g. Priya Sharma"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors placeholder:text-[#94A3B8]"
+              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
             />
           </div>
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
+          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
             Email Address (for OTP Verification) *
           </label>
           <div className="relative">
-            <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
+            <Mail className="w-4 h-4 text-white/40 absolute left-3.5 top-3" />
             <input
               type="email"
               required
@@ -592,7 +592,7 @@ export default function RSVPForm({
                   setEmailSuggestion(null);
                 }
               }}
-              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors placeholder:text-[#94A3B8]"
+              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
             />
           </div>
           {emailSuggestion && (
@@ -603,24 +603,24 @@ export default function RSVPForm({
                 setEmailSuggestion(null);
                 setErrorMessage(null);
               }}
-              className="mt-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+              className="mt-1.5 text-xs text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
             >
               <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
             </button>
           )}
-          <p className="text-[11px] mt-1 text-[#64748B]">
+          <p className="text-[11px] mt-1 text-white/50">
             An OTP verification code will be sent to verify your pass.
           </p>
         </div>
 
         {/* Indian Phone with +91 Prefix */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
-            <Phone className="w-3 h-3 inline mr-1 text-[#94A3B8]" />
+          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
+            <Phone className="w-3 h-3 inline mr-1 text-white/40" />
             WhatsApp Phone Number {event.rsvp_form_config.ask_phone === false ? '(Optional)' : '*'}
           </label>
           <div className="relative flex">
-            <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-[#CBD5E1] bg-[#F1F5F9] text-xs font-bold text-[#475569]">
+            <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-white/15 bg-[#14171F] text-xs font-bold text-white/70">
               +91
             </span>
             <input
@@ -630,26 +630,26 @@ export default function RSVPForm({
               placeholder="98200 12345"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-              className="w-full text-sm px-3.5 py-2.5 rounded-r-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors placeholder:text-[#94A3B8]"
+              className="w-full text-sm px-3.5 py-2.5 rounded-r-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
             />
           </div>
-          <p className="text-[11px] mt-1 text-[#64748B]">
+          <p className="text-[11px] mt-1 text-white/50">
             Used for WhatsApp pass &amp; directions.
           </p>
         </div>
 
         {/* Plus One Toggle */}
         {event.rsvp_form_config.ask_plus_one && (
-          <div className="pt-2 border-t border-[#E2E8F0]">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#0F172A]">
+          <div className="pt-2 border-t border-white/10">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
               <input
                 type="checkbox"
                 checked={hasPlusOne}
                 onChange={(e) => setHasPlusOne(e.target.checked)}
-                className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A]"
+                className="w-4 h-4 rounded text-[#FF5500] focus:ring-[#FF5500] accent-[#FF5500]"
               />
               <span>
-                <Users className="w-3.5 h-3.5 inline mr-1 text-[#64748B]" />
+                <Users className="w-3.5 h-3.5 inline mr-1 text-white/60" />
                 Will you be bringing a +1 guest?
               </span>
             </label>
@@ -662,7 +662,7 @@ export default function RSVPForm({
                   placeholder="Full name of your +1 guest"
                   value={plusOneName}
                   onChange={(e) => setPlusOneName(e.target.value)}
-                  className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors"
+                  className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
                 />
               </div>
             )}
@@ -672,19 +672,19 @@ export default function RSVPForm({
         {/* Dietary Preferences */}
         {event.rsvp_form_config.ask_dietary && (
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
-              <Utensils className="w-3 h-3 inline mr-1 text-[#64748B]" />
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
+              <Utensils className="w-3 h-3 inline mr-1 text-white/60" />
               Dietary Preference
             </label>
             <select
               value={dietary}
               onChange={(e) => setDietary(e.target.value)}
-              className="w-full text-sm px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors"
+              className="w-full text-sm px-3 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors"
             >
-              <option value="vegetarian">Vegetarian / Jain friendly</option>
-              <option value="vegan">Vegan</option>
-              <option value="non-veg">Non-Vegetarian</option>
-              <option value="none">No dietary preferences</option>
+              <option value="vegetarian" className="bg-[#111114] text-white">Vegetarian / Jain friendly</option>
+              <option value="vegan" className="bg-[#111114] text-white">Vegan</option>
+              <option value="non-veg" className="bg-[#111114] text-white">Non-Vegetarian</option>
+              <option value="none" className="bg-[#111114] text-white">No dietary preferences</option>
             </select>
           </div>
         )}
@@ -692,21 +692,21 @@ export default function RSVPForm({
         {/* T-Shirt Size */}
         {event.rsvp_form_config.ask_tshirt && (
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
-              <Shirt className="w-3 h-3 inline mr-1 text-[#64748B]" />
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
+              <Shirt className="w-3 h-3 inline mr-1 text-white/60" />
               T-Shirt Size
             </label>
             <select
               value={tshirt}
               onChange={(e) => setTshirt(e.target.value)}
-              className="w-full text-sm px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors"
+              className="w-full text-sm px-3 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors"
             >
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="XXL">XXL</option>
+              <option value="XS" className="bg-[#111114] text-white">XS</option>
+              <option value="S" className="bg-[#111114] text-white">S</option>
+              <option value="M" className="bg-[#111114] text-white">M</option>
+              <option value="L" className="bg-[#111114] text-white">L</option>
+              <option value="XL" className="bg-[#111114] text-white">XL</option>
+              <option value="XXL" className="bg-[#111114] text-white">XXL</option>
             </select>
           </div>
         )}
@@ -714,8 +714,8 @@ export default function RSVPForm({
         {/* Custom Form Fields */}
         {event.rsvp_form_config.custom_fields?.map((field) => (
           <div key={field.id}>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
-              <HelpCircle className="w-3 h-3 inline mr-1 text-[#64748B]" />
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
+              <HelpCircle className="w-3 h-3 inline mr-1 text-white/60" />
               {field.label} {field.required && '*'}
             </label>
             {field.type === 'dropdown' && field.options ? (
@@ -723,11 +723,11 @@ export default function RSVPForm({
                 required={field.required}
                 value={customAnswers[field.id] || ''}
                 onChange={(e) => setCustomAnswers({ ...customAnswers, [field.id]: e.target.value })}
-                className="w-full text-sm px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors"
+                className="w-full text-sm px-3 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors"
               >
-                <option value="">Select an option</option>
+                <option value="" className="bg-[#111114] text-white">Select an option</option>
                 {field.options.map((opt: string) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option key={opt} value={opt} className="bg-[#111114] text-white">{opt}</option>
                 ))}
               </select>
             ) : (
@@ -737,7 +737,7 @@ export default function RSVPForm({
                 placeholder="Your answer"
                 value={customAnswers[field.id] || ''}
                 onChange={(e) => setCustomAnswers({ ...customAnswers, [field.id]: e.target.value })}
-                className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors"
+                className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
               />
             )}
           </div>
@@ -746,8 +746,8 @@ export default function RSVPForm({
         {/* Host Custom Questions */}
         {event.rsvp_form_config.custom_questions?.map((question, qIdx) => (
           <div key={`cq-${qIdx}`}>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-[#475569]">
-              <HelpCircle className="w-3 h-3 inline mr-1 text-[#E8621A]" />
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-white/70">
+              <HelpCircle className="w-3 h-3 inline mr-1 text-[#FF5500]" />
               {question} *
             </label>
             <input
@@ -756,7 +756,7 @@ export default function RSVPForm({
               placeholder="Your answer"
               value={customAnswers[question] || ''}
               onChange={(e) => setCustomAnswers({ ...customAnswers, [question]: e.target.value })}
-              className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none transition-colors"
+              className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
             />
           </div>
         ))}
@@ -765,7 +765,7 @@ export default function RSVPForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs bg-[#0F172A] hover:bg-black text-white shadow-sm disabled:opacity-50 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs bg-[#FF5500] hover:bg-[#E04B00] text-white shadow-lg shadow-[#FF5500]/25 disabled:opacity-50 transition-all cursor-pointer"
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">

@@ -42,7 +42,7 @@ function ResponsiveEventPoster({ src, title }: { src?: string; title: string }) 
 
   if (!currentSrc || hasError) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#F1F5F9] text-[#64748B] text-xs">
+      <div className="flex items-center justify-center h-full bg-[#111114] text-white/50 text-xs">
         No poster available
       </div>
     );
@@ -138,12 +138,12 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4 sm:py-10 w-full font-sans text-[#0F172A]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 sm:py-10 w-full font-sans text-white">
       {/* Top Utility Bar */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-[#E2E8F0]">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-white/10">
         <Link
           href="/discover"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Discover</span>
@@ -151,9 +151,9 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
         <button
           onClick={() => setShowShareModal(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-bold text-[#0F172A] transition shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-[#0D0D10] hover:bg-[#111114] text-xs font-bold text-white transition shadow-xs cursor-pointer"
         >
-          <Share2 className="w-3.5 h-3.5 text-[#E8621A]" />
+          <Share2 className="w-3.5 h-3.5 text-[#FF5500]" />
           <span>Share</span>
         </button>
       </div>
@@ -169,12 +169,12 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         {/* Left Column: Poster & Details (7 cols) */}
         <div className="lg:col-span-7 space-y-4 sm:space-y-6">
           {/* Cover Poster */}
-          <div className="relative aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#F1F5F9] border border-[#E2E8F0] shadow-sm">
+          <div className="relative aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0D0D10] border border-white/10 shadow-sm">
             <ResponsiveEventPoster src={event.cover_image_url} title={event.title} />
 
             {/* Badges Overlay */}
             <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-              <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-bold text-white uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+              <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-bold text-white uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-white/10">
                 {event.is_public === false || String(event.is_public) === 'false' ? (
                   <>
                     <Lock className="w-3 h-3 text-amber-400" />
@@ -188,11 +188,11 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               </span>
 
               {event.external_price_text ? (
-                <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-bold text-[#0F172A] shadow-sm">
+                <span className="px-3 py-1 rounded-full bg-[#0D0D10]/90 backdrop-blur-md text-[11px] font-bold text-white shadow-sm border border-white/15">
                   {event.external_price_text}
                 </span>
               ) : (
-                <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-bold text-[#0F172A] shadow-sm">
+                <span className="px-3 py-1 rounded-full bg-[#0D0D10]/90 backdrop-blur-md text-[11px] font-bold text-white shadow-sm border border-white/15">
                   Free RSVP
                 </span>
               )}
@@ -202,20 +202,20 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
           {/* Event Header Information */}
           <div className="space-y-2.5">
             {(event.is_public === false || String(event.is_public) === 'false') && (
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center gap-2.5 text-xs text-amber-950 font-medium">
-                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2.5 text-xs text-amber-300 font-medium">
+                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>
                   <strong>Private Gathering:</strong> Unlisted from public discovery. You received exclusive direct invite access from the host.
                 </span>
               </div>
             )}
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#0F172A] tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
               {event.title}
             </h1>
 
             {event.tagline && (
-              <p className="text-sm font-normal text-[#64748B] leading-relaxed">
+              <p className="text-sm font-normal text-white/60 leading-relaxed">
                 {event.tagline}
               </p>
             )}
@@ -224,15 +224,15 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
           {/* Schedule & Location Blocks */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             {/* Date / Time Card */}
-            <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] flex items-start gap-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4 text-[#E8621A]" />
+            <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex items-start gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-[#111114] border border-white/10 text-white flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4 text-[#FF5500]" />
               </div>
               <div className="min-w-0">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">When</div>
-                <div className="text-xs font-bold text-[#0F172A] mt-0.5">{formatIST(event.start_at)}</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/40">When</div>
+                <div className="text-xs font-bold text-white mt-0.5">{formatIST(event.start_at)}</div>
                 {event.end_at && (
-                  <div className="text-[11px] text-[#64748B] mt-0.5">
+                  <div className="text-[11px] text-white/50 mt-0.5">
                     Until {formatIST(event.end_at).split('·')[1] || formatIST(event.end_at)}
                   </div>
                 )}
@@ -240,16 +240,16 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             </div>
 
             {/* Location Card */}
-            <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] flex items-start gap-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] flex items-center justify-center shrink-0">
-                <MapPin className="w-4 h-4 text-[#E8621A]" />
+            <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex items-start gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-[#111114] border border-white/10 text-white flex items-center justify-center shrink-0">
+                <MapPin className="w-4 h-4 text-[#FF5500]" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Where</div>
-                <div className="text-xs font-bold text-[#0F172A] truncate mt-0.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/40">Where</div>
+                <div className="text-xs font-bold text-white truncate mt-0.5">
                   {event.location_name || event.city}
                 </div>
-                <div className="text-[11px] text-[#64748B] truncate">
+                <div className="text-[11px] text-white/50 truncate">
                   {event.location_address || `${event.city}, India`}
                 </div>
                 {event.event_type !== 'online' && (
@@ -257,7 +257,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#E8621A] hover:underline mt-1"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#FF5500] hover:underline mt-1"
                   >
                     <span>View on Google Maps</span>
                     <Navigation className="w-2.5 h-2.5" />
@@ -268,17 +268,17 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
           </div>
 
           {/* Description Section */}
-          <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-xs space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+          <div className="bg-[#0D0D10] rounded-2xl p-6 border border-white/10 shadow-xs space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white/40">
               About This Experience
             </h2>
-            <div className="text-xs sm:text-sm font-normal text-[#475569] whitespace-pre-line leading-relaxed">
+            <div className="text-xs sm:text-sm font-normal text-white/80 whitespace-pre-line leading-relaxed">
               {event.description || 'No detailed description provided.'}
             </div>
           </div>
 
           {/* Host Profile Card */}
-          <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3 min-w-0">
               {event.organizer_logo ? (
                 <Image
@@ -286,38 +286,38 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                   alt={event.organizer_name || 'Organizer'}
                   width={42}
                   height={42}
-                  className="rounded-full object-cover border border-[#E2E8F0] shrink-0"
+                  className="rounded-full object-cover border border-white/20 shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#111114] border border-white/10 text-white flex items-center justify-center text-xs font-bold shrink-0">
                   {(event.organizer_name || 'V')[0]?.toUpperCase()}
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-[#0F172A] truncate">
+                <div className="text-xs font-bold text-white truncate">
                   Hosted by {event.organizer_name || event.source_platform || 'Curated by Vibe'}
                 </div>
-                <div className="text-[11px] text-[#64748B] truncate">
+                <div className="text-[11px] text-white/40 truncate">
                   {event.organizer_handle ? `@${event.organizer_handle}` : 'Verified Event Curator'}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#F1F5F9]">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-white/10">
               <button
                 onClick={handleAskHostClick}
-                className="py-2 px-3 sm:py-1.5 sm:px-3.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] hover:text-[#E8621A] transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="py-2 px-3 sm:py-1.5 sm:px-3.5 rounded-xl bg-[#111114] hover:bg-white/10 border border-white/10 text-xs font-semibold text-white hover:text-[#FF5500] transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                 title="Send a direct question to the organizer"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
+                <MessageSquare className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
                 <span>Ask Host</span>
               </button>
 
               <button
                 onClick={() => setShowShareModal(true)}
-                className="py-2 px-3 sm:py-1.5 sm:px-3.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="py-2 px-3 sm:py-1.5 sm:px-3.5 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+                <Share2 className="w-3.5 h-3.5 text-white/60 shrink-0" />
                 <span>Share Event</span>
               </button>
             </div>
@@ -326,20 +326,20 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
         {/* Right Column: Sticky Action & Ticket Box (5 cols) */}
         <div className="lg:col-span-5 space-y-4 sm:space-y-6">
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E2E8F0] shadow-sm space-y-4 sm:space-y-5 sticky top-24">
+          <div className="bg-[#0D0D10] rounded-2xl p-5 sm:p-6 border border-white/10 shadow-sm space-y-4 sm:space-y-5 sticky top-24">
             {/* Price & Status Banner */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Pricing</div>
-                <div className="text-2xl font-black text-[#0F172A] font-sans">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/40">Pricing</div>
+                <div className="text-2xl font-black text-white font-sans">
                   {event.external_price_text || (isExternal ? 'Official Ticketing' : 'Free Entry')}
                 </div>
               </div>
 
               {event.capacity && (
                 <div className="text-right">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Availability</div>
-                  <div className="text-xs font-bold text-[#E8621A] flex items-center gap-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-white/40">Availability</div>
+                  <div className="text-xs font-bold text-[#FF5500] flex items-center gap-1">
                     <Flame className="w-3.5 h-3.5" />
                     <span>{Math.max(0, event.capacity - confirmedCount)} spots left</span>
                   </div>
@@ -353,7 +353,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 href={normalizedTicketUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3.5 px-4 rounded-xl bg-[#0F172A] hover:bg-black text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white font-bold text-xs transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 group cursor-pointer"
               >
                 <span>Book Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'}</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -367,7 +367,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                   <CheckCircle2 className="w-4 h-4 text-white" />
                   <span>View Your Confirmed Pass &amp; QR</span>
                 </button>
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-600 font-medium text-center">
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400 font-medium text-center">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Spot Confirmed · Digital Pass Ready</span>
                 </div>
@@ -375,7 +375,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             ) : (
               <button
                 onClick={() => setShowRsvpModal(true)}
-                className="w-full py-3.5 px-4 rounded-xl bg-[#0F172A] hover:bg-black text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white font-bold text-xs transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Ticket className="w-4 h-4" />
                 <span>RSVP Now — Free Entry</span>
@@ -386,22 +386,22 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             <div className="space-y-2.5 pt-2">
               <button
                 onClick={handleAskHostClick}
-                className="w-full py-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-stone-50 hover:border-orange-500 text-xs font-semibold text-[#0F172A] hover:text-orange-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                className="w-full py-2.5 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 hover:border-[#FF5500]/50 text-xs font-semibold text-white hover:text-[#FF5500] transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
+                <MessageSquare className="w-3.5 h-3.5 text-[#FF5500]" />
                 <span>Ask Host a Question</span>
               </button>
 
               <button
                 onClick={() => setShowShareModal(true)}
-                className="w-full py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-xs font-semibold text-[#0F172A] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#E8621A]" />
+                <Share2 className="w-3.5 h-3.5 text-[#FF5500]" />
                 <span>Invite Friends / Share Link</span>
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#64748B] text-center pt-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-white/50 text-center pt-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span>Instant confirmation • Verified listing</span>
               </div>
             </div>
@@ -412,22 +412,22 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
       {/* Clean RSVP Modal if native event */}
       {!isExternal && showRsvpModal && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowRsvpModal(false);
           }}
         >
-          <div className="relative w-full max-w-md bg-white rounded-3xl border border-[#E2E8F0] p-6 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-[#0D0D10] rounded-3xl border border-white/15 p-6 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto text-white">
             <button
               onClick={() => setShowRsvpModal(false)}
-              className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#0F172A] w-8 h-8 rounded-full hover:bg-[#F1F5F9] flex items-center justify-center transition-colors text-sm font-bold z-10 cursor-pointer"
+              className="absolute top-4 right-4 text-white/60 hover:text-white w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-sm font-bold z-10 cursor-pointer"
               aria-label="Close modal"
             >
               ✕
             </button>
             <RSVPForm
               event={event}
-              cardClass="border-0 shadow-none p-0 bg-transparent"
+              cardClass="border-0 shadow-none p-0 bg-transparent text-white"
               onSuccess={(rsvp) => {
                 setConfirmedRsvp(rsvp);
               }}

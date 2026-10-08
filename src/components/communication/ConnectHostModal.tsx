@@ -83,7 +83,7 @@ export default function ConnectHostModal({
 
   const modalBody = (
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="dark-dialog fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           e.preventDefault();
@@ -93,7 +93,7 @@ export default function ConnectHostModal({
       }}
     >
       <div
-        className="relative w-full max-w-lg bg-[#0E1118] border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white overflow-hidden"
+        className="dark-dialog-content relative w-full max-w-lg bg-[#0E1118] border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient background glows */}

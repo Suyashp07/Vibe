@@ -40,7 +40,6 @@ const fraunces = Fraunces({
 
 import PWARegister from '@/components/pwa/PWARegister';
 import AutoLocationDetector from '@/components/location/AutoLocationDetector';
-import CustomCursor from '@/components/common/CustomCursor';
 import SmoothScroll from '@/components/common/SmoothScroll';
 import AmbientBackground from '@/components/common/AmbientBackground';
 import { ThemeProvider } from '@/components/common/ThemeContext';
@@ -116,7 +115,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white relative">
         <ThemeProvider>
           <AmbientBackground />
-          <CustomCursor />
           <SmoothScroll>
             <div className="relative z-10">
               {children}

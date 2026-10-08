@@ -491,7 +491,7 @@ export default function WhatsOnFeed() {
               <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/95 via-black/80 to-black/35 pointer-events-none" />
 
               {/* Spotlight Content Overlay */}
-              <div className="absolute inset-0 p-6 sm:p-8 md:p-10 flex flex-col justify-between z-10 text-white">
+              <div className="flashcard-hero-overlay absolute inset-0 p-6 sm:p-8 md:p-10 flex flex-col justify-between z-10 text-white">
                 {/* Top Badge: ⚡ IN THE SPOTLIGHT */}
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-white text-[11px] font-black uppercase tracking-wider">

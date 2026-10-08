@@ -82,10 +82,22 @@ export default function Navbar() {
     // Calculate user's active confirmed passes count for webapp badge
     const updatePasses = () => {
       try {
+        const userEmail =
+          profile?.email ||
+          (typeof window !== 'undefined' ? localStorage.getItem('vibe_guest_email') : null);
+        if (!userEmail) {
+          setConfirmedPassCount(0);
+          return;
+        }
         const passes = getRSVPs();
-        const active = passes.filter((p) => p.status === 'confirmed').length;
+        const target = userEmail.toLowerCase().trim();
+        const active = passes.filter(
+          (p) => p.status === 'confirmed' && (p.email || '').toLowerCase().trim() === target
+        ).length;
         setConfirmedPassCount(active);
-      } catch {}
+      } catch {
+        setConfirmedPassCount(0);
+      }
     };
 
     updatePasses();
@@ -98,13 +110,21 @@ export default function Navbar() {
       setLocationModalOpen(true);
     };
 
+    const handlePassesUpdated = () => {
+      updatePasses();
+    };
+
     window.addEventListener('vibe:location_changed', handleCityChange);
     window.addEventListener('vibe:open_location_modal', handleOpenLocationModal);
+    window.addEventListener('vibe:rsvp_updated', handlePassesUpdated);
+    window.addEventListener('storage', handlePassesUpdated);
     return () => {
       window.removeEventListener('vibe:location_changed', handleCityChange);
       window.removeEventListener('vibe:open_location_modal', handleOpenLocationModal);
+      window.removeEventListener('vibe:rsvp_updated', handlePassesUpdated);
+      window.removeEventListener('storage', handlePassesUpdated);
     };
-  }, []);
+  }, [profile?.email]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

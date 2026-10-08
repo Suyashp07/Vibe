@@ -27,7 +27,10 @@ import {
   MessageSquare,
   QrCode,
   Lock,
-  Globe
+  Globe,
+  LogIn,
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -44,12 +47,14 @@ import {
   formatIST
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
-import { useAuth, getInitials, isSyntheticAvatar } from '@/lib/auth';
+import { useAuth, getInitials, isSyntheticAvatar, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
 
 function DashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { profile, isLoggedIn } = useAuth();
+  const { profile, isLoggedIn, loading } = useAuth();
+  const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
+  const isAuth = isLoggedIn || Boolean(localSession) || Boolean(profile);
 
   // If user lands with ?tab=passes, redirect smoothly to the dedicated /passes page
   const tabParam = searchParams.get('tab');
@@ -109,7 +114,9 @@ function DashboardInner() {
 
   // Events hosted by this user/organizer (including private events)
   const hostEvents = useMemo(() => {
-    if (!profile) return events;
+    if (!profile) return [];
+    if (profile.role === 'super_admin') return events;
+
     const profileId = (profile.id || '').toLowerCase();
     const profileHandle = (profile.handle || '').toLowerCase();
     const profileName = (profile.name || '').toLowerCase();
@@ -123,9 +130,6 @@ function DashboardInner() {
 
       return (
         (profileId && eOrgId === profileId) ||
-        eOrgId === 'org-current' ||
-        eOrgId === 'org-local' ||
-        eOrgId === 'org-user' ||
         (profileHandle && eOrgHandle === profileHandle) ||
         (profileName && (eOrgName === profileName || eOrgName.includes(profileName))) ||
         (profileEmail && eOrgEmail === profileEmail)
@@ -227,6 +231,96 @@ function DashboardInner() {
 
   const displayName = profile?.name || 'Organizer';
 
+  // 1. Loading state while session resolves
+  if (loading && !localSession && !profile) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="w-7 h-7 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated Gate: Prevent unauthenticated access to the host workstation
+  if (!isAuth && !loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
+        <Navbar />
+
+        <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
+          <div className="w-full bg-[#0D0D10] rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 text-white mx-auto flex items-center justify-center shadow-xs">
+              <Megaphone className="w-7 h-7 text-[#FF5500]" />
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="font-sans font-bold text-2xl text-white">
+                Host Workstation
+              </h1>
+              <p className="text-xs text-white/60 max-w-sm mx-auto leading-relaxed">
+                Sign in to manage your hosted events, monitor guest RSVPs, track door check-ins, and broadcast live event updates.
+              </p>
+            </div>
+
+            <button
+              onClick={() => signInWithGoogle('organizer', '/dashboard')}
+              type="button"
+              className="w-full py-2.5 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 cursor-pointer"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <Link
+                href="/login?redirect=/dashboard"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs transition-all hover:border-white/20"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </Link>
+
+              <Link
+                href="/signup?redirect=/dashboard"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-semibold text-xs transition-all shadow-md"
+              >
+                <span>Sign Up</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 flex items-center justify-center gap-1.5 text-[11px] text-white/50">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Organizer Workstation • Instant Publishing</span>
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white">
       <Navbar />
@@ -273,7 +367,7 @@ function DashboardInner() {
                   </span>
                   <span className="text-white/30 hidden sm:inline">·</span>
                   <span className="text-xs font-mono text-white/50 truncate max-w-[220px] sm:max-w-none">
-                    {profile?.email || 'host@vibe.in'}
+                    {profile?.email || 'Authenticated Host'}
                   </span>
                   {profile?.role === 'super_admin' && (
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-900/50 text-purple-300 border border-purple-500/30">
@@ -533,7 +627,7 @@ function DashboardInner() {
                     className="group bg-[#0D0D10] rounded-2xl border border-white/10 hover:border-[#FF5500]/50 overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(255,85,0,0.18)] flex flex-col"
                   >
                     {/* Poster Image Container */}
-                    <div className="relative aspect-[16/9] w-full bg-black overflow-hidden">
+                    <div className="event-card-cover relative aspect-[16/9] w-full bg-black overflow-hidden">
                       {event.cover_image_url ? (
                         <Image
                           src={event.cover_image_url}
@@ -589,7 +683,7 @@ function DashboardInner() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5 bg-[#0D0D10]">
+                    <div className="event-card-body p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5 bg-[#0D0D10]">
                       <div>
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-white/50">
                           <Clock className="w-3.5 h-3.5 text-[#FF5500]" />

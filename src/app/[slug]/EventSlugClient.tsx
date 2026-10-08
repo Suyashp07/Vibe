@@ -160,8 +160,8 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-2 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -173,23 +173,23 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
     // If event is unverified/draft and viewer is NOT an admin, block access
     if (isDraft && !isAdmin) {
       return (
-        <div className="min-h-screen bg-surface-2 flex flex-col">
+        <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col transition-colors">
           <Navbar />
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <ShieldAlert className="w-7 h-7" />
             </div>
-            <h2 className="font-display font-black text-2xl sm:text-3xl text-ink">
+            <h2 className="font-display font-black text-2xl sm:text-3xl text-white">
               Pending Admin Verification
             </h2>
-            <p className="text-sm text-ink-muted max-w-md">
+            <p className="text-sm text-white/60 max-w-md">
               &ldquo;{event.title}&rdquo; has been submitted to Vibe and is currently awaiting administrator review. It will be open for RSVPs once verified.
             </p>
             <Link
               href="/discover"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-btn bg-brand text-white text-xs font-bold hover:bg-brand-mid shadow-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF5500] text-white text-xs font-bold hover:bg-[#E04B00] shadow-sm"
             >
-              <Compass className="w-4 h-4 text-accent" />
+              <Compass className="w-4 h-4 text-white" />
               <span>Browse Live Events</span>
             </Link>
           </div>
@@ -199,7 +199,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
     }
 
     return (
-      <div className="min-h-screen flex flex-col bg-surface-2">
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] transition-colors">
         {isDraft && isAdmin && (
           <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-2.5 text-xs text-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3 sticky top-0 z-50 backdrop-blur-md">
             <div className="flex items-center gap-2">
@@ -235,7 +235,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
   // Render Organizer Profile Page
   if (organizer) {
     return (
-      <div className="min-h-screen flex flex-col bg-surface-2">
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] transition-colors">
         <Navbar />
         <OrganizerProfileView organizer={organizer} events={organizerEvents} />
         <Footer />
@@ -245,7 +245,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
 
   // 404 Not Found State
   return (
-    <div className="min-h-screen bg-surface-2 flex flex-col">
+    <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col transition-colors">
       <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-4">
         <h2 className="font-display font-black text-3xl text-ink">Page Not Found</h2>

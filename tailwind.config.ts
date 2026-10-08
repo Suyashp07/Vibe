@@ -11,40 +11,40 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: "#0A0A0A",
-          mid: "#171717",
-          deep: "#000000",
+          DEFAULT: "var(--brand)",
+          mid: "var(--brand-mid)",
+          deep: "var(--brand-deep)",
         },
         accent: {
-          DEFAULT: "#E8621A",
-          dark: "#C84E0E",
-          light: "#FFF1E8",
+          DEFAULT: "var(--accent)",
+          dark: "var(--accent-dark)",
+          light: "var(--accent-light)",
         },
         gold: {
-          DEFAULT: "#D97706",
-          light: "#FEF3C7",
+          DEFAULT: "var(--gold)",
+          light: "var(--gold-light)",
         },
         ink: {
-          DEFAULT: "#0A0A0A",
-          secondary: "#525252",
-          muted: "#737373",
+          DEFAULT: "var(--ink)",
+          secondary: "var(--ink-secondary)",
+          muted: "var(--ink-muted)",
         },
         surface: {
-          DEFAULT: "#FFFFFF",
-          2: "#F8FAFC",
-          3: "#F1F5F9",
+          DEFAULT: "var(--surface)",
+          2: "var(--surface-2)",
+          3: "var(--surface-3)",
         },
         border: {
-          DEFAULT: "#E2E8F0",
-          strong: "#CBD5E1",
+          DEFAULT: "var(--border)",
+          strong: "var(--border-strong)",
         },
         success: {
-          DEFAULT: "#16A34A",
-          bg: "#DCFCE7",
+          DEFAULT: "var(--success)",
+          bg: "var(--success-bg)",
         },
         warning: {
-          DEFAULT: "#D97706",
-          bg: "#FEF3C7",
+          DEFAULT: "var(--warning)",
+          bg: "var(--warning-bg)",
         },
       },
       fontFamily: {

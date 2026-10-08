@@ -59,29 +59,46 @@ export default function PWARegister() {
   if (!showInstallBanner) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 z-50 bg-[#0F172A] text-white p-3.5 rounded-2xl shadow-2xl border border-white/10 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8621A] to-[#F97316] flex items-center justify-center font-black text-white text-base shrink-0 shadow-sm">
-          V
+    <div
+      role="dialog"
+      aria-label="Install Vibe WebApp"
+      className="pwa-install-banner fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-[410px] z-[9998] p-3.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl border bg-white/95 dark:bg-[#0D0D10]/95 border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300"
+    >
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {/* Vibe App Icon Badge */}
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF5500] to-[#E04B00] flex items-center justify-center font-black text-base shrink-0 shadow-md shadow-[#FF5500]/25 select-none">
+          <span style={{ color: '#FFFFFF' }} className="text-white font-black">
+            V
+          </span>
         </div>
-        <div className="min-w-0">
-          <p className="text-xs font-bold truncate">Install Vibe WebApp</p>
-          <p className="text-[11px] text-[#94A3B8] truncate">Fast offline access & instant RSVP passes</p>
+
+        {/* Copy Text */}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate tracking-tight">
+            Install Vibe WebApp
+          </p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+            Fast offline access & instant RSVP passes
+          </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      {/* Action Buttons */}
+      <div className="flex items-center gap-1.5 shrink-0">
         <button
+          type="button"
           onClick={handleInstallClick}
-          className="px-3 py-1.5 bg-white text-[#0F172A] hover:bg-[#F1F5F9] text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+          className="px-3.5 py-2 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-[#FF5500]/25 active:scale-95"
         >
-          <Download className="w-3.5 h-3.5 text-[#E8621A]" />
-          <span>Install</span>
+          <Download className="w-3.5 h-3.5 stroke-[2.5]" style={{ color: '#FFFFFF' }} />
+          <span style={{ color: '#FFFFFF' }}>Install</span>
         </button>
+
         <button
+          type="button"
           onClick={handleDismiss}
-          className="p-1.5 text-[#94A3B8] hover:text-white transition"
-          aria-label="Dismiss banner"
+          className="p-2 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+          aria-label="Dismiss install banner"
         >
           <X className="w-4 h-4" />
         </button>

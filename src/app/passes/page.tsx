@@ -126,10 +126,10 @@ function PassesInner() {
   // Filter passes belonging to this guest
   const guestPasses = useMemo(() => {
     const targetEmail = guestEmail.trim().toLowerCase();
+    if (!targetEmail) return [];
 
     return rsvps
       .filter((r) => {
-        if (!targetEmail) return true;
         const rEmail = (r.email || '').toLowerCase().trim();
         return rEmail === targetEmail;
       })
@@ -456,7 +456,7 @@ function PassesInner() {
                     className="group bg-[#0D0D10] rounded-2xl border border-white/10 hover:border-[#FF5500]/50 overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(255,85,0,0.18)] flex flex-col text-white"
                   >
                     {/* Poster Image Container */}
-                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full bg-black overflow-hidden">
+                    <div className="event-card-cover relative aspect-[16/10] sm:aspect-[4/3] w-full bg-black overflow-hidden">
                       {event.cover_image_url ? (
                         <Image
                           src={event.cover_image_url}
@@ -512,7 +512,7 @@ function PassesInner() {
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4 bg-[#0D0D10]">
+                    <div className="event-card-body p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4 bg-[#0D0D10]">
                       <div>
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF5500] uppercase tracking-wider">
                           <span>{event.category || 'Special Gathering'}</span>

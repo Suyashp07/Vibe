@@ -146,7 +146,7 @@ export default function ShareEventModal({
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
                   copied
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-brand hover:bg-accent text-white shadow-xs'
+                    : 'bg-[#FF5500] hover:bg-[#E04B00] text-white shadow-xs'
                 }`}
               >
                 {copied ? (
@@ -173,13 +173,13 @@ export default function ShareEventModal({
               {/* WhatsApp */}
               <button
                 onClick={handleWhatsApp}
-                className="p-3 rounded-xl border border-border hover:border-emerald-400 bg-surface hover:bg-emerald-50/40 text-left transition flex items-center gap-2.5 group"
+                className="p-3 rounded-xl border border-border hover:border-emerald-400 bg-surface hover:bg-emerald-500/10 text-left transition flex items-center gap-2.5 group cursor-pointer"
               >
                 <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <MessageCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-ink group-hover:text-emerald-700">WhatsApp</div>
+                  <div className="text-xs font-bold text-ink group-hover:text-emerald-500">WhatsApp</div>
                   <div className="text-[10px] text-ink-muted">Send to chats</div>
                 </div>
               </button>
@@ -187,13 +187,13 @@ export default function ShareEventModal({
               {/* Telegram */}
               <button
                 onClick={handleTelegram}
-                className="p-3 rounded-xl border border-border hover:border-sky-400 bg-surface hover:bg-sky-50/40 text-left transition flex items-center gap-2.5 group"
+                className="p-3 rounded-xl border border-border hover:border-sky-400 bg-surface hover:bg-sky-500/10 text-left transition flex items-center gap-2.5 group cursor-pointer"
               >
                 <div className="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <Send className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-ink group-hover:text-sky-700">Telegram</div>
+                  <div className="text-xs font-bold text-ink group-hover:text-sky-500">Telegram</div>
                   <div className="text-[10px] text-ink-muted">Share to channels</div>
                 </div>
               </button>
@@ -201,7 +201,7 @@ export default function ShareEventModal({
               {/* Twitter / X */}
               <button
                 onClick={handleTwitter}
-                className="p-3 rounded-xl border border-border hover:border-zinc-400 bg-surface hover:bg-zinc-50 text-left transition flex items-center gap-2.5 group"
+                className="p-3 rounded-xl border border-border hover:border-zinc-400 bg-surface hover:bg-zinc-500/10 text-left transition flex items-center gap-2.5 group cursor-pointer"
               >
                 <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shrink-0 shadow-xs">
                   <Twitter className="w-4 h-4" />
@@ -215,13 +215,13 @@ export default function ShareEventModal({
               {/* Google Calendar */}
               <button
                 onClick={handleGoogleCalendar}
-                className="p-3 rounded-xl border border-border hover:border-amber-400 bg-surface hover:bg-amber-50/40 text-left transition flex items-center gap-2.5 group"
+                className="p-3 rounded-xl border border-border hover:border-amber-400 bg-surface hover:bg-amber-500/10 text-left transition flex items-center gap-2.5 group cursor-pointer"
               >
                 <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-ink group-hover:text-amber-700">Add to Cal</div>
+                  <div className="text-xs font-bold text-ink group-hover:text-amber-500">Add to Cal</div>
                   <div className="text-[10px] text-ink-muted">Google Calendar</div>
                 </div>
               </button>

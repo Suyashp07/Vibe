@@ -391,7 +391,7 @@ function VibesReelsContent() {
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-[#07090E] text-white relative overflow-hidden flex flex-col justify-center items-center select-none">
+    <div className="vibe-instant-container dark-canvas h-[100dvh] w-full bg-[#07090E] text-white relative overflow-hidden flex flex-col justify-center items-center select-none" data-theme="dark">
       {/* Top Floating Glass Navigation Header */}
       <header className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/90 via-black/40 to-transparent px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between pointer-events-auto">
         {/* Left: Brand / Back */}
