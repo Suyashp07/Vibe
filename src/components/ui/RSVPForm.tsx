@@ -216,12 +216,6 @@ export default function RSVPForm({
       return;
     }
 
-    // If user is already authenticated with this email, skip redundant OTP!
-    if (isLoggedIn && profile?.email && profile.email.toLowerCase() === cleanEmail.toLowerCase()) {
-      await finalizeRsvp();
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMessage(null);
     setOtpToken('');
