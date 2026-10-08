@@ -31,7 +31,8 @@ import {
   RotateCcw,
   ExternalLink,
   ChevronRight,
-  Filter
+  Filter,
+  ImageIcon
 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { getEvents, getRSVPs, syncEventsWithSupabase, syncRSVPsWithSupabase, markRSVPAttended, formatIST, getPassSerialNumber } from '@/lib/store';
@@ -88,8 +89,10 @@ function OrganizerCheckInContent() {
   const [manualSearchOpen, setManualSearchOpen] = useState(false);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const autoResumeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isRetryingCamera, setIsRetryingCamera] = useState(false);
 
   // Load local data and sync (including private events hosted by organizer)
   const loadData = useCallback(async () => {
@@ -310,7 +313,138 @@ function OrganizerCheckInContent() {
     }
   }, [isVerifying, selectedEventId, playSound, triggerHaptic]);
 
-  // Resume camera scanning
+  // Stop camera scanner cleanly
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+        await scannerRef.current.clear();
+      } catch (err) {
+        console.warn('Error stopping scanner:', err);
+      }
+    }
+    setIsScanning(false);
+  }, []);
+
+  // Initialize camera scanner with multi-tier hardware fallback
+  const startScanner = useCallback(async (isUserInitiated = false) => {
+    setScannerError(null);
+    if (isUserInitiated) setIsRetryingCamera(true);
+
+    if (typeof window === 'undefined') return;
+
+    // Check mediaDevices support
+    if (!navigator?.mediaDevices || !navigator?.mediaDevices.getUserMedia) {
+      setIsScanning(false);
+      setIsRetryingCamera(false);
+      setScannerError('Camera access requires a secure connection (HTTPS) or a modern browser like Chrome or Safari.');
+      return;
+    }
+
+    try {
+      // 1. Explicit pre-flight check on user action to trigger native browser prompt
+      if (isUserInitiated) {
+        try {
+          const warmupStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: facingMode } },
+          });
+          warmupStream.getTracks().forEach((t) => t.stop());
+        } catch (permErr: any) {
+          console.warn('Explicit getUserMedia preflight:', permErr);
+          if (permErr?.name === 'NotAllowedError' || permErr?.name === 'PermissionDeniedError') {
+            setIsScanning(false);
+            setIsRetryingCamera(false);
+            setScannerError('Camera permission is blocked. Tap the 🔒 lock icon in your browser address bar → Site Settings → Set Camera to "Allow", then tap Retry.');
+            return;
+          }
+        }
+      }
+
+      // 2. Ensure existing scanner instance is completely stopped & cleared
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop();
+          }
+          await scannerRef.current.clear();
+        } catch {
+          // ignore
+        }
+        scannerRef.current = null;
+      }
+
+      // 3. Ensure DOM mount point exists
+      const container = document.getElementById('qr-reader');
+      if (!container) {
+        console.warn('qr-reader container not found in DOM');
+        setIsRetryingCamera(false);
+        return;
+      }
+
+      const html5Qr = new Html5Qrcode('qr-reader', {
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        verbose: false,
+      });
+      scannerRef.current = html5Qr;
+
+      const config = {
+        fps: 15,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+      };
+
+      const onSuccess = (decodedText: string) => {
+        handleVerifyScan(decodedText);
+      };
+
+      const onError = () => {
+        // Normal frame-by-frame lookup failure
+      };
+
+      // 4. Try starting with facingMode
+      try {
+        await html5Qr.start({ facingMode: facingMode }, config, onSuccess, onError);
+        setIsScanning(true);
+        setScannerError(null);
+      } catch (modeErr) {
+        console.warn('FacingMode start failed, trying deviceId fallback:', modeErr);
+        // Fallback: list all video input cameras and choose back camera
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          const backCam =
+            cameras.find(
+              (c) =>
+                c.label.toLowerCase().includes('back') ||
+                c.label.toLowerCase().includes('rear') ||
+                c.label.toLowerCase().includes('environment')
+            ) || cameras[0];
+
+          await html5Qr.start(backCam.id, config, onSuccess, onError);
+          setIsScanning(true);
+          setScannerError(null);
+        } else {
+          throw modeErr;
+        }
+      }
+    } catch (err: any) {
+      console.warn('Failed to start Html5Qrcode camera:', err);
+      setIsScanning(false);
+      const msg = err?.message || '';
+      if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
+        setScannerError('Camera permission was denied. Tap the 🔒 lock icon in your browser address bar → Site Settings → Set Camera to "Allow", then tap Retry.');
+      } else if (msg.includes('NotFoundError') || msg.includes('device not found')) {
+        setScannerError('No camera found on this device. You can scan pass photos below or search guests manually.');
+      } else {
+        setScannerError('Camera unavailable or in use by another app. Please check browser settings or scan a pass photo.');
+      }
+    } finally {
+      setIsRetryingCamera(false);
+    }
+  }, [facingMode, handleVerifyScan]);
+
+  // Resume camera scanning after a successful scan
   const handleResumeScanning = useCallback(async () => {
     if (autoResumeTimerRef.current) {
       clearTimeout(autoResumeTimerRef.current);
@@ -325,56 +459,44 @@ function OrganizerCheckInContent() {
         startScanner();
       }
     }
-  }, []);
+  }, [startScanner]);
 
-  // Initialize camera scanner
-  const startScanner = useCallback(async () => {
-    setScannerError(null);
-    try {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode('qr-reader', {
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          verbose: false,
-        });
-      }
+  // Scan QR code from uploaded image or pass screenshot
+  const handleScanFromFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-      const config = {
-        fps: 15,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0,
-      };
-
-      await scannerRef.current.start(
-        { facingMode: facingMode },
-        config,
-        (decodedText) => {
-          handleVerifyScan(decodedText);
-        },
-        () => {
-          // Frame scan error (expected while camera is looking for QR)
-        }
-      );
-
-      setIsScanning(true);
-    } catch (err: any) {
-      console.warn('Failed to start Html5Qrcode camera:', err);
-      setIsScanning(false);
-      setScannerError(
-        err?.message || 'Camera permission denied or camera unavailable. Please check browser settings.'
-      );
-    }
-  }, [facingMode, handleVerifyScan]);
-
-  const stopScanner = useCallback(async () => {
-    if (scannerRef.current && isScanning) {
+      setIsVerifying(true);
       try {
-        await scannerRef.current.stop();
-        setIsScanning(false);
-      } catch (err) {
-        console.warn('Error stopping scanner:', err);
+        let qrScanner = scannerRef.current;
+        if (!qrScanner) {
+          qrScanner = new Html5Qrcode('qr-reader', {
+            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+            verbose: false,
+          });
+          scannerRef.current = qrScanner;
+        }
+
+        const decodedText = await qrScanner.scanFile(file, true);
+        handleVerifyScan(decodedText);
+      } catch (fileErr: any) {
+        console.warn('Failed to scan QR from file:', fileErr);
+        playSound('error');
+        setLastScanResult({
+          valid: false,
+          status: 'error',
+          message: 'Could not detect a QR code in this image. Please ensure the QR is clear and well-lit, or search manually.',
+        });
+      } finally {
+        setIsVerifying(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
-    }
-  }, [isScanning]);
+    },
+    [handleVerifyScan, playSound]
+  );
 
   // Start scanner on mount
   useEffect(() => {
@@ -712,8 +834,17 @@ function OrganizerCheckInContent() {
                 {/* Restart camera */}
                 <button
                   type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  title="Scan Pass from Photo / File"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => {
-                    stopScanner().then(() => startScanner());
+                    stopScanner().then(() => startScanner(true));
                   }}
                   className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
                   title="Restart Camera"
@@ -723,42 +854,78 @@ function OrganizerCheckInContent() {
               </div>
             </div>
 
-            {/* Error Banner */}
-            {scannerError ? (
-              <div className="w-full aspect-square rounded-2xl bg-black/60 border border-rose-500/30 p-5 flex flex-col items-center justify-center text-center space-y-3">
-                <XCircle className="w-10 h-10 text-rose-500" />
-                <p className="text-xs text-rose-300 max-w-xs">{scannerError}</p>
-                <button
-                  type="button"
-                  onClick={startScanner}
-                  className="py-2 px-4 rounded-xl bg-white text-black text-xs font-bold"
-                >
-                  Retry Camera Permission
-                </button>
-              </div>
-            ) : (
-              <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-black border-2 border-white/15 shadow-2xl">
-                {/* HTML5 QR Mount Point */}
-                <div id="qr-reader" className="w-full h-full object-cover" />
+            {/* Hidden File Input for scanning QR from photo or screenshot */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleScanFromFile}
+            />
 
-                {/* Custom Gate Viewfinder Target Overlay */}
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                  <div className="w-56 h-56 relative border-2 border-dashed border-white/30 rounded-2xl">
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#E8621A] rounded-tl-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#E8621A] rounded-tr-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#E8621A] rounded-bl-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#E8621A] rounded-br-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                    <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#E8621A] to-transparent shadow-[0_0_12px_rgba(232,98,26,0.9)] animate-qr-scan" />
+            {/* Viewfinder & Scanner Frame (Permanently Mounts #qr-reader in DOM) */}
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-black border-2 border-white/15 shadow-2xl">
+              {/* HTML5 QR Mount Point - Always in DOM so it never unmounts */}
+              <div id="qr-reader" className="w-full h-full object-cover" />
+
+              {/* Error / Permission Denied Overlay */}
+              {scannerError && (
+                <div className="absolute inset-0 z-30 bg-[#0D121F]/95 backdrop-blur-md p-6 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
+                    <XCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-rose-300 max-w-xs leading-relaxed">
+                      {scannerError}
+                    </p>
+                    <p className="text-[10px] text-white/40 mt-1.5 max-w-xs">
+                      Tip: In Chrome/Safari, tap the 🔒 lock or tune icon in the address bar → Site Settings → Set Camera to &quot;Allow&quot;.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 w-full max-w-xs pt-1">
+                    <button
+                      type="button"
+                      disabled={isRetryingCamera}
+                      onClick={() => startScanner(true)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+                    >
+                      {isRetryingCamera ? 'Requesting Camera...' : 'Retry Camera Permission'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#E8621A]" />
+                      <span>Scan Pass Image / Photo</span>
+                    </button>
                   </div>
                 </div>
+              )}
 
-                {/* Badge Top Left */}
-                <div className="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>Dynamic TOTP 30s Ready</span>
-                </div>
-              </div>
-            )}
+              {/* Viewfinder Reticle Overlay (Only shown when no error) */}
+              {!scannerError && (
+                <>
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="w-56 h-56 relative border-2 border-dashed border-white/30 rounded-2xl">
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#E8621A] rounded-tl-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#E8621A] rounded-tr-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#E8621A] rounded-bl-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#E8621A] rounded-br-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
+                      <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#E8621A] to-transparent shadow-[0_0_12px_rgba(232,98,26,0.9)] animate-qr-scan" />
+                    </div>
+                  </div>
+
+                  {/* Badge Top Left */}
+                  <div className="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-md">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Dynamic TOTP 30s Ready</span>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Instruction Tip */}
             <p className="text-[11px] text-white/50 text-center mt-3 font-mono">
