@@ -8,7 +8,7 @@ export default function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
 
-  // Ref for trailing physics with lerp easing
+  // Ref for trailing physics with smooth lerp easing
   const trailingRef = useRef({ x: -200, y: -200 });
   const targetPosRef = useRef({ x: -200, y: -200 });
   const ringElementRef = useRef<HTMLDivElement>(null);
@@ -19,6 +19,14 @@ export default function CustomCursor() {
     if (typeof window === 'undefined' || window.matchMedia('(pointer: coarse)').matches) {
       return;
     }
+
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let isReducedMotion = reducedMotionQuery.matches;
+
+    const onReducedMotionChange = (e: MediaQueryListEvent) => {
+      isReducedMotion = e.matches;
+    };
+    reducedMotionQuery.addEventListener('change', onReducedMotionChange);
 
     let animationFrameId: number;
 
@@ -34,7 +42,6 @@ export default function CustomCursor() {
           setCursorType('text');
         } else if (
           target.closest('[data-cursor="view"]') ||
-          target.closest('.group') ||
           target.closest('.cursor-view') ||
           target.closest('.spotlight-card')
         ) {
@@ -66,11 +73,11 @@ export default function CustomCursor() {
     document.addEventListener('mouseleave', onMouseLeave);
     document.addEventListener('mouseenter', onMouseEnter);
 
-    // High performance Lerp (Linear Interpolation) loop: trailing = trailing + (target - trailing) * factor
-    const LERP_FACTOR = 0.18;
+    // Easing loop: turns off lag if reduced motion is enabled, otherwise smooth 0.16 lerp
     const animateTrailing = () => {
-      trailingRef.current.x += (targetPosRef.current.x - trailingRef.current.x) * LERP_FACTOR;
-      trailingRef.current.y += (targetPosRef.current.y - trailingRef.current.y) * LERP_FACTOR;
+      const factor = isReducedMotion ? 1 : 0.16;
+      trailingRef.current.x += (targetPosRef.current.x - trailingRef.current.x) * factor;
+      trailingRef.current.y += (targetPosRef.current.y - trailingRef.current.y) * factor;
 
       if (ringElementRef.current) {
         ringElementRef.current.style.transform = `translate3d(${trailingRef.current.x}px, ${trailingRef.current.y}px, 0) translate(-50%, -50%)`;
@@ -87,81 +94,73 @@ export default function CustomCursor() {
       window.removeEventListener('mouseup', onMouseUp);
       document.removeEventListener('mouseleave', onMouseLeave);
       document.removeEventListener('mouseenter', onMouseEnter);
+      reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       cancelAnimationFrame(animationFrameId);
     };
   }, [isVisible]);
 
   if (!isVisible) return null;
 
-  const isInteractive = cursorType !== 'default';
-
   return (
-    <>
-      {/* 1. Precision Center Dot (Instant Response) */}
+    <div className="pointer-events-none fixed inset-0 z-[99999] overflow-hidden select-none">
+      {/* 1. Precision Center Dot (Exact mouse tracking, blend-mode difference) */}
       <div
         ref={dotElementRef}
-        className="fixed top-0 left-0 pointer-events-none z-[9999] rounded-full will-change-transform transition-all duration-75 ease-out"
+        className="fixed top-0 left-0 rounded-full will-change-transform mix-blend-difference bg-white transition-opacity duration-150"
         style={{
           transform: `translate3d(${position.x}px, ${position.y}px, 0) translate(-50%, -50%) scale(${
-            isMouseDown ? 0.6 : cursorType === 'view' ? 0 : cursorType === 'pointer' ? 1.4 : 1
+            cursorType === 'pointer' || cursorType === 'view' ? 0 : isMouseDown ? 0.75 : 1
           })`,
-          width: cursorType === 'text' ? '3px' : '6px',
-          height: cursorType === 'text' ? '18px' : '6px',
-          borderRadius: cursorType === 'text' ? '2px' : '9999px',
-          backgroundColor: '#FF5500',
-          boxShadow: '0 0 10px rgba(255, 85, 0, 0.9)',
+          width: cursorType === 'text' ? '2px' : '5px',
+          height: cursorType === 'text' ? '18px' : '5px',
+          borderRadius: cursorType === 'text' ? '1px' : '9999px',
+          opacity: cursorType === 'pointer' || cursorType === 'view' ? 0 : 1,
         }}
       />
 
-      {/* 2. Trailing Ring with Lerp Lag & Mix-Blend-Mode Difference */}
+      {/* 2. Trailing Ring / Filled Circle / View Label (Smooth lag, blend-mode difference) */}
       <div
         ref={ringElementRef}
-        className="fixed top-0 left-0 pointer-events-none z-[9998] rounded-full will-change-transform flex items-center justify-center transition-[width,height,background-color,border-color,box-shadow,transform] duration-200 ease-out"
+        className="fixed top-0 left-0 rounded-full will-change-transform mix-blend-difference flex items-center justify-center transition-[width,height,background-color,border-color,transform] duration-200 ease-out"
         style={{
           width:
             cursorType === 'view'
-              ? '64px'
+              ? '76px'
               : cursorType === 'pointer'
-              ? '44px'
+              ? '42px'
               : cursorType === 'text'
-              ? '24px'
+              ? '4px'
               : '26px',
           height:
             cursorType === 'view'
-              ? '64px'
+              ? '76px'
               : cursorType === 'pointer'
-              ? '44px'
+              ? '42px'
               : cursorType === 'text'
-              ? '24px'
+              ? '22px'
               : '26px',
           border:
-            cursorType === 'view'
-              ? '1px solid rgba(255, 255, 255, 0.4)'
-              : isInteractive
-              ? '1.5px solid rgba(255, 85, 0, 0.85)'
-              : '1px solid rgba(255, 255, 255, 0.35)',
+            cursorType === 'pointer' || cursorType === 'view'
+              ? 'none'
+              : cursorType === 'text'
+              ? 'none'
+              : '1.5px solid #FFFFFF',
           backgroundColor:
-            cursorType === 'view'
-              ? 'rgba(0, 0, 0, 0.6)'
-              : cursorType === 'pointer'
-              ? 'rgba(255, 85, 0, 0.1)'
-              : 'rgba(255, 255, 255, 0.03)',
-          backdropFilter: cursorType === 'view' ? 'blur(8px)' : 'none',
-          boxShadow:
-            cursorType === 'pointer'
-              ? '0 0 20px rgba(255, 85, 0, 0.35)'
-              : cursorType === 'view'
-              ? '0 8px 32px rgba(0, 0, 0, 0.5)'
-              : 'none',
+            cursorType === 'pointer' || cursorType === 'view'
+              ? '#FFFFFF'
+              : 'transparent',
+          transform: `translate3d(${trailingRef.current.x}px, ${trailingRef.current.y}px, 0) translate(-50%, -50%) scale(${
+            isMouseDown ? 0.85 : 1
+          })`,
         }}
       >
-        {/* Dynamic "VIEW ↗" Badge on Card/Flyer Hover */}
+        {/* Crisp "View" label over cards */}
         {cursorType === 'view' && (
-          <span className="text-[10px] font-black tracking-wider text-white select-none animate-in fade-in zoom-in-90 duration-150">
-            VIEW ↗
+          <span className="text-[11px] font-black uppercase tracking-widest text-black select-none pointer-events-none">
+            View
           </span>
         )}
       </div>
-    </>
+    </div>
   );
 }
