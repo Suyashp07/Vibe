@@ -176,16 +176,16 @@ function SignupContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#0A0A0A] flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col justify-between font-sans">
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 sm:p-8 animate-in fade-in">
+        <div className="w-full max-w-md bg-[#0D0D10] rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 animate-in fade-in">
           {/* Header */}
           <div className="mb-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#0A0A0A] mb-4 transition-colors font-medium"
+              className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white mb-4 transition-colors font-medium"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to events</span>
@@ -193,19 +193,19 @@ function SignupContent() {
 
             {isVerifyingOtp ? (
               <>
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] text-[11px] font-bold mb-2">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold mb-2">
                   <KeyRound className="w-3.5 h-3.5" />
                   <span>Email Verification Required</span>
                 </div>
-                <h1 className="font-black text-2xl tracking-tight text-[#0A0A0A]">Verify your email</h1>
-                <p className="text-xs text-[#64748B] mt-1">
-                  We sent a verification code to <span className="font-bold text-[#0A0A0A]">{email}</span>. Enter the code below to complete your registration.
+                <h1 className="font-black text-2xl tracking-tight text-white">Verify your email</h1>
+                <p className="text-xs text-white/60 mt-1">
+                  We sent a verification code to <span className="font-bold text-white">{email}</span>. Enter the code below to complete your registration.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="font-black text-2xl tracking-tight text-[#0A0A0A]">Create your account</h1>
-                <p className="text-xs text-[#64748B] mt-1">
+                <h1 className="font-black text-2xl tracking-tight text-white">Create your account</h1>
+                <p className="text-xs text-white/60 mt-1">
                   Join Vibe to host events, manage RSVPs, or discover gatherings.
                 </p>
               </>
@@ -214,17 +214,17 @@ function SignupContent() {
 
           {/* Feedback Messages */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex flex-col gap-2 text-xs text-red-700 animate-in fade-in">
+            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex flex-col gap-2 text-xs text-red-400 animate-in fade-in">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
                 <span>{error}</span>
               </div>
               {isExistingUser && (
-                <div className="mt-1 pt-2 border-t border-red-200/60 flex items-center justify-between">
-                  <span className="font-medium text-red-800">Ready to log in?</span>
+                <div className="mt-1 pt-2 border-t border-red-500/20 flex items-center justify-between">
+                  <span className="font-medium text-red-300">Ready to log in?</span>
                   <Link
                     href={`/login?redirect=${encodeURIComponent(destination)}`}
-                    className="px-3 py-1 bg-red-600 text-white rounded-lg font-bold text-[11px] hover:bg-red-700 transition"
+                    className="px-3 py-1 bg-[#FF5500] text-white rounded-lg font-bold text-[11px] hover:bg-[#FF661A] transition"
                   >
                     Go to Sign In →
                   </Link>
@@ -234,8 +234,8 @@ function SignupContent() {
           )}
 
           {resendMessage && (
-            <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 flex items-center gap-2 text-xs text-green-700 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600" />
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-400 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>{resendMessage}</span>
             </div>
           )}
@@ -244,7 +244,7 @@ function SignupContent() {
           {isVerifyingOtp ? (
             <form onSubmit={handleVerifyOtp} className="space-y-5 animate-in fade-in">
               <div>
-                <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                <label className="block text-xs font-bold text-white/80 mb-1.5">
                   Verification Code
                 </label>
                 <div className="relative">
@@ -258,10 +258,10 @@ function SignupContent() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="••••••••"
-                    className="w-full text-center tracking-[0.3em] sm:tracking-[0.35em] text-lg font-mono font-bold py-3 bg-white border border-[#E2E8F0] rounded-xl text-[#0A0A0A] placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                    className="w-full text-center tracking-[0.3em] sm:tracking-[0.35em] text-lg font-mono font-bold py-3 bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-white placeholder:text-white/20 focus:outline-none transition-colors"
                   />
                 </div>
-                <p className="text-[11px] text-[#64748B] mt-1.5 text-center">
+                <p className="text-[11px] text-white/50 mt-1.5 text-center">
                   Check your spam/junk folder if you do not see the email within 1 minute.
                 </p>
               </div>
@@ -269,16 +269,16 @@ function SignupContent() {
               <button
                 type="submit"
                 disabled={otpLoading || otpSuccess || otpCode.trim().length < 6}
-                className="w-full py-3 bg-[#0A0A0A] hover:bg-[#262626] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                className="w-full py-3 bg-[#FF5500] hover:bg-[#FF661A] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
               >
                 {otpLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                     <span>Verifying code...</span>
                   </>
                 ) : otpSuccess ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <span>Verified! Redirecting...</span>
                   </>
                 ) : (
@@ -286,12 +286,12 @@ function SignupContent() {
                 )}
               </button>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0] text-xs">
+              <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                 <button
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0}
-                  className="font-semibold text-[#0A0A0A] hover:underline disabled:text-[#94A3B8] disabled:no-underline flex items-center gap-1.5"
+                  className="font-semibold text-white/90 hover:text-white disabled:text-white/30 disabled:no-underline flex items-center gap-1.5 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>
@@ -305,7 +305,7 @@ function SignupContent() {
                     setIsVerifyingOtp(false);
                     setError(null);
                   }}
-                  className="text-[#64748B] hover:text-[#0A0A0A] underline"
+                  className="text-white/60 hover:text-white underline cursor-pointer"
                 >
                   Edit email / info
                 </button>
@@ -319,11 +319,11 @@ function SignupContent() {
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading || loading}
                 type="button"
-                className="w-full py-3 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0A0A0A] disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 disabled:opacity-50 cursor-pointer"
               >
                 {googleLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#0A0A0A]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                     <span>Connecting with Google...</span>
                   </>
                 ) : (
@@ -353,20 +353,20 @@ function SignupContent() {
 
               {/* Divider */}
               <div className="flex items-center gap-3 my-5">
-                <div className="h-px bg-[#E2E8F0] flex-1" />
-                <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">
+                <div className="h-px bg-white/10 flex-1" />
+                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
                   or sign up with email
                 </span>
-                <div className="h-px bg-[#E2E8F0] flex-1" />
+                <div className="h-px bg-white/10 flex-1" />
               </div>
 
               <form onSubmit={handlePasswordSignUp} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                  <label className="block text-xs font-bold text-white/80 mb-1.5">
                     Full Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
                       type="text"
                       required
@@ -376,17 +376,17 @@ function SignupContent() {
                         if (isExistingUser) setIsExistingUser(false);
                       }}
                       placeholder="Aarav Sharma"
-                      className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#111114] border border-white/10 rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                  <label className="block text-xs font-bold text-white/80 mb-1.5">
                     Email address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
                       type="email"
                       required
@@ -419,9 +419,9 @@ function SignupContent() {
                         }
                       }}
                       placeholder="you@example.com"
-                      className={`w-full pl-10 pr-4 py-2.5 bg-white border ${
-                        emailError ? 'border-red-400 focus:border-red-500' : 'border-[#E2E8F0] focus:border-[#0A0A0A]'
-                      } rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none transition-colors`}
+                      className={`w-full pl-10 pr-4 py-2.5 bg-[#111114] border ${
+                        emailError ? 'border-red-500 focus:border-red-400' : 'border-white/10 focus:border-[#FF5500]'
+                      } rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none transition-colors`}
                     />
                   </div>
                   {emailSuggestion && (
@@ -432,13 +432,13 @@ function SignupContent() {
                         setEmailSuggestion(null);
                         setEmailError(null);
                       }}
-                      className="mt-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+                      className="mt-1.5 text-xs text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
                     >
                       <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
                     </button>
                   )}
                   {emailError && (
-                    <p className="mt-1 text-[11px] text-red-600 font-medium flex items-center gap-1">
+                    <p className="mt-1 text-[11px] text-red-400 font-medium flex items-center gap-1">
                       <AlertCircle className="w-3 h-3 shrink-0" />
                       <span>{emailError}</span>
                     </p>
@@ -446,23 +446,23 @@ function SignupContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                  <label className="block text-xs font-bold text-white/80 mb-1.5">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="At least 6 characters"
-                      className="w-full pl-10 pr-10 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#0A0A0A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                      className="w-full pl-10 pr-10 py-2.5 bg-[#111114] border border-white/10 rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0A0A0A]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -472,11 +472,11 @@ function SignupContent() {
                 <button
                   type="submit"
                   disabled={loading || googleLoading}
-                  className="w-full py-3 bg-[#0A0A0A] hover:bg-[#262626] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                  className="w-full py-3 bg-[#FF5500] hover:bg-[#FF661A] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
                       <span>Creating account...</span>
                     </>
                   ) : (
@@ -486,12 +486,12 @@ function SignupContent() {
               </form>
 
               {/* Footer switch to Sign In */}
-              <div className="mt-6 pt-6 border-t border-[#E2E8F0] text-center">
-                <p className="text-xs text-[#64748B]">
+              <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                <p className="text-xs text-white/60">
                   Already have an account?{' '}
                   <Link
                     href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
-                    className="font-bold text-[#0A0A0A] hover:underline"
+                    className="font-bold text-[#FF5500] hover:underline"
                   >
                     Sign in
                   </Link>
@@ -511,8 +511,8 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white text-[#0A0A0A]">
-          <Loader2 className="w-6 h-6 animate-spin text-[#0A0A0A]" />
+        <div className="min-h-screen flex items-center justify-center bg-[#050505] text-[#FF5500]">
+          <Loader2 className="w-6 h-6 animate-spin text-[#FF5500]" />
         </div>
       }
     >

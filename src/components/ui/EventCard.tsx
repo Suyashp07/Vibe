@@ -7,6 +7,7 @@ import { MapPin, Calendar, Users, ArrowUpRight } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST, getEventRSVPs } from '@/lib/store';
 import { getEventDisplayTags } from '@/lib/eventTags';
+import TiltCard from '@/components/common/TiltCard';
 
 interface EventCardProps {
   event: EventItem;
@@ -55,10 +56,12 @@ export default function EventCard({
   };
 
   return (
-    <div
-      onClick={handleCardClick}
-      className="group relative bg-[#0D0D10] rounded-2xl border border-white/10 overflow-hidden hover:border-[#FF5500]/50 hover:shadow-[0_0_30px_rgba(255,85,0,0.15)] transition-all duration-300 flex flex-col h-full cursor-pointer select-none text-white"
-    >
+    <TiltCard glare={true} maxTilt={6} className="h-full">
+      <div
+        onClick={handleCardClick}
+        data-cursor="view"
+        className="group relative bg-[#0D0D10] rounded-2xl border border-white/10 overflow-hidden hover:border-[#FF5500]/50 hover:shadow-[0_0_30px_rgba(255,85,0,0.18)] transition-all duration-300 flex flex-col h-full cursor-pointer select-none text-white"
+      >
       {/* Cover Image Container */}
       <div className="relative h-48 w-full overflow-hidden bg-black">
         <Image
@@ -231,5 +234,6 @@ export default function EventCard({
         </div>
       </div>
     </div>
-  );
+  </TiltCard>
+);
 }

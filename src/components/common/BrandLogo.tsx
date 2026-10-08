@@ -50,9 +50,9 @@ export default function BrandLogo({ className = '', href = '/' }: BrandLogoProps
             : {}
         }
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        className="flex items-baseline font-sans font-black text-[25px] sm:text-[28px] text-white tracking-tight leading-none select-none group-hover:scale-[1.02] transition-transform duration-200"
+        className="flex items-baseline font-sans font-black text-[25px] sm:text-[28px] text-white dark:text-white tracking-tight leading-none select-none group-hover:scale-[1.02] transition-transform duration-200"
       >
-        <span className="text-white group-hover:text-white transition-colors">vibe</span>
+        <span className="text-white dark:text-white brand-logo-text transition-colors">vibe</span>
 
         {/* Vibrant Brand Orange Dot with animated pulse glow */}
         <span

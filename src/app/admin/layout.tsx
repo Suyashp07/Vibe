@@ -20,10 +20,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center text-[#64748B]">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/50">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-7 h-7 text-[#0A0A0A] animate-spin" />
-          <span className="text-xs uppercase tracking-widest font-mono text-[#94A3B8]">
+          <Loader2 className="w-7 h-7 text-[#FF5500] animate-spin" />
+          <span className="text-xs uppercase tracking-widest font-mono text-white/40">
             Verifying Admin Session...
           </span>
         </div>
@@ -34,31 +34,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Authorization barrier
   if (!isStaff) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 text-[#0A0A0A]">
-        <div className="max-w-md w-full bg-white border border-[#E2E8F0] rounded-2xl p-8 text-center space-y-5 shadow-lg">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 text-red-500 mx-auto flex items-center justify-center">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 text-[#F3F4F6]">
+        <div className="max-w-md w-full bg-[#0D0D10] border border-white/10 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 mx-auto flex items-center justify-center">
             <Lock className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-[#0A0A0A]">Admin Access Restricted</h1>
-            <p className="text-xs text-[#64748B] mt-2">
+            <h1 className="text-xl font-bold tracking-tight text-white">Admin Access Restricted</h1>
+            <p className="text-xs text-white/60 mt-2">
               The Vibe Admin Panel is strictly reserved for verified administrators.
             </p>
           </div>
-          <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-xs text-[#64748B] font-mono text-left space-y-1">
-            <div>Current Account: <span className="text-[#0A0A0A] font-semibold">{profile?.email || 'Anonymous'}</span></div>
-            <div>Role: <span className="text-amber-600 font-semibold">{profile?.role || 'Guest'}</span></div>
+          <div className="p-3.5 bg-[#111114] rounded-xl border border-white/10 text-xs text-white/60 font-mono text-left space-y-1">
+            <div>Current Account: <span className="text-white font-semibold">{profile?.email || 'Anonymous'}</span></div>
+            <div>Role: <span className="text-amber-400 font-semibold">{profile?.role || 'Guest'}</span></div>
           </div>
           <div className="flex gap-3">
             <Link
               href="/"
-              className="flex-1 py-2.5 px-4 rounded-full bg-[#0A0A0A] hover:bg-[#262626] text-white text-xs font-semibold transition text-center"
+              className="flex-1 py-2.5 px-4 rounded-full bg-[#FF5500] hover:bg-[#FF661A] text-white text-xs font-bold transition text-center"
             >
               Back to Home
             </Link>
             <button
               onClick={() => signOut()}
-              className="flex-1 py-2.5 px-4 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold border border-red-200 transition cursor-pointer"
+              className="flex-1 py-2.5 px-4 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/20 transition cursor-pointer"
             >
               Sign Out
             </button>
@@ -68,6 +68,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // Single clean layout without conflicting dark sidebars
-  return <div className="min-h-screen bg-white text-[#0A0A0A]">{children}</div>;
+  // Single clean layout
+  return <div className="min-h-screen bg-[#050505] text-[#F3F4F6]">{children}</div>;
 }

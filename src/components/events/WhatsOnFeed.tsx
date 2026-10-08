@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
+import Magnetic from '@/components/common/MagneticButton';
 import {
   getUserCity,
   getUserCoords,
@@ -462,6 +463,7 @@ export default function WhatsOnFeed() {
       {/* ========================================================================= */}
       {currentFlashEvent && (
         <div
+          data-cursor="view"
           className="w-full relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 group min-h-[350px] md:h-[400px] bg-black"
           onMouseEnter={() => setIsFlashcardPaused(true)}
           onMouseLeave={() => setIsFlashcardPaused(false)}
@@ -526,15 +528,17 @@ export default function WhatsOnFeed() {
                 {/* Bottom Row: [Find your spot ↗] + Avatar Stack + Pagination Controls */}
                 <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                   <div className="flex items-center gap-4 sm:gap-5 flex-wrap">
-                    <Link
-                      href={flashcardLink}
-                      target={isFlashcardExternal ? '_blank' : undefined}
-                      rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs sm:text-sm font-black shadow-[0_0_25px_rgba(255,85,0,0.45)] transition-all cursor-pointer hover:scale-105 active:scale-95"
-                    >
-                      <span>Find your spot</span>
-                      <ArrowRight className="w-4 h-4 -rotate-45" />
-                    </Link>
+                    <Magnetic pullFactor={0.35}>
+                      <Link
+                        href={flashcardLink}
+                        target={isFlashcardExternal ? '_blank' : undefined}
+                        rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs sm:text-sm font-black shadow-[0_0_25px_rgba(255,85,0,0.45)] transition-all cursor-pointer hover:scale-105 active:scale-95"
+                      >
+                        <span>Find your spot</span>
+                        <ArrowRight className="w-4 h-4 -rotate-45" />
+                      </Link>
+                    </Magnetic>
 
                     {/* Avatar stack matching reference image */}
                     <div className="flex items-center gap-2.5">
@@ -554,22 +558,26 @@ export default function WhatsOnFeed() {
                       {String(flashcardIdx + 1).padStart(2, '0')} / {String(prominentEvents.length).padStart(2, '0')}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={handlePrevFlashcard}
-                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
-                        aria-label="Previous event"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleNextFlashcard}
-                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
-                        aria-label="Next event"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
+                      <Magnetic pullFactor={0.25}>
+                        <button
+                          type="button"
+                          onClick={handlePrevFlashcard}
+                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
+                          aria-label="Previous event"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                      </Magnetic>
+                      <Magnetic pullFactor={0.25}>
+                        <button
+                          type="button"
+                          onClick={handleNextFlashcard}
+                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
+                          aria-label="Next event"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </Magnetic>
                     </div>
                   </div>
                 </div>

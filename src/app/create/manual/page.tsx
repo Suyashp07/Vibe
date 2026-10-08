@@ -15,10 +15,10 @@ export default function CreateManualPage() {
 
   if (loading && !localSession) {
     return (
-      <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-7 h-7 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -27,20 +27,20 @@ export default function CreateManualPage() {
 
   if (!isAuth && !loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white text-[#0A0A0A]">
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
         <Navbar />
 
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
-          <div className="w-full bg-white rounded-2xl p-8 border border-[#E2E8F0] shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95">
-            <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0A0A0A] mx-auto flex items-center justify-center shadow-xs">
-              <Sparkles className="w-6 h-6 text-[#0A0A0A]" />
+          <div className="w-full bg-[#0D0D10] rounded-2xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-white mx-auto flex items-center justify-center shadow-xs">
+              <Sparkles className="w-6 h-6 text-[#FF5500]" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="font-sans font-bold text-2xl text-[#0A0A0A]">
+              <h1 className="font-sans font-bold text-2xl text-white">
                 Sign in to Create Event
               </h1>
-              <p className="text-xs text-[#64748B] max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-white/60 max-w-sm mx-auto leading-relaxed">
                 Sign in to publish your gathering and start collecting RSVPs.
               </p>
             </div>
@@ -48,7 +48,7 @@ export default function CreateManualPage() {
             <button
               onClick={() => signInWithGoogle('organizer', '/create/manual')}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-[#0A0A0A] cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -74,7 +74,7 @@ export default function CreateManualPage() {
             <div className="grid grid-cols-2 gap-2 pt-2">
               <Link
                 href="/login?redirect=/create/manual"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0A0A0A] font-semibold text-xs transition-all hover:border-[#0A0A0A]"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs transition-all hover:border-white/20"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -82,15 +82,15 @@ export default function CreateManualPage() {
 
               <Link
                 href="/signup?redirect=/create/manual"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#0A0A0A] hover:bg-[#262626] text-white font-semibold text-xs transition-all shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-semibold text-xs transition-all shadow-md"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="pt-4 border-t border-white/10 flex items-center justify-center gap-1.5 text-[11px] text-white/50">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               <span>Free to host • Instant publishing</span>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function CreateManualPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
       <Navbar />
       <main className="flex-1">
         <SingleStepCreateForm mode="manual" />

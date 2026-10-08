@@ -39,10 +39,10 @@ export default function LandingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <RefreshCw className="w-6 h-6 animate-spin text-[#0F172A]" />
-            <p className="text-xs font-bold text-[#64748B]">Loading...</p>
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[#FF5500]" />
+            <p className="text-xs font-bold text-white/50 tracking-wider uppercase">Loading Vibe...</p>
           </div>
         </div>
       }

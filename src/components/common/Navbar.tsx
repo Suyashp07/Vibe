@@ -38,6 +38,8 @@ import LocationModal from '@/components/location/LocationModal';
 import AuthModal from '@/components/auth/AuthModal';
 import { getUserCity, INDIAN_CITIES } from '@/lib/location';
 import BrandLogo from '@/components/common/BrandLogo';
+import Magnetic from '@/components/common/MagneticButton';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -50,8 +52,6 @@ export default function Navbar() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeCity, setActiveCity] = useState<string>('All India');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
   const [confirmedPassCount, setConfirmedPassCount] = useState(0);
   const [imageError, setImageError] = useState(false);
 
@@ -73,17 +73,6 @@ export default function Navbar() {
     if (found?.state) return found.state;
     return activeCity === 'All India' ? 'India' : 'Maharashtra';
   }, [activeCity]);
-
-  // Close search on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && searchOpen) {
-        setSearchOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -135,16 +124,7 @@ export default function Navbar() {
     }
   }, [isLoggedIn, authModalOpen]);
 
-  // Handle global search submission
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchOpen(false);
-    if (searchQuery.trim()) {
-      router.push(`/discover?q=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      router.push('/discover');
-    }
-  };
+
 
   const isNavActive = (path: string) => {
     if (path === '/') return pathname === '/';
@@ -249,29 +229,20 @@ export default function Navbar() {
                 )}
               </Link>
 
-              {/* Search Icon Trigger */}
-              <button
-                type="button"
-                onClick={() => setSearchOpen(!searchOpen)}
-                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                  searchOpen
-                    ? 'bg-white text-black shadow-md'
-                    : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white'
-                }`}
-                title="Search events, venues, and artists"
-              >
-                <Search className="w-4 h-4 stroke-[2.2]" />
-              </button>
+              {/* Dark and Light Mode Theme Toggle */}
+              <ThemeToggle />
 
-              {/* Primary Action Button: + Host an event (Matching reference image) */}
-              <Link
-                href="/create"
-                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(255,85,0,0.35)] transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-                title="Host an event"
-              >
-                <Plus className="w-4 h-4 stroke-[2.8]" />
-                <span>Host an event</span>
-              </Link>
+              {/* Primary Action Button: + Host an event (Matching reference image with Magnetic Pull) */}
+              <Magnetic pullFactor={0.35}>
+                <Link
+                  href="/create"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(255,85,0,0.35)] transition-all cursor-pointer hover:scale-[1.03] active:scale-95"
+                  title="Host an event"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.8]" />
+                  <span>Host an event</span>
+                </Link>
+              </Magnetic>
 
               {/* User Auth Profile (Hi, Guest / Hi, Name) */}
               {mounted && isLoggedIn && profile ? (
@@ -385,49 +356,6 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-
-        {/* Expandable Search Drawer (Dark Styled) */}
-        <AnimatePresence>
-          {searchOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="border-t border-white/10 bg-[#0F0F12] px-4 py-3 shadow-2xl overflow-hidden"
-            >
-              <div className="max-w-3xl mx-auto flex items-center gap-3">
-                <form onSubmit={handleSearchSubmit} className="flex-1 relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder={`Search events, concerts, plays, workshops in ${activeCity}...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-black/60 border border-white/15 rounded-2xl focus:outline-none focus:border-[#FF5500] text-white placeholder:text-white/40 shadow-inner"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </form>
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(false)}
-                  className="px-3 py-2 text-xs font-bold text-white/60 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       {/* Mobile WebApp Fixed Bottom Navigation Bar (Dark Styled) */}

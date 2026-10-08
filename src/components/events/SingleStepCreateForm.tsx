@@ -444,7 +444,7 @@ Current Draft: ${description || tagline}`,
     (venueName ? `${venueName}, ` : '') + (eventType === 'online' ? 'Online' : city);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-32 md:pb-24">
+    <div className="studio-workspace-container max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-32 md:pb-24">
       {/* Top Header & Breadcrumb */}
       <div className="mb-6">
         <Link

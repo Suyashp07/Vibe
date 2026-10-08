@@ -212,3 +212,224 @@ input::placeholder, textarea::placeholder {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ink-muted);
 }
+
+/* ========================================================================= */
+/* THEME SYSTEM: DARK (DEFAULT) & LIGHT (EDITORIAL)                          */
+/* ========================================================================= */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+  --brand: #0A0A0A;
+  --brand-mid: #262626;
+  --brand-deep: #FFFFFF;
+  --accent: #FF5500;
+  --accent-dark: #E04B00;
+  --accent-light: #FFF0E6;
+  --gold: #D97706;
+  --gold-light: #FEF3C7;
+  --ink: #0F172A;
+  --ink-secondary: #475569;
+  --ink-muted: #94A3B8;
+  --surface: #FFFFFF;
+  --surface-2: #F8F9FA;
+  --surface-3: #F1F3F5;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+}
+
+/* Smooth background and text transition across theme change */
+body, header, nav, main, footer {
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- LIGHT MODE THEME OVERRIDES --- */
+html.light body {
+  background-color: #F8F9FA !important;
+  color: #0F172A !important;
+}
+
+html.light .bg-\[\#050505\] {
+  background-color: #F8F9FA !important;
+  color: #0F172A !important;
+}
+
+/* Sticky Header */
+html.light header.bg-\[\#0A0A0A\]\/95 {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+  color: #0F172A !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Event Cards, Filter Bars & Surfaces */
+html.light .bg-\[\#0D0D10\] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light .bg-\[\#111114\] {
+  background-color: #F1F3F5 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .border-white\/15,
+html.light .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Buttons, Chips, and Sub-elements in Light Mode */
+html.light .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+html.light .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .hover\:bg-white\/20:hover {
+  background-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Text Overrides for Light Mode */
+html.light .text-white:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]):not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not([data-cursor="view"] [class*="text-"]):not(.pointer-events-none *) {
+  color: #0F172A;
+}
+
+html.light .text-white\/90 {
+  color: #1E293B !important;
+}
+
+html.light .text-white\/80 {
+  color: #334155 !important;
+}
+
+html.light .text-white\/70,
+html.light .text-white\/60 {
+  color: #64748B !important;
+}
+
+html.light .text-white\/50,
+html.light .text-white\/40 {
+  color: #94A3B8 !important;
+}
+
+/* Brand Logo Text */
+html.light .brand-logo-text {
+  color: #0F172A !important;
+}
+
+/* Keep High-Contrast Vibrant Elements Clean */
+html.light button.bg-\[\#FF5500\],
+html.light a.bg-\[\#FF5500\],
+html.light button.bg-\[\#FF5500\] *,
+html.light a.bg-\[\#FF5500\] *,
+html.light .shadow-\[0_0_25px_rgba\(255\,85\,0\,0\.45\)\],
+html.light [data-cursor="view"] .text-white,
+html.light [data-cursor="view"] [class*="text-white"],
+html.light [data-cursor="view"] h2,
+html.light [data-cursor="view"] p {
+  color: #FFFFFF !important;
+}
+
+/* Search input on feed */
+html.light input[placeholder*="Search for a vibe"] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #0F172A !important;
+}
+html.light input[placeholder*="Search for a vibe"]::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Mobile Nav Bar */
+html.light nav.bg-\[\#0A0A0A\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+  color: #0F172A !important;
+}
+
+/* Footer in Light Mode */
+html.light footer.bg-\[\#050505\] {
+  background-color: #F1F3F5 !important;
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+  color: #64748B !important;
+}
+
+/* --- STUDIO WORKSPACE DARK MODE THEMING --- */
+html:not(.light) .studio-workspace-container h1,
+html:not(.light) .studio-workspace-container h2,
+html:not(.light) .studio-workspace-container h3 {
+  color: #FFFFFF !important;
+}
+
+html:not(.light) .studio-workspace-container p,
+html:not(.light) .studio-workspace-container label {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+html:not(.light) .studio-workspace-container .bg-white {
+  background-color: #0D0D10 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F3F4F6 !important;
+}
+
+html:not(.light) .studio-workspace-container .bg-\[\#F8FAFC\],
+html:not(.light) .studio-workspace-container .bg-\[\#FAF8F5\],
+html:not(.light) .studio-workspace-container .bg-\[\#F1F5F9\] {
+  background-color: #111114 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not(.light) .studio-workspace-container input,
+html:not(.light) .studio-workspace-container textarea,
+html:not(.light) .studio-workspace-container select {
+  background-color: #111114 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.light) .studio-workspace-container input::placeholder,
+html:not(.light) .studio-workspace-container textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+html:not(.light) .studio-workspace-container .border-\[\#E2E8F0\] {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html:not(.light) .studio-workspace-container .text-\[\#0F172A\],
+html:not(.light) .studio-workspace-container .text-\[\#0A0A0A\] {
+  color: #FFFFFF !important;
+}
+
+html:not(.light) .studio-workspace-container .text-\[\#64748B\],
+html:not(.light) .studio-workspace-container .text-\[\#475569\] {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+html:not(.light) .studio-workspace-container .fixed.bottom-0 {
+  background-color: rgba(13, 13, 16, 0.95) !important;
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html:not(.light) .studio-workspace-container button[class*="bg-\[\#E8621A\]"],
+html:not(.light) .studio-workspace-container button[class*="bg-\[\#FF5500\]"] {
+  background-color: #FF5500 !important;
+  color: #FFFFFF !important;
+  border-color: #FF5500 !important;
+}

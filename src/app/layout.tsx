@@ -41,6 +41,9 @@ const fraunces = Fraunces({
 import PWARegister from '@/components/pwa/PWARegister';
 import AutoLocationDetector from '@/components/location/AutoLocationDetector';
 import CustomCursor from '@/components/common/CustomCursor';
+import SmoothScroll from '@/components/common/SmoothScroll';
+import AmbientBackground from '@/components/common/AmbientBackground';
+import { ThemeProvider } from '@/components/common/ThemeContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -83,12 +86,45 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}>
-      <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white">
-        <CustomCursor />
-        {children}
-        <PWARegister />
-        <AutoLocationDetector />
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`dark ${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}
+    >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const storedTheme = localStorage.getItem('vibe-theme');
+                if (storedTheme === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.setAttribute('data-theme', 'light');
+                  document.documentElement.style.colorScheme = 'light';
+                } else {
+                  document.documentElement.classList.remove('light');
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                  document.documentElement.style.colorScheme = 'dark';
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white relative">
+        <ThemeProvider>
+          <AmbientBackground />
+          <CustomCursor />
+          <SmoothScroll>
+            <div className="relative z-10">
+              {children}
+            </div>
+          </SmoothScroll>
+          <PWARegister />
+          <AutoLocationDetector />
+        </ThemeProvider>
       </body>
     </html>
   );
