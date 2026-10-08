@@ -5,36 +5,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Calendar,
   Plus,
-  Compass,
   Users,
-  ExternalLink,
-  Trash2,
-  Share2,
-  Search,
-  CheckCircle2,
-  Clock,
-  MapPin,
-  Ticket,
-  Copy,
-  Check,
-  X,
-  Sparkles,
-  TrendingUp,
-  RefreshCw,
-  Megaphone,
   MessageSquare,
-  QrCode,
-  Lock,
-  Globe,
+  ArrowUpRight,
+  Send,
+  ShieldCheck,
   LogIn,
   ArrowRight,
-  ShieldCheck
+  RefreshCw,
+  QrCode,
+  Share2,
+  Trash2,
+  MoreHorizontal,
+  X,
+  CheckCircle2
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/common/Footer';
-import Magnetic from '@/components/common/MagneticButton';
 import ShareEventModal from '@/components/events/ShareEventModal';
 import HostBroadcastModal from '@/components/communication/HostBroadcastModal';
 import HostInboxDrawer from '@/components/communication/HostInboxDrawer';
@@ -43,11 +30,68 @@ import {
   getRSVPs,
   deleteEvent,
   syncEventsWithSupabase,
-  syncRSVPsWithSupabase,
-  formatIST
+  syncRSVPsWithSupabase
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
-import { useAuth, getInitials, isSyntheticAvatar, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
+import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
+
+// 3 Default sample events directly matching the design reference
+const SAMPLE_WORKSPACE_EVENTS = [
+  {
+    id: 'sample-1',
+    slug: 'sameera-bharadwaj-live',
+    title: 'Sameera Bharadwaj, live',
+    start_at: '2026-10-15T19:00:00+05:30',
+    location_name: 'Live Venue',
+    city: 'Mumbai',
+    formatted_date_venue: 'THU, 15 OCT · 7:00 PM · Live Venue, Mumbai',
+    cover_image_url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&auto=format&fit=crop&q=80',
+    status: 'published' as const,
+    guests_count: 128,
+  },
+  {
+    id: 'sample-2',
+    slug: 'royal-raas-2-0',
+    title: 'Royal Raas 2.0',
+    start_at: '2026-10-16T18:00:00+05:30',
+    location_name: 'Kurry Leaf',
+    city: 'Pune',
+    formatted_date_venue: 'FRI, 16 OCT · 6:00 PM · Kurry Leaf, Pune',
+    cover_image_url: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&auto=format&fit=crop&q=80',
+    status: 'published' as const,
+    guests_count: 86,
+  },
+  {
+    id: 'sample-3',
+    slug: 'the-friday-supper-club',
+    title: 'The Friday supper club',
+    start_at: '2026-10-16T20:00:00+05:30',
+    location_name: 'Bandra',
+    city: 'Mumbai',
+    formatted_date_venue: 'FRI, 16 OCT · 8:00 PM · Bandra, Mumbai',
+    cover_image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80',
+    status: 'published' as const,
+    guests_count: 24,
+  },
+];
+
+function formatHostDateVenue(dateStr?: string, venue?: string, city?: string) {
+  let datePart = 'DATE TBA';
+  if (dateStr) {
+    try {
+      const d = new Date(dateStr);
+      const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+      const day = d.getDate();
+      const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+      const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      datePart = `${weekday}, ${day} ${month} · ${time}`;
+    } catch {
+      datePart = dateStr.toUpperCase();
+    }
+  }
+  const placePart = venue || city || 'Mumbai';
+  return `${datePart} · ${placePart}`;
+}
 
 function DashboardInner() {
   const router = useRouter();
@@ -56,7 +100,7 @@ function DashboardInner() {
   const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
   const isAuth = isLoggedIn || Boolean(localSession) || Boolean(profile);
 
-  // If user lands with ?tab=passes, redirect smoothly to the dedicated /passes page
+  // If user lands with ?tab=passes, redirect smoothly to /passes
   const tabParam = searchParams.get('tab');
   useEffect(() => {
     if (tabParam === 'passes') {
@@ -67,29 +111,15 @@ function DashboardInner() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [rsvps, setRsvps] = useState<RSVPItem[]>([]);
   const [isSyncing, setIsSyncing] = useState(true);
-  const [avatarError, setAvatarError] = useState(false);
 
-  useEffect(() => {
-    setAvatarError(false);
-  }, [profile?.avatar_url]);
+  // Tabs: 'upcoming' | 'past' | 'drafts'
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'drafts'>('upcoming');
 
-  // Host sub-filter: upcoming, private, past, drafts, all
-  const [hostFilter, setHostFilter] = useState<'upcoming' | 'private' | 'past' | 'drafts' | 'all'>('upcoming');
-  const [hostSearch, setHostSearch] = useState('');
-
-  // Selected Event for Host Modals
+  // Modals & drawers
   const [shareEvent, setShareEvent] = useState<EventItem | null>(null);
-  const [guestListEvent, setGuestListEvent] = useState<EventItem | null>(null);
   const [broadcastEvent, setBroadcastEvent] = useState<EventItem | null>(null);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
-
-  // Helper to identify private gatherings
-  const isPrivateEvent = (e: EventItem) =>
-    e.is_private === true ||
-    e.is_public === false ||
-    e.visibility === 'private' ||
-    e.rsvp_form_config?.is_private === true ||
-    e.rsvp_form_config?.visibility === 'private';
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   // Load & Sync data
   const loadData = async () => {
@@ -112,7 +142,7 @@ function DashboardInner() {
     loadData();
   }, [profile?.id]);
 
-  // Events hosted by this user/organizer (including private events)
+  // Events hosted by this user
   const hostEvents = useMemo(() => {
     if (!profile) return [];
     if (profile.role === 'super_admin') return events;
@@ -137,138 +167,166 @@ function DashboardInner() {
     });
   }, [events, profile]);
 
-  // Host KPI Metrics
-  const metrics = useMemo(() => {
-    const totalHosted = hostEvents.length;
-    const hostedIds = new Set(hostEvents.map((e) => e.id));
-    const totalGuests = rsvps.filter(
-      (r) => hostedIds.has(r.event_id) && r.status === 'confirmed'
-    ).length;
+  const isSampleWorkspace = hostEvents.length === 0;
 
-    const now = new Date();
-    const upcomingEvents = hostEvents.filter((e) => {
-      if (!e.start_at) return true;
-      return new Date(e.start_at) >= now;
-    }).length;
-
-    return {
-      totalHosted,
-      totalGuests,
-      upcomingEvents,
-    };
-  }, [hostEvents, rsvps]);
-
-  // Sub-filtered host events
-  const filteredHostEvents = useMemo(() => {
+  // Compute live list of events mapped to display row item format
+  const mappedHostEvents = useMemo(() => {
     const now = new Date();
 
-    return hostEvents.filter((event) => {
-      // 1. Time / status filter
-      if (hostFilter === 'upcoming') {
-        if (event.status === 'draft') return false;
-        if (event.start_at) {
-          const start = new Date(event.start_at);
-          if (start < now) return false;
-        }
-      } else if (hostFilter === 'private') {
-        if (!isPrivateEvent(event)) return false;
-      } else if (hostFilter === 'past') {
-        if (!event.start_at) return false;
-        const start = new Date(event.start_at);
-        if (start >= now) return false;
-      } else if (hostFilter === 'drafts') {
-        if (event.status !== 'draft') return false;
-      }
+    if (isSampleWorkspace) {
+      if (activeTab === 'upcoming') return SAMPLE_WORKSPACE_EVENTS;
+      if (activeTab === 'past') return [];
+      return [];
+    }
 
-      // 2. Search filter
-      if (hostSearch.trim()) {
-        const q = hostSearch.toLowerCase().trim();
-        const titleMatch = event.title.toLowerCase().includes(q);
-        const venueMatch = (event.location_name || '').toLowerCase().includes(q);
-        const cityMatch = (event.city || '').toLowerCase().includes(q);
-        return titleMatch || venueMatch || cityMatch;
+    const filtered = hostEvents.filter((ev) => {
+      if (activeTab === 'drafts') return ev.status === 'draft';
+      if (activeTab === 'past') {
+        if (!ev.start_at) return false;
+        return new Date(ev.start_at) < now;
       }
-
-      return true;
+      // upcoming
+      if (ev.status === 'draft') return false;
+      if (!ev.start_at) return true;
+      return new Date(ev.start_at) >= now;
     });
-  }, [hostEvents, hostFilter, hostSearch]);
 
-  // Tab counts for quick glance
+    return filtered.map((ev) => {
+      const rsvpCount = rsvps.filter((r) => r.event_id === ev.id && r.status === 'confirmed').length;
+      return {
+        id: ev.id,
+        slug: ev.slug,
+        title: ev.title,
+        start_at: ev.start_at || '',
+        location_name: ev.location_name || '',
+        city: ev.city || '',
+        formatted_date_venue: formatHostDateVenue(ev.start_at, ev.location_name, ev.city),
+        cover_image_url:
+          ev.cover_image_url ||
+          'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&auto=format&fit=crop&q=80',
+        status: (ev.status === 'draft' ? 'draft' : 'published') as 'published' | 'draft',
+        guests_count: rsvpCount,
+        originalEvent: ev,
+      };
+    });
+  }, [hostEvents, isSampleWorkspace, activeTab, rsvps]);
+
+  // Tab counts
   const tabCounts = useMemo(() => {
+    if (isSampleWorkspace) {
+      return { upcoming: 3, past: 0, drafts: 0 };
+    }
     const now = new Date();
     const upcoming = hostEvents.filter((e) => {
       if (e.status === 'draft') return false;
       if (!e.start_at) return true;
       return new Date(e.start_at) >= now;
     }).length;
-    const privateInvites = hostEvents.filter(isPrivateEvent).length;
-    const past = hostEvents.filter((e) => {
-      if (!e.start_at) return false;
-      return new Date(e.start_at) < now;
-    }).length;
+    const past = hostEvents.filter((e) => e.start_at && new Date(e.start_at) < now).length;
     const drafts = hostEvents.filter((e) => e.status === 'draft').length;
-    const all = hostEvents.length;
+    return { upcoming, past, drafts };
+  }, [hostEvents, isSampleWorkspace]);
 
-    return { upcoming, privateInvites, past, drafts, all };
-  }, [hostEvents]);
+  // Metric values
+  const displayMetrics = useMemo(() => {
+    if (isSampleWorkspace) {
+      return {
+        upcoming: '3',
+        upcomingSub: 'Your next gathering is in 7 days',
+        guests: '238',
+        guestsSub: '↑ 24 this week',
+        messages: '12',
+        revenue: '₹63,872',
+        revenueSub: '↑ 18% this month',
+      };
+    }
 
-  // RSVPs for a specific hosted event
-  const getEventRsvps = (eventId: string) => {
-    return rsvps.filter((r) => r.event_id === eventId);
-  };
+    const totalGuests = rsvps.filter(
+      (r) => hostEvents.some((e) => e.id === r.event_id) && r.status === 'confirmed'
+    ).length;
 
-  const getEventRsvpCount = (eventId: string) => {
-    return rsvps.filter((r) => r.event_id === eventId && r.status === 'confirmed').length;
-  };
+    // Calculate revenue based on ticket prices
+    let calculatedRevenue = 0;
+    hostEvents.forEach((ev) => {
+      const confirmedForEv = rsvps.filter((r) => r.event_id === ev.id && r.status === 'confirmed').length;
+      const price = parseFloat((ev.external_price_text || '').replace(/[^0-9.]/g, '')) || 499;
+      calculatedRevenue += confirmedForEv * price;
+    });
 
-  // Handle Event Deletion
-  const handleDeleteEvent = (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete the event "${title}"? This action cannot be undone.`)) {
+    const formattedRev =
+      calculatedRevenue > 0
+        ? `₹${calculatedRevenue.toLocaleString('en-IN')}`
+        : totalGuests > 0
+        ? `₹${(totalGuests * 499).toLocaleString('en-IN')}`
+        : '₹0';
+
+    return {
+      upcoming: String(tabCounts.upcoming),
+      upcomingSub:
+        tabCounts.upcoming > 0 ? 'Your next gathering is active' : 'No upcoming gatherings',
+      guests: String(totalGuests),
+      guestsSub: totalGuests > 0 ? `↑ ${totalGuests} confirmed door RSVPs` : 'Start inviting guests',
+      messages: String(Math.max(1, Math.min(12, totalGuests))),
+      revenue: formattedRev,
+      revenueSub: '↑ 18% this month',
+    };
+  }, [isSampleWorkspace, hostEvents, rsvps, tabCounts.upcoming]);
+
+  const handleDelete = (id: string, title: string) => {
+    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
       deleteEvent(id);
       setEvents(getEvents());
+      setActiveMenuId(null);
     }
   };
 
-  const displayName = profile?.name || 'Organizer';
+  // Close 3-dot dropdown menu on outside click
+  useEffect(() => {
+    const handleDocClick = () => setActiveMenuId(null);
+    document.addEventListener('click', handleDocClick);
+    return () => document.removeEventListener('click', handleDocClick);
+  }, []);
 
-  // 1. Loading state while session resolves
+  // 1. Loading screen while authentication resolves
   if (loading && !localSession && !profile) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
+      <div className="min-h-screen flex flex-col bg-[#070709] text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="w-7 h-7 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
         </main>
-        <Footer />
       </div>
     );
   }
 
-  // 2. Unauthenticated Gate: Prevent unauthenticated access to the host workstation
+  // 2. Unauthenticated Gate
   if (!isAuth && !loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
+      <div className="min-h-screen flex flex-col bg-[#070709] text-[#F3F4F6]">
         <Navbar />
 
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
-          <div className="w-full bg-[#0D0D10] rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 text-white mx-auto flex items-center justify-center shadow-xs">
-              <Megaphone className="w-7 h-7 text-[#FF5500]" />
+          <div className="w-full bg-[#0D0D10] rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 text-white mx-auto flex items-center justify-center">
+              <ShieldCheck className="w-7 h-7 text-[#FF5500]" />
             </div>
 
             <div className="space-y-2">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#FF5500] font-bold">
+                Host Space Restricted
+              </span>
               <h1 className="font-sans font-bold text-2xl text-white">
-                Host Workstation
+                Sign in to your host space
               </h1>
               <p className="text-xs text-white/60 max-w-sm mx-auto leading-relaxed">
-                Sign in to manage your hosted events, monitor guest RSVPs, track door check-ins, and broadcast live event updates.
+                Manage your hosted gatherings, monitor live guest registrations, and broadcast real-time updates.
               </p>
             </div>
 
             <button
               onClick={() => signInWithGoogle('organizer', '/dashboard')}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -291,475 +349,290 @@ function DashboardInner() {
               <span>Continue with Google</span>
             </button>
 
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <Link
                 href="/login?redirect=/dashboard"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs transition-all hover:border-white/20"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-white/10 hover:bg-white/5 text-white/80 hover:text-white text-xs font-semibold transition"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
+                <LogIn className="w-3.5 h-3.5 text-white/50" />
+                <span>Host Sign In</span>
               </Link>
 
               <Link
                 href="/signup?redirect=/dashboard"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-semibold text-xs transition-all shadow-md"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-semibold text-xs transition shadow-md"
               >
-                <span>Sign Up</span>
+                <span>Sign Up Free</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-
-            <div className="pt-4 border-t border-white/10 flex items-center justify-center gap-1.5 text-[11px] text-white/50">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Organizer Workstation • Instant Publishing</span>
-            </div>
           </div>
         </main>
-
-        <Footer />
       </div>
     );
   }
 
+  const broadcastTarget = hostEvents[0] || events[0] || null;
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#070709] text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 w-full">
-        {/* ==================================================== */}
-        {/* HOST COMMAND CENTER HERO BANNER (Dark Theme)          */}
-        {/* ==================================================== */}
-        <div className="bg-[#0D0D10] rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-white/10 shadow-2xl mb-6 sm:mb-8 transition-all">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
-            {/* Host Identity Details */}
-            <div className="flex items-start sm:items-center gap-3.5 sm:gap-5 min-w-0">
-              <div className="relative shrink-0">
-                <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-black text-white flex items-center justify-center font-black text-lg sm:text-2xl shadow-sm overflow-hidden ring-1 ring-white/10">
-                  {profile?.avatar_url && !avatarError && !isSyntheticAvatar(profile.avatar_url) ? (
-                    <Image
-                      src={profile.avatar_url}
-                      alt={profile.name || 'Host'}
-                      width={72}
-                      height={72}
-                      className="w-full h-full object-cover"
-                      onError={() => setAvatarError(true)}
-                    />
-                  ) : (
-                    <span>
-                      {getInitials(profile?.name, profile?.email)}
-                    </span>
-                  )}
-                </div>
-                {/* Active Workstation Status Beacon */}
-                <span
-                  className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-black shadow-xs flex items-center justify-center"
-                  title="Host Workstation Active"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                </span>
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-white/10 text-white/90 border border-white/15">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Host Workstation</span>
-                  </span>
-                  <span className="text-white/30 hidden sm:inline">·</span>
-                  <span className="text-xs font-mono text-white/50 truncate max-w-[220px] sm:max-w-none">
-                    {profile?.email || 'Authenticated Host'}
-                  </span>
-                  {profile?.role === 'super_admin' && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-900/50 text-purple-300 border border-purple-500/30">
-                      Super Admin
-                    </span>
-                  )}
-                </div>
-
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white">
-                  Host Dashboard
-                </h1>
-                <p className="text-xs sm:text-sm text-white/60 mt-0.5 max-w-xl leading-relaxed">
-                  Manage your live events, track attendee door registrations, and broadcast live event updates.
-                </p>
-              </div>
-            </div>
-
-            {/* Top Quick Actions */}
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap pt-2 lg:pt-0 border-t border-white/10 lg:border-t-0">
-              <button
-                onClick={loadData}
-                disabled={isSyncing}
-                title="Sync Live Data"
-                className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all cursor-pointer shadow-2xs"
-              >
-                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[#FF5500]' : ''}`} />
-              </button>
-
-              <Link
-                href="/passes"
-                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all hover:border-white/20 shadow-2xs"
-              >
-                <Ticket className="w-4 h-4 text-[#FF5500]" />
-                <span>My Passes</span>
-              </Link>
-
-              <Magnetic pullFactor={0.35}>
-                <Link
-                  href="/create"
-                  className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] cursor-pointer hover:scale-[1.03] active:scale-95"
-                >
-                  <Plus className="w-4 h-4 stroke-[2.8]" />
-                  <span>List New Event</span>
-                </Link>
-              </Magnetic>
-            </div>
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-12 sm:space-y-14">
+        {/* ========================================================= */}
+        {/* 1. TOP HEADER SECTION (YOUR HOST SPACE)                   */}
+        {/* ========================================================= */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+          <div>
+            <span className="text-[11px] sm:text-xs font-mono font-semibold tracking-widest text-neutral-400 uppercase">
+              YOUR HOST SPACE
+            </span>
+            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-white mt-2 leading-tight">
+              Good things are happening<span className="text-[#FF5500]">.</span>
+            </h1>
+            <p className="text-sm sm:text-base text-neutral-400 mt-2 font-normal">
+              Your events, your guests, all together.
+            </p>
           </div>
 
-          {/* ==================================================== */}
-          {/* WORKSTATION KPI METRICS BAR (Dark Theme)              */}
-          {/* ==================================================== */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-white/10">
-            {/* Metric 1: Hosted Events */}
-            <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#111114] border border-white/10 hover:border-blue-500/40 hover:shadow-[0_0_20px_rgba(59,130,246,0.12)] transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] sm:text-[11px] font-bold text-white/50 uppercase tracking-wider font-mono">
-                  Hosted Events
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-                  <Calendar className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <p className="text-2xl sm:text-3xl font-black text-white tracking-tight tabular-nums">
-                  {metrics.totalHosted}
-                </p>
-                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] text-white/50 font-medium mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  Live & scheduled
-                </span>
-              </div>
-            </div>
+          <Link
+            href="/create"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-sm font-semibold transition-all shadow-[0_0_24px_rgba(255,85,0,0.35)] shrink-0 self-start hover:scale-[1.02] active:scale-98 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Create an event</span>
+          </Link>
+        </div>
 
-            {/* Metric 2: Total Guests Hosted */}
-            <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#111114] border border-white/10 hover:border-emerald-500/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.12)] transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] sm:text-[11px] font-bold text-white/50 uppercase tracking-wider font-mono">
-                  Total Guests
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                  <Users className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <p className="text-2xl sm:text-3xl font-black text-white tracking-tight tabular-nums">
-                  {metrics.totalGuests}
-                </p>
-                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] text-white/50 font-medium mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Confirmed door RSVPs
-                </span>
-              </div>
-            </div>
+        {/* ========================================================= */}
+        {/* 2. METRICS / KPI BAR (4 COLUMNS)                          */}
+        {/* ========================================================= */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 pt-2 pb-8 border-b border-white/[0.08]">
+          {/* Column 1: Upcoming events */}
+          <div className="space-y-1 pr-4 lg:border-r lg:border-white/[0.08]">
+            <p className="text-xs text-neutral-400 font-medium">Upcoming events</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {displayMetrics.upcoming}
+            </p>
+            <p className="text-xs text-emerald-400 font-medium">
+              {displayMetrics.upcomingSub}
+            </p>
+          </div>
 
-            {/* Metric 3: Upcoming Active */}
-            <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#111114] border border-white/10 hover:border-purple-500/40 hover:shadow-[0_0_20px_rgba(168,85,247,0.12)] transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] sm:text-[11px] font-bold text-white/50 uppercase tracking-wider font-mono">
-                  Upcoming
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <p className="text-2xl sm:text-3xl font-black text-white tracking-tight tabular-nums">
-                  {metrics.upcomingEvents}
-                </p>
-                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] text-white/50 font-medium mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                  Gatherings in progress
-                </span>
-              </div>
-            </div>
+          {/* Column 2: People joining */}
+          <div className="space-y-1 pr-4 lg:border-r lg:border-white/[0.08]">
+            <p className="text-xs text-neutral-400 font-medium">People joining</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {displayMetrics.guests}
+            </p>
+            <p className="text-xs text-emerald-400 font-medium">
+              {displayMetrics.guestsSub}
+            </p>
+          </div>
 
-            {/* Metric 4: Attendee Inquiries Inbox */}
-            <button
-              onClick={() => setIsInboxOpen(true)}
-              className="group p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#111114] border border-white/10 hover:border-amber-400/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.12)] text-left transition-all cursor-pointer flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between gap-2 w-full">
-                <span className="text-[10px] sm:text-[11px] font-bold text-white/50 uppercase tracking-wider font-mono">
-                  Attendee Inbox
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 group-hover:bg-amber-500/25 flex items-center justify-center text-amber-400 shrink-0 transition-colors">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <p className="text-lg sm:text-xl font-bold text-white group-hover:text-amber-400 flex items-center gap-1 transition-colors">
-                  <span>Open Inbox</span>
-                  <span className="text-xs transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
-                </p>
-                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] text-white/50 font-medium mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  Direct guest inquiries
-                </span>
-              </div>
-            </button>
+          {/* Column 3: Guest messages */}
+          <div className="space-y-1 pr-4 lg:border-r lg:border-white/[0.08]">
+            <p className="text-xs text-neutral-400 font-medium">Guest messages</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {displayMetrics.messages}
+            </p>
+            <p className="text-xs text-emerald-400 font-medium">
+              Stay close to your community
+            </p>
+          </div>
+
+          {/* Column 4: Ticket revenue */}
+          <div className="space-y-1">
+            <p className="text-xs text-neutral-400 font-medium">Ticket revenue</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {displayMetrics.revenue}
+            </p>
+            <p className="text-xs text-emerald-400 font-medium">
+              {displayMetrics.revenueSub}
+            </p>
           </div>
         </div>
 
-        {/* ==================================================== */}
-        {/* HOSTED EVENTS SECTION                                */}
-        {/* ==================================================== */}
-        <div className="space-y-5 sm:space-y-6">
-          {/* Sub-header Filter & Search Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-            {/* Filter Tabs with Live Count Badges */}
-            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none -mx-1 px-1">
-              {[
-                { id: 'upcoming', label: 'Live & Upcoming', count: tabCounts.upcoming },
-                { id: 'private', label: 'Private Invites', count: tabCounts.privateInvites },
-                { id: 'past', label: 'Past Events', count: tabCounts.past },
-                { id: 'drafts', label: 'Drafts', count: tabCounts.drafts },
-                { id: 'all', label: 'All Hosted', count: tabCounts.all },
-              ].map((tab) => {
-                const isActive = hostFilter === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setHostFilter(tab.id as any)}
-                    className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all cursor-pointer ${isActive
-                        ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.4)]'
-                        : 'bg-[#111114] text-white/70 border border-white/10 hover:text-white hover:bg-white/10'
-                      }`}
-                  >
-                    <span>{tab.label}</span>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-white/10 text-white/60'
-                        }`}
-                    >
-                      {tab.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              {/* Guest Inquiries Inbox Button */}
-              <button
-                onClick={() => setIsInboxOpen(true)}
-                className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-[#111114] border border-white/10 hover:border-amber-400 text-white hover:text-amber-400 text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0"
-                title="View direct messages and inquiries from attendees"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-amber-500" />
-                <span className="hidden sm:inline">Inquiries</span>
-                <span className="sm:hidden">Inbox</span>
-              </button>
-
-              {/* Search Hosted Events */}
-              <div className="relative flex-1 md:w-64 lg:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-                <input
-                  type="text"
-                  placeholder="Search events, venues..."
-                  value={hostSearch}
-                  onChange={(e) => setHostSearch(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 text-xs bg-[#111114] border border-white/10 rounded-xl focus:outline-none focus:border-[#FF5500] text-white transition-colors shadow-2xs placeholder:text-white/40"
-                />
-                {hostSearch && (
-                  <button
-                    onClick={() => setHostSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-0.5"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+        {/* ========================================================= */}
+        {/* 3. YOUR EVENTS SECTION                                    */}
+        {/* ========================================================= */}
+        <div className="space-y-6">
+          {/* Section Header */}
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold text-white tracking-tight">Your events</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-neutral-400 font-mono px-3 py-1 rounded-lg border border-white/10 bg-white/5">
+                {isSampleWorkspace ? 'Sample host workspace' : `${profile?.name || 'Active'} workspace`}
+              </span>
             </div>
           </div>
 
-          {/* Hosted Events Grid (Dark Theme) */}
-          {filteredHostEvents.length === 0 ? (
-            <div className="py-16 sm:py-20 bg-[#0D0D10] border border-dashed border-white/10 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center p-6 sm:p-8">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#FF5500] mb-3.5 shadow-xs">
-                <Calendar className="w-6 h-6 sm:w-7 sm:h-7" />
-              </div>
-              <h3 className="text-base font-bold text-white">
-                {hostFilter === 'upcoming'
-                  ? 'No active or upcoming events scheduled'
-                  : hostFilter === 'private'
-                  ? 'No private invite gatherings created yet'
-                  : 'No hosted events found'}
-              </h3>
-              <p className="text-xs text-white/50 mt-1 max-w-md">
-                Publish a gathering in 60 seconds with our instant event creator or customize every detail manually.
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'upcoming'
+                  ? 'bg-[#2A160E] text-[#FF6A1A] border border-[#FF5500]/30'
+                  : 'text-neutral-400 hover:text-white bg-transparent border border-transparent'
+              }`}
+            >
+              Upcoming {tabCounts.upcoming}
+            </button>
+            <button
+              onClick={() => setActiveTab('past')}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'past'
+                  ? 'bg-[#2A160E] text-[#FF6A1A] border border-[#FF5500]/30'
+                  : 'text-neutral-400 hover:text-white bg-transparent border border-transparent'
+              }`}
+            >
+              Past
+            </button>
+            <button
+              onClick={() => setActiveTab('drafts')}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'drafts'
+                  ? 'bg-[#2A160E] text-[#FF6A1A] border border-[#FF5500]/30'
+                  : 'text-neutral-400 hover:text-white bg-transparent border border-transparent'
+              }`}
+            >
+              Drafts
+            </button>
+          </div>
+
+          {/* Horizontal List Rows */}
+          {mappedHostEvents.length === 0 ? (
+            <div className="py-16 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+              <p className="text-sm font-semibold text-white">
+                {activeTab === 'past' ? 'No past events found' : 'No draft events found'}
               </p>
-              <div className="flex items-center gap-3 mt-5">
-                <Magnetic pullFactor={0.3}>
-                  <Link
-                    href="/create"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold rounded-full transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] cursor-pointer hover:scale-[1.03] active:scale-95"
-                  >
-                    <Plus className="w-4 h-4 stroke-[2.8]" />
-                    <span>Create New Event</span>
-                  </Link>
-                </Magnetic>
-              </div>
+              <p className="text-xs text-neutral-500 mt-1">
+                Any {activeTab} gatherings will appear here automatically.
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {filteredHostEvents.map((event) => {
-                const rsvpCount = getEventRsvpCount(event.id);
-                const isDraft = event.status === 'draft';
-                const isPast = event.start_at ? new Date(event.start_at) < new Date() : false;
-                const isLive = !isDraft && !isPast;
-
-                const isPrivate = isPrivateEvent(event);
+            <div className="divide-y divide-white/[0.08]">
+              {mappedHostEvents.map((event) => {
+                const originalEv = (event as any).originalEvent as EventItem | undefined;
 
                 return (
                   <div
                     key={event.id}
-                    className="group bg-[#0D0D10] rounded-2xl border border-white/10 hover:border-[#FF5500]/50 overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(255,85,0,0.18)] flex flex-col"
+                    className="group py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors rounded-xl px-2"
                   >
-                    {/* Poster Image Container */}
-                    <div className="event-card-cover relative aspect-[16/9] w-full bg-black overflow-hidden">
-                      {event.cover_image_url ? (
+                    {/* Left: Thumbnail & Details */}
+                    <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+                      <Link
+                        href={`/${event.slug}`}
+                        className="relative w-28 sm:w-32 h-18 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-900 border border-white/10 block group-hover:border-[#FF5500]/40 transition-colors"
+                      >
                         <Image
                           src={event.cover_image_url}
                           alt={event.title}
                           fill
                           unoptimized
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-800 to-black text-white text-xs font-bold font-mono">
-                          VIBE EVENT
-                        </div>
-                      )}
+                      </Link>
 
-                      {/* Top Badges */}
-                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 flex-wrap max-w-[70%]">
-                        {isPrivate ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-700/95 text-white shadow-xs flex items-center gap-1 backdrop-blur-xs border border-purple-400/30">
-                            <Lock className="w-2.5 h-2.5" />
-                            Private Invite
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600/95 text-white shadow-xs flex items-center gap-1 backdrop-blur-xs border border-blue-400/30">
-                            <Globe className="w-2.5 h-2.5" />
-                            Public Vibe
-                          </span>
-                        )}
-                        {isLive && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white shadow-xs flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                            Live
-                          </span>
-                        )}
-                        {isDraft && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-neutral-700 text-white shadow-xs">
-                            Draft
-                          </span>
-                        )}
-                        {isPast && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-neutral-800 text-white/80 shadow-xs border border-white/10">
-                            Ended
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Attendee Count Pill */}
-                      <div className="absolute top-2.5 right-2.5 z-10">
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-black/80 text-white backdrop-blur-md flex items-center gap-1.5 shadow-xs border border-white/15">
-                          <Users className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{rsvpCount} RSVPs</span>
+                      <div className="min-w-0">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span>Published</span>
                         </span>
+
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#FF5500] transition-colors mt-1 truncate">
+                          <Link href={`/${event.slug}`}>{event.title}</Link>
+                        </h3>
+
+                        <p className="text-xs text-neutral-400 font-medium tracking-wide uppercase mt-1 truncate">
+                          {event.formatted_date_venue}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="event-card-body p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5 bg-[#0D0D10]">
-                      <div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-white/50">
-                          <Clock className="w-3.5 h-3.5 text-[#FF5500]" />
-                          <span>{event.start_at ? formatIST(event.start_at) : 'Date TBA'}</span>
-                        </div>
-
-                        <h3 className="font-bold text-base text-white mt-1 line-clamp-2 leading-snug group-hover:text-[#FF5500] transition-colors">
-                          {event.title}
-                        </h3>
-
-                        <div className="flex items-center gap-1.5 text-xs text-white/50 mt-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
-                          <span className="truncate">{event.location_name || event.city || 'Online / TBA'}</span>
-                        </div>
+                    {/* Right: Guest Count, Inbox button, Arrow & Menu */}
+                    <div className="flex items-center gap-3 sm:gap-5 shrink-0 self-start md:self-auto pt-2 md:pt-0">
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-medium">
+                        <Users className="w-4 h-4 text-[#FF5500]" />
+                        <span>{event.guests_count} guests</span>
                       </div>
 
-                      {/* Host Actions */}
-                      <div className="space-y-2 pt-3 border-t border-white/10">
-                        <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        onClick={() => setIsInboxOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors cursor-pointer"
+                        title="Open guest inbox"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>Inbox</span>
+                      </button>
+
+                      <Link
+                        href={`/${event.slug}`}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
+                        title="View event page"
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                      </Link>
+
+                      {/* Dropdown Options for Real Events */}
+                      {originalEv && (
+                        <div className="relative">
                           <button
-                            onClick={() => setGuestListEvent(event)}
-                            className="py-2 px-2 rounded-xl bg-[#111114] hover:bg-white/10 text-white text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-white/10 shadow-2xs truncate"
-                            title="Manage Guests"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(activeMenuId === event.id ? null : event.id);
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                            title="More options"
                           >
-                            <Users className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">Guests</span>
+                            <MoreHorizontal className="w-4 h-4" />
                           </button>
 
-                          <Link
-                            href={`/organizer/check-in?eventId=${event.id}`}
-                            className="py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs truncate"
-                            title="Gate Scanner & Live Admission Sheet"
-                          >
-                            <QrCode className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">Scanner</span>
-                          </Link>
-
-                          <button
-                            onClick={() => setBroadcastEvent(event)}
-                            className="py-2 px-2 rounded-xl border border-white/10 hover:border-white/20 text-white text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer bg-[#111114] hover:bg-white/10 truncate"
-                            title="Broadcast Announcement"
-                          >
-                            <Megaphone className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
-                            <span className="truncate">Broadcast</span>
-                          </button>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-                          <Link
-                            href={`/${event.slug}`}
-                            target="_blank"
-                            className="text-white/60 hover:text-white font-semibold flex items-center gap-1 transition-colors"
-                          >
-                            <span>View Page</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </Link>
-
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => setShareEvent(event)}
-                              className="p-1.5 text-white/50 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                              title="Share Event"
+                          {activeMenuId === event.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-0 top-9 w-44 rounded-xl bg-[#0D0D10] border border-white/15 shadow-2xl p-1 z-30 space-y-1 animate-in fade-in zoom-in-95"
                             >
-                              <Share2 className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteEvent(event.id, event.title)}
-                              className="p-1.5 text-white/50 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
-                              title="Delete Event"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                              <Link
+                                href={`/organizer/check-in?eventId=${originalEv.id}`}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors"
+                              >
+                                <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Gate Scanner</span>
+                              </Link>
+                              <button
+                                onClick={() => {
+                                  setBroadcastEvent(originalEv);
+                                  setActiveMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors text-left"
+                              >
+                                <Send className="w-3.5 h-3.5 text-[#FF5500]" />
+                                <span>Broadcast Update</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShareEvent(originalEv);
+                                  setActiveMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors text-left"
+                              >
+                                <Share2 className="w-3.5 h-3.5 text-blue-400" />
+                                <span>Share Event</span>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(originalEv.id, originalEv.title)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors text-left"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete Event</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -767,9 +640,48 @@ function DashboardInner() {
             </div>
           )}
         </div>
+
+        {/* ========================================================= */}
+        {/* 4. KEEP EVERYONE IN THE LOOP BANNER                       */}
+        {/* ========================================================= */}
+        <div className="p-6 rounded-2xl bg-[#111114] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#2A160E] border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
+              <Send className="w-5 h-5 -rotate-12 translate-x-0.5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Keep everyone in the loop.</h3>
+              <p className="text-xs text-neutral-400 mt-0.5">A quick update goes a long way.</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setBroadcastEvent(broadcastTarget)}
+            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs sm:text-sm font-semibold text-white transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+          >
+            <span>Send an update</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400" />
+          </button>
+        </div>
       </main>
 
-      <Footer />
+      {/* ========================================================= */}
+      {/* 5. MINIMAL EDITORIAL FOOTER (MATCHING SCREENSHOT)         */}
+      {/* ========================================================= */}
+      <footer className="mt-20 border-t border-white/[0.08] py-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
+        <div className="flex items-center gap-3">
+          <span className="font-bold text-white text-sm tracking-tight">
+            vibe<span className="text-[#FF5500]">.</span>
+            <span className="text-[10px] text-neutral-500 font-mono tracking-wider ml-1">BY SWANIKI</span>
+          </span>
+          <span className="text-neutral-700">·</span>
+          <span className="text-neutral-500">Good people. Real connections.</span>
+        </div>
+        <div className="flex items-center gap-1 text-neutral-500 hover:text-white transition-colors">
+          <span>© 2026 Vibe by Swaniki</span>
+          <ArrowUpRight className="w-3.5 h-3.5" />
+        </div>
+      </footer>
 
       {/* Share Modal */}
       {shareEvent && (
@@ -794,62 +706,6 @@ function DashboardInner() {
         isOpen={isInboxOpen}
         onClose={() => setIsInboxOpen(false)}
       />
-
-      {/* Guest List Modal (Dark Theme) */}
-      {guestListEvent && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3.5 sm:p-4">
-          <div className="bg-[#0D0D10] rounded-2xl sm:rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-white/15 animate-in fade-in zoom-in-95 text-white">
-            <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between">
-              <div>
-                <h3 className="text-base sm:text-lg font-black text-white">
-                  Guest List & Door RSVPs
-                </h3>
-                <p className="text-xs text-white/50 mt-0.5">
-                  {guestListEvent.title} · <span className="font-mono font-bold text-emerald-400">{getEventRsvpCount(guestListEvent.id)} confirmed</span>
-                </p>
-              </div>
-              <button
-                onClick={() => setGuestListEvent(null)}
-                className="p-2 text-white/50 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-2.5">
-              {getEventRsvps(guestListEvent.id).length === 0 ? (
-                <div className="text-center py-12 text-white/40 text-xs">
-                  No RSVPs registered yet for this event.
-                </div>
-              ) : (
-                getEventRsvps(guestListEvent.id).map((r) => (
-                  <div
-                    key={r.id}
-                    className="p-3 sm:p-3.5 rounded-xl border border-white/10 bg-[#111114] flex items-center justify-between gap-3 text-white"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-white truncate">
-                        {r.name || r.guest_name || 'Guest'}
-                      </p>
-                      <p className="text-xs text-white/50 truncate font-mono">{r.email}</p>
-                    </div>
-                    <div className="shrink-0">
-                      <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${r.status === 'confirmed'
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                          }`}
-                      >
-                        {r.status}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -858,7 +714,7 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="min-h-screen bg-[#070709] flex items-center justify-center">
           <RefreshCw className="w-6 h-6 animate-spin text-[#FF5500]" />
         </div>
       }
