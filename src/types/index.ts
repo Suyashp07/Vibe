@@ -89,6 +89,7 @@ export interface EventItem {
   organizer_handle: string;
   organizer_logo?: string;
   organizer_brand_color?: string;
+  organizer_email?: string;
   slug: string;
   title: string;
   tagline: string;

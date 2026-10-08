@@ -54,32 +54,18 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
     const cleanEmail = profile?.email || `${cleanPhone}@guest.vibe.community`;
 
     try {
-      // 1. Send RSVP to Supabase backend API
-      const res = await fetch('/api/rsvps/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_id: event.id,
-          event_slug: event.slug,
-          name: name.trim(),
-          phone: cleanPhone,
-          email: cleanEmail,
-          status: 'confirmed',
-          custom_responses: {
-            channel: 'vibe_reels_instant',
-            flash_activity: event.flash_activity || 'casual',
-          },
-        }),
-      });
-
-      // 2. Save locally in store so passes appear in user dashboard
-      addRSVP({
+      // Supabase is single source of truth: writes to DB first, caches confirmed record
+      await addRSVP({
         event_id: event.id,
         event_slug: event.slug,
         name: name.trim(),
         phone: cleanPhone,
         email: cleanEmail,
         status: 'confirmed',
+        custom_responses: {
+          channel: 'vibe_reels_instant',
+          flash_activity: event.flash_activity || 'casual',
+        },
       });
 
       // Update spot filled in memory

@@ -29,6 +29,58 @@ import AnnouncementBanner from '@/components/communication/AnnouncementBanner';
 import AuthModal from '@/components/auth/AuthModal';
 import EventConversationModal from '@/components/communication/EventConversationModal';
 
+function ResponsiveEventPoster({ src, title }: { src?: string; title: string }) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [triedProxy, setTriedProxy] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setCurrentSrc(src);
+    setTriedProxy(false);
+    setHasError(false);
+  }, [src]);
+
+  if (!currentSrc || hasError) {
+    return (
+      <div className="flex items-center justify-center h-full bg-[#F1F5F9] text-[#64748B] text-xs">
+        No poster available
+      </div>
+    );
+  }
+
+  const handleError = () => {
+    if (!triedProxy && currentSrc && !currentSrc.startsWith('/api/image-proxy') && !currentSrc.startsWith('data:')) {
+      setTriedProxy(true);
+      setCurrentSrc(`/api/image-proxy?url=${encodeURIComponent(currentSrc)}`);
+    } else {
+      setHasError(true);
+    }
+  };
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-[#0A0A0A]">
+      {/* Ambient Blurred Backdrop for widescreen, banner or vertical flyers */}
+      <img
+        src={currentSrc}
+        alt=""
+        aria-hidden="true"
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+        className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-45 brightness-75 select-none pointer-events-none"
+      />
+      {/* Crystal Clear Poster fitting any aspect ratio without cropping text/faces */}
+      <img
+        src={currentSrc}
+        alt={title}
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+        onError={handleError}
+        className="relative max-h-full max-w-full object-contain z-10 drop-shadow-xl"
+      />
+    </div>
+  );
+}
+
 interface UnifiedEventDetailViewProps {
   event: EventItem;
 }
@@ -86,9 +138,9 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full font-sans text-[#0F172A]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4 sm:py-10 w-full font-sans text-[#0F172A]">
       {/* Top Utility Bar */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E2E8F0]">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-[#E2E8F0]">
         <Link
           href="/discover"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
@@ -113,24 +165,12 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
       />
 
       {/* Main 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
         {/* Left Column: Poster & Details (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6">
           {/* Cover Poster */}
           <div className="relative aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#F1F5F9] border border-[#E2E8F0] shadow-sm">
-            {event.cover_image_url ? (
-              <Image
-                src={event.cover_image_url}
-                alt={event.title}
-                fill
-                priority
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-[#F1F5F9] text-[#64748B] text-xs">
-                No poster available
-              </div>
-            )}
+            <ResponsiveEventPoster src={event.cover_image_url} title={event.title} />
 
             {/* Badges Overlay */}
             <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
@@ -238,54 +278,55 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
           </div>
 
           {/* Host Profile Card */}
-          <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3 min-w-0">
               {event.organizer_logo ? (
                 <Image
                   src={event.organizer_logo}
-                  alt={event.organizer_name}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover border border-[#E2E8F0]"
+                  alt={event.organizer_name || 'Organizer'}
+                  width={42}
+                  height={42}
+                  className="rounded-full object-cover border border-[#E2E8F0] shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold">
+                <div className="w-10 h-10 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold shrink-0">
                   {(event.organizer_name || 'V')[0]?.toUpperCase()}
                 </div>
               )}
-              <div>
-                <div className="text-xs font-bold text-[#0F172A]">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-[#0F172A] truncate">
                   Hosted by {event.organizer_name || event.source_platform || 'Curated by Vibe'}
                 </div>
-                <div className="text-[11px] text-[#64748B]">
+                <div className="text-[11px] text-[#64748B] truncate">
                   {event.organizer_handle ? `@${event.organizer_handle}` : 'Verified Event Curator'}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#F1F5F9]">
               <button
                 onClick={handleAskHostClick}
-                className="px-3.5 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] hover:text-orange-600 transition flex items-center gap-1.5 cursor-pointer"
+                className="py-2 px-3 sm:py-1.5 sm:px-3.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] hover:text-[#E8621A] transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                 title="Send a direct question to the organizer"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
+                <MessageSquare className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
                 <span>Ask Host</span>
               </button>
 
               <button
                 onClick={() => setShowShareModal(true)}
-                className="px-3.5 py-1.5 rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition cursor-pointer"
+                className="py-2 px-3 sm:py-1.5 sm:px-3.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#0F172A] transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                Share Event
+                <Share2 className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+                <span>Share Event</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Right Column: Sticky Action & Ticket Box (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-sm space-y-5 sticky top-24">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E2E8F0] shadow-sm space-y-4 sm:space-y-5 sticky top-24">
             {/* Price & Status Banner */}
             <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
               <div>

@@ -34,7 +34,16 @@ export default function ShareEventModal({
     ? `${window.location.origin}/${event.slug}`
     : `https://vibe-seven-pied.vercel.app/${event.slug}`;
 
-  const shareText = `Check out "${event.title}" on Vibe! ${event.tagline || ''}`;
+  const isPrivate =
+    event.is_private === true ||
+    event.is_public === false ||
+    event.visibility === 'private' ||
+    event.rsvp_form_config?.is_private === true ||
+    event.rsvp_form_config?.visibility === 'private';
+
+  const shareText = isPrivate
+    ? `You're invited to "${event.title}"! ${event.tagline || ''}`
+    : `Check out "${event.title}" on Vibe! ${event.tagline || ''}`;
 
   const handleCopy = async () => {
     try {
@@ -115,9 +124,16 @@ export default function ShareEventModal({
         <div className="p-5 space-y-4">
           {/* Direct Copy Bar */}
           <div>
-            <label className="block text-[11px] font-bold text-ink-secondary mb-1.5">
-              Event Link
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] font-bold text-ink-secondary">
+                {isPrivate ? 'Secret Invite Link' : 'Event Link'}
+              </label>
+              {isPrivate && (
+                <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                  Hidden from public discovery
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <input
                 type="text"

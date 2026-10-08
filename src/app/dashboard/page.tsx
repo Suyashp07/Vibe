@@ -25,7 +25,9 @@ import {
   RefreshCw,
   Megaphone,
   MessageSquare,
-  QrCode
+  QrCode,
+  Lock,
+  Globe
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -65,8 +67,8 @@ function DashboardInner() {
     setAvatarError(false);
   }, [profile?.avatar_url]);
 
-  // Host sub-filter: upcoming, past, drafts, all
-  const [hostFilter, setHostFilter] = useState<'upcoming' | 'past' | 'drafts' | 'all'>('upcoming');
+  // Host sub-filter: upcoming, private, past, drafts, all
+  const [hostFilter, setHostFilter] = useState<'upcoming' | 'private' | 'past' | 'drafts' | 'all'>('upcoming');
   const [hostSearch, setHostSearch] = useState('');
 
   // Selected Event for Host Modals
@@ -75,11 +77,22 @@ function DashboardInner() {
   const [broadcastEvent, setBroadcastEvent] = useState<EventItem | null>(null);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
 
+  // Helper to identify private gatherings
+  const isPrivateEvent = (e: EventItem) =>
+    e.is_private === true ||
+    e.is_public === false ||
+    e.visibility === 'private' ||
+    e.rsvp_form_config?.is_private === true ||
+    e.rsvp_form_config?.visibility === 'private';
+
   // Load & Sync data
   const loadData = async () => {
     setIsSyncing(true);
     try {
-      await Promise.all([syncEventsWithSupabase(), syncRSVPsWithSupabase()]);
+      const syncOptions = profile?.id
+        ? { organizerId: profile.id, includePrivate: true }
+        : { includePrivate: true };
+      await Promise.all([syncEventsWithSupabase(syncOptions), syncRSVPsWithSupabase()]);
     } catch (e) {
       console.warn('Dashboard sync fallback:', e);
     } finally {
@@ -91,17 +104,32 @@ function DashboardInner() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [profile?.id]);
 
-  // Events hosted by this user/organizer
+  // Events hosted by this user/organizer (including private events)
   const hostEvents = useMemo(() => {
     if (!profile) return events;
-    return events.filter(
-      (e) =>
-        e.organizer_id === profile.id ||
-        e.organizer_id === 'org-current' ||
-        (profile.email && e.organizer_name?.toLowerCase().includes(profile.name?.toLowerCase() || ''))
-    );
+    const profileId = (profile.id || '').toLowerCase();
+    const profileHandle = (profile.handle || '').toLowerCase();
+    const profileName = (profile.name || '').toLowerCase();
+    const profileEmail = (profile.email || '').toLowerCase();
+
+    return events.filter((e) => {
+      const eOrgId = (e.organizer_id || '').toLowerCase();
+      const eOrgHandle = (e.organizer_handle || '').toLowerCase();
+      const eOrgName = (e.organizer_name || '').toLowerCase();
+      const eOrgEmail = (e.organizer_email || '').toLowerCase();
+
+      return (
+        (profileId && eOrgId === profileId) ||
+        eOrgId === 'org-current' ||
+        eOrgId === 'org-local' ||
+        eOrgId === 'org-user' ||
+        (profileHandle && eOrgHandle === profileHandle) ||
+        (profileName && (eOrgName === profileName || eOrgName.includes(profileName))) ||
+        (profileEmail && eOrgEmail === profileEmail)
+      );
+    });
   }, [events, profile]);
 
   // Host KPI Metrics
@@ -137,6 +165,8 @@ function DashboardInner() {
           const start = new Date(event.start_at);
           if (start < now) return false;
         }
+      } else if (hostFilter === 'private') {
+        if (!isPrivateEvent(event)) return false;
       } else if (hostFilter === 'past') {
         if (!event.start_at) return false;
         const start = new Date(event.start_at);
@@ -166,6 +196,7 @@ function DashboardInner() {
       if (!e.start_at) return true;
       return new Date(e.start_at) >= now;
     }).length;
+    const privateInvites = hostEvents.filter(isPrivateEvent).length;
     const past = hostEvents.filter((e) => {
       if (!e.start_at) return false;
       return new Date(e.start_at) < now;
@@ -173,7 +204,7 @@ function DashboardInner() {
     const drafts = hostEvents.filter((e) => e.status === 'draft').length;
     const all = hostEvents.length;
 
-    return { upcoming, past, drafts, all };
+    return { upcoming, privateInvites, past, drafts, all };
   }, [hostEvents]);
 
   // RSVPs for a specific hosted event
@@ -392,6 +423,7 @@ function DashboardInner() {
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none -mx-1 px-1">
               {[
                 { id: 'upcoming', label: 'Live & Upcoming', count: tabCounts.upcoming },
+                { id: 'private', label: 'Private Invites', count: tabCounts.privateInvites },
                 { id: 'past', label: 'Past Events', count: tabCounts.past },
                 { id: 'drafts', label: 'Drafts', count: tabCounts.drafts },
                 { id: 'all', label: 'All Hosted', count: tabCounts.all },
@@ -463,6 +495,8 @@ function DashboardInner() {
               <h3 className="text-base font-bold text-slate-900">
                 {hostFilter === 'upcoming'
                   ? 'No active or upcoming events scheduled'
+                  : hostFilter === 'private'
+                  ? 'No private invite gatherings created yet'
                   : 'No hosted events found'}
               </h3>
               <p className="text-xs text-slate-500 mt-1 max-w-md">
@@ -486,6 +520,8 @@ function DashboardInner() {
                 const isPast = event.start_at ? new Date(event.start_at) < new Date() : false;
                 const isLive = !isDraft && !isPast;
 
+                const isPrivate = isPrivateEvent(event);
+
                 return (
                   <div
                     key={event.id}
@@ -508,7 +544,18 @@ function DashboardInner() {
                       )}
 
                       {/* Top Badges */}
-                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10">
+                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 flex-wrap max-w-[70%]">
+                        {isPrivate ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-700/95 text-white shadow-xs flex items-center gap-1 backdrop-blur-xs border border-purple-400/30">
+                            <Lock className="w-2.5 h-2.5" />
+                            Private Invite
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600/95 text-white shadow-xs flex items-center gap-1 backdrop-blur-xs border border-blue-400/30">
+                            <Globe className="w-2.5 h-2.5" />
+                            Public Vibe
+                          </span>
+                        )}
                         {isLive && (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white shadow-xs flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />

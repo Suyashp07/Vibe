@@ -100,6 +100,20 @@ export async function POST(req: Request) {
       }
     }
 
+    // Deduplication check: if attendee already registered in Supabase for this event, return confirmed record
+    if (resolvedEventId && email) {
+      const { data: existingRsvp } = await supabase
+        .from('rsvps')
+        .select('*')
+        .eq('event_id', resolvedEventId)
+        .ilike('email', email.trim())
+        .maybeSingle();
+
+      if (existingRsvp) {
+        return NextResponse.json({ success: true, rsvp: existingRsvp });
+      }
+    }
+
     // 3. Assign structured sequential pass serial number
     let passSerial = body.pass_serial || custom_responses?.pass_serial;
     let enrollmentNumber = custom_responses?.enrollment_number;

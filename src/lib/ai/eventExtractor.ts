@@ -355,7 +355,16 @@ export async function scrapeUrlMetadata(url: string): Promise<{
   end_at?: string;
 }> {
   let platform = 'telegram';
-  const lower = url.toLowerCase();
+  // Sanitize input url in case of trailing accidental noise (e.g. /ET00517685htt; -> /ET00517685)
+  let cleanTargetUrl = (url || '').trim();
+  const bmsMatch = cleanTargetUrl.match(/(https?:\/\/(?:[a-z0-9.-]+\.)?bookmyshow\.com\/events\/[A-Za-z0-9\-]+\/(ET\d+))/i);
+  if (bmsMatch) {
+    cleanTargetUrl = bmsMatch[1];
+  } else {
+    cleanTargetUrl = cleanTargetUrl.replace(/(?:htt|http|https);*$/i, '');
+  }
+
+  const lower = cleanTargetUrl.toLowerCase();
   if (lower.includes('district.in')) platform = 'district';
   else if (lower.includes('unstop.com')) platform = 'unstop';
   else if (lower.includes('bookmyshow.com')) platform = 'bookmyshow';
@@ -369,7 +378,7 @@ export async function scrapeUrlMetadata(url: string): Promise<{
   // Step 1: Attempt direct HTTP fetch (except for BookMyShow which always returns 403 Cloudflare blocks)
   if (!lower.includes('bookmyshow.com')) {
     try {
-      const res = await fetch(url, {
+      const res = await fetch(cleanTargetUrl, {
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -393,7 +402,7 @@ export async function scrapeUrlMetadata(url: string): Promise<{
   // Step 2: Fallback to Jina Reader for protected platforms (e.g. BookMyShow 403)
   if (usedReaderProxy || !rawContent || rawContent.length < 500) {
     try {
-      const proxyRes = await fetch(`https://r.jina.ai/${url}`, {
+      const proxyRes = await fetch(`https://r.jina.ai/${cleanTargetUrl}`, {
         headers: { Accept: 'text/plain' },
         signal: AbortSignal.timeout(16000),
       });
@@ -504,19 +513,21 @@ export async function scrapeUrlMetadata(url: string): Promise<{
       }
     }
 
-    // 4. BMS Real Desktop Banner (match markdown, HTML, or raw URLs)
+    // 4. BMS Real Desktop Banner & Listing Poster (strip markdown trailing brackets)
     const bmsImages = Array.from(
       rawContent.matchAll(/(https?:\/\/[^\s"'<>()]+bmscdn\.com[^\s"'<>()]+\.(?:jpg|jpeg|png|webp)[^\s"'<>()]*)/gi)
     )
-      .map((m) => m[1])
+      .map((m) => m[1].replace(/[)\],;]+$/, ''))
       .filter(isValidEventPoster);
     const banner =
       bmsImages.find(
         (img) =>
           img.includes('events/banner/desktop/') ||
-          img.includes('media-desktop-') ||
-          img.includes('events/banner/weblisting/')
-      ) || bmsImages[0];
+          img.includes('media-desktop-')
+      ) ||
+      bmsImages.find((img) => img.includes('events/banner/weblisting/')) ||
+      bmsImages.find((img) => img.includes('events/banner/mobile/')) ||
+      bmsImages[0];
     if (banner) {
       image = banner;
     }

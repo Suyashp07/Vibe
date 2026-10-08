@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
 import { addRSVP, generateGoogleCalendarUrl, downloadICS, getEventRSVPs } from '@/lib/store';
-import { sendEmailOtp, verifyEmailOtp, createGuestAccountFromRsvp, getLocalAuthSession, validateEmailInput } from '@/lib/auth';
+import { sendEmailOtp, verifyEmailOtp, createGuestAccountFromRsvp, getLocalAuthSession, validateEmailInput, useAuth } from '@/lib/auth';
 import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import FollowButton from '@/components/ui/FollowButton';
 
@@ -127,7 +127,84 @@ export default function RSVPForm({
     }
   }, [event.id]);
 
-  // 1. Details submission -> send Email OTP
+  const { profile, isLoggedIn } = useAuth();
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
+  // Finalize RSVP after verification or for authenticated users
+  const finalizeRsvp = async () => {
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    const fullPhone = phone ? (phone.startsWith('+91') ? phone : `+91${phone.replace(/\D/g, '')}`) : '';
+    const isApprovalRequired = Boolean(event.rsvp_form_config?.approval_required);
+    const status = isApprovalRequired
+      ? 'waitlisted'
+      : (isFull && event.rsvp_form_config.waitlist_enabled ? 'waitlisted' : 'confirmed');
+
+    try {
+      const rsvp = await addRSVP({
+        event_id: event.id,
+        event_slug: event.slug,
+        name: name.trim(),
+        email: email.trim(),
+        phone: fullPhone,
+        status,
+        plus_one_name: hasPlusOne ? plusOneName.trim() : undefined,
+        custom_responses: {
+          ...(event.rsvp_form_config.ask_dietary ? { dietary } : {}),
+          ...(event.rsvp_form_config.ask_tshirt ? { tshirt } : {}),
+          ...customAnswers
+        }
+      });
+
+      // Confetti celebration if confirmed
+      if (status === 'confirmed') {
+        confetti({
+          particleCount: 90,
+          spread: 75,
+          origin: { y: 0.6 },
+          colors: ['#E8621A', '#C9A84C', '#1A1A2E', '#1A7A4A']
+        });
+      }
+
+      // Dispatch background whitelabeled email notification with confirmed digital pass
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: status === 'waitlisted' ? 'waitlisted' : 'rsvp_confirmed',
+          to: email.trim(),
+          guestName: name.trim(),
+          rsvp,
+          event,
+          organizer: {
+            name: event.organizer_name,
+            brand_color: event.organizer_brand_color,
+            logo_url: event.organizer_logo,
+            handle: event.organizer_handle
+          }
+        })
+      }).catch(err => console.warn('Email notification note:', err));
+
+      setSubmittedRsvp(rsvp);
+      setIsSubmitting(false);
+      setStep('success');
+      if (onSuccess) onSuccess(rsvp);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setErrorMessage(err.message || 'Failed to confirm RSVP with server. Please try again.');
+    }
+  };
+
+  // 1. Details submission -> send Email OTP (or auto-confirm if already authenticated)
   const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !phone.trim()) return;
@@ -139,8 +216,15 @@ export default function RSVPForm({
       return;
     }
 
+    // If user is already authenticated with this email, skip redundant OTP!
+    if (isLoggedIn && profile?.email && profile.email.toLowerCase() === cleanEmail.toLowerCase()) {
+      await finalizeRsvp();
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage(null);
+    setOtpToken('');
 
     const { error } = await sendEmailOtp(cleanEmail, 'guest');
 
@@ -149,7 +233,25 @@ export default function RSVPForm({
       setErrorMessage(error.message || 'Failed to send verification code. Please try again.');
     } else {
       setOtpMessage(`We sent a 6-digit verification code to ${cleanEmail}`);
+      setResendCooldown(30);
       setStep('otp');
+    }
+  };
+
+  // Dedicated resend handler with cooldown protection
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || isSubmitting) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    setOtpToken('');
+    const cleanEmail = email.trim();
+    const { error } = await sendEmailOtp(cleanEmail, 'guest');
+    setIsSubmitting(false);
+    if (error) {
+      setErrorMessage(error.message || 'Failed to resend code. Please try again.');
+    } else {
+      setOtpMessage(`A new 6-digit verification code was sent to ${cleanEmail}`);
+      setResendCooldown(30);
     }
   };
 
@@ -170,60 +272,7 @@ export default function RSVPForm({
     }
 
     // OTP Verified! Finalize RSVP
-    const fullPhone = phone ? (phone.startsWith('+91') ? phone : `+91${phone.replace(/\D/g, '')}`) : '';
-    const isApprovalRequired = Boolean(event.rsvp_form_config?.approval_required);
-    const status = isApprovalRequired
-      ? 'waitlisted'
-      : (isFull && event.rsvp_form_config.waitlist_enabled ? 'waitlisted' : 'confirmed');
-
-    const rsvp = addRSVP({
-      event_id: event.id,
-      event_slug: event.slug,
-      name: name.trim(),
-      email: email.trim(),
-      phone: fullPhone,
-      status,
-      plus_one_name: hasPlusOne ? plusOneName.trim() : undefined,
-      custom_responses: {
-        ...(event.rsvp_form_config.ask_dietary ? { dietary } : {}),
-        ...(event.rsvp_form_config.ask_tshirt ? { tshirt } : {}),
-        ...customAnswers
-      }
-    });
-
-    // Confetti celebration if confirmed
-    if (status === 'confirmed') {
-      confetti({
-        particleCount: 90,
-        spread: 75,
-        origin: { y: 0.6 },
-        colors: ['#E8621A', '#C9A84C', '#1A1A2E', '#1A7A4A']
-      });
-    }
-
-    // Dispatch background whitelabeled email notification with digital pass
-    fetch('/api/email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: status === 'waitlisted' ? 'waitlisted' : 'rsvp_confirmed',
-        to: email.trim(),
-        guestName: name.trim(),
-        rsvp,
-        event,
-        organizer: {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        }
-      })
-    }).catch(err => console.warn('Email notification note:', err));
-
-    setSubmittedRsvp(rsvp);
-    setIsSubmitting(false);
-    setStep('success');
-    if (onSuccess) onSuccess(rsvp);
+    await finalizeRsvp();
   };
 
   // 3. Soft Prompt: Activate Guest Account
@@ -422,12 +471,12 @@ export default function RSVPForm({
               <span>Didn&apos;t receive code?</span>
               <button
                 type="button"
-                onClick={handleDetailsSubmit}
-                disabled={isSubmitting}
-                className="hover:underline inline-flex items-center gap-1 font-bold text-[#E8621A] transition-colors cursor-pointer disabled:opacity-50"
+                onClick={handleResendOtp}
+                disabled={isSubmitting || resendCooldown > 0}
+                className="hover:underline inline-flex items-center gap-1 font-bold text-[#E8621A] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
-                <span>Resend Code</span>
+                <span>{resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : 'Resend Code'}</span>
               </button>
             </div>
 

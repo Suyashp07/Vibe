@@ -1052,30 +1052,17 @@ export const getEventBySlug = (slug: string): EventItem | undefined => {
 
 import { getSupabaseClient, isSupabaseConfigured } from './supabase';
 
-export const saveEvent = async (event: EventItem) => {
-  if (isClient) {
-    const events = getEvents();
-    const index = events.findIndex(
-      (e) => (e.id && event.id && e.id === event.id) || (e.slug && event.slug && e.slug.toLowerCase() === event.slug.toLowerCase())
-    );
-    if (index >= 0) {
-      events[index] = { ...events[index], ...event, updated_at: new Date().toISOString() };
-    } else {
-      events.unshift(event);
-    }
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
-    notifyListeners();
-  }
+export const saveEvent = async (event: EventItem): Promise<EventItem> => {
+  let confirmedEvent: EventItem = event;
 
-  // Supabase PostgreSQL sync
+  // 1. Supabase PostgreSQL as primary single source of truth
   const client = getSupabaseClient();
   if (client) {
     try {
       const isUUID = Boolean(event.organizer_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.organizer_id));
       const isEventUUID = Boolean(event.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.id));
-      await client.from('events').upsert({
-        id: isEventUUID ? event.id : undefined,
-        organizer_id: isUUID ? event.organizer_id : undefined,
+        const isPrivate = event.is_public === false || event.is_private === true || event.visibility === 'private' || event.rsvp_form_config?.is_private === true;
+        const payload: any = {
         slug: event.slug,
         title: event.title,
         tagline: event.tagline,
@@ -1101,11 +1088,15 @@ export const saveEvent = async (event: EventItem) => {
         end_at: event.end_at,
         timezone: event.timezone,
         capacity: event.capacity,
-        is_public: event.is_public,
+        is_public: !isPrivate,
         status: event.status,
         ai_generated: event.ai_generated,
         faq: event.faq,
-        rsvp_form_config: event.rsvp_form_config,
+        rsvp_form_config: {
+          ...(typeof event.rsvp_form_config === 'object' ? event.rsvp_form_config : {}),
+          is_private: isPrivate,
+          visibility: isPrivate ? 'private' : 'public',
+        },
         whatsapp_caption: event.whatsapp_caption,
         instagram_caption: event.instagram_caption,
         source_type: event.source_type || 'native',
@@ -1114,11 +1105,48 @@ export const saveEvent = async (event: EventItem) => {
         external_price_text: event.external_price_text || undefined,
         confidence_score: event.confidence_score || undefined,
         updated_at: new Date().toISOString(),
-      });
+      };
+      if (isEventUUID) payload.id = event.id;
+      if (isUUID) payload.organizer_id = event.organizer_id;
+
+      const { data, error } = await client
+        .from('events')
+        .upsert(payload, { onConflict: 'slug' })
+        .select()
+        .maybeSingle();
+
+      if (!error && data) {
+        confirmedEvent = {
+          ...event,
+          is_public: !isPrivate,
+          is_private: isPrivate,
+          visibility: isPrivate ? 'private' : 'public',
+          id: data.id || event.id,
+          slug: data.slug || event.slug,
+          updated_at: data.updated_at || new Date().toISOString(),
+        };
+      }
     } catch (e) {
       console.warn('Supabase sync skipped, stored locally:', e);
     }
   }
+
+  // 2. Read-through client cache update
+  if (isClient) {
+    const events = getEvents();
+    const index = events.findIndex(
+      (e) => (e.id && confirmedEvent.id && e.id === confirmedEvent.id) || (e.slug && confirmedEvent.slug && e.slug.toLowerCase() === confirmedEvent.slug.toLowerCase())
+    );
+    if (index >= 0) {
+      events[index] = { ...events[index], ...confirmedEvent, updated_at: new Date().toISOString() };
+    } else {
+      events.unshift(confirmedEvent);
+    }
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+    notifyListeners();
+  }
+
+  return confirmedEvent;
 };
 
 export const deleteEvent = async (id: string, slug?: string): Promise<boolean> => {
@@ -1153,9 +1181,17 @@ export const deleteEvent = async (id: string, slug?: string): Promise<boolean> =
   }
 };
 
-export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
+export const syncEventsWithSupabase = async (options?: { organizerId?: string; includePrivate?: boolean }): Promise<EventItem[]> => {
   try {
-    const res = await fetch(`/api/events/list?t=${Date.now()}`, {
+    let url = `/api/events/list?t=${Date.now()}`;
+    if (options?.organizerId) {
+      url += `&organizer_id=${encodeURIComponent(options.organizerId)}`;
+    }
+    if (options?.includePrivate) {
+      url += `&include_private=true`;
+    }
+
+    const res = await fetch(url, {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
     });
@@ -1169,6 +1205,15 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
     // Convert remote events to EventItem
     const formattedRemote: EventItem[] = remoteEvents.map((row: any) => {
       const orgProfile = row.profiles || {};
+      const isPrivate =
+        row.is_public === false ||
+        String(row.is_public) === 'false' ||
+        row.is_private === true ||
+        row.visibility === 'private' ||
+        row.rsvp_form_config?.is_private === true ||
+        row.rsvp_form_config?.visibility === 'private' ||
+        row.rsvp_form_config?.is_public === false;
+
       return {
         id: row.id,
         organizer_id: row.organizer_id || orgProfile.id || 'org-1',
@@ -1192,9 +1237,9 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
         end_at: row.end_at,
         timezone: row.timezone || 'Asia/Kolkata',
         capacity: row.capacity || 50,
-        is_public: row.is_public === true,
-        is_private: row.is_public === false || row.rsvp_form_config?.is_private === true,
-        visibility: (row.is_public === false || row.rsvp_form_config?.is_private === true) ? 'private' : 'public',
+        is_public: !isPrivate,
+        is_private: isPrivate,
+        visibility: isPrivate ? 'private' : 'public',
         status: row.status || 'live',
         ai_generated: row.ai_generated || false,
         faq: row.faq || [],
@@ -1236,10 +1281,29 @@ export const syncEventsWithSupabase = async (): Promise<EventItem[]> => {
     const deletedList: string[] = isClient ? JSON.parse(localStorage.getItem('vibe_deleted_events') || '[]') : [];
     const deletedSet = new Set(deletedList);
 
-    // Strictly keep only public live remote events, excluding private gatherings, legacy static demo events or deleted events
-    const merged = formattedRemote.filter(
-      e => isPublicLiveEvent(e) && !STATIC_EVENT_IDS.has(e.id) && !STATIC_EVENT_IDS.has(e.slug) && !deletedSet.has(e.id) && !deletedSet.has(e.slug)
+    // Existing local events: strictly preserve private events created by the host!
+    const currentLocal = isClient ? getEvents() : [];
+    const localPrivateEvents = currentLocal.filter(
+      e => !isPublicLiveEvent(e) && !deletedSet.has(e.id) && !deletedSet.has(e.slug)
     );
+
+    // Filter valid remote events
+    const validRemote = formattedRemote.filter(
+      e => !STATIC_EVENT_IDS.has(e.id) && !STATIC_EVENT_IDS.has(e.slug) && !deletedSet.has(e.id) && !deletedSet.has(e.slug)
+    );
+
+    // Merge: Remote events + local host private events (so host private events are NEVER discarded)
+    const seen = new Set<string>();
+    const merged: EventItem[] = [];
+
+    for (const ev of [...validRemote, ...localPrivateEvents]) {
+      const key = ev.id || ev.slug;
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        if (ev.slug) seen.add(ev.slug);
+        merged.push(ev);
+      }
+    }
 
     if (isClient) {
       localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(merged));
@@ -1261,7 +1325,10 @@ export const getRSVPs = (): RSVPItem[] => {
     return INITIAL_RSVPS;
   }
   try {
-    return JSON.parse(stored);
+    const parsed: RSVPItem[] = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return INITIAL_RSVPS;
+    // Client cache is strictly a read-through cache of confirmed records: purge any stale unconfirmed 'r-' dummy IDs
+    return parsed.filter(r => r && r.id && !r.id.startsWith('r-'));
   } catch {
     return INITIAL_RSVPS;
   }
@@ -1283,82 +1350,84 @@ export const hasUserRSVP = (eventIdOrSlug: string): RSVPItem | null => {
   return null;
 };
 
-export const addRSVP = (rsvp: Omit<RSVPItem, 'id' | 'created_at'>): RSVPItem => {
-  const all = isClient ? getRSVPs() : [];
+/**
+ * Supabase is the single source of truth for all write operations.
+ * Writes directly to Supabase via /api/rsvps/create, waits for the genuine
+ * confirmed database record (with UUID and sequential pass serial), and uses
+ * localStorage strictly as a read-through cache. Never generates unconfirmed
+ * client-side record IDs.
+ */
+export const addRSVP = async (
+  rsvp: Omit<RSVPItem, 'id' | 'created_at'>
+): Promise<RSVPItem> => {
+  if (typeof window === 'undefined') {
+    throw new Error('addRSVP can only be called in a browser environment');
+  }
 
-  // Determine sequence number by counting existing guests for this specific event
-  const existingForEvent = all.filter(
-    (r) => r.event_id === rsvp.event_id || (rsvp.event_slug && r.event_slug === rsvp.event_slug)
-  );
-  const nextSeq = existingForEvent.length + 1;
+  // 1. Submit to Supabase as single source of truth
+  const res = await fetch('/api/rsvps/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rsvp),
+  });
 
-  // Resolve matching event to get city and online/in-person status
-  const allEvents = isClient ? getEvents() : [];
-  const matchedEvent = allEvents.find(
-    (e) => e.id === rsvp.event_id || (rsvp.event_slug && e.slug === rsvp.event_slug)
-  );
+  const data = await res.json().catch(() => null);
 
+  if (!res.ok || !data?.success || !data?.rsvp) {
+    const errorMsg = data?.error || `Failed to confirm RSVP with server (HTTP ${res.status})`;
+    throw new Error(errorMsg);
+  }
+
+  const serverRsvp = data.rsvp;
   const passSerial =
+    serverRsvp.pass_serial ||
+    serverRsvp.custom_responses?.pass_serial ||
     rsvp.pass_serial ||
-    rsvp.custom_responses?.pass_serial ||
-    generatePassSerial({
-      city: matchedEvent?.city,
-      sequenceNumber: nextSeq,
-      status: rsvp.status,
-      isOnline: matchedEvent?.event_type === 'online',
-    });
+    rsvp.custom_responses?.pass_serial;
 
-  const updatedCustomResponses = {
-    ...(rsvp.custom_responses || {}),
+  const enrollmentNumber =
+    serverRsvp.enrollment_number ||
+    serverRsvp.custom_responses?.enrollment_number ||
+    rsvp.enrollment_number;
+
+  const confirmedRsvp: RSVPItem = {
+    id: serverRsvp.id,
+    event_id: serverRsvp.event_id || rsvp.event_id,
+    event_slug: rsvp.event_slug || serverRsvp.events?.slug || '',
+    name: serverRsvp.name || rsvp.name,
+    email: serverRsvp.email || rsvp.email,
+    phone: serverRsvp.phone || rsvp.phone || '',
+    status: serverRsvp.status || rsvp.status || 'confirmed',
+    plus_one_name: serverRsvp.plus_one_name || rsvp.plus_one_name,
+    dietary: serverRsvp.custom_responses?.dietary || (rsvp as any).dietary,
+    tshirt_size: serverRsvp.custom_responses?.tshirt || (rsvp as any).tshirt_size,
+    custom_responses: serverRsvp.custom_responses || rsvp.custom_responses || {},
     pass_serial: passSerial,
-    enrollment_number: nextSeq,
+    enrollment_number: enrollmentNumber,
+    created_at: serverRsvp.created_at || new Date().toISOString(),
   };
 
-  const newRsvp: RSVPItem = {
-    ...rsvp,
-    id: `r-${Date.now()}`,
-    pass_serial: passSerial,
-    enrollment_number: nextSeq,
-    custom_responses: updatedCustomResponses,
-    created_at: new Date().toISOString()
-  };
+  // 2. Update client cache strictly as a read-through cache
   if (isClient) {
-    all.unshift(newRsvp);
-    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(all));
+    const all = getRSVPs();
+    const cleaned = all.filter(
+      (r) =>
+        !r.id.startsWith('r-') &&
+        r.id !== confirmedRsvp.id &&
+        !(
+          (r.event_id === confirmedRsvp.event_id || (rsvp.event_slug && r.event_slug === rsvp.event_slug)) &&
+          r.email?.trim().toLowerCase() === confirmedRsvp.email?.trim().toLowerCase()
+        )
+    );
+    cleaned.unshift(confirmedRsvp);
+    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(cleaned));
     notifyListeners();
   }
 
-  // Persist to Supabase via server API route
-  if (typeof window !== 'undefined') {
-    fetch('/api/rsvps/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...rsvp,
-        pass_serial: passSerial,
-        custom_responses: updatedCustomResponses
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data?.rsvp?.id) {
-          const current = getRSVPs();
-          const mapped = current.map(r => r.id === newRsvp.id ? {
-            ...r,
-            id: data.rsvp.id,
-            event_id: data.rsvp.event_id,
-            pass_serial: data.rsvp.custom_responses?.pass_serial || passSerial,
-            custom_responses: data.rsvp.custom_responses || updatedCustomResponses
-          } : r);
-          localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(mapped));
-          notifyListeners();
-        }
-      })
-      .catch(err => console.warn('Note on /api/rsvps/create:', err));
-  }
-
-  return newRsvp;
+  return confirmedRsvp;
 };
+
+export const createRSVP = addRSVP;
 
 export const syncRSVPsWithSupabase = async (): Promise<RSVPItem[]> => {
   if (!isClient) return getRSVPs();
@@ -1394,6 +1463,8 @@ export const syncRSVPsWithSupabase = async (): Promise<RSVPItem[]> => {
     });
 
     local.forEach(l => {
+      // Purge any stale unconfirmed client-side dummy IDs
+      if (l.id && l.id.startsWith('r-')) return;
       const alreadyExists = remoteRsvps.some(
         r => r.id === l.id || (r.event_id === l.event_id && r.email?.toLowerCase() === l.email?.toLowerCase())
       );

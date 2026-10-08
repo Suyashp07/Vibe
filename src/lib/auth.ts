@@ -214,6 +214,8 @@ export const verifyEmailOtp = async (
     } catch {}
   }
 
+  const cleanEmail = normalizeEmail(email);
+
   if (!client) {
     return { data: null, error: { message: 'Supabase client is not configured.' } };
   }
@@ -222,37 +224,34 @@ export const verifyEmailOtp = async (
     return { data: null, error: { message: 'Please enter the 6 to 8 digit verification code from your email.' } };
   }
 
-  // Try 'magiclink' first (for existing users & login OTPs), then 'signup' (new users), then 'email'
+  // 1. Primary: Tokens generated via signInWithOtp MUST be verified with type: 'email'
   let { data, error } = await client.auth.verifyOtp({
-    email,
+    email: cleanEmail,
     token: trimmedToken,
-    type: 'magiclink'
+    type: 'email'
   });
 
+  // 2. Fallback: If 'email' type fails, try 'signup' (in case user came from passwordless signup)
   if (error) {
     const signupRes = await client.auth.verifyOtp({
-      email,
+      email: cleanEmail,
       token: trimmedToken,
       type: 'signup'
     });
     if (!signupRes.error) {
       data = signupRes.data;
       error = null;
-    } else {
-      const emailRes = await client.auth.verifyOtp({
-        email,
-        token: trimmedToken,
-        type: 'email'
-      });
-      if (!emailRes.error) {
-        data = emailRes.data;
-        error = null;
-      }
     }
   }
 
   if (error) {
-    return { data: null, error };
+    return {
+      data: null,
+      error: {
+        ...error,
+        message: 'Invalid or expired verification code. If multiple codes arrived, please enter the code from the most recent email.'
+      }
+    };
   }
 
   if (data?.user) {

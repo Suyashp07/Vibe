@@ -39,6 +39,38 @@ const nextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/guest',
+        destination: '/passes',
+        permanent: true,
+      },
+      {
+        source: '/vibe',
+        destination: '/vibes',
+        permanent: true,
+      },
+      {
+        source: '/admin/scanner',
+        destination: '/organizer/check-in',
+        permanent: true,
+      },
+      {
+        source: '/admin/events',
+        destination: '/admin',
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/discover',
+        destination: '/',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

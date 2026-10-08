@@ -91,17 +91,20 @@ function OrganizerCheckInContent() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const autoResumeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load local data and sync
+  // Load local data and sync (including private events hosted by organizer)
   const loadData = useCallback(async () => {
     try {
-      await Promise.all([syncEventsWithSupabase(), syncRSVPsWithSupabase()]);
+      const syncOpts = profile?.id
+        ? { organizerId: profile.id, includePrivate: true }
+        : { includePrivate: true };
+      await Promise.all([syncEventsWithSupabase(syncOpts), syncRSVPsWithSupabase()]);
     } catch (e) {
       console.warn('Sync failed, using cache:', e);
     } finally {
       setEvents(getEvents());
       setRsvps(getRSVPs());
     }
-  }, []);
+  }, [profile?.id]);
 
   useEffect(() => {
     loadData();
