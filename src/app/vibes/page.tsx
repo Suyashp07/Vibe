@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { EventItem } from '@/types';
+import { EventItem, RSVPItem } from '@/types';
 import {
   getFlashVibeEvents,
   subscribeToStore,
@@ -30,6 +30,8 @@ import {
   isFlashVibeLiked,
   toggleFlashVibeLike,
   hasUserRSVP,
+  getRSVPs,
+  getComments,
 } from '@/lib/store';
 import { getUserCity } from '@/lib/location';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
@@ -167,10 +169,10 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
 
 const ACTIVITY_FILTERS = [
   { id: 'all', label: 'All vibes' },
-  { id: 'tech', label: 'Technology', match: ['technology', 'founders', 'code'] },
-  { id: 'music', label: 'Live Music', match: ['music', 'acoustic', 'concert'] },
-  { id: 'sports', label: 'Sports & Turf', match: ['sports', 'cricket', 'padel'] },
-  { id: 'social', label: 'Social & Cafes', match: ['coffee', 'chai', 'social'] },
+  { id: 'tech', label: 'Technology', match: ['technology', 'founders', 'code', 'ai', 'cyber', 'tech'] },
+  { id: 'music', label: 'Live Music', match: ['music', 'acoustic', 'concert', 'live', 'jam'] },
+  { id: 'sports', label: 'Sports & Turf', match: ['sports', 'cricket', 'padel', 'football', 'turf', 'badminton'] },
+  { id: 'social', label: 'Social & Cafes', match: ['coffee', 'chai', 'social', 'cafe', 'milan', 'samaroh', 'meetup'] },
 ];
 
 function VibesContent() {
@@ -191,12 +193,34 @@ function VibesContent() {
   // Likes & interaction states
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likesCountMap, setLikesCountMap] = useState<Record<string, number>>({});
-  const [storeEvents, setStoreEvents] = useState<EventItem[]>([]);
+  
+  // Real vibes from local/remote store - lazily initialized from store cache
+  const [storeEvents, setStoreEvents] = useState<EventItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return getFlashVibeEvents().filter((e) => !isEventExpired(e));
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const [allRsvps, setAllRsvps] = useState<RSVPItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return getRSVPs();
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
 
   const filterDropdownRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number>(0);
 
-  // Sync city
+  // Sync city from user location
   useEffect(() => {
     const c = getUserCity();
     if (c && c !== 'All India' && c !== 'all') {
@@ -204,11 +228,12 @@ function VibesContent() {
     }
   }, []);
 
-  // Load live vibes from local/remote store
+  // Load and continuously sync live vibes from store/Supabase
   useEffect(() => {
     const loadStoreVibes = () => {
       const live = getFlashVibeEvents().filter((e) => !isEventExpired(e));
       setStoreEvents(live);
+      setAllRsvps(getRSVPs());
     };
     loadStoreVibes();
     syncEventsWithSupabase().then(() => loadStoreVibes()).catch(() => {});
@@ -216,65 +241,170 @@ function VibesContent() {
     return () => unsub();
   }, []);
 
-  // Combine default sample vibes with any user-created vibes
-  const allVibes = useMemo<VibeInstantItem[]>(() => {
-    const convertedStoreVibes: VibeInstantItem[] = storeEvents.map((e, idx) => {
-      const going = e.spots_filled || (e.theme as any)?.spots_filled || 3;
+  // Map real store events into VibeInstantItem format
+  const convertedStoreVibes = useMemo<VibeInstantItem[]>(() => {
+    return storeEvents.map((e, idx) => {
+      const confirmedRsvps = allRsvps.filter(
+        (r) => (r.event_id === e.id || r.event_slug === e.slug) && r.status === 'confirmed'
+      ).length;
+      const going = Math.max(confirmedRsvps, e.spots_filled || (e.theme as any)?.spots_filled || 1);
       const capacity = e.spots_limit || (e.theme as any)?.spots_limit || e.capacity || 12;
       const spotsLeft = Math.max(0, capacity - going);
 
-      let dStr = 'DATE TBA';
+      let dStr = 'TODAY';
       let tStr = 'TIME TBA';
       if (e.start_at) {
         try {
           const d = new Date(e.start_at);
-          dStr = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+          const now = new Date();
+          const yearStr = d.getFullYear() !== now.getFullYear() ? ` ${d.getFullYear()}` : '';
+          dStr = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase() + yearStr;
           tStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         } catch {}
       }
 
-      const initials = (e.organizer_name || 'Host')
-        .split(' ')
-        .map((p) => p[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase();
+      // Determine category dynamically from activity, category or title
+      const titleLower = (e.title || '').toLowerCase();
+      const activityLower = (e.flash_activity || '').toLowerCase();
+      let cat = 'COMMUNITY';
+      if (
+        activityLower.includes('cricket') ||
+        activityLower.includes('sport') ||
+        titleLower.includes('cricket') ||
+        titleLower.includes('turf') ||
+        titleLower.includes('match') ||
+        titleLower.includes('sports')
+      ) {
+        cat = 'SPORTS';
+      } else if (
+        activityLower.includes('tech') ||
+        activityLower.includes('founder') ||
+        activityLower.includes('code') ||
+        titleLower.includes('ai') ||
+        titleLower.includes('tech') ||
+        titleLower.includes('cyber') ||
+        titleLower.includes('founders')
+      ) {
+        cat = 'TECHNOLOGY';
+      } else if (
+        activityLower.includes('music') ||
+        activityLower.includes('acoustic') ||
+        titleLower.includes('music') ||
+        titleLower.includes('live')
+      ) {
+        cat = 'MUSIC';
+      } else if (
+        activityLower.includes('coffee') ||
+        activityLower.includes('chai') ||
+        titleLower.includes('coffee') ||
+        titleLower.includes('milan') ||
+        titleLower.includes('samaroh') ||
+        titleLower.includes('cafe')
+      ) {
+        cat = 'SOCIAL';
+      } else if (e.category) {
+        cat = e.category.toUpperCase();
+      }
+
+      // Dynamic badges
+      let badge = spotsLeft <= 3 ? 'Selling fast' : 'Community pick';
+      if (e.source_platform === 'whatsapp') {
+        badge = 'WhatsApp Instant Vibe';
+      } else if (e.source_platform === 'telegram') {
+        badge = 'Telegram Instant Vibe';
+      }
+
+      const hostName =
+        e.organizer_name ||
+        (e as any).profiles?.name ||
+        (e.source_platform ? `${e.source_platform.toUpperCase()} Host` : 'Vibe Host');
+
+      const initials =
+        hostName
+          .split(' ')
+          .map((p: string) => p[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase() || 'VH';
+
+      const venue = (e.location_name || '').trim();
+      const city = (e.city || '').trim();
+      let venueDisplay = 'Venue TBA';
+      if (venue && city && !venue.toLowerCase().includes(city.toLowerCase())) {
+        venueDisplay = `${venue} · ${city}`;
+      } else if (venue) {
+        venueDisplay = venue;
+      } else if (city) {
+        venueDisplay = city;
+      }
+
+      // Pick contextual cover image based on activity if image is missing
+      let coverImg = e.cover_image_url;
+      if (!coverImg) {
+        if (cat === 'SPORTS') {
+          coverImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80';
+        } else if (cat === 'TECHNOLOGY') {
+          coverImg = 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=1200&auto=format&fit=crop&q=80';
+        } else if (cat === 'MUSIC') {
+          coverImg = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80';
+        } else {
+          coverImg = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80';
+        }
+      }
+
+      const commentsCount = typeof window !== 'undefined' ? getComments(e.id).length : 0;
 
       return {
         id: e.id,
         slug: e.slug,
         title: e.title,
-        category: (e.category || 'COMMUNITY').toUpperCase(),
-        badge: spotsLeft <= 3 ? 'Selling fast' : 'Community pick',
-        host_name: e.organizer_name || 'Swaniki Social',
-        host_initials: initials || 'SS',
+        category: cat,
+        badge,
+        host_name: hostName,
+        host_initials: initials,
         host_rating: '4.9',
-        host_vibes_count: 8 + idx,
+        host_vibes_count: Math.max(1, 4 + (idx % 8)),
         formatted_date: dStr,
         formatted_time: tStr,
-        formatted_date_time_venue: `${dStr} · ${tStr} · ${e.location_name || e.city || 'Mumbai'}`,
-        location_name: e.location_name || e.city || 'The Studio, Mumbai',
-        city: e.city || 'Mumbai',
-        description: e.description || e.tagline || 'A curated boutique gathering. The host will share final details in chat.',
+        formatted_date_time_venue: `${dStr} · ${tStr} · ${venueDisplay}`,
+        location_name: venue || city || 'Venue TBA',
+        city: city || 'Mumbai',
+        description:
+          e.description ||
+          e.tagline ||
+          'Spontaneous community gathering organized via Vibe Instant. Come solo or bring a friend.',
         going_count: going,
-        capacity: capacity,
+        capacity,
         spots_left: spotsLeft,
-        likes_count: e.vibe_cheers_count || 12,
-        comments_count: 5,
-        cover_image_url:
-          e.cover_image_url ||
-          'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80',
+        likes_count: Number(e.vibe_cheers_count || 0),
+        comments_count: Math.max(commentsCount, (going > 1 ? going - 1 : 0)),
+        cover_image_url: coverImg,
         originalEvent: e,
       };
     });
+  }, [storeEvents, allRsvps]);
 
-    // Merge: unique by slug
-    const map = new Map<string, VibeInstantItem>();
-    DEFAULT_VIBES_LIST.forEach((v) => map.set(v.slug, v));
-    convertedStoreVibes.forEach((v) => map.set(v.slug, v));
+  // Combine vibes: Strictly prioritize REAL vibes from Supabase/bots!
+  // Only fall back to DEFAULT_VIBES_LIST if zero real vibes exist.
+  const allVibes = useMemo<VibeInstantItem[]>(() => {
+    if (convertedStoreVibes.length > 0) {
+      // Prioritize events matching the user's active/detected city first, then by date / newest
+      const targetCity = (activeCity || '').toLowerCase().trim();
+      const sorted = [...convertedStoreVibes].sort((a, b) => {
+        const aCityMatch = Boolean(targetCity && targetCity !== 'all' && a.city.toLowerCase().includes(targetCity));
+        const bCityMatch = Boolean(targetCity && targetCity !== 'all' && b.city.toLowerCase().includes(targetCity));
+        if (aCityMatch && !bCityMatch) return -1;
+        if (!aCityMatch && bCityMatch) return 1;
 
-    return Array.from(map.values());
-  }, [storeEvents]);
+        const timeA = a.originalEvent?.start_at ? new Date(a.originalEvent.start_at).getTime() : 0;
+        const timeB = b.originalEvent?.start_at ? new Date(b.originalEvent.start_at).getTime() : 0;
+        return timeA - timeB;
+      });
+      return sorted;
+    }
+
+    return DEFAULT_VIBES_LIST;
+  }, [convertedStoreVibes, activeCity]);
 
   // Filtered vibes
   const filteredVibes = useMemo(() => {

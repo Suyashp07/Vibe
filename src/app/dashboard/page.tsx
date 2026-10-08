@@ -30,12 +30,13 @@ import {
   getRSVPs,
   deleteEvent,
   syncEventsWithSupabase,
-  syncRSVPsWithSupabase
+  syncRSVPsWithSupabase,
+  subscribeToStore
 } from '@/lib/store';
 import { EventItem, RSVPItem } from '@/types';
 import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
 
-// 3 Default sample events directly matching the design reference
+// 3 Default sample events directly matching the design reference for preview
 const SAMPLE_WORKSPACE_EVENTS = [
   {
     id: 'sample-1',
@@ -80,16 +81,28 @@ function formatHostDateVenue(dateStr?: string, venue?: string, city?: string) {
   if (dateStr) {
     try {
       const d = new Date(dateStr);
+      const now = new Date();
       const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
       const day = d.getDate();
       const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
       const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-      datePart = `${weekday}, ${day} ${month} · ${time}`;
+      const yearPart = d.getFullYear() !== now.getFullYear() ? ` ${d.getFullYear()}` : '';
+      datePart = `${weekday}, ${day} ${month}${yearPart} · ${time}`;
     } catch {
       datePart = dateStr.toUpperCase();
     }
   }
-  const placePart = venue || city || 'Mumbai';
+
+  const venueTrimmed = (venue || '').trim();
+  const cityTrimmed = (city || '').trim();
+  let placePart = 'Venue TBA';
+  if (venueTrimmed && cityTrimmed && !venueTrimmed.toLowerCase().includes(cityTrimmed.toLowerCase())) {
+    placePart = `${venueTrimmed} · ${cityTrimmed}`;
+  } else if (venueTrimmed) {
+    placePart = venueTrimmed;
+  } else if (cityTrimmed) {
+    placePart = cityTrimmed;
+  }
   return `${datePart} · ${placePart}`;
 }
 
@@ -108,8 +121,26 @@ function DashboardInner() {
     }
   }, [tabParam, router]);
 
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [rsvps, setRsvps] = useState<RSVPItem[]>([]);
+  const [events, setEvents] = useState<EventItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return getEvents();
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [rsvps, setRsvps] = useState<RSVPItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return getRSVPs();
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [isSyncing, setIsSyncing] = useState(true);
 
   // Tabs: 'upcoming' | 'past' | 'drafts'
@@ -119,7 +150,17 @@ function DashboardInner() {
   const [shareEvent, setShareEvent] = useState<EventItem | null>(null);
   const [broadcastEvent, setBroadcastEvent] = useState<EventItem | null>(null);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [selectedInboxEventId, setSelectedInboxEventId] = useState<string | undefined>(undefined);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  // Subscribe to reactive store changes
+  useEffect(() => {
+    const unsub = subscribeToStore(() => {
+      setEvents(getEvents());
+      setRsvps(getRSVPs());
+    });
+    return () => unsub();
+  }, []);
 
   // Load & Sync data
   const loadData = async () => {
@@ -142,10 +183,9 @@ function DashboardInner() {
     loadData();
   }, [profile?.id]);
 
-  // Events hosted by this user
+  // Events hosted by this user (strictly scoped to personal hosted events)
   const hostEvents = useMemo(() => {
     if (!profile) return [];
-    if (profile.role === 'super_admin') return events;
 
     const profileId = (profile.id || '').toLowerCase();
     const profileHandle = (profile.handle || '').toLowerCase();
@@ -167,7 +207,8 @@ function DashboardInner() {
     });
   }, [events, profile]);
 
-  const isSampleWorkspace = hostEvents.length === 0;
+  // Sample workspace preview is only for unauthenticated preview mode, never for logged-in hosts
+  const isSampleWorkspace = !isAuth && !profile;
 
   // Compute live list of events mapped to display row item format
   const mappedHostEvents = useMemo(() => {
@@ -189,6 +230,18 @@ function DashboardInner() {
       if (ev.status === 'draft') return false;
       if (!ev.start_at) return true;
       return new Date(ev.start_at) >= now;
+    });
+
+    // Chronological sorting: soonest upcoming first, most recent past first
+    filtered.sort((a, b) => {
+      const timeA = a.start_at ? new Date(a.start_at).getTime() : 0;
+      const timeB = b.start_at ? new Date(b.start_at).getTime() : 0;
+      if (activeTab === 'past') {
+        return timeB - timeA;
+      }
+      if (!timeA) return 1;
+      if (!timeB) return -1;
+      return timeA - timeB;
     });
 
     return filtered.map((ev) => {
@@ -249,16 +302,15 @@ function DashboardInner() {
     let calculatedRevenue = 0;
     hostEvents.forEach((ev) => {
       const confirmedForEv = rsvps.filter((r) => r.event_id === ev.id && r.status === 'confirmed').length;
-      const price = parseFloat((ev.external_price_text || '').replace(/[^0-9.]/g, '')) || 499;
+      const priceText = (ev.external_price_text || '').toLowerCase();
+      let price = 0;
+      if (!priceText.includes('free')) {
+        price = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
+      }
       calculatedRevenue += confirmedForEv * price;
     });
 
-    const formattedRev =
-      calculatedRevenue > 0
-        ? `₹${calculatedRevenue.toLocaleString('en-IN')}`
-        : totalGuests > 0
-        ? `₹${(totalGuests * 499).toLocaleString('en-IN')}`
-        : '₹0';
+    const formattedRev = `₹${calculatedRevenue.toLocaleString('en-IN')}`;
 
     return {
       upcoming: String(tabCounts.upcoming),
@@ -266,7 +318,7 @@ function DashboardInner() {
         tabCounts.upcoming > 0 ? 'Your next gathering is active' : 'No upcoming gatherings',
       guests: String(totalGuests),
       guestsSub: totalGuests > 0 ? `↑ ${totalGuests} confirmed door RSVPs` : 'Start inviting guests',
-      messages: String(Math.max(1, Math.min(12, totalGuests))),
+      messages: String(Math.max(0, totalGuests)),
       revenue: formattedRev,
       revenueSub: '↑ 18% this month',
     };
@@ -560,7 +612,10 @@ function DashboardInner() {
                       </div>
 
                       <button
-                        onClick={() => setIsInboxOpen(true)}
+                        onClick={() => {
+                          setSelectedInboxEventId(event.id);
+                          setIsInboxOpen(true);
+                        }}
                         className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors cursor-pointer"
                         title="Open guest inbox"
                       >
@@ -704,7 +759,12 @@ function DashboardInner() {
       {/* Host Inbox Drawer */}
       <HostInboxDrawer
         isOpen={isInboxOpen}
-        onClose={() => setIsInboxOpen(false)}
+        onClose={() => {
+          setIsInboxOpen(false);
+          setSelectedInboxEventId(undefined);
+        }}
+        events={hostEvents}
+        selectedEventId={selectedInboxEventId}
       />
     </div>
   );

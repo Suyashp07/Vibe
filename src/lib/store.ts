@@ -942,16 +942,13 @@ export const getFlashVibeEvents = (): EventItem[] => {
     return timeB - timeA;
   });
 
-  const existingIds = new Set(flashFromStore.map(e => e.id));
-  const existingSlugs = new Set(flashFromStore.map(e => e.slug));
-  
-  const combined = [...flashFromStore];
-  for (const sample of SAMPLE_FLASH_VIBES) {
-    if (!existingIds.has(sample.id) && !existingSlugs.has(sample.slug) && !isEventExpired(sample)) {
-      combined.push(sample);
-    }
+  // If real live events exist from WhatsApp, Telegram, or Supabase, return ONLY real events!
+  if (flashFromStore.length > 0) {
+    return flashFromStore;
   }
-  return combined;
+
+  // Only fallback to sample flash vibes if zero real events exist in store
+  return SAMPLE_FLASH_VIBES.filter(s => !isEventExpired(s));
 };
 
 export const isFlashVibeLiked = (eventId: string, slug?: string): boolean => {
@@ -1296,12 +1293,41 @@ export const syncEventsWithSupabase = async (options?: { organizerId?: string; i
     const seen = new Set<string>();
     const merged: EventItem[] = [];
 
-    for (const ev of [...validRemote, ...localPrivateEvents]) {
-      const key = ev.id || ev.slug;
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        if (ev.slug) seen.add(ev.slug);
-        merged.push(ev);
+    if (options?.organizerId) {
+      // Scoped organizer fetch: upsert into currentLocal rather than wiping out other events!
+      const remoteMap = new Map<string, EventItem>();
+      validRemote.forEach(e => {
+        if (e.id) remoteMap.set(e.id, e);
+        if (e.slug) remoteMap.set(e.slug, e);
+      });
+
+      for (const ev of currentLocal) {
+        if (deletedSet.has(ev.id) || deletedSet.has(ev.slug)) continue;
+        const key = ev.id || ev.slug;
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          if (ev.slug) seen.add(ev.slug);
+          const updated = remoteMap.get(ev.id) || (ev.slug ? remoteMap.get(ev.slug) : undefined);
+          merged.push(updated || ev);
+        }
+      }
+      // Add any newly discovered organizer events that weren't in currentLocal
+      for (const ev of validRemote) {
+        const key = ev.id || ev.slug;
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          if (ev.slug) seen.add(ev.slug);
+          merged.push(ev);
+        }
+      }
+    } else {
+      for (const ev of [...validRemote, ...localPrivateEvents]) {
+        const key = ev.id || ev.slug;
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          if (ev.slug) seen.add(ev.slug);
+          merged.push(ev);
+        }
       }
     }
 
