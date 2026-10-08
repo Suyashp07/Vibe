@@ -37,6 +37,7 @@ import { getUserCity } from '@/lib/location';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
 import QuickJoinModal from '@/components/vibes/QuickJoinModal';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
+import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
 
 interface VibeInstantItem {
   id: string;
@@ -476,18 +477,62 @@ function VibesContent() {
     return () => window.removeEventListener('wheel', onWheel);
   }, [handleNext, handlePrev]);
 
-  // Touch Swipe for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
+  // Lock document & body to prevent outer page rubber-banding / scrolling on mobile
+  useEffect(() => {
+    const origHtmlOverflow = document.documentElement.style.overflow;
+    const origHtmlHeight = document.documentElement.style.height;
+    const origBodyOverflow = document.body.style.overflow;
+    const origBodyHeight = document.body.style.height;
+    const origBodyPaddingBottom = document.body.style.paddingBottom;
+    const origBodyOverscroll = document.body.style.overscrollBehavior;
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const touchEndY = e.changedTouches[0].clientY;
-    const diff = touchStartY.current - touchEndY;
-    if (diff > 45) {
-      handleNext();
-    } else if (diff < -45) {
-      handlePrev();
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.height = '100%';
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100%';
+    document.body.style.paddingBottom = '0px';
+    document.body.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.documentElement.style.overflow = origHtmlOverflow;
+      document.documentElement.style.height = origHtmlHeight;
+      document.body.style.overflow = origBodyOverflow;
+      document.body.style.height = origBodyHeight;
+      document.body.style.paddingBottom = origBodyPaddingBottom;
+      document.body.style.overscrollBehavior = origBodyOverscroll;
+    };
+  }, []);
+
+  // Mobile Feed Scroll Ref & programmatic tracking
+  const mobileFeedRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScroll = useRef(false);
+
+  // Sync mobile scroll position when currentIndex changes (keyboard, desktop chevrons, query param)
+  useEffect(() => {
+    if (!mobileFeedRef.current) return;
+    const container = mobileFeedRef.current;
+    const height = container.clientHeight;
+    if (!height) return;
+    const targetTop = currentIndex * height;
+    if (Math.abs(container.scrollTop - targetTop) > 10) {
+      isProgrammaticScroll.current = true;
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
+      const timer = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
+
+  // Handle scroll events inside the mobile vibes reel
+  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isProgrammaticScroll.current) return;
+    const container = e.currentTarget;
+    const height = container.clientHeight;
+    if (!height) return;
+    const newIndex = Math.round(container.scrollTop / height);
+    if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndex) {
+      setCurrentIndex(newIndex);
     }
   };
 
@@ -502,15 +547,21 @@ function VibesContent() {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  // Modal targeted vibe state
+  const [selectedModalVibe, setSelectedModalVibe] = useState<VibeInstantItem | null>(null);
+  const activeTargetVibe = selectedModalVibe || currentVibe;
+
   // Likes handling
   const vibeKey = currentVibe.id || currentVibe.slug;
   const hasLiked = likedMap[vibeKey] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(vibeKey, currentVibe.slug) : false);
   const likeCount = (likesCountMap[vibeKey] ?? currentVibe.likes_count) + (hasLiked ? 1 : 0);
 
-  const handleLike = () => {
-    const next = !hasLiked;
-    setLikedMap((prev) => ({ ...prev, [vibeKey]: next }));
-    toggleFlashVibeLike(vibeKey, currentVibe.slug);
+  const handleLikeVibe = (vibe: VibeInstantItem) => {
+    const key = vibe.id || vibe.slug;
+    const isLiked = likedMap[key] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(key, vibe.slug) : false);
+    const next = !isLiked;
+    setLikedMap((prev) => ({ ...prev, [key]: next }));
+    toggleFlashVibeLike(key, vibe.slug);
     if (next) {
       confetti({
         particleCount: 28,
@@ -521,13 +572,15 @@ function VibesContent() {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/vibes?event=${currentVibe.slug}`;
+  const handleLike = () => handleLikeVibe(currentVibe);
+
+  const handleShareVibe = async (vibe: VibeInstantItem) => {
+    const shareUrl = `${window.location.origin}/vibes?event=${vibe.slug}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: currentVibe.title,
-          text: `Check out "${currentVibe.title}" on Vibe Instant`,
+          title: vibe.title,
+          text: `Check out "${vibe.title}" on Vibe Instant`,
           url: shareUrl,
         });
         return;
@@ -537,25 +590,57 @@ function VibesContent() {
     alert('Vibe link copied to clipboard!');
   };
 
+  const handleShare = () => handleShareVibe(currentVibe);
+
+  // Comments Modal state
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  const [selectedCommentsVibe, setSelectedCommentsVibe] = useState<VibeInstantItem | null>(null);
+  const [commentCountsMap, setCommentCountsMap] = useState<Record<string, number>>({});
+
+  const openComments = (vibe?: VibeInstantItem) => {
+    setSelectedCommentsVibe(vibe || currentVibe);
+    setCommentsModalOpen(true);
+  };
+
+  const getVibeCommentsCount = (vibe: VibeInstantItem) => {
+    const key = vibe.id || vibe.slug;
+    if (commentCountsMap[key] !== undefined) return commentCountsMap[key];
+    if (typeof window !== 'undefined') {
+      const live = getComments(vibe.id);
+      if (live.length > 0) return live.length;
+    }
+    return vibe.comments_count || 0;
+  };
+
+  const openAskHost = (vibe?: VibeInstantItem) => {
+    setSelectedModalVibe(vibe || currentVibe);
+    setConnectHostOpen(true);
+  };
+
+  const openQuickJoin = (vibe?: VibeInstantItem) => {
+    setSelectedModalVibe(vibe || currentVibe);
+    setQuickJoinOpen(true);
+  };
+
   // Build temporary EventItem for Modals if originalEvent is not set
   const modalEvent: EventItem = useMemo(() => {
-    if (currentVibe.originalEvent) return currentVibe.originalEvent;
+    if (activeTargetVibe.originalEvent) return activeTargetVibe.originalEvent;
     return {
-      id: currentVibe.id,
-      slug: currentVibe.slug,
-      title: currentVibe.title,
-      description: currentVibe.description,
+      id: activeTargetVibe.id,
+      slug: activeTargetVibe.slug,
+      title: activeTargetVibe.title,
+      description: activeTargetVibe.description,
       organizer_id: 'org-1',
-      organizer_name: currentVibe.host_name,
-      cover_image_url: currentVibe.cover_image_url,
-      city: currentVibe.city,
-      location_name: currentVibe.location_name,
+      organizer_name: activeTargetVibe.host_name,
+      cover_image_url: activeTargetVibe.cover_image_url,
+      city: activeTargetVibe.city,
+      location_name: activeTargetVibe.location_name,
       start_at: new Date().toISOString(),
-      capacity: currentVibe.capacity,
-      spots_limit: currentVibe.capacity,
-      spots_filled: currentVibe.going_count,
+      capacity: activeTargetVibe.capacity,
+      spots_limit: activeTargetVibe.capacity,
+      spots_filled: activeTargetVibe.going_count,
     } as EventItem;
-  }, [currentVibe]);
+  }, [activeTargetVibe]);
 
   const selectedFilterLabel = ACTIVITY_FILTERS.find((f) => f.id === selectedActivity)?.label || 'All vibes';
 
@@ -565,9 +650,7 @@ function VibesContent() {
 
   return (
     <div
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      className="h-[100dvh] w-full bg-[#08080A] text-white relative overflow-hidden flex flex-col justify-between select-none"
+      className="fixed inset-0 h-[100dvh] w-full bg-[#08080A] text-white overflow-hidden overscroll-none select-none flex flex-col justify-between"
     >
       {/* Ambient Radial Glow in background (like in Screenshot 1) */}
       <div className="absolute inset-0 pointer-events-none opacity-40">
@@ -697,11 +780,15 @@ function VibesContent() {
               </button>
 
               {/* Chat / Comments */}
-              <button onClick={() => setConnectHostOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all">
+              <button
+                onClick={() => openComments(currentVibe)}
+                className="flex flex-col items-center gap-1 cursor-pointer group"
+                title="View & post comments"
+              >
+                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover:text-white group-hover:bg-[#FF5500]/20 group-hover:border-[#FF5500]/40 flex items-center justify-center transition-all group-hover:scale-105 active:scale-95 shadow-md">
                   <MessageSquare className="w-4.5 h-4.5" />
                 </div>
-                <span className="text-xs font-bold text-white shadow-sm">{currentVibe.comments_count}</span>
+                <span className="text-xs font-bold text-white shadow-sm">{getVibeCommentsCount(currentVibe)}</span>
               </button>
 
               {/* Share */}
@@ -837,124 +924,173 @@ function VibesContent() {
       </main>
 
       {/* ========================================================= */}
-      {/* 3. MOBILE VIEW (FULL-BLEED IMMERSIVE - SCREENSHOT 2)      */}
+      {/* 3. MOBILE VIEW (INSTAGRAM REELS / TIKTOK VIBE FEED)       */}
       {/* ========================================================= */}
-      <main className="flex md:hidden flex-1 relative w-full h-full overflow-hidden">
-        {/* Story Progress Indicators Top */}
-        <div className="absolute top-2 left-4 right-4 z-20 flex gap-1.5">
-          {Array.from({ length: storyCount }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
-                i === activeStoryIndex ? 'bg-[#FF5500]' : i < activeStoryIndex ? 'bg-white/70' : 'bg-white/20'
-              }`}
-            />
-          ))}
-        </div>
+      <main
+        ref={mobileFeedRef}
+        onScroll={handleMobileScroll}
+        className="flex md:hidden flex-1 relative w-full h-[calc(100dvh-58px)] overflow-y-scroll snap-y snap-mandatory overscroll-contain no-scrollbar"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          scrollSnapType: 'y mandatory',
+        }}
+      >
+        {activeVibes.map((vibe, index) => {
+          const vibeKey = vibe.id || vibe.slug;
+          const isLiked = likedMap[vibeKey] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(vibeKey, vibe.slug) : false);
+          const count = (likesCountMap[vibeKey] ?? vibe.likes_count) + (isLiked ? 1 : 0);
+          const activeStoryIndex = index % storyCount;
 
-        {/* Top Left Badge */}
-        <div className="absolute top-5 left-4 z-20">
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
-            {currentVibe.badge || 'Selling fast'}
-          </span>
-        </div>
-
-        {/* Full Screen Visual */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src={currentVibe.cover_image_url}
-            alt={currentVibe.title}
-            fill
-            unoptimized
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
-        </div>
-
-        {/* Floating Action Stack (Right side) */}
-        <div className="absolute right-4 bottom-32 z-20 flex flex-col items-center gap-3.5">
-          {/* Flame */}
-          <button onClick={handleLike} className="flex flex-col items-center gap-1 cursor-pointer">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                hasLiked ? 'bg-[#FF5500] text-white shadow-lg' : 'bg-black/50 backdrop-blur-md border border-white/15 text-white'
-              }`}
+          return (
+            <section
+              key={vibeKey || index}
+              data-index={index}
+              className="relative w-full h-[calc(100dvh-58px)] min-h-[calc(100dvh-58px)] max-h-[calc(100dvh-58px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none"
             >
-              <Flame className="w-5 h-5 fill-current" />
-            </div>
-            <span className="text-[11px] font-bold text-white">{likeCount}</span>
-          </button>
+              {/* Story Progress Indicators Top */}
+              <div className="absolute top-2 left-4 right-4 z-20 flex gap-1.5">
+                {Array.from({ length: storyCount }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
+                      i === activeStoryIndex ? 'bg-[#FF5500]' : i < activeStoryIndex ? 'bg-white/70' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
 
-          {/* Comments */}
-          <button onClick={() => setConnectHostOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer">
-            <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white flex items-center justify-center">
-              <MessageSquare className="w-4.5 h-4.5" />
-            </div>
-            <span className="text-[11px] font-bold text-white">{currentVibe.comments_count}</span>
-          </button>
+              {/* Top Left Badge */}
+              <div className="absolute top-5 left-4 z-20">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
+                  {vibe.badge || 'Selling fast'}
+                </span>
+              </div>
 
-          {/* Share */}
-          <button onClick={handleShare} className="flex flex-col items-center gap-1 cursor-pointer">
-            <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white flex items-center justify-center">
-              <Share2 className="w-4.5 h-4.5" />
-            </div>
-            <span className="text-[10px] font-semibold text-white">Share</span>
-          </button>
-        </div>
+              {/* Full Screen Visual */}
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src={vibe.cover_image_url}
+                  alt={vibe.title}
+                  fill
+                  unoptimized
+                  priority={index === 0}
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
+              </div>
 
-        {/* Bottom Overlay Card */}
-        <div className="relative z-20 px-4 pb-5 pt-8 space-y-3 mt-auto w-full">
-          <div>
-            <p className="text-xs text-neutral-400 font-medium">
-              Hosted by {currentVibe.host_name}
-            </p>
-            <h3 className="text-xl font-black text-white leading-snug mt-0.5">
-              {currentVibe.title}
-            </h3>
-            <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mt-1">
-              {currentVibe.formatted_date_time_venue}
-            </p>
-          </div>
+              {/* Floating Action Stack (Right side) */}
+              <div className="absolute right-4 bottom-28 z-20 flex flex-col items-center gap-3.5">
+                {/* Flame */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLikeVibe(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                      isLiked ? 'bg-[#FF5500] text-white shadow-lg' : 'bg-black/50 backdrop-blur-md border border-white/15 text-white'
+                    }`}
+                  >
+                    <Flame className="w-5 h-5 fill-current" />
+                  </div>
+                  <span className="text-[11px] font-bold text-white">{count}</span>
+                </button>
 
-          {/* Spots Bar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-neutral-300 flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-neutral-400" />
-                <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
-              </span>
-              <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                <Zap className="w-3 h-3 fill-[#FF5500]" />
-                <span>{currentVibe.spots_left} spots left</span>
-              </span>
-            </div>
-            <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, (currentVibe.going_count / currentVibe.capacity) * 100)}%` }}
-              />
-            </div>
-          </div>
+                {/* Comments */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openComments(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform"
+                  title="Comments"
+                >
+                  <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white flex items-center justify-center">
+                    <MessageSquare className="w-4.5 h-4.5" />
+                  </div>
+                  <span className="text-[11px] font-bold text-white">{getVibeCommentsCount(vibe)}</span>
+                </button>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2.5 pt-1">
-            <button
-              onClick={() => setConnectHostOpen(true)}
-              className="flex-1 py-2.5 px-3 rounded-xl bg-black/60 hover:bg-black/80 border border-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Ask host</span>
-            </button>
+                {/* Share */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareVibe(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform"
+                >
+                  <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white flex items-center justify-center">
+                    <Share2 className="w-4.5 h-4.5" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-white">Share</span>
+                </button>
+              </div>
 
-            <button
-              onClick={() => setQuickJoinOpen(true)}
-              className="flex-1 py-2.5 px-3 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-lg"
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>I'm in</span>
-            </button>
-          </div>
-        </div>
+              {/* Bottom Overlay Card */}
+              <div className="relative z-20 px-4 pb-4 pt-8 space-y-2.5 mt-auto w-full">
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium">
+                    Hosted by {vibe.host_name}
+                  </p>
+                  <h3 className="text-xl font-black text-white leading-snug mt-0.5">
+                    {vibe.title}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mt-0.5">
+                    {vibe.formatted_date_time_venue}
+                  </p>
+                </div>
+
+                {/* Spots Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-neutral-300 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>{vibe.going_count}/{vibe.capacity} going</span>
+                    </span>
+                    <span className="font-bold text-[#FF5500] flex items-center gap-1">
+                      <Zap className="w-3 h-3 fill-[#FF5500]" />
+                      <span>{vibe.spots_left} spots left</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, (vibe.going_count / vibe.capacity) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2.5 pt-0.5">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openAskHost(vibe);
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-black/60 hover:bg-black/80 border border-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md active:scale-98"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
+                    <span>Ask host</span>
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openQuickJoin(vibe);
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-lg active:scale-98"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    <span>I'm in</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          );
+        })}
       </main>
 
       {/* Connect Host Modal */}
@@ -982,6 +1118,18 @@ function VibesContent() {
         onCreated={(slug) => {
           setCreateModalOpen(false);
           router.push(`/vibes?event=${slug}`);
+        }}
+      />
+
+      {/* Vibe Comments Modal */}
+      <VibeCommentsModal
+        isOpen={commentsModalOpen}
+        onClose={() => setCommentsModalOpen(false)}
+        vibe={selectedCommentsVibe || currentVibe}
+        onCommentAdded={(newCount) => {
+          const target = selectedCommentsVibe || currentVibe;
+          const key = target.id || target.slug;
+          setCommentCountsMap((prev) => ({ ...prev, [key]: newCount }));
         }}
       />
     </div>

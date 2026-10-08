@@ -704,7 +704,98 @@ export const STATIC_EVENT_IDS = new Set([
 
 export const INITIAL_RSVPS: RSVPItem[] = [];
 
-export const INITIAL_COMMENTS: CommentItem[] = [];
+export const INITIAL_COMMENTS: CommentItem[] = [
+  {
+    id: 'cmt-c1',
+    event_id: 'vibe-coffee-1',
+    author_name: 'Kabir Sharma',
+    author_email: 'kabir@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Kabir%20Sharma',
+    body: 'Is there good Wi-Fi at the studio? Looking forward to bringing my laptop!',
+    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-c2',
+    event_id: 'vibe-coffee-1',
+    author_name: 'Swaniki Social',
+    author_email: 'host@swaniki.com',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Swaniki%20Social',
+    body: 'Yes Kabir! High-speed 300 Mbps Wi-Fi is available, plenty of plug points.',
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-c3',
+    event_id: 'vibe-coffee-1',
+    author_name: 'Ananya Deshmukh',
+    author_email: 'ananya@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Ananya%20Deshmukh',
+    body: 'Super excited for the pour-over coffee tasting! Bringing a friend along 🙌',
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-c4',
+    event_id: 'vibe-coffee-1',
+    author_name: 'Rohan Joshi',
+    author_email: 'rohan@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Rohan%20Joshi',
+    body: 'Can beginners join? Just moved to Mumbai recently.',
+    created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-s1',
+    event_id: 'vibe-sameera-2',
+    author_name: 'Priya Nair',
+    author_email: 'priya@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Priya%20Nair',
+    body: 'Her acoustic sets are pure magic! Snagged my spot instantly 🎸',
+    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-s2',
+    event_id: 'vibe-sameera-2',
+    author_name: 'Siddharth Rao',
+    author_email: 'sid@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Siddharth%20Rao',
+    body: 'What time do the doors open for the rooftop venue?',
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-s3',
+    event_id: 'vibe-sameera-2',
+    author_name: 'Swaniki Social',
+    author_email: 'host@swaniki.com',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Swaniki%20Social',
+    body: 'Doors open at 6:30 PM, acoustic performance begins right at 7:15 PM sunset 🌇',
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-cr1',
+    event_id: 'vibe-cricket-3',
+    author_name: 'Arjun Verma',
+    author_email: 'arjun@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Arjun%20Verma',
+    body: 'Tape balls ready! Who is opening the bowling spell? 🏏',
+    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-cr2',
+    event_id: 'vibe-cricket-3',
+    author_name: 'Sameer Khan',
+    author_email: 'sameer@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Sameer%20Khan',
+    body: 'Is there parking available near the turf?',
+    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'cmt-f1',
+    event_id: 'vibe-founders-4',
+    author_name: 'Varun Kapoor',
+    author_email: 'varun@vibe.community',
+    author_avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Varun%20Kapoor',
+    body: 'Looking to connect with Next.js & agentic AI builders. Looking forward to this!',
+    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+  },
+];
 
 export const INITIAL_DATE_POLLS: DatePoll[] = [];
 
@@ -1630,8 +1721,13 @@ export const markRSVPAttended = (rsvpId: string, attended = true, attendedAt = n
 export const getComments = (eventId: string): CommentItem[] => {
   if (!isClient) return INITIAL_COMMENTS.filter(c => c.event_id === eventId);
   const stored = localStorage.getItem(STORAGE_KEYS.COMMENTS);
-  const all: CommentItem[] = stored ? JSON.parse(stored) : INITIAL_COMMENTS;
-  return all.filter(c => c.event_id === eventId);
+  let all: CommentItem[] = stored ? JSON.parse(stored) : [];
+  for (const init of INITIAL_COMMENTS) {
+    if (!all.some(c => c.id === init.id)) {
+      all.push(init);
+    }
+  }
+  return all.filter(c => c.event_id === eventId || c.event_id?.toLowerCase() === eventId?.toLowerCase());
 };
 
 export const addComment = (eventId: string, authorName: string, authorEmail: string, body: string): CommentItem => {
@@ -1646,7 +1742,7 @@ export const addComment = (eventId: string, authorName: string, authorEmail: str
   };
   if (isClient) {
     const stored = localStorage.getItem(STORAGE_KEYS.COMMENTS);
-    const all: CommentItem[] = stored ? JSON.parse(stored) : INITIAL_COMMENTS;
+    let all: CommentItem[] = stored ? JSON.parse(stored) : [...INITIAL_COMMENTS];
     all.unshift(newComment);
     localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(all));
     notifyListeners();

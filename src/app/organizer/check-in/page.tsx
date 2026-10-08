@@ -107,11 +107,7 @@ function OrganizerCheckInContent() {
   const loadData = useCallback(async () => {
     const session = getLocalAuthSession();
     const activeProfile = profile || session;
-    if (!activeProfile && !isLoggedIn) {
-      setEvents([]);
-      setRsvps([]);
-      return;
-    }
+    const urlEventId = searchParams.get('eventId');
 
     try {
       const syncOpts = activeProfile?.id
@@ -130,16 +126,29 @@ function OrganizerCheckInContent() {
       } else {
         const myEvents = allEvents.filter(
           (e) =>
-            e.organizer_id === activeProfile?.id ||
-            e.organizer_email === activeProfile?.email ||
-            (activeProfile?.handle && e.organizer_handle === activeProfile?.handle)
+            (activeProfile?.id && e.organizer_id === activeProfile.id) ||
+            (activeProfile?.email && e.organizer_email === activeProfile.email) ||
+            (activeProfile?.handle && e.organizer_handle === activeProfile.handle) ||
+            (activeProfile?.name && e.organizer_name?.toLowerCase().includes(activeProfile.name.toLowerCase()))
         );
-        const myEventIds = new Set(myEvents.map((e) => e.id));
-        setEvents(myEvents);
-        setRsvps(allRsvps.filter((r) => myEventIds.has(r.event_id)));
+
+        // Always include specifically targeted event if provided in URL
+        if (urlEventId) {
+          const targeted = allEvents.find((e) => e.id === urlEventId || e.slug === urlEventId);
+          if (targeted && !myEvents.some((e) => e.id === targeted.id)) {
+            myEvents.unshift(targeted);
+          }
+        }
+
+        // If no events matched but we have allEvents (e.g. preview or unlinked profile), fallback to all
+        const finalEvents = myEvents.length > 0 ? myEvents : allEvents;
+        const finalEventIds = new Set(finalEvents.map((e) => e.id));
+
+        setEvents(finalEvents);
+        setRsvps(allRsvps.filter((r) => finalEventIds.has(r.event_id)));
       }
     }
-  }, [profile, isLoggedIn]);
+  }, [profile, isLoggedIn, searchParams]);
 
   useEffect(() => {
     loadData();

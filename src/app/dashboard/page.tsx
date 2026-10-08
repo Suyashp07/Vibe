@@ -15,6 +15,7 @@ import {
   ArrowRight,
   RefreshCw,
   QrCode,
+  Scan,
   Share2,
   Trash2,
   MoreHorizontal,
@@ -457,11 +458,11 @@ function DashboardInner() {
         </div>
 
         {/* ========================================================= */}
-        {/* 2. METRICS / KPI BAR (4 COLUMNS)                          */}
+        {/* 2. METRICS / KPI BAR (3 COLUMNS)                          */}
         {/* ========================================================= */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 pt-2 pb-8 border-b border-white/[0.08]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-2 pb-8 border-b border-white/[0.08]">
           {/* Column 1: Upcoming events */}
-          <div className="space-y-1 pr-4 lg:border-r lg:border-white/[0.08]">
+          <div className="space-y-1 pr-4 sm:border-r sm:border-white/[0.08]">
             <p className="text-xs text-neutral-400 font-medium">Upcoming events</p>
             <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               {displayMetrics.upcoming}
@@ -472,7 +473,7 @@ function DashboardInner() {
           </div>
 
           {/* Column 2: People joining */}
-          <div className="space-y-1 pr-4 lg:border-r lg:border-white/[0.08]">
+          <div className="space-y-1 pr-4 sm:border-r sm:border-white/[0.08]">
             <p className="text-xs text-neutral-400 font-medium">People joining</p>
             <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               {displayMetrics.guests}
@@ -483,24 +484,13 @@ function DashboardInner() {
           </div>
 
           {/* Column 3: Guest messages */}
-          <div className="space-y-1 pr-4 lg:border-r lg:border-white/[0.08]">
+          <div className="space-y-1">
             <p className="text-xs text-neutral-400 font-medium">Guest messages</p>
             <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               {displayMetrics.messages}
             </p>
             <p className="text-xs text-emerald-400 font-medium">
               Stay close to your community
-            </p>
-          </div>
-
-          {/* Column 4: Ticket revenue */}
-          <div className="space-y-1">
-            <p className="text-xs text-neutral-400 font-medium">Ticket revenue</p>
-            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {displayMetrics.revenue}
-            </p>
-            <p className="text-xs text-emerald-400 font-medium">
-              {displayMetrics.revenueSub}
             </p>
           </div>
         </div>
@@ -631,6 +621,16 @@ function DashboardInner() {
                         <ArrowUpRight className="w-4 h-4" />
                       </Link>
 
+                      {/* Scanner for passes & attendance system (in place of three-dots) */}
+                      <Link
+                        href={`/organizer/check-in?eventId=${event.id}`}
+                        className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+                        title="Scan passes & live attendance system"
+                      >
+                        <Scan className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Scan passes</span>
+                      </Link>
+
                       {/* Dropdown Options for Real Events */}
                       {originalEv && (
                         <div className="relative">
@@ -639,22 +639,22 @@ function DashboardInner() {
                               e.stopPropagation();
                               setActiveMenuId(activeMenuId === event.id ? null : event.id);
                             }}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                            title="More options"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                            title="More options (Broadcast, Share, Delete)"
                           >
-                            <MoreHorizontal className="w-4 h-4" />
+                            <MoreHorizontal className="w-3.5 h-3.5" />
                           </button>
 
                           {activeMenuId === event.id && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute right-0 top-9 w-44 rounded-xl bg-[#0D0D10] border border-white/15 shadow-2xl p-1 z-30 space-y-1 animate-in fade-in zoom-in-95"
+                              className="absolute right-0 top-8 w-44 rounded-xl bg-[#0D0D10] border border-white/15 shadow-2xl p-1 z-30 space-y-1 animate-in fade-in zoom-in-95"
                             >
                               <Link
                                 href={`/organizer/check-in?eventId=${originalEv.id}`}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors"
                               >
-                                <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+                                <Scan className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>Gate Scanner</span>
                               </Link>
                               <button
