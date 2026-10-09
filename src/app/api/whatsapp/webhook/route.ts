@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         handledBy: 'welcome_prompt',
-        replyText: welcome,
+        replyText: replyDispatched ? undefined : welcome,
         replyDispatched,
       });
     }
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         handledBy: 'guidance_hint',
-        replyText: hint,
+        replyText: replyDispatched ? undefined : hint,
         replyDispatched,
       });
     }
@@ -255,7 +255,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         handledBy: 'guidance_hint',
-        replyText: hint,
+        replyText: replyDispatched ? undefined : hint,
         replyDispatched,
       });
     }
@@ -651,7 +651,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
-      replyText: confirmationMsg,
+      replyText: replyDispatched ? undefined : confirmationMsg,
       replyDispatched,
       event: {
         slug: createdEventSlug,
