@@ -1,18 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
-import {
-  MessageSquare,
-  Send,
-  X,
-  Heart,
-  Sparkles,
-  CheckCircle2,
-  Users,
-  CornerDownRight,
-  Flame,
-} from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MessageCircle, Send, X, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CommentItem } from '@/types';
 import { getComments, addComment, subscribeToStore } from '@/lib/store';
@@ -32,6 +21,14 @@ interface VibeCommentsModalProps {
   onCommentAdded?: (newCount: number) => void;
 }
 
+interface DisplayComment {
+  id: string;
+  author_name: string;
+  author_avatar?: string;
+  body: string;
+  created_at: string;
+}
+
 export default function VibeCommentsModal({
   isOpen,
   onClose,
@@ -39,15 +36,15 @@ export default function VibeCommentsModal({
   onCommentAdded,
 }: VibeCommentsModalProps) {
   const { profile } = useAuth();
-  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [comments, setComments] = useState<DisplayComment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [authorName, setAuthorName] = useState('');
-  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const commentsEndRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
-  // Load name from profile or local storage
+  // Initialize author name from profile or local storage
   useEffect(() => {
     if (profile?.name) {
       setAuthorName(profile.name);
@@ -57,45 +54,83 @@ export default function VibeCommentsModal({
     }
   }, [profile?.name]);
 
-  // Sync comments for current vibe
-  useEffect(() => {
+  // Load comments for the current vibe
+  const loadAllComments = useCallback(async () => {
     if (!vibe.id && !vibe.slug) return;
-    const loadComments = () => {
-      // Check both ID and slug in case comments were saved under either
-      const byId = vibe.id ? getComments(vibe.id) : [];
-      const bySlug = vibe.slug && vibe.slug !== vibe.id ? getComments(vibe.slug) : [];
-      const merged = [...byId];
-      for (const c of bySlug) {
-        if (!merged.some((m) => m.id === c.id)) {
-          merged.push(c);
+    setIsLoading(true);
+
+    const targetId = vibe.id || vibe.slug || '';
+    const map = new Map<string, DisplayComment>();
+
+    // 1. Local store comments
+    const storeComments: CommentItem[] = [
+      ...(vibe.id ? getComments(vibe.id) : []),
+      ...(vibe.slug && vibe.slug !== vibe.id ? getComments(vibe.slug) : []),
+    ];
+
+    for (const c of storeComments) {
+      map.set(c.id, {
+        id: c.id,
+        author_name: c.author_name || 'Guest',
+        author_avatar: c.author_avatar,
+        body: c.body,
+        created_at: c.created_at,
+      });
+    }
+
+    // 2. Database API comments
+    try {
+      const res = await fetch(`/api/events/comments?eventId=${encodeURIComponent(targetId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.comments)) {
+          for (const item of data.comments) {
+            map.set(item.id, {
+              id: item.id,
+              author_name: item.user_name || item.author_name || 'Guest',
+              author_avatar: item.user_avatar || item.author_avatar,
+              body: item.content || item.body || '',
+              created_at: item.created_at,
+            });
+          }
         }
       }
-      // Sort newest first
-      merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setComments(merged);
-    };
+    } catch {
+      // Fallback cleanly to store comments
+    }
 
-    loadComments();
-    const unsubscribe = subscribeToStore(loadComments);
-    return () => unsubscribe();
+    const merged = Array.from(map.values());
+    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setComments(merged);
+    setIsLoading(false);
   }, [vibe.id, vibe.slug]);
 
-  // Focus input when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    loadAllComments();
+    const unsubscribe = subscribeToStore(loadAllComments);
+    return () => unsubscribe();
+  }, [isOpen, loadAllComments]);
+
+  // Focus input and escape key listener
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 200);
+      setTimeout(() => inputRef.current?.focus(), 200);
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const text = commentText.trim();
-    if (!text) return;
+    if (!text || isSubmitting) return;
 
-    const finalName = authorName.trim() || profile?.name || 'Anonymous Guest';
+    const finalName = authorName.trim() || profile?.name || 'Guest';
     const finalEmail = profile?.email || `${finalName.toLowerCase().replace(/\s+/g, '')}@vibe.community`;
+    const targetId = vibe.id || vibe.slug || 'vibe-general';
 
     setIsSubmitting(true);
 
@@ -104,24 +139,43 @@ export default function VibeCommentsModal({
         localStorage.setItem('vibe_guest_name', finalName);
       }
 
-      // Add to store with vibe.id (or vibe.slug)
-      const targetId = vibe.id || vibe.slug || 'vibe-general';
-      const newComment = addComment(targetId, finalName, finalEmail, text);
+      // Add to local store immediately for instant UI response
+      const stored = addComment(targetId, finalName, finalEmail, text);
+      const newDisplayItem: DisplayComment = {
+        id: stored.id,
+        author_name: finalName,
+        body: text,
+        created_at: stored.created_at,
+      };
 
-      setComments((prev) => [newComment, ...prev]);
+      setComments((prev) => [newDisplayItem, ...prev.filter((c) => c.id !== stored.id)]);
       setCommentText('');
 
       if (onCommentAdded) {
         onCommentAdded(comments.length + 1);
       }
 
-      // Small confetti burst
-      confetti({
-        particleCount: 20,
-        spread: 45,
-        origin: { y: 0.8 },
-        colors: ['#FF5500', '#FF8C42', '#FFA07A'],
-      });
+      // Sync with backend API in background
+      fetch('/api/events/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: targetId,
+          content: text,
+          userName: finalName,
+          userEmail: finalEmail,
+        }),
+      }).catch(() => {});
+
+      // Celebration confetti
+      try {
+        confetti({
+          particleCount: 25,
+          spread: 45,
+          origin: { y: 0.8 },
+          colors: ['#E8621A', '#FF8C42', '#FFA07A'],
+        });
+      } catch {}
     } catch (err) {
       console.error('Failed to post comment:', err);
     } finally {
@@ -129,14 +183,7 @@ export default function VibeCommentsModal({
     }
   };
 
-  const toggleCommentLike = (commentId: string) => {
-    setLikedComments((prev) => ({
-      ...prev,
-      [commentId]: !prev[commentId],
-    }));
-  };
-
-  const formatRelativeTime = (isoString: string) => {
+  const formatDate = (isoString: string) => {
     try {
       const diffMs = Date.now() - new Date(isoString).getTime();
       const diffMins = Math.floor(diffMs / 60000);
@@ -144,9 +191,7 @@ export default function VibeCommentsModal({
       if (diffMins < 60) return `${diffMins}m ago`;
       const diffHours = Math.floor(diffMins / 60);
       if (diffHours < 24) return `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return new Date(isoString).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+      return new Date(isoString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     } catch {
       return 'Recently';
     }
@@ -156,197 +201,125 @@ export default function VibeCommentsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 select-text"
-      role="dialog"
-      aria-modal="true"
+      className="fixed inset-0 z-50 flex flex-col justify-end"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       {/* Backdrop */}
       <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
       />
 
-      {/* Drawer / Modal Container */}
+      {/* Drawer */}
       <div
-        className="relative z-10 w-full md:max-w-md bg-[#111115] border-t md:border border-white/15 rounded-t-[32px] md:rounded-[32px] shadow-[0_25px_60px_rgba(0,0,0,0.85)] max-h-[85dvh] md:max-h-[80vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-250 text-white"
+        className="relative z-10 w-full max-w-lg mx-auto bg-[#0D0F14] border-t border-white/10 rounded-t-3xl max-h-[65vh] flex flex-col animate-in slide-in-from-bottom duration-300 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Pull handle on mobile */}
-        <div className="md:hidden flex justify-center pt-2.5 pb-1">
+        {/* Handle */}
+        <div className="flex justify-center pt-2.5 pb-1">
           <div className="w-10 h-1 bg-white/20 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#141419]/80 backdrop-blur-md">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#FF5500]/15 border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
-              <MessageSquare className="w-4 h-4 fill-[#FF5500]/20" />
+        <div className="flex items-center justify-between px-5 pt-2 pb-2.5 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#E8621A]/20 flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-[#E8621A]" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-sm sm:text-base text-white tracking-tight truncate">
-                  Comments
-                </h3>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/80">
-                  {comments.length}
-                </span>
-              </div>
-              <p className="text-[11px] text-neutral-400 truncate max-w-[220px] sm:max-w-[280px]">
-                {vibe.title}
-              </p>
-            </div>
+            <span className="text-sm font-black text-white">
+              Comments <span className="text-white/50 font-normal">({comments.length})</span>
+            </span>
           </div>
-
           <button
+            type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
-            aria-label="Close comments"
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Comments Feed */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 no-scrollbar min-h-[220px]">
-          {comments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-neutral-400">
-                <Sparkles className="w-6 h-6 text-[#FF5500]" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white">No comments yet</p>
-                <p className="text-xs text-neutral-400 mt-1 max-w-[240px]">
-                  Be the first to share your thoughts, ask questions, or hype up this vibe!
-                </p>
-              </div>
+        {/* Comments List */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 no-scrollbar min-h-[140px] max-h-[35vh]">
+          {isLoading && comments.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-[#E8621A]" />
+            </div>
+          ) : comments.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-white/40 text-xs">No comments yet. Be the first! 🎉</p>
             </div>
           ) : (
-            comments.map((comment) => {
-              const isLiked = likedComments[comment.id];
-              const isHost = vibe.host_name && comment.author_name.toLowerCase().includes(vibe.host_name.toLowerCase());
-
-              return (
-                <div
-                  key={comment.id}
-                  className="flex items-start gap-3 group animate-in fade-in duration-200"
-                >
-                  {/* Author Avatar */}
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-[#FF5500] to-purple-600 flex items-center justify-center text-white text-xs font-black shrink-0 border border-white/15 shadow-sm">
-                    {comment.author_avatar ? (
-                      <img
-                        src={comment.author_avatar}
-                        alt={comment.author_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      comment.author_name.slice(0, 2).toUpperCase()
-                    )}
-                  </div>
-
-                  {/* Comment Bubble */}
-                  <div className="flex-1 min-w-0 bg-white/[0.03] hover:bg-white/[0.05] border border-white/5 rounded-2xl p-3 transition-colors">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-bold text-white truncate">
-                          {comment.author_name}
-                        </span>
-                        {isHost && (
-                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FF5500]/20 text-[#FF5500] border border-[#FF5500]/30 shrink-0">
-                            Host
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-neutral-500 shrink-0">
-                        {formatRelativeTime(comment.created_at)}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-neutral-200 leading-relaxed break-words">
-                      {comment.body}
-                    </p>
-
-                    {/* Quick Reaction Bar */}
-                    <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/5">
-                      <span className="text-[10px] text-neutral-500">
-                        {isLiked ? 'Liked by you' : ''}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => toggleCommentLike(comment.id)}
-                        className={`flex items-center gap-1 text-[11px] transition-colors cursor-pointer px-1.5 py-0.5 rounded-md ${
-                          isLiked
-                            ? 'text-[#FF5500] font-bold'
-                            : 'text-neutral-400 hover:text-white'
-                        }`}
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${
-                            isLiked ? 'fill-[#FF5500] text-[#FF5500]' : ''
-                          }`}
-                        />
-                        <span>{isLiked ? 1 : 0}</span>
-                      </button>
-                    </div>
-                  </div>
+            comments.map((cmt) => (
+              <div key={cmt.id} className="flex gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#E8621A] to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                  {(cmt.author_name || 'G')[0].toUpperCase()}
                 </div>
-              );
-            })
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs font-bold text-white truncate">
+                      {cmt.author_name || 'Guest'}
+                    </span>
+                    <span className="text-[10px] text-white/30 shrink-0">
+                      {formatDate(cmt.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/80 leading-relaxed mt-0.5 break-words">
+                    {cmt.body}
+                  </p>
+                </div>
+              </div>
+            ))
           )}
           <div ref={commentsEndRef} />
         </div>
 
-        {/* Comment Composer Input Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="p-3.5 border-t border-white/10 bg-[#141419] shrink-0 space-y-2"
-        >
-          {/* Author Name row (if guest/not logged in) */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider shrink-0">
-              Posting as:
-            </span>
+        {/* Comment Input */}
+        <div className="px-4 py-3 border-t border-white/10 bg-[#0D0F14]">
+          {/* Guest Name input if not logged in */}
+          {!profile?.name && (
             <input
               type="text"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               placeholder="Your name"
-              maxLength={40}
-              className="flex-1 text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white placeholder-white/30 focus:outline-none focus:border-[#FF5500]/60 transition-colors"
+              maxLength={50}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 mb-2 focus:outline-none focus:border-[#E8621A]/50"
             />
-          </div>
+          )}
 
-          {/* Text Input + Send Button */}
           <div className="flex items-end gap-2">
             <textarea
               ref={inputRef}
-              rows={1}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleSubmit(e);
+                  handleSubmit();
                 }
               }}
-              placeholder="Add a comment or ask a question..."
-              maxLength={400}
-              className="flex-1 text-xs bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-[#FF5500]/60 transition-colors resize-none leading-relaxed max-h-24"
+              placeholder="Add a comment..."
+              maxLength={500}
+              rows={1}
+              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#E8621A]/50 transition-colors"
             />
-
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={!commentText.trim() || isSubmitting}
-              className="w-9 h-9 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] disabled:opacity-40 disabled:hover:bg-[#FF5500] text-white flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-[0_0_15px_rgba(255,85,0,0.3)] active:scale-95"
-              title="Post comment"
+              className="w-10 h-10 rounded-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0"
             >
-              <Send className="w-4 h-4" />
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </button>
           </div>
-          <div className="flex items-center justify-between text-[10px] text-neutral-500 px-1">
-            <span>Press Enter to send</span>
-            <span>{commentText.length}/400</span>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

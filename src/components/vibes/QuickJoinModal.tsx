@@ -72,10 +72,6 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
 
   const cleanEmail = email.trim().toLowerCase();
   const cleanPhone = phone.replace(/[^0-9]/g, '');
-  const isAlreadyAuthenticated = Boolean(
-    (isLoggedIn && profile?.email && profile.email.toLowerCase() === cleanEmail) ||
-    (profile?.email && profile.email.toLowerCase() === cleanEmail)
-  );
 
   // Finalize reservation and create RSVP
   const finalizeRsvp = async () => {
@@ -83,18 +79,20 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
     setError('');
 
     try {
-      const fullPhone = cleanPhone.startsWith('+91')
-        ? cleanPhone
-        : cleanPhone.startsWith('91') && cleanPhone.length > 10
-        ? `+${cleanPhone}`
-        : `+91${cleanPhone}`;
+      const fullPhone = cleanPhone
+        ? cleanPhone.startsWith('+91')
+          ? cleanPhone
+          : cleanPhone.startsWith('91') && cleanPhone.length > 10
+          ? `+${cleanPhone}`
+          : `+91${cleanPhone}`
+        : '';
 
       // Supabase is single source of truth: writes to DB first, caches confirmed record
       const rsvp = await addRSVP({
         event_id: event.id,
         event_slug: event.slug,
         name: name.trim(),
-        phone: fullPhone,
+        phone: fullPhone || '+910000000000',
         email: cleanEmail,
         status: 'confirmed',
         custom_responses: {
@@ -139,7 +137,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
     }
   };
 
-  // Step 1: Submit details -> Send OTP (or auto-confirm if already authenticated)
+  // Step 1: Submit details -> Send Email OTP
   const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -151,18 +149,12 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
       setError(emailValidation.error || 'Please enter a valid email address');
       return;
     }
-    if (!cleanPhone || cleanPhone.length < 8) {
-      setError('Please enter a valid phone or WhatsApp number');
+    if (cleanPhone && cleanPhone.length < 8) {
+      setError('Please enter a valid phone number or leave blank');
       return;
     }
 
-    // If user is already authenticated with this email, confirm directly
-    if (isAlreadyAuthenticated) {
-      await finalizeRsvp();
-      return;
-    }
-
-    // Send Email OTP
+    // Always require Email OTP verification as expected for spot booking
     setSubmitting(true);
     setError('');
 
@@ -323,15 +315,14 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                   <input
                     type="tel"
-                    required
-                    placeholder="e.g. 9820011223"
+                    placeholder="e.g. 9820011223 (optional)"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
                 <p className="text-[10px] text-white/40 mt-1">
-                  Used by the host on WhatsApp to coordinate meetup spot and rules.
+                  Optional — used by the host on WhatsApp to coordinate meetup spot.
                 </p>
               </div>
 
@@ -342,12 +333,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
                 className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>{isAlreadyAuthenticated ? 'Reserving spot...' : 'Sending verification code...'}</span>
-                ) : isAlreadyAuthenticated ? (
-                  <>
-                    <span>⚡ Confirm Spot in 1 Tap</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                  <span>Sending verification code...</span>
                 ) : (
                   <>
                     <span>Verify with Email OTP</span>

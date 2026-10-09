@@ -899,7 +899,7 @@ function VibesContent() {
             {/* Action Buttons */}
             <div className="flex items-center gap-3 pt-1">
               <button
-                onClick={() => setConnectHostOpen(true)}
+                onClick={() => openAskHost(currentVibe)}
                 className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer hover:border-white/20"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
@@ -907,7 +907,7 @@ function VibesContent() {
               </button>
 
               <button
-                onClick={() => setQuickJoinOpen(true)}
+                onClick={() => openQuickJoin(currentVibe)}
                 className="flex-1 py-3 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
@@ -929,7 +929,7 @@ function VibesContent() {
       <main
         ref={mobileFeedRef}
         onScroll={handleMobileScroll}
-        className="flex md:hidden flex-1 relative w-full h-[calc(100dvh-58px)] overflow-y-scroll snap-y snap-mandatory overscroll-contain no-scrollbar"
+        className="flex flex-col md:hidden flex-1 relative w-full h-[calc(100dvh-58px)] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar"
         style={{
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'y mandatory',

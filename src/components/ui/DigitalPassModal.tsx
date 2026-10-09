@@ -233,16 +233,19 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex justify-center items-start p-3 sm:p-6 py-6 sm:py-10 animate-fade-in"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-md my-auto sm:my-2 animate-scale-up">
+      <div 
+        className="relative w-full max-w-md max-h-[92dvh] flex flex-col my-auto animate-scale-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* ========================================================= */}
         {/* PASS TOP NAVIGATION & DISMISS BAR */}
         {/* ========================================================= */}
-        <div className="flex items-center justify-between pb-3 px-1 text-white">
+        <div className="flex items-center justify-between pb-2.5 px-1 text-white shrink-0">
           <div className="flex items-center gap-2">
             <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md border shadow-xs ${
               isWaitlisted 
@@ -272,7 +275,7 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
 
           <button
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-md transition-all hover:scale-105 shadow-md"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-md transition-all hover:scale-105 shadow-md cursor-pointer"
             title="Close Pass"
           >
             <X className="w-4 h-4" />
@@ -281,9 +284,9 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
         </div>
 
         {/* ========================================================= */}
-        {/* TICKET CONTAINER (APPLE WALLET / LU.MA STYLE) */}
+        {/* TICKET CONTAINER (APPLE WALLET / LU.MA STYLE - SCROLLABLE) */}
         {/* ========================================================= */}
-        <div className="bg-surface rounded-3xl border border-border/80 shadow-2xl overflow-hidden print:shadow-none print:border-none">
+        <div className="bg-surface rounded-3xl border border-border/80 shadow-2xl overflow-y-auto flex-1 overscroll-contain print:shadow-none print:border-none">
           {/* Top Brand Banner Strip */}
           <div
             className="h-3 sm:h-3.5 w-full transition-colors"

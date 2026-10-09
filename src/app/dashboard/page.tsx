@@ -561,14 +561,12 @@ function DashboardInner() {
                 return (
                   <div
                     key={event.id}
-                    className="group py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors rounded-xl px-2"
+                    onClick={() => router.push(`/${event.slug}`)}
+                    className="group py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.04] transition-all rounded-xl px-3 cursor-pointer"
                   >
                     {/* Left: Thumbnail & Details */}
                     <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-                      <Link
-                        href={`/${event.slug}`}
-                        className="relative w-28 sm:w-32 h-18 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-900 border border-white/10 block group-hover:border-[#FF5500]/40 transition-colors"
-                      >
+                      <div className="relative w-28 sm:w-32 h-18 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-900 border border-white/10 block group-hover:border-[#FF5500]/40 transition-colors">
                         <Image
                           src={event.cover_image_url}
                           alt={event.title}
@@ -576,7 +574,7 @@ function DashboardInner() {
                           unoptimized
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                      </Link>
+                      </div>
 
                       <div className="min-w-0">
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -585,7 +583,7 @@ function DashboardInner() {
                         </span>
 
                         <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#FF5500] transition-colors mt-1 truncate">
-                          <Link href={`/${event.slug}`}>{event.title}</Link>
+                          {event.title}
                         </h3>
 
                         <p className="text-xs text-neutral-400 font-medium tracking-wide uppercase mt-1 truncate">
@@ -594,15 +592,16 @@ function DashboardInner() {
                       </div>
                     </div>
 
-                    {/* Right: Guest Count, Inbox button, Arrow & Menu */}
-                    <div className="flex items-center gap-3 sm:gap-5 shrink-0 self-start md:self-auto pt-2 md:pt-0">
+                    {/* Right: Guest Count, Inbox button & Scan passes */}
+                    <div className="flex items-center gap-3 sm:gap-4 shrink-0 self-start md:self-auto pt-2 md:pt-0">
                       <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-medium">
                         <Users className="w-4 h-4 text-[#FF5500]" />
                         <span>{event.guests_count} guests</span>
                       </div>
 
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedInboxEventId(event.id);
                           setIsInboxOpen(true);
                         }}
@@ -613,81 +612,16 @@ function DashboardInner() {
                         <span>Inbox</span>
                       </button>
 
-                      <Link
-                        href={`/${event.slug}`}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
-                        title="View event page"
-                      >
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
-
-                      {/* Scanner for passes & attendance system (in place of three-dots) */}
+                      {/* Scanner for passes & attendance system */}
                       <Link
                         href={`/organizer/check-in?eventId=${event.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
                         title="Scan passes & live attendance system"
                       >
                         <Scan className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Scan passes</span>
                       </Link>
-
-                      {/* Dropdown Options for Real Events */}
-                      {originalEv && (
-                        <div className="relative">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMenuId(activeMenuId === event.id ? null : event.id);
-                            }}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                            title="More options (Broadcast, Share, Delete)"
-                          >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </button>
-
-                          {activeMenuId === event.id && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute right-0 top-8 w-44 rounded-xl bg-[#0D0D10] border border-white/15 shadow-2xl p-1 z-30 space-y-1 animate-in fade-in zoom-in-95"
-                            >
-                              <Link
-                                href={`/organizer/check-in?eventId=${originalEv.id}`}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors"
-                              >
-                                <Scan className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Gate Scanner</span>
-                              </Link>
-                              <button
-                                onClick={() => {
-                                  setBroadcastEvent(originalEv);
-                                  setActiveMenuId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors text-left"
-                              >
-                                <Send className="w-3.5 h-3.5 text-[#FF5500]" />
-                                <span>Broadcast Update</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShareEvent(originalEv);
-                                  setActiveMenuId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors text-left"
-                              >
-                                <Share2 className="w-3.5 h-3.5 text-blue-400" />
-                                <span>Share Event</span>
-                              </button>
-                              <button
-                                onClick={() => handleDelete(originalEv.id, originalEv.title)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors text-left"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Delete Event</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
