@@ -328,7 +328,7 @@ export async function POST(req: NextRequest) {
                 handledBy: 'duplicate_suppressed',
                 duplicate: true,
                 replyDispatched: true, // Crucial: signals bridge NOT to send any reply message
-                event: {
+                existingEvent: {
                   slug: ev.slug,
                   title: ev.title,
                   url: `${getAppUrl()}/${ev.slug}`,
@@ -649,7 +649,7 @@ export async function POST(req: NextRequest) {
                 handledBy: 'duplicate_suppressed',
                 duplicate: true,
                 replyDispatched: true, // Signals bridge not to send any reply
-                event: {
+                existingEvent: {
                   slug: recentDuplicate.slug,
                   title: recentDuplicate.title,
                   url: `${getAppUrl()}/${recentDuplicate.slug}`,
@@ -733,24 +733,17 @@ export async function POST(req: NextRequest) {
         `🔗 *Review Draft Preview:*\n${liveEventUrl}`;
     }
 
-    let replyDispatched = false;
-    if (replyTarget) {
-      replyDispatched = await sendWhatsAppReply(replyTarget, confirmationMsg);
-    }
-
     console.log('[WhatsApp Webhook] Event successfully created via WhatsApp:', {
       slug: createdEventSlug,
       title: createdEventTitle,
       senderPhone,
-      replyDispatched,
     });
 
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
-      replyText: replyDispatched ? undefined : confirmationMsg,
-      replyDispatched,
-      event: {
+      replyText: confirmationMsg,
+      eventDetails: {
         slug: createdEventSlug,
         title: createdEventTitle,
         url: liveEventUrl,
