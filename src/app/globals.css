@@ -406,15 +406,50 @@ html.light .dark-canvas {
   color: #FFFFFF !important;
 }
 
+html.light .vibe-instant-container {
+  background-color: #08080A !important;
+}
+
 html.light .vibe-instant-container h1,
 html.light .vibe-instant-container h2,
 html.light .vibe-instant-container h3,
+html.light .vibe-instant-container h4,
+html.light .vibe-instant-container h5,
+html.light .vibe-instant-container h6,
 html.light .vibe-reel-card h1,
 html.light .vibe-reel-card h2,
 html.light .vibe-reel-card h3,
+html.light .vibe-reel-card h4,
+html.light .vibe-reel-card h5,
+html.light .vibe-reel-card h6,
 html.light .dark-dialog h1,
 html.light .dark-dialog h2,
-html.light .dark-dialog h3 {
+html.light .dark-dialog h3,
+html.light .dark-dialog h4,
+html.light .dark-dialog h5,
+html.light .dark-dialog h6 {
+  color: #FFFFFF !important;
+}
+
+html.light .vibe-instant-container .text-neutral-300,
+html.light .vibe-reel-card .text-neutral-300 {
+  color: #D4D4D8 !important;
+}
+
+html.light .vibe-instant-container .text-neutral-400,
+html.light .vibe-reel-card .text-neutral-400 {
+  color: #A1A1AA !important;
+}
+
+html.light .vibe-instant-container .text-neutral-500,
+html.light .vibe-reel-card .text-neutral-500 {
+  color: #71717A !important;
+}
+
+html.light .vibe-instant-container button[aria-label*="Switch to"],
+html.light .vibe-instant-container button[title*="Switch to"] {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
   color: #FFFFFF !important;
 }
 

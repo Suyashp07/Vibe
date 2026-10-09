@@ -42,6 +42,7 @@ import QuickJoinModal from '@/components/vibes/QuickJoinModal';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
 import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
 import DigitalPassModal from '@/components/ui/DigitalPassModal';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 interface VibeInstantItem {
   id: string;
@@ -696,7 +697,7 @@ function VibesContent() {
 
   return (
     <div
-      className="fixed inset-0 h-[100dvh] w-full bg-[#08080A] text-white overflow-hidden overscroll-none select-none flex flex-col justify-between"
+      className="vibe-instant-container fixed inset-0 h-[100dvh] w-full bg-[#08080A] text-white overflow-hidden overscroll-none select-none flex flex-col justify-between"
     >
       {/* Ambient Radial Glow in background (like in Screenshot 1) */}
       <div className="absolute inset-0 pointer-events-none opacity-40">
@@ -726,7 +727,7 @@ function VibesContent() {
           </div>
         </div>
 
-        {/* Right: Location Badge + Filter Dropdown */}
+        {/* Right: Location Badge + Filter Dropdown + Theme Toggle */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Near Mumbai (Desktop pill) */}
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-neutral-300">
@@ -768,6 +769,9 @@ function VibesContent() {
               </div>
             )}
           </div>
+
+          {/* Theme Toggle Button */}
+          <ThemeToggle />
         </div>
       </header>
 
@@ -777,7 +781,7 @@ function VibesContent() {
       <main className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4">
         <div className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full">
           {/* Left Card: Vertical Reel Frame */}
-          <div className="relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0">
+          <div className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0">
             {/* Story Progress Indicators Top */}
             <div className="absolute top-3 left-4 right-4 z-20 flex gap-1.5">
               {Array.from({ length: storyCount }).map((_, i) => (
@@ -978,7 +982,7 @@ function VibesContent() {
             </div>
 
             {/* Keyboard Hint */}
-            <p className="text-[11px] text-neutral-500 font-medium text-center">
+            <p className="text-[11px] text-white/40 font-medium text-center">
               Use ↑ ↓ to browse vibes
             </p>
           </div>
@@ -1007,7 +1011,7 @@ function VibesContent() {
             <section
               key={vibeKey || index}
               data-index={index}
-              className="relative w-full h-[calc(100dvh-58px)] min-h-[calc(100dvh-58px)] max-h-[calc(100dvh-58px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none"
+              className="vibe-reel-card relative w-full h-[calc(100dvh-58px)] min-h-[calc(100dvh-58px)] max-h-[calc(100dvh-58px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none"
             >
               {/* Story Progress Indicators Top */}
               <div className="absolute top-2 left-4 right-4 z-20 flex gap-1.5">

@@ -201,7 +201,7 @@ export default function VibeCommentsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end"
+      className="dark-dialog fixed inset-0 z-50 flex flex-col justify-end"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
