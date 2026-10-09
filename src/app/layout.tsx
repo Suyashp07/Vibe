@@ -63,9 +63,12 @@ export const metadata: Metadata = {
     apple: '/icons/icon-192.png',
   },
   appleWebApp: {
-    capable: false,
+    capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Vibe',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
   applicationName: 'Vibe by Swaniki',
   openGraph: {
