@@ -69,6 +69,9 @@ const processedInboundIds = new Set<string>();
 // Outbound message deduplication store to prevent sending duplicate replies if webhook both dispatches via /send-message and returns replyText
 const recentOutboundTexts = new Map<string, number>();
 
+// Inbound message text deduplication store to prevent multi-device sync duplicate processing
+const recentInboundTexts = new Map<string, number>();
+
 async function startWhatsAppBridge() {
   if (!fs.existsSync(AUTH_DIR)) {
     fs.mkdirSync(AUTH_DIR, { recursive: true });
@@ -128,6 +131,11 @@ async function startWhatsAppBridge() {
 
   // Listen to incoming messages
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    // Skip multi-device background append syncs that re-fire historical messages
+    if (type === 'append') {
+      return;
+    }
+
     for (const msg of messages) {
       // Inbound deduplication: ignore if this message ID was already processed
       if (msg.key.id) {
@@ -228,6 +236,21 @@ async function startWhatsAppBridge() {
       }
 
       const senderName = msg.pushName || 'Host';
+
+      // Inbound text deduplication: ignore if same text from same sender was received within the last 90 seconds
+      if (trimmedText) {
+        const textKey = `${senderPhone || remoteJid}:${trimmedText.toLowerCase()}`;
+        const lastInboundTime = recentInboundTexts.get(textKey);
+        if (lastInboundTime && Date.now() - lastInboundTime < 90000) {
+          console.log(`[WhatsApp Bridge] ℹ️ Skipping duplicate inbound message within 90s: "${trimmedText.slice(0, 40)}"`);
+          continue;
+        }
+        recentInboundTexts.set(textKey, Date.now());
+        if (recentInboundTexts.size > 2000) {
+          const firstKey = recentInboundTexts.keys().next().value;
+          if (firstKey) recentInboundTexts.delete(firstKey);
+        }
+      }
 
       // Check if we have this quoted message stored in memory
       let matchedConversationId: string | undefined = undefined;

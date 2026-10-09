@@ -283,15 +283,65 @@ export async function POST(req: NextRequest) {
       flashActivity,
     });
 
-    // Send instant progress acknowledgment
-    if (replyTarget) {
-      const progressMsg = isFlashVibe
-        ? '⚡ *Creating your Flash Vibe with Gemini AI...* Posting directly to Vibe Instant!'
-        : '🔍 *Analyzing your event with Gemini AI...* Hang tight!';
-      await sendWhatsAppReply(replyTarget, progressMsg);
+    const supabase = getSupabaseAdmin();
+
+    // Early Deduplication Guard: Check if an event was created by this host in the last 120 seconds
+    if (supabase && (senderPhone || replyTarget)) {
+      try {
+        const { data: recentEvents } = await supabase
+          .from('events')
+          .select('id, slug, title, created_at, theme')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (recentEvents && recentEvents.length > 0) {
+          const now = Date.now();
+          const cleanPhone = (senderPhone || replyTarget).replace(/[^0-9]/g, '');
+
+          for (const ev of recentEvents) {
+            const evCreated = new Date(ev.created_at).getTime();
+            const ageMs = now - evCreated;
+            if (ageMs > 120000) continue; // older than 2 minutes, ignore
+
+            const hostPhone = (ev.theme?.whatsapp_host_phone || '').replace(/[^0-9]/g, '');
+            const isSameHost = hostPhone && cleanPhone && (hostPhone === cleanPhone || cleanPhone.includes(hostPhone) || hostPhone.includes(cleanPhone));
+
+            // Check title similarity or same host
+            const existingTitle = (ev.title || '').toLowerCase();
+            const rawTextLower = textContent.toLowerCase();
+            const hasSimilarKeywords = existingTitle && (
+              rawTextLower.includes(existingTitle) ||
+              existingTitle.includes(rawTextLower.slice(0, 30))
+            );
+
+            if (isSameHost || (ageMs < 60000 && hasSimilarKeywords)) {
+              console.warn('[WhatsApp Webhook] 🛑 Early suppressed duplicate event request within 120s window:', {
+                existingSlug: ev.slug,
+                existingTitle: ev.title,
+                ageMs,
+                cleanPhone,
+                hostPhone,
+              });
+
+              return NextResponse.json({
+                ok: true,
+                handledBy: 'duplicate_suppressed',
+                duplicate: true,
+                replyDispatched: true, // Crucial: signals bridge NOT to send any reply message
+                event: {
+                  slug: ev.slug,
+                  title: ev.title,
+                  url: `${getAppUrl()}/${ev.slug}`,
+                },
+              });
+            }
+          }
+        }
+      } catch (earlyDedupErr: any) {
+        console.warn('[WhatsApp Webhook] Early duplicate check warning:', earlyDedupErr.message);
+      }
     }
 
-    const supabase = getSupabaseAdmin();
     let extracted: ExtractedEventData;
     let coverImageUrl: string | undefined = payload.imageUrl || undefined;
 
@@ -565,6 +615,53 @@ export async function POST(req: NextRequest) {
     let createdEventTitle = insertPayload.title;
 
     if (supabase) {
+      // 1. Guard against duplicate event creation from the same host phone within a 60-second window
+      if (senderPhone) {
+        try {
+          const { data: recentDuplicate } = await supabase
+            .from('events')
+            .select('id, slug, title, created_at')
+            .filter('theme->>whatsapp_host_phone', 'eq', senderPhone)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (recentDuplicate && recentDuplicate.created_at) {
+            const timeSinceLastEventMs = Date.now() - new Date(recentDuplicate.created_at).getTime();
+            const existingTitle = (recentDuplicate.title || '').toLowerCase();
+            const newTitle = (insertPayload.title || '').toLowerCase();
+
+            // If created within the last 60 seconds and matches title
+            if (
+              timeSinceLastEventMs < 60000 &&
+              (existingTitle === newTitle ||
+               existingTitle.includes(newTitle) ||
+               newTitle.includes(existingTitle))
+            ) {
+              console.warn('[WhatsApp Webhook] 🛑 Suppressed duplicate event creation within 60s window:', {
+                existingSlug: recentDuplicate.slug,
+                newTitle: insertPayload.title,
+                timeSinceLastEventMs,
+              });
+
+              return NextResponse.json({
+                ok: true,
+                handledBy: 'duplicate_suppressed',
+                duplicate: true,
+                replyDispatched: true, // Signals bridge not to send any reply
+                event: {
+                  slug: recentDuplicate.slug,
+                  title: recentDuplicate.title,
+                  url: `${getAppUrl()}/${recentDuplicate.slug}`,
+                },
+              });
+            }
+          }
+        } catch (dedupErr: any) {
+          console.warn('[WhatsApp Webhook] Duplicate check warning:', dedupErr.message);
+        }
+      }
+
       try {
         const { data: savedEvent, error: insertError } = await supabase
           .from('events')
