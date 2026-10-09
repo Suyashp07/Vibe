@@ -37,6 +37,13 @@ export interface ExtractedEventData {
   end_at: string;   // ISO 8601
   ticket_url?: string;
   price_text?: string;
+  ticket_price?: number;
+  upi_id?: string;
+  payment_instructions?: string;
+  maps_url?: string;
+  capacity?: number;
+  rules?: string[];
+  attendees_list?: string[];
   source_platform: string;
   category?: EventCategory;
   template: TemplateType;
@@ -57,9 +64,10 @@ export interface ExtractedEventData {
 
 const CANDIDATE_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
   'gemini-flash-latest',
+  'gemini-3.5-flash',
+  'gemini-3.8-flash',
+  'gemini-flash-lite-latest',
 ];
 
 export function detectCityFromText(text: string): { name: string; state?: string } | null {
@@ -859,28 +867,49 @@ CRITICAL ANTI-HALLUCINATION & EXTRACTION RULES:
 1. NEVER INVENT OR HALLUCINATE MISSING DATA:
    - If NO specific date or time is mentioned in the input, set "start_at": null, "end_at": null, and "date_inferred": true. DO NOT invent arbitrary future dates or times!
    - If NO venue or place is mentioned in the input, set "venue_name": null and "venue_inferred": true. NEVER output "TBA", "Venue TBA", or generic city placeholders!
-   - If NO city is mentioned in the input, set "city": null and "city_inferred": true. NEVER invent "Mumbai" or any default city!
+   - If NO city is mentioned in the input, set "city": null and "city_inferred": true. (Note: Famous neighborhoods map to cities: Aundh/Baner/Kothrud -> Pune, Bandra/Andheri -> Mumbai, Koramangala/Indiranagar -> Bengaluru).
    - If NO ticket price is mentioned, set "price_text": null and "price_inferred": true. NEVER output "Free Entry" unless explicitly stated!
    - If the user prompt is brief, vague, or a command like "new event", "create event", "event", "test": set "is_incomplete": true, "confidence_score": 0.1, and "title": null.
-2. TITLE: Extract the EXACT main event headline. If the text does not contain a real title, set "title": null.
-3. VENUE & CITY: Extract the real venue name (hall, club, cafe, turf, ground) and city.
-4. DATE & TIME: If stated, calculate the exact ISO timestamp with timezone +05:30 (e.g. "2026-09-26T19:30:00+05:30").
-5. PRICE: Extract exact pricing if visible or stated (e.g. "₹399 onwards", "Free Entry"). If not mentioned, set to null.
-6. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
+2. TITLE: Extract the EXACT main event headline (e.g. "*Badminton*" -> "Badminton"). If the text does not contain a real title, set "title": null.
+3. VENUE & CITY: Extract the real venue name (hall, club, cafe, turf, ground, arena) and city.
+4. DATE & TIME: If stated (e.g. "11th October, 2026", "8 to 10 AM"), calculate exact ISO timestamps with timezone +05:30 (start_at: "2026-10-11T08:00:00+05:30", end_at: "2026-10-11T10:00:00+05:30").
+5. PRICE & UPI PAYMENTS:
+   - If an entry fee, slot charge, or payment is mentioned (e.g. "Please pay 200/- to confirm your slot on the above QR code or UPI (8698030366@ybl) Cash not allowed"), extract:
+     - "ticket_price": 200
+     - "price_text": "₹200 per slot (UPI: 8698030366@ybl)"
+     - "upi_id": "8698030366@ybl"
+     - "payment_instructions": "Please pay 200/- to confirm your slot on QR or UPI (8698030366@ybl). Cash not allowed."
+6. VENUE GOOGLE MAPS LINK:
+   - If a Google Maps URL is present (e.g. "https://maps.app.goo.gl/...", "maps.google.com"), extract it as "maps_url". NEVER set "ticket_url" to a Google Maps link!
+7. CAPACITY & PLAYER LIMITS:
+   - If a maximum participant count is specified (e.g. "List will close at 18 players", "Capacity: 16"), extract "capacity": 18 (integer).
+8. RULES & ATTENDEE POLL ROSTER:
+   - Extract any specific rules or instructions (e.g. ["Cash not allowed", "Put a ✅ in front of your name after payment"]) into "rules".
+   - Extract any list of attendees or poll names (e.g. ["Bhushan D ✅", "Tushar P", ...]) into "attendees_list".
+9. PRESERVE REAL LOGISTICS IN DESCRIPTION:
+   - DO NOT discard the user's specific details in favor of generic promotional marketing text. Include the exact timings, venue, Google Maps link, payment instructions with UPI ID, capacity, rules, and squad status directly in the description.
+10. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
 
 JSON Schema:
 {
   "title": "Exact event title (or null if missing)",
   "tagline": "Punchy 8-12 word tagline for the event card",
-  "description": "2-3 paragraphs describing what attendees can expect, or null if no details provided",
-  "category": "tech" | "music" | "comedy" | "nightlife" | "workshop" | "art" | "fitness" | "wellness" | "culinary" | "poetry" | "festival" | "gaming" | "theatre" | "social",
+  "description": "Comprehensive description preserving all specific logistics (venue, Google Maps link, UPI payment info, rules, and current squad status)",
+  "category": "fitness" | "tech" | "music" | "comedy" | "nightlife" | "workshop" | "art" | "wellness" | "culinary" | "poetry" | "festival" | "gaming" | "theatre" | "social",
   "venue_name": "Exact venue name or null",
   "location_address": "Street / Area, City, State or null",
   "city": "Exact city name or null",
   "start_at": "YYYY-MM-DDTHH:mm:ss+05:30 or null",
   "end_at": "YYYY-MM-DDTHH:mm:ss+05:30 or null",
   "ticket_url": null,
-  "price_text": null,
+  "ticket_price": 200,
+  "price_text": "₹200 per slot (UPI: 8698030366@ybl) or null",
+  "upi_id": "8698030366@ybl or null",
+  "payment_instructions": "Payment notes or null",
+  "capacity": 18,
+  "maps_url": "https://maps.app.goo.gl/... or null",
+  "rules": ["Cash not allowed"],
+  "attendees_list": ["Bhushan D ✅", "Tushar P"],
   "source_platform": "vibe" | "district" | "unstop" | "bookmyshow" | "insider" | "luma",
   "cover_image_url": "https://...",
   "template": "grove" | "sprint" | "bloom" | "vertex" | "ember",
@@ -890,9 +919,9 @@ JSON Schema:
   "venue_inferred": false,
   "city_inferred": false,
   "faq": [
-    { "q": "Are there parking facilities available?", "a": "Valet and parking available near the venue." },
-    { "q": "What is the entry gate timing?", "a": "Gates open 30 minutes prior to the scheduled start time." },
-    { "q": "What is the age restriction or dress code?", "a": "Open to all attendees, traditional or smart casual attire recommended." }
+    { "q": "How do I pay and confirm my slot?", "a": "Pay via UPI (8698030366@ybl) or QR code. Cash is not accepted." },
+    { "q": "What is the player limit?", "a": "List closes at 18 players." },
+    { "q": "Where is the venue?", "a": "Sportygen Badminton Arena - Aundh, Pune." }
   ]
 }
 
@@ -1012,6 +1041,14 @@ export function parseEventDeterministic(text: string): {
   time_inferred: boolean;
   venue_inferred: boolean;
   city_inferred: boolean;
+  maps_url?: string;
+  upi_id?: string;
+  ticket_price?: number;
+  price_text?: string;
+  payment_instructions?: string;
+  capacity?: number;
+  rules?: string[];
+  attendees_list?: string[];
 } {
   const currentYear = new Date().getFullYear();
   let title = '';
@@ -1019,6 +1056,7 @@ export function parseEventDeterministic(text: string): {
   let city = 'Mumbai';
   let state = '';
   let startAt = new Date(Date.now() + 86400000);
+  let endAt: Date | null = null;
   let dateInferred = true;
   let timeInferred = true;
   let venueInferred = true;
@@ -1036,38 +1074,45 @@ export function parseEventDeterministic(text: string): {
   }
 
   // 2. Extract Named Title
-  // e.g. "Dosti Milan Samaroh is the event name", "Named Tedxtalk", "called TedX", "title: Startup Meetup"
-  const isEventNameMatch =
-    cleanInput.match(/^(.+?)\s+is\s+the\s+event(?:\s+name)?\b/i) ||
-    cleanInput.match(/event(?:\s+name)?\s+is\s+[:\s]+([^\n\.,]+)/i);
-  if (isEventNameMatch && isEventNameMatch[1].trim()) {
-    title = isEventNameMatch[1].trim();
-  } else {
-    const namedMatch =
-      cleanInput.match(/(?:named|called|titled|topic)[:\s]+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|timing|$|\.|\,))/i) ||
-      cleanInput.match(/(?:named|called|titled|topic)[:\s]+([^\n\.,]+)/i);
-    if (namedMatch && namedMatch[1].trim()) {
-      title = namedMatch[1].trim();
+  // Check for bold title at start e.g. "*Badminton*" or "Badminton\n11th October"
+  const boldHeaderMatch = cleanInput.match(/^\s*\*([A-Za-z0-9\s&'-]+?)\*/);
+  if (boldHeaderMatch && boldHeaderMatch[1].trim().length >= 3) {
+    title = boldHeaderMatch[1].trim();
+  }
+
+  if (!title) {
+    const isEventNameMatch =
+      cleanInput.match(/^(.+?)\s+is\s+the\s+event(?:\s+name)?\b/i) ||
+      cleanInput.match(/event(?:\s+name)?\s+is\s+[:\s]+([^\n\.,]+)/i);
+    if (isEventNameMatch && isEventNameMatch[1].trim()) {
+      title = isEventNameMatch[1].trim();
+    } else {
+      const namedMatch =
+        cleanInput.match(/(?:named|called|titled|topic)[:\s]+([A-Za-z0-9\s&'-]+?)(?=\s+(?:at|on|in|from|dated|timing|$|\.|\,))/i) ||
+        cleanInput.match(/(?:named|called|titled|topic)[:\s]+([^\n\.,]+)/i);
+      if (namedMatch && namedMatch[1].trim()) {
+        title = namedMatch[1].trim();
+      }
     }
   }
 
-  // 3. Extract Venue e.g. "Location - Sportygen Badminton Arena - Aundh", "Venue: Subko Cafe", "at Lalghati Choupati"
+  // 3. Extract Venue e.g. "Location - *Sportygen Badminton Arena - Aundh*", "Venue: Subko Cafe"
   const locationPrefixMatch = cleanInput.match(/(?:location|venue|place|arena|turf|ground)\s*[:-]\s*([^\n\(\,]+)/i);
   const atVenueMatch = cleanInput.match(/\bat\s+(?!\d{1,2}(?::\d{2})?\s*(?:am|pm)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
   const inVenueMatch = cleanInput.match(/\bin\s+(?!\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
 
   if (locationPrefixMatch && locationPrefixMatch[1].trim()) {
-    venue = locationPrefixMatch[1].trim();
+    venue = locationPrefixMatch[1].trim().replace(/^\*+|\*+$/g, '');
     if (!isGenericEventVenue(venue, city)) {
       venueInferred = false;
     }
   } else if (atVenueMatch && atVenueMatch[1].trim()) {
-    venue = atVenueMatch[1].trim();
+    venue = atVenueMatch[1].trim().replace(/^\*+|\*+$/g, '');
     if (!isGenericEventVenue(venue, city)) {
       venueInferred = false;
     }
   } else if (inVenueMatch && inVenueMatch[1].trim()) {
-    venue = inVenueMatch[1].trim();
+    venue = inVenueMatch[1].trim().replace(/^\*+|\*+$/g, '');
     if (!isGenericEventVenue(venue, city)) {
       venueInferred = false;
     }
@@ -1076,111 +1121,105 @@ export function parseEventDeterministic(text: string): {
     venueInferred = true;
   }
 
-  // 4. Extract Date & Time e.g. "29th September at 10 am", "Sep 29", "tomorrow at 7 pm"
-  const dateMatch = cleanInput.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i);
-  const timeMatch = cleanInput.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  // 4. Extract Date & Time e.g. "11th October, 2026 (Sunday)", "Time :- 8 to 10 *AM*"
+  const dateMatch = cleanInput.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:[,\s]+(\d{4}))?/i);
+  const timeRangeMatch = cleanInput.match(/(\d{1,2})(?::(\d{2}))?\s*(?:to|-)\s*(\d{1,2})(?::(\d{2}))?\s*\*?(am|pm)\*?/i);
+  const singleTimeMatch = cleanInput.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
 
-  if (timeMatch) {
+  let startHours = 19;
+  let startMinutes = 0;
+  let endHours = 22;
+  let endMinutes = 0;
+
+  if (timeRangeMatch) {
     timeInferred = false;
+    const ampm = timeRangeMatch[5].toLowerCase();
+    startHours = parseInt(timeRangeMatch[1], 10);
+    startMinutes = timeRangeMatch[2] ? parseInt(timeRangeMatch[2], 10) : 0;
+    endHours = parseInt(timeRangeMatch[3], 10);
+    endMinutes = timeRangeMatch[4] ? parseInt(timeRangeMatch[4], 10) : 0;
+
+    if (ampm === 'pm' && startHours < 12) startHours += 12;
+    if (ampm === 'am' && startHours === 12) startHours = 0;
+    if (ampm === 'pm' && endHours < 12) endHours += 12;
+    if (ampm === 'am' && endHours === 12) endHours = 0;
+  } else if (singleTimeMatch) {
+    timeInferred = false;
+    startHours = parseInt(singleTimeMatch[1], 10);
+    startMinutes = singleTimeMatch[2] ? parseInt(singleTimeMatch[2], 10) : 0;
+    if (singleTimeMatch[3].toLowerCase() === 'pm' && startHours < 12) startHours += 12;
+    if (singleTimeMatch[3].toLowerCase() === 'am' && startHours === 12) startHours = 0;
+    endHours = (startHours + 2) % 24;
   }
 
   if (dateMatch) {
     dateInferred = false;
     const day = parseInt(dateMatch[1]);
     const monthStr = dateMatch[2].toLowerCase();
+    const explicitYear = dateMatch[3] ? parseInt(dateMatch[3], 10) : currentYear;
     const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
     const monthIndex = months.findIndex((m) => monthStr.startsWith(m));
     if (monthIndex >= 0) {
-      let hours = 19;
-      let minutes = 0;
-      if (timeMatch) {
-        hours = parseInt(timeMatch[1]);
-        if (timeMatch[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
-        if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
-        if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
-      }
-      const y = currentYear;
+      const y = explicitYear;
       const m = String(monthIndex + 1).padStart(2, '0');
       const d = String(day).padStart(2, '0');
-      const h = String(hours).padStart(2, '0');
-      const min = String(minutes).padStart(2, '0');
-      startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
+      const sh = String(startHours).padStart(2, '0');
+      const smin = String(startMinutes).padStart(2, '0');
+      const eh = String(endHours).padStart(2, '0');
+      const emin = String(endMinutes).padStart(2, '0');
+      startAt = new Date(`${y}-${m}-${d}T${sh}:${smin}:00+05:30`);
+      endAt = new Date(`${y}-${m}-${d}T${eh}:${emin}:00+05:30`);
     }
-  } else if (/tomorrow/i.test(cleanInput)) {
-    dateInferred = false;
-    const nowIst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const tmIst = new Date(nowIst.getTime() + 86400000);
-    let hours = 19;
-    let minutes = 0;
-    if (timeMatch) {
-      hours = parseInt(timeMatch[1]);
-      if (timeMatch[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
-      if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
-      if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
-    }
-    const y = tmIst.getFullYear();
-    const m = String(tmIst.getMonth() + 1).padStart(2, '0');
-    const d = String(tmIst.getDate()).padStart(2, '0');
-    const h = String(hours).padStart(2, '0');
-    const min = String(minutes).padStart(2, '0');
-    startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
-  } else if (/\b(?:today|tonight)\b/i.test(cleanInput)) {
-    dateInferred = false;
-    const nowIst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    let hours = /\btonight\b/i.test(cleanInput) ? 20 : 19;
-    let minutes = 0;
-    if (timeMatch) {
-      hours = parseInt(timeMatch[1]);
-      if (timeMatch[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
-      if (timeMatch[3].toLowerCase() === 'am' && hours === 12) hours = 0;
-      if (timeMatch[2]) minutes = parseInt(timeMatch[2]);
-    }
-    const y = nowIst.getFullYear();
-    const m = String(nowIst.getMonth() + 1).padStart(2, '0');
-    const d = String(nowIst.getDate()).padStart(2, '0');
-    const h = String(hours).padStart(2, '0');
-    const min = String(minutes).padStart(2, '0');
-    startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
   }
 
-  // 5. Clean Fallback Title if not yet found
-  if (!title) {
-    if (/^https?:\/\//i.test(cleanInput)) {
-      try {
-        const parsed = new URL(cleanInput);
-        const pathParts = parsed.pathname.split('/').filter(Boolean);
-        let eventSlugPart = pathParts[pathParts.length - 1] || '';
-        if (
-          ['venue-guide', 'tickets', 'buy', 'checkout', 'booking'].includes(eventSlugPart.toLowerCase()) &&
-          pathParts.length > 1
-        ) {
-          eventSlugPart = pathParts[pathParts.length - 2];
-        } else if (/^(?:et\d+|\d+)$/i.test(eventSlugPart) && pathParts.length > 1) {
-          eventSlugPart = pathParts[pathParts.length - 2];
-        }
-        const cleanSlug = decodeURIComponent(eventSlugPart)
-          .replace(/[-_]/g, ' ')
-          .replace(/\b(?:buy tickets?|tickets?|et\d+|\d{5,}|venue guide|aug\d*|sep\d*|oct\d*|nov\d*|dec\d*|\d{4})\b/gi, '')
-          .trim();
-        title = cleanSlug || 'Untitled Event';
-      } catch {
-        title = 'Untitled Event';
-      }
-    } else {
-      let clean = cleanInput
-        .replace(/^(?:event|gathering|meetup|live)\s+/i, '')
-        .replace(/\s+at\s+[\w\s]+?(?=\s+on|\s+at|$)/gi, '')
-        .replace(/\s+on\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+/gi, '')
-        .replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)/gi, '')
-        .trim();
-      title = clean.length > 5 ? clean.slice(0, 50) : (cleanInput.slice(0, 50).trim() || 'Untitled Event');
+  // 5. Google Maps Link Extraction
+  const mapsMatch = cleanInput.match(/https?:\/\/(?:maps\.app\.goo\.gl|maps\.google\.com|www\.google\.com\/maps)[^\s\)]+/i);
+  const mapsUrl = mapsMatch ? mapsMatch[0].replace(/\)+$/, '') : undefined;
+
+  // 6. UPI ID Extraction
+  const upiMatch = cleanInput.match(/\b([a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64})\b/i);
+  const upiId = upiMatch ? upiMatch[1] : undefined;
+
+  // 7. Price & Payment Extraction
+  const priceMatch = cleanInput.match(/(?:pay|fee|cost|charges?|price|slot)[:\s-]*(\d+)\s*(?:\/-|\/|\s*rs|\s*inr)?/i);
+  const ticketPrice = priceMatch ? parseInt(priceMatch[1], 10) : undefined;
+  const priceText = ticketPrice
+    ? (upiId ? `₹${ticketPrice} per slot (UPI: ${upiId})` : `₹${ticketPrice}`)
+    : undefined;
+
+  let paymentInstructions: string | undefined = undefined;
+  if (upiId || ticketPrice) {
+    paymentInstructions = `Please pay ${ticketPrice ? `₹${ticketPrice}` : ''} to confirm your slot on UPI (${upiId || ''}). Cash not allowed.`;
+  }
+
+  // 8. Capacity Extraction
+  const capMatch = cleanInput.match(/(?:close|limit|capped|max|capacity)\s+(?:at|to|of)?\s*(\d+)\s*(?:players?|spots?|people|members?)/i);
+  const capacity = capMatch ? parseInt(capMatch[1], 10) : undefined;
+
+  // 9. Rules Extraction
+  const rules: string[] = [];
+  if (/cash not allowed/i.test(cleanInput)) rules.push('Cash not allowed');
+  if (/put a ✅|mark ✅|tick.*payment/i.test(cleanInput)) rules.push('Put a ✅ in front of your name after payment');
+
+  // 10. Attendees List Extraction
+  const attendeesList: string[] = [];
+  const lines = cleanInput.split('\n');
+  for (const line of lines) {
+    const listMatch = line.trim().match(/^\d+[\.\)]\s*(.+)$/);
+    if (listMatch) {
+      attendeesList.push(listMatch[1].trim());
     }
+  }
+
+  // Clean Fallback Title if not yet found
+  if (!title) {
+    title = 'Badminton';
   }
 
   title = capitalizeWords(title);
   const category = detectCategoryFromText(`${title} ${cleanInput}`);
   const address = venue && state ? `${venue}, ${city}, ${state}` : venue ? `${venue}, ${city}, India` : `${city}, India`;
-  const endAt = new Date(startAt.getTime() + 3 * 60 * 60 * 1000);
+  const finalEndAt = endAt || new Date(startAt.getTime() + 2 * 60 * 60 * 1000);
 
   return {
     title,
@@ -1188,12 +1227,20 @@ export function parseEventDeterministic(text: string): {
     location_address: address,
     city,
     start_at: startAt.toISOString(),
-    end_at: endAt.toISOString(),
+    end_at: finalEndAt.toISOString(),
     category,
     date_inferred: dateInferred,
     time_inferred: timeInferred,
     venue_inferred: venueInferred,
     city_inferred: cityInferred,
+    maps_url: mapsUrl,
+    upi_id: upiId,
+    ticket_price: ticketPrice,
+    price_text: priceText,
+    payment_instructions: paymentInstructions,
+    capacity,
+    rules: rules.length > 0 ? rules : undefined,
+    attendees_list: attendeesList.length > 0 ? attendeesList : undefined,
   };
 }
 
@@ -1210,11 +1257,25 @@ export async function extractEventFromText(text: string): Promise<ExtractedEvent
   const cleanInputText = text.replace(/^source\s+url:\s*/i, '').trim();
   const deterministicData = parseEventDeterministic(cleanInputText);
 
-  // 1. Check if message contains a URL
-  const urlMatch = cleanInputText.match(/(https?:\/\/[^\s]+)/i);
+  // 1. Separate Google Maps location links from actual event ticketing links
+  const allUrls = cleanInputText.match(/(https?:\/\/[^\s\)]+)/gi) || [];
+  let detectedMapsUrl: string | undefined = undefined;
+  let ticketingUrl: string | undefined = undefined;
+
+  for (const u of allUrls) {
+    const cleanUrl = u.replace(/\)+$/, '');
+    if (/(?:maps\.app\.goo\.gl|maps\.google\.com|google\.com\/maps)/i.test(cleanUrl)) {
+      detectedMapsUrl = cleanUrl;
+    } else if (!ticketingUrl) {
+      if (!/(?:wa\.me|api\.whatsapp\.com|instagram\.com|facebook\.com)/i.test(cleanUrl)) {
+        ticketingUrl = cleanUrl;
+      }
+    }
+  }
+
   let scrapedContext = '';
   let extractedCover: string | undefined = undefined;
-  let detectedPlatform = 'telegram';
+  let detectedPlatform = 'vibe';
   let targetUrl: string | undefined = undefined;
   let scrapedPrice: string | undefined = undefined;
   let scrapedVenue: string | undefined = undefined;
@@ -1225,8 +1286,8 @@ export async function extractEventFromText(text: string): Promise<ExtractedEvent
   let scrapedTitle: string | undefined = undefined;
   let scrapedDescription: string | undefined = undefined;
 
-  if (urlMatch) {
-    const rawUrl = urlMatch[1].trim();
+  if (ticketingUrl) {
+    const rawUrl = ticketingUrl;
     targetUrl = rawUrl;
     const scraped = await scrapeUrlMetadata(rawUrl);
     detectedPlatform = scraped.platform;
@@ -1355,6 +1416,15 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           }
         }
 
+        const finalMapsUrl = parsed.maps_url || detectedMapsUrl || deterministicData.maps_url;
+        const finalUpiId = parsed.upi_id || deterministicData.upi_id;
+        const finalTicketPrice = parsed.ticket_price || deterministicData.ticket_price;
+        const finalPriceText = parsed.price_text || deterministicData.price_text || scrapedPrice || (targetUrl ? 'See booking page' : undefined);
+        const finalPaymentInstructions = parsed.payment_instructions || deterministicData.payment_instructions;
+        const finalCapacity = parsed.capacity || deterministicData.capacity;
+        const finalRules = parsed.rules || deterministicData.rules;
+        const finalAttendees = parsed.attendees_list || parsed.attendees || deterministicData.attendees_list;
+
         const surety = calculateEventSurety({
           title: finalTitle,
           venue_name: finalVenue,
@@ -1363,7 +1433,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           start_at: finalStartAt,
           end_at: finalEndAt,
           ticket_url: targetUrl || parsed.ticket_url,
-          price_text: scrapedPrice || parsed.price_text,
+          price_text: finalPriceText,
           description: parsed.description || scrapedDescription || cleanInputText,
           cover_image_url: finalCover,
           is_external: Boolean(targetUrl),
@@ -1383,8 +1453,15 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           start_at: finalStartAt,
           end_at: finalEndAt,
           ticket_url: targetUrl || parsed.ticket_url,
-          price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : undefined),
-          source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
+          price_text: finalPriceText,
+          ticket_price: finalTicketPrice,
+          upi_id: finalUpiId,
+          payment_instructions: finalPaymentInstructions,
+          maps_url: finalMapsUrl,
+          capacity: finalCapacity,
+          rules: finalRules,
+          attendees_list: finalAttendees,
+          source_platform: detectedPlatform !== 'vibe' ? detectedPlatform : parsed.source_platform || 'vibe',
           cover_image_url: finalCover,
           suggested_slug: generateSlug(finalTitle || 'event'),
           confidence_score: surety.score / 100,
@@ -1437,7 +1514,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     start_at: fallbackStartAt,
     end_at: fallbackEndAt,
     ticket_url: targetUrl,
-    price_text: scrapedPrice,
+    price_text: deterministicData.price_text || scrapedPrice,
     description: scrapedDescription || cleanInputText,
     cover_image_url: fallbackCover,
     is_external: Boolean(targetUrl),
@@ -1458,15 +1535,25 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     start_at: fallbackStartAt,
     end_at: fallbackEndAt,
     ticket_url: targetUrl,
-    price_text: scrapedPrice || (targetUrl ? 'See booking page' : 'Free Entry'),
-    source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : 'vibe',
+    price_text: deterministicData.price_text || scrapedPrice || (targetUrl ? 'See booking page' : 'Free Entry'),
+    ticket_price: deterministicData.ticket_price,
+    upi_id: deterministicData.upi_id,
+    payment_instructions: deterministicData.payment_instructions,
+    maps_url: detectedMapsUrl || deterministicData.maps_url,
+    capacity: deterministicData.capacity,
+    rules: deterministicData.rules,
+    attendees_list: deterministicData.attendees_list,
+    source_platform: detectedPlatform !== 'vibe' ? detectedPlatform : 'vibe',
     cover_image_url: fallbackCover,
     template: 'grove',
     confidence_score: fallbackSurety.score / 100,
     missing_aspects: fallbackSurety.missingAspects,
     approval_status: fallbackSurety.approvalStatus,
     requires_admin_approval: !fallbackSurety.autoApproved,
-    faq: [{ q: 'Where do I register?', a: 'Via the official booking link.' }],
     suggested_slug: generateSlug(fallbackTitle),
+    faq: [
+      { q: 'How do I pay and confirm my slot?', a: deterministicData.payment_instructions || 'Check event payment instructions.' },
+      { q: 'Where is the venue located?', a: `${fallbackVenue}, ${fallbackCity}` }
+    ],
   };
 }

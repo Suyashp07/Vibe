@@ -572,63 +572,71 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Insert into Supabase `public.events`
-    // All events created via WhatsApp bot belong strictly to the Vibe Instant stream
-    const insertPayload = {
-      slug: finalSlug,
-      title: extracted.title || 'Untitled Event',
-      tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
-      description:
-        extracted.description ||
-        `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
-      cover_image_url: coverImageUrl,
-      template: 'ember',
-      theme: {
-        palette: 'sunset',
-        font: 'Inter',
-        bg_style: 'solid',
-        button_style: 'pill',
-        is_flash: true,
-        created_via: 'bot',
-        source_platform: 'whatsapp',
-        flash_activity: flashActivity,
-        whatsapp_host_phone: senderPhone,
-        vibe_cheers_count: 0,
-        spots_limit: requestedSpots,
-        spots_filled: requestedSpots ? 1 : 0,
+      const effectiveSpotsLimit = requestedSpots || extracted.capacity;
+
+      // Insert into Supabase `public.events`
+      // All events created via WhatsApp bot belong strictly to the Vibe Instant stream
+      const insertPayload = {
+        slug: finalSlug,
+        title: extracted.title || 'Untitled Event',
+        tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
+        description:
+          extracted.description ||
+          `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
+        cover_image_url: coverImageUrl,
+        template: 'ember',
+        theme: {
+          palette: 'sunset',
+          font: 'Inter',
+          bg_style: 'solid',
+          button_style: 'pill',
+          is_flash: true,
+          created_via: 'bot',
+          source_platform: 'whatsapp',
+          flash_activity: flashActivity,
+          whatsapp_host_phone: senderPhone,
+          vibe_cheers_count: 0,
+          spots_limit: effectiveSpotsLimit,
+          spots_filled: extracted.attendees_list?.length || (effectiveSpotsLimit ? 1 : 0),
+          confidence_score: suretyScore / 100,
+          missing_aspects: surety.missingAspects,
+          approval_status: approvalStatus,
+          admin_approved: isAutoApproved,
+          upi_id: extracted.upi_id,
+          payment_instructions: extracted.payment_instructions,
+          maps_url: extracted.maps_url,
+          rules: extracted.rules,
+          attendees_list: extracted.attendees_list,
+        },
+        sections: { speakers: false, agenda: false, gallery: false, faq: true },
+        event_type: 'in-person',
+        location_name: extracted.venue_name || `${detectedCity} Venue`,
+        location_address: extracted.location_address || `${detectedCity}, India`,
+        city: detectedCity,
+        start_at: validStartAt,
+        end_at: validEndAt,
+        timezone: 'Asia/Kolkata',
+        capacity: effectiveSpotsLimit || 12,
+        is_public: isPublic,
+        status: eventStatus,
         confidence_score: suretyScore / 100,
-        missing_aspects: surety.missingAspects,
-        approval_status: approvalStatus,
-        admin_approved: isAutoApproved,
-      },
-      sections: { speakers: false, agenda: false, gallery: false, faq: true },
-      event_type: 'in-person',
-      location_name: extracted.venue_name || `${detectedCity} Venue`,
-      location_address: extracted.location_address || `${detectedCity}, India`,
-      city: detectedCity,
-      start_at: validStartAt,
-      end_at: validEndAt,
-      timezone: 'Asia/Kolkata',
-      capacity: requestedSpots || 12,
-      is_public: isPublic,
-      status: eventStatus,
-      confidence_score: suretyScore / 100,
-      ai_generated: true,
-      organizer_id: organizerId,
-      source_type: 'bot',
-      source_platform: 'whatsapp',
-      external_ticket_url: finalTicketUrl,
-      external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
-      faq: extracted.faq || [],
-      rsvp_form_config: {
-        ask_plus_one: true,
-        ask_dietary: false,
-        ask_tshirt: false,
-        waitlist_enabled: true,
-        is_flash: true,
-        confirmation_message: `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`,
-      },
-    };
+        ai_generated: true,
+        organizer_id: organizerId,
+        source_type: 'bot',
+        source_platform: 'whatsapp',
+        maps_url: extracted.maps_url,
+        external_ticket_url: finalTicketUrl,
+        external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
+        faq: extracted.faq || [],
+        rsvp_form_config: {
+          ask_plus_one: true,
+          ask_dietary: false,
+          ask_tshirt: false,
+          waitlist_enabled: true,
+          is_flash: true,
+          confirmation_message: `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`,
+        },
+      };
 
     let createdEventSlug = finalSlug;
     let createdEventTitle = insertPayload.title;
@@ -714,6 +722,16 @@ export async function POST(req: NextRequest) {
     const liveEventUrl = `${appUrl}/${createdEventSlug}`;
     const liveReelUrl = `${appUrl}/vibes?event=${createdEventSlug}`;
 
+    const paymentInfoLine = extracted.upi_id || extracted.price_text
+      ? `💳 *Payment:* ${extracted.price_text || `UPI ${extracted.upi_id}`}\n`
+      : '';
+    const spotsInfoLine = effectiveSpotsLimit
+      ? `👥 *Capacity:* ${extracted.attendees_list?.length ? `${extracted.attendees_list.length}/` : ''}${effectiveSpotsLimit} players\n`
+      : '';
+    const mapsInfoLine = extracted.maps_url
+      ? `🗺️ *Maps:* ${extracted.maps_url}\n`
+      : '';
+
     // Send confirmation message to the organizer's WhatsApp
     let confirmationMsg = '';
     if (isAutoApproved) {
@@ -722,8 +740,11 @@ export async function POST(req: NextRequest) {
           `⚡ *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
           `🔥 *${createdEventTitle}*\n` +
           `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-          `🕒 ${dateStr}\n\n` +
-          `✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
+          `🕒 ${dateStr}\n` +
+          paymentInfoLine +
+          spotsInfoLine +
+          mapsInfoLine +
+          `\n✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
           `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
           `🌐 *Full Event & RSVP Pass:*\n${liveEventUrl}\n\n` +
           `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
@@ -732,8 +753,11 @@ export async function POST(req: NextRequest) {
           `🎉 *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE!* (${suretyScore}% Surety)\n\n` +
           `📌 *${createdEventTitle}*\n` +
           `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-          `🕒 ${dateStr}\n\n` +
-          `✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
+          `🕒 ${dateStr}\n` +
+          paymentInfoLine +
+          spotsInfoLine +
+          mapsInfoLine +
+          `\n✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
           `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
           `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
       }
@@ -746,8 +770,11 @@ export async function POST(req: NextRequest) {
         `⏳ *EVENT SUBMITTED FOR ADMIN APPROVAL* (${suretyScore}% Surety)\n\n` +
         `📌 *${createdEventTitle}*\n` +
         `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-        `🕒 ${dateStr}\n\n` +
-        `⚠️ *Aspects Not Given By User:* \n${missingList}\n\n` +
+        `🕒 ${dateStr}\n` +
+        paymentInfoLine +
+        spotsInfoLine +
+        mapsInfoLine +
+        `\n⚠️ *Aspects Not Given By User:* \n${missingList}\n\n` +
         `🛡️ _Because event surety is under 90%, our team has queued your event for admin approval. Once approved, it will be published live!_\n\n` +
         `🔗 *Review Draft Preview:*\n${liveEventUrl}`;
     }
