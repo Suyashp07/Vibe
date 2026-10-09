@@ -50,7 +50,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#000000',
+  themeColor: '#0F172A',
 };
 
 export const metadata: Metadata = {
@@ -60,15 +60,12 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
-    apple: '/icon-192x192.png',
+    apple: '/icons/icon-192.png',
   },
   appleWebApp: {
-    capable: true,
+    capable: false,
     statusBarStyle: 'black-translucent',
     title: 'Vibe',
-  },
-  other: {
-    'mobile-web-app-capable': 'yes',
   },
   applicationName: 'Vibe by Swaniki',
   openGraph: {
