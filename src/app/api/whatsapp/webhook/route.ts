@@ -180,13 +180,15 @@ export async function POST(req: NextRequest) {
         `🔗 *Send a Link:* Paste a Luma, BookMyShow, District, or Unstop URL.\n` +
         `💬 *Send a Text:* Forward any event details message or blurb.\n\n` +
         `_Gemini AI will extract all details, create the event, and reply with your live link!_`;
+      let replyDispatched = false;
       if (replyTarget) {
-        await sendWhatsAppReply(replyTarget, welcome);
+        replyDispatched = await sendWhatsAppReply(replyTarget, welcome);
       }
       return NextResponse.json({
         ok: true,
         handledBy: 'welcome_prompt',
         replyText: welcome,
+        replyDispatched,
       });
     }
 
@@ -210,13 +212,15 @@ export async function POST(req: NextRequest) {
         `• Send */vibe <details>* (e.g. \`/vibe Turf cricket tonight 8 PM at Bandra\`)\n` +
         `• Or send/forward any *event flyer poster*\n` +
         `• Or paste an event link from Luma, BookMyShow, or District!`;
+      let replyDispatched = false;
       if (replyTarget) {
-        await sendWhatsAppReply(replyTarget, hint);
+        replyDispatched = await sendWhatsAppReply(replyTarget, hint);
       }
       return NextResponse.json({
         ok: true,
         handledBy: 'guidance_hint',
         replyText: hint,
+        replyDispatched,
       });
     }
 
@@ -244,13 +248,15 @@ export async function POST(req: NextRequest) {
         `• Send */vibe <details>* (e.g. \`/vibe Turf cricket tonight 8 PM at Bandra\`)\n` +
         `• Or send/forward any *event flyer poster*\n` +
         `• Or paste an event link from Luma, BookMyShow, or District!`;
+      let replyDispatched = false;
       if (replyTarget && textContent.length > 0) {
-        await sendWhatsAppReply(replyTarget, hint);
+        replyDispatched = await sendWhatsAppReply(replyTarget, hint);
       }
       return NextResponse.json({
         ok: true,
         handledBy: 'guidance_hint',
         replyText: hint,
+        replyDispatched,
       });
     }
 
@@ -630,20 +636,23 @@ export async function POST(req: NextRequest) {
         `🔗 *Review Draft Preview:*\n${liveEventUrl}`;
     }
 
+    let replyDispatched = false;
     if (replyTarget) {
-      await sendWhatsAppReply(replyTarget, confirmationMsg);
+      replyDispatched = await sendWhatsAppReply(replyTarget, confirmationMsg);
     }
 
     console.log('[WhatsApp Webhook] Event successfully created via WhatsApp:', {
       slug: createdEventSlug,
       title: createdEventTitle,
       senderPhone,
+      replyDispatched,
     });
 
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
       replyText: confirmationMsg,
+      replyDispatched,
       event: {
         slug: createdEventSlug,
         title: createdEventTitle,
