@@ -474,24 +474,8 @@ export default function WhatsOnFeed() {
 
   return (
     <div className="w-full space-y-8 sm:space-y-12">
-      {/* ========================================================================= */}
-      {/* 1. EDITORIAL HERO HEADLINE (Matching mobile reference design)               */}
-      {/* ========================================================================= */}
-      <div className="space-y-2 mb-2 sm:mb-4">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#E8621A]" />
-          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] text-slate-400">
-            GO OUT. FIND YOUR PEOPLE.
-          </span>
-        </div>
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
-          A little less scrolling.<br />
-          A lot more <span className="text-[#E8621A]">living.</span>
-        </h1>
-        <p className="text-sm sm:text-base text-slate-400 font-normal max-w-xl">
-          Discover experiences worth showing up for.
-        </p>
-      </div>
+      {/* Accessible semantic heading for SEO & screen readers */}
+      <h1 className="sr-only">Vibe — Discover Spotlight Events & Live Experiences</h1>
 
       {/* ========================================================================= */}
       {/* 2. SPOTLIGHT HERO BILLBOARD CAROUSEL (Matching reference design)            */}
