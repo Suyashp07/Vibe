@@ -1051,11 +1051,17 @@ export function parseEventDeterministic(text: string): {
     }
   }
 
-  // 3. Extract Venue e.g. "at Lalghati Choupati", "at Subko Cafe", "in Cyber Hub"
+  // 3. Extract Venue e.g. "Location - Sportygen Badminton Arena - Aundh", "Venue: Subko Cafe", "at Lalghati Choupati"
+  const locationPrefixMatch = cleanInput.match(/(?:location|venue|place|arena|turf|ground)\s*[:-]\s*([^\n\(\,]+)/i);
   const atVenueMatch = cleanInput.match(/\bat\s+(?!\d{1,2}(?::\d{2})?\s*(?:am|pm)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
   const inVenueMatch = cleanInput.match(/\bin\s+(?!\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
 
-  if (atVenueMatch && atVenueMatch[1].trim()) {
+  if (locationPrefixMatch && locationPrefixMatch[1].trim()) {
+    venue = locationPrefixMatch[1].trim();
+    if (!isGenericEventVenue(venue, city)) {
+      venueInferred = false;
+    }
+  } else if (atVenueMatch && atVenueMatch[1].trim()) {
     venue = atVenueMatch[1].trim();
     if (!isGenericEventVenue(venue, city)) {
       venueInferred = false;
@@ -1322,7 +1328,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
         const candidateVenue = scrapedVenue || parsed.venue_name || deterministicData.venue_name;
         const venueIsGeneric = isGenericEventVenue(candidateVenue, finalCity);
         const finalVenue = !venueIsGeneric ? candidateVenue : (candidateVenue || 'TBA');
-        const venueIsInferred = venueIsGeneric || parsed.venue_inferred || deterministicData.venue_inferred;
+        const venueIsInferred = venueIsGeneric || (!candidateVenue) || Boolean(parsed.venue_inferred && deterministicData.venue_inferred);
 
         const finalAddress =
           (scrapedAddress && !scrapedAddress.includes('City Venue') ? scrapedAddress : undefined) ||
