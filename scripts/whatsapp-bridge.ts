@@ -198,6 +198,10 @@ async function startWhatsAppBridge() {
       const trimmedText = messageContent.trim();
       const lowerText = trimmedText.toLowerCase();
 
+      // Detect event keywords in message text (e.g. Badminton, Football, Cricket, Meetup)
+      const hasEventKeywords =
+        /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging|tournament|rsvp|tickets?|registration|venue|timing|entry free|entry fee|curated by|hosted by|doors open|lineup|line-up|hackathon|workshop|standup|comedy|concert|gig|party)\b/i.test(trimmedText);
+
       // Check if this message is intentionally creating an event or command
       const isEventCommand =
         hasImage ||
@@ -210,9 +214,10 @@ async function startWhatsAppBridge() {
         lowerText.startsWith('/start') ||
         lowerText.startsWith('/help') ||
         lowerText === 'hi' ||
-        lowerText === 'hello';
+        lowerText === 'hello' ||
+        (trimmedText.length >= 25 && hasEventKeywords);
 
-      // If sent by me to someone else, only process if in self chat or explicitly typing /vibe / sending flyer
+      // If sent by me to someone else, only process if in self chat or explicitly typing /vibe / sending flyer or event blurb
       if (msg.key.fromMe && !isSelfChat && !isEventCommand) continue;
 
       if (!trimmedText && !hasImage) continue;

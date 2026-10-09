@@ -306,15 +306,21 @@ export async function POST(req: NextRequest) {
             const hostPhone = (ev.theme?.whatsapp_host_phone || '').replace(/[^0-9]/g, '');
             const isSameHost = hostPhone && cleanPhone && (hostPhone === cleanPhone || cleanPhone.includes(hostPhone) || hostPhone.includes(cleanPhone));
 
-            // Check title similarity or same host
+            // Check title similarity: words from existing title present in incoming text
             const existingTitle = (ev.title || '').toLowerCase();
             const rawTextLower = textContent.toLowerCase();
-            const hasSimilarKeywords = existingTitle && (
-              rawTextLower.includes(existingTitle) ||
-              existingTitle.includes(rawTextLower.slice(0, 30))
+            const titleWords = existingTitle.split(/\s+/).filter((w: string) => w.length > 3);
+            const matchesTitleWords = titleWords.length > 0 && titleWords.some((w: string) => rawTextLower.includes(w));
+            const hasSimilarKeywords = Boolean(
+              existingTitle && (
+                rawTextLower.includes(existingTitle) ||
+                existingTitle.includes(rawTextLower.slice(0, 30)) ||
+                matchesTitleWords
+              )
             );
 
-            if (isSameHost || (ageMs < 60000 && hasSimilarKeywords)) {
+            // It is a duplicate ONLY if it is the same host AND the event content/title is similar
+            if (isSameHost && hasSimilarKeywords) {
               console.warn('[WhatsApp Webhook] 🛑 Early suppressed duplicate event request within 120s window:', {
                 existingSlug: ev.slug,
                 existingTitle: ev.title,

@@ -82,7 +82,7 @@ export function detectCityFromText(text: string): { name: string; state?: string
   if (/\b(koramangala|indiranagar|whitefield|hsr|bellandur|jayanagar|mg road)\b/i.test(lower)) {
     return { name: 'Bengaluru', state: 'Karnataka' };
   }
-  if (/\b(koregaon park|kothrud|viman nagar|baner|wakad|hinjewadi|shivajinagar)\b/i.test(lower)) {
+  if (/\b(koregaon park|kothrud|viman nagar|baner|wakad|hinjewadi|shivajinagar|aundh|magarpatta|hadapsar|senapati bapat)\b/i.test(lower)) {
     return { name: 'Pune', state: 'Maharashtra' };
   }
   if (/\b(cp|connaught place|hauz khas|saket|gurugram|gurgaon|noida|cyber hub)\b/i.test(lower)) {
