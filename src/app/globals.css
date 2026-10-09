@@ -370,7 +370,7 @@ html.light .border-white\/20:not(.vibe-instant-container *):not(.vibe-reel-card 
 }
 
 /* Text Overrides for Light Mode (applied ONLY to regular light content) */
-html.light .text-white:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]):not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not([class*="bg-black"] *):not(.pointer-events-none *):not(.pwa-install-banner *) {
+html.light .text-white:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]):not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not(.preview-card-cover *):not([class*="bg-black"]):not([class*="bg-black"] *):not([class*="bg-slate-9"]):not([class*="bg-slate-9"] *):not([class*="bg-slate-8"]):not([class*="bg-slate-8"] *):not([class*="bg-\[\#0F172A\]"]):not([class*="bg-\[\#0F172A\]"] *):not([class*="bg-\[\#111114\]"]):not([class*="bg-\[\#111114\]"] *):not([class*="bg-neutral-9"]):not([class*="bg-neutral-9"] *):not([class*="bg-neutral-8"]):not([class*="bg-neutral-8"] *):not(.pointer-events-none *):not(.pwa-install-banner *) {
   color: #0F172A !important;
 }
 

@@ -566,7 +566,7 @@ function DashboardInner() {
                   >
                     {/* Left: Thumbnail & Details */}
                     <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-                      <div className="relative w-28 sm:w-32 h-18 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 block group-hover:border-[#FF5500]/40 transition-colors">
+                      <div className="relative w-28 sm:w-32 h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 block group-hover:border-[#FF5500]/40 transition-colors">
                         <Image
                           src={event.cover_image_url}
                           alt={event.title}

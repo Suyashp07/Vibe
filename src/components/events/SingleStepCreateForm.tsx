@@ -730,7 +730,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-bold">1</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">1</span>
                   <span>General Information</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Core identity and discovery settings</p>
@@ -882,7 +882,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-bold">2</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">2</span>
                   <span>Date, Schedule & Venue</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Timings and physical or virtual location</p>
@@ -1066,7 +1066,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9] gap-2">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-bold">3</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">3</span>
                   <span>Event Cover & Flyer</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Preset curated artwork, custom flyer, or image URL</p>
@@ -1103,9 +1103,10 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setSelectedPresetTab('Match Category')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     selectedPresetTab === 'Match Category'
-                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      ? 'bg-[#FF5500] text-white shadow-xs font-bold'
                       : 'bg-slate-100 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-200'
                   }`}
+                  style={selectedPresetTab === 'Match Category' ? { color: '#FFFFFF' } : undefined}
                 >
                   ⚡ Match ({category})
                 </button>
@@ -1114,9 +1115,10 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setSelectedPresetTab('All')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     selectedPresetTab === 'All'
-                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      ? 'bg-[#FF5500] text-white shadow-xs font-bold'
                       : 'bg-slate-100 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-200'
                   }`}
+                  style={selectedPresetTab === 'All' ? { color: '#FFFFFF' } : undefined}
                 >
                   ✨ All ({ALL_PRESETS_FLAT.length})
                 </button>
@@ -1127,9 +1129,10 @@ Current Draft: ${description || tagline}`,
                     onClick={() => setSelectedPresetTab(cat)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       selectedPresetTab === cat
-                        ? 'bg-[#0F172A] text-white shadow-xs'
+                        ? 'bg-[#FF5500] text-white shadow-xs font-bold'
                         : 'bg-slate-100 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-200'
                     }`}
+                    style={selectedPresetTab === cat ? { color: '#FFFFFF' } : undefined}
                   >
                     {cat}
                   </button>
@@ -1137,7 +1140,7 @@ Current Draft: ${description || tagline}`,
               </div>
 
               {/* Presets Grid */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {(showAllPresets ? displayedPresets : displayedPresets.slice(0, 8)).map((url, i) => (
                   <button
                     key={i}
@@ -1147,16 +1150,16 @@ Current Draft: ${description || tagline}`,
                       setUploadedFileName(null);
                       setCustomCoverUrl('');
                     }}
-                    className={`relative h-18 sm:h-22 rounded-xl overflow-hidden border-2 transition-all cursor-pointer group shadow-2xs ${
+                    className={`relative aspect-[16/10] w-full min-h-[76px] sm:min-h-[88px] rounded-xl overflow-hidden border-2 transition-all cursor-pointer group shadow-2xs ${
                       coverUrl === url
-                        ? 'border-[#E8621A] ring-2 ring-[#E8621A]/30 scale-[1.02]'
-                        : 'border-transparent hover:border-slate-300 opacity-85 hover:opacity-100'
+                        ? 'border-[#FF5500] ring-2 ring-[#FF5500]/30 scale-[1.02]'
+                        : 'border-transparent hover:border-slate-300 opacity-90 hover:opacity-100'
                     }`}
                   >
                     <Image src={url} alt={`Preset ${i + 1}`} fill className="object-cover group-hover:scale-105 transition duration-300" unoptimized />
                     {coverUrl === url && (
-                      <div className="absolute inset-0 bg-[#E8621A]/20 flex items-center justify-center">
-                        <div className="w-5 h-5 rounded-full bg-[#E8621A] text-white flex items-center justify-center shadow-sm">
+                      <div className="absolute inset-0 bg-[#FF5500]/25 flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full bg-[#FF5500] text-white flex items-center justify-center shadow-sm" style={{ color: '#FFFFFF' }}>
                           <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       </div>
@@ -1216,7 +1219,8 @@ Current Draft: ${description || tagline}`,
                 <button
                   type="button"
                   onClick={() => handleApplyImageUrl()}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer shrink-0 shadow-2xs"
+                  className="px-4 py-2 rounded-xl bg-[#0F172A] hover:bg-black text-white text-xs font-bold transition cursor-pointer shrink-0 shadow-2xs"
+                  style={{ color: '#FFFFFF' }}
                 >
                   Apply
                 </button>
@@ -1259,7 +1263,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-bold">4</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">4</span>
                   <span>Passes, Pricing & RSVP Controls</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Capacity, ticket tiers, and guest questionnaire</p>
@@ -1561,7 +1565,7 @@ Current Draft: ${description || tagline}`,
             {/* Event Card Attendee Preview */}
             <div className="rounded-2xl border border-[#E2E8F0] overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow">
               {/* Cover Image */}
-              <div className="relative h-44 w-full bg-slate-900 overflow-hidden">
+              <div className="relative h-44 w-full bg-slate-900 overflow-hidden event-card-cover">
                 <Image
                   src={coverUrl}
                   alt={title || 'Event Cover'}
@@ -1569,11 +1573,11 @@ Current Draft: ${description || tagline}`,
                   className="object-cover transition-all duration-300"
                   unoptimized
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
                 {/* Badges on Card */}
                 <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-black/60 backdrop-blur-md text-white border border-white/20">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-black/70 backdrop-blur-md text-white border border-white/20" style={{ color: '#FFFFFF' }}>
                     {category}
                   </span>
                   <span
@@ -1582,20 +1586,21 @@ Current Draft: ${description || tagline}`,
                         ? 'bg-emerald-500/80 text-white border-emerald-400/40'
                         : 'bg-slate-900/80 text-amber-300 border-amber-400/30'
                     }`}
+                    style={isPublic ? { color: '#FFFFFF' } : undefined}
                   >
                     {isPublic ? 'Public' : 'Private'}
                   </span>
                 </div>
 
                 {/* Bottom title info over photo */}
-                <div className="absolute bottom-3 left-3 right-3 text-white">
+                <div className="absolute bottom-3 left-3 right-3">
                   <div className="text-[11px] font-bold text-amber-300 flex items-center gap-1 mb-1">
                     <Calendar className="w-3 h-3" />
                     <span>
                       {date} · {startTime} IST
                     </span>
                   </div>
-                  <h3 className="text-base font-black text-white leading-snug line-clamp-2 drop-shadow-md">
+                  <h3 className="text-base font-black text-white leading-snug line-clamp-2 drop-shadow-md" style={{ color: '#FFFFFF' }}>
                     {title.trim() || 'Your Event Title'}
                   </h3>
                 </div>
