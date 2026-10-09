@@ -46,8 +46,8 @@ function getWebhookUrl(): string {
 const VIBE_WEBHOOK_URL = getWebhookUrl();
 
 function getBridgeSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jqnwlafvsfnqwdkmquwt.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_BNK4wDwy6ItZqECtDcQ76Q_tMLBWzz_';
   if (!url || !key || url.includes('your-project')) return null;
   return createClient(url, key, { auth: { persistSession: false } });
 }
@@ -72,9 +72,92 @@ const recentOutboundTexts = new Map<string, number>();
 // Inbound message text deduplication store to prevent multi-device sync duplicate processing
 const recentInboundTexts = new Map<string, number>();
 
+// --- CLOUD SESSION PERSISTENCE (Supabase Storage) ---
+// Keeps WhatsApp authenticated across Render/cloud container redeployments and restarts
+async function restoreSessionFromSupabase(): Promise<boolean> {
+  try {
+    let sessionData: Record<string, string> | null = null;
+    const supabase = getBridgeSupabase();
+
+    if (supabase) {
+      console.log('[WhatsApp Bridge] Checking Supabase for remote session backup...');
+      const { data, error } = await supabase.storage
+        .from('whatsapp-session')
+        .download('session_bundle.json');
+
+      if (!error && data) {
+        const jsonText = await data.text();
+        sessionData = JSON.parse(jsonText);
+      }
+    }
+
+    if (!sessionData) {
+      const directUrl = 'https://jqnwlafvsfnqwdkmquwt.supabase.co/storage/v1/object/public/whatsapp-session/session_bundle.json';
+      console.log('[WhatsApp Bridge] Attempting direct fetch from public Supabase storage bundle...');
+      const res = await fetch(directUrl);
+      if (res.ok) {
+        sessionData = (await res.json()) as Record<string, string>;
+      }
+    }
+
+    if (!sessionData) {
+      console.log('[WhatsApp Bridge] No existing remote session found in Supabase.');
+      return false;
+    }
+
+    const keys = Object.keys(sessionData);
+    if (keys.length === 0) return false;
+
+    if (!fs.existsSync(AUTH_DIR)) {
+      fs.mkdirSync(AUTH_DIR, { recursive: true });
+    }
+
+    for (const file of keys) {
+      fs.writeFileSync(path.join(AUTH_DIR, file), sessionData[file], 'utf8');
+    }
+
+    console.log(`[WhatsApp Bridge] ✅ Restored ${keys.length} session auth files from Supabase!`);
+    return true;
+  } catch (err: any) {
+    console.warn('[WhatsApp Bridge] Notice while restoring session from Supabase:', err.message);
+    return false;
+  }
+}
+
+let syncTimeout: NodeJS.Timeout | null = null;
+function scheduleSessionBackupToSupabase() {
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    try {
+      const supabase = getBridgeSupabase();
+      if (!supabase || !fs.existsSync(AUTH_DIR)) return;
+
+      const files = fs.readdirSync(AUTH_DIR).filter((f) => f.endsWith('.json'));
+      if (files.length === 0) return;
+
+      const sessionData: Record<string, string> = {};
+      for (const file of files) {
+        sessionData[file] = fs.readFileSync(path.join(AUTH_DIR, file), 'utf8');
+      }
+
+      await supabase.storage
+        .from('whatsapp-session')
+        .upload('session_bundle.json', Buffer.from(JSON.stringify(sessionData)), {
+          contentType: 'application/json',
+          upsert: true,
+        });
+
+      console.log(`[WhatsApp Bridge] 💾 Auto-synced ${files.length} session files to Supabase.`);
+    } catch (err: any) {
+      console.warn('[WhatsApp Bridge] Auto-sync session notice:', err.message);
+    }
+  }, 10000); // 10 second debounce
+}
+
 async function startWhatsAppBridge() {
-  if (!fs.existsSync(AUTH_DIR)) {
+  if (!fs.existsSync(AUTH_DIR) || !fs.existsSync(path.join(AUTH_DIR, 'creds.json'))) {
     fs.mkdirSync(AUTH_DIR, { recursive: true });
+    await restoreSessionFromSupabase();
   }
 
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -85,7 +168,10 @@ async function startWhatsAppBridge() {
     printQRInTerminal: false, // Handled manually with qrcodeTerminal
   });
 
-  sock.ev.on('creds.update', saveCreds);
+  sock.ev.on('creds.update', async () => {
+    await saveCreds();
+    scheduleSessionBackupToSupabase();
+  });
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -113,6 +199,10 @@ async function startWhatsAppBridge() {
       } else {
         console.log('[WhatsApp Bridge] Device logged out. Deleting credentials and waiting for restart.');
         fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+        const supabase = getBridgeSupabase();
+        if (supabase) {
+          supabase.storage.from('whatsapp-session').remove(['session_bundle.json']).catch(() => {});
+        }
         setTimeout(startWhatsAppBridge, 2000);
       }
     } else if (connection === 'open') {
