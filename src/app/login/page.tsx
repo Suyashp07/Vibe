@@ -147,18 +147,18 @@ function LoginContent() {
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-[#0D0D10] rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 animate-in fade-in">
+        <div className="w-full max-w-md bg-white dark:bg-[#0D0D10] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 sm:p-8 animate-in fade-in">
           {/* Header */}
           <div className="mb-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white mb-4 transition-colors font-medium"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors font-medium"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to events</span>
             </Link>
-            <h1 className="font-black text-2xl tracking-tight text-white">Welcome back</h1>
-            <p className="text-xs text-white/60 mt-1">
+            <h1 className="font-black text-2xl tracking-tight text-slate-900 dark:text-white">Welcome back</h1>
+            <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
               Sign in to manage your events, check RSVPs, or create new gatherings.
             </p>
           </div>
@@ -168,11 +168,11 @@ function LoginContent() {
             onClick={handleGoogleSignIn}
             disabled={googleLoading || loading}
             type="button"
-            className="w-full py-3 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 disabled:opacity-50 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-800 dark:text-white text-xs font-bold transition flex items-center justify-center gap-3 shadow-2xs hover:border-slate-300 dark:hover:border-white/30 disabled:opacity-50 cursor-pointer"
           >
             {googleLoading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-white" />
                 <span>Connecting with Google...</span>
               </>
             ) : (
@@ -202,24 +202,24 @@ function LoginContent() {
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">
-            <div className="h-px bg-white/10 flex-1" />
-            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+            <div className="h-px bg-slate-200 dark:bg-white/10 flex-1" />
+            <span className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">
               or email and password
             </span>
-            <div className="h-px bg-white/10 flex-1" />
+            <div className="h-px bg-slate-200 dark:bg-white/10 flex-1" />
           </div>
 
           {/* Feedback Messages */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2 text-xs text-red-700 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2 text-xs text-red-500 dark:text-red-400 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
               <span>{error}</span>
             </div>
           )}
 
           {message && (
-            <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 flex items-start gap-2 text-xs text-green-700 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-green-600" />
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-2 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
               <span>{message}</span>
             </div>
           )}
@@ -227,11 +227,11 @@ function LoginContent() {
           {/* Standard Email/Password Form */}
           <form onSubmit={handlePasswordSignIn} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-white/80 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-white/80 mb-1.5">
                 Email address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
                 <input
                   type="email"
                   required
@@ -263,9 +263,9 @@ function LoginContent() {
                     }
                   }}
                   placeholder="you@example.com"
-                  className={`w-full pl-10 pr-4 py-2.5 bg-[#111114] border ${
-                    emailError ? 'border-red-500 focus:border-red-400' : 'border-white/10 focus:border-[#FF5500]'
-                  } rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none transition-colors`}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#111114] border ${
+                    emailError ? 'border-red-500 focus:border-red-400' : 'border-slate-200 dark:border-white/10 focus:border-[#FF5500]'
+                  } rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all`}
                 />
               </div>
               {emailSuggestion && (
@@ -276,13 +276,13 @@ function LoginContent() {
                     setEmailSuggestion(null);
                     setEmailError(null);
                   }}
-                  className="mt-1.5 text-xs text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+                  className="mt-1.5 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
                 >
                   <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
                 </button>
               )}
               {emailError && (
-                <p className="mt-1 text-[11px] text-red-400 font-medium flex items-center gap-1">
+                <p className="mt-1 text-[11px] text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
                   <AlertCircle className="w-3 h-3 shrink-0" />
                   <span>{emailError}</span>
                 </p>
@@ -291,7 +291,7 @@ function LoginContent() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-white/80">Password</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-white/80">Password</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -300,25 +300,25 @@ function LoginContent() {
                     setOtpCode('');
                     setError(null);
                   }}
-                  className="text-[11px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer"
+                  className="text-[11px] font-medium text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   {showOtpFlow ? 'Use password instead' : 'Sign in with 6-digit code?'}
                 </button>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required={!showOtpFlow}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#111114] border border-white/10 rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -345,17 +345,17 @@ function LoginContent() {
 
           {/* 6-Digit Verification Code (OTP) Flow — NO MAGIC LINK */}
           {showOtpFlow && (
-            <div className="mt-4 pt-4 border-t border-white/10 space-y-3 animate-in fade-in">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in">
               {!otpSent ? (
                 <div className="space-y-2">
-                  <p className="text-[11px] text-white/60">
+                  <p className="text-[11px] text-slate-500 dark:text-white/60">
                     Enter your email above to receive a secure 6-digit verification code. No magic link or password needed.
                   </p>
                   <button
                     type="button"
                     onClick={handleSendOtpCode}
                     disabled={otpLoading || loading || googleLoading}
-                    className="w-full py-2.5 px-3 border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 px-3 border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
                   >
                     {otpLoading ? (
                       <>
@@ -370,7 +370,7 @@ function LoginContent() {
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-3">
                   <div>
-                    <label className="text-xs font-bold text-white block mb-1">
+                    <label className="text-xs font-bold text-slate-700 dark:text-white block mb-1">
                       Enter Verification Code
                     </label>
                     <input
@@ -383,7 +383,7 @@ function LoginContent() {
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="••••••••"
                       autoFocus
-                      className="w-full text-center tracking-[6px] sm:tracking-[8px] font-mono text-xl py-2.5 bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                      className="w-full text-center tracking-[6px] sm:tracking-[8px] font-mono text-xl py-2.5 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
                     />
                   </div>
 
@@ -418,8 +418,8 @@ function LoginContent() {
           )}
 
           {/* Footer switch to Sign Up */}
-          <div className="mt-6 pt-6 border-t border-white/10 text-center">
-            <p className="text-xs text-white/60">
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-white/10 text-center">
+            <p className="text-xs text-slate-500 dark:text-white/60">
               Don&apos;t have an account yet?{' '}
               <Link
                 href={redirectParam ? `/signup?redirect=${encodeURIComponent(redirectParam)}` : '/signup'}

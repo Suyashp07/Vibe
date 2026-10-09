@@ -625,6 +625,28 @@ html.light .dark-dialog .hover\:text-white:hover {
   color: #FFFFFF !important;
 }
 
+/* Universal Form Fields & Inputs in Light Mode */
+html.light input:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *),
+html.light select:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *),
+html.light textarea:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *) {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+html.light input:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *)::placeholder,
+html.light textarea:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *)::placeholder {
+  color: #94A3B8 !important;
+  opacity: 1 !important;
+}
+
+html.light input:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *):focus,
+html.light select:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *):focus,
+html.light textarea:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *):focus {
+  border-color: #FF5500 !important;
+  box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15) !important;
+}
+
 /* Inputs & Form Elements in Vibe Instant & Dark Modals */
 html.light .vibe-instant-container input,
 html.light .vibe-instant-container textarea,

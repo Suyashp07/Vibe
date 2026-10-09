@@ -180,12 +180,12 @@ function SignupContent() {
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-[#0D0D10] rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 animate-in fade-in">
+        <div className="w-full max-w-md bg-white dark:bg-[#0D0D10] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 sm:p-8 animate-in fade-in">
           {/* Header */}
           <div className="mb-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white mb-4 transition-colors font-medium"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors font-medium"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to events</span>
@@ -193,19 +193,19 @@ function SignupContent() {
 
             {isVerifyingOtp ? (
               <>
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold mb-2">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400 text-[11px] font-bold mb-2">
                   <KeyRound className="w-3.5 h-3.5" />
                   <span>Email Verification Required</span>
                 </div>
-                <h1 className="font-black text-2xl tracking-tight text-white">Verify your email</h1>
-                <p className="text-xs text-white/60 mt-1">
-                  We sent a verification code to <span className="font-bold text-white">{email}</span>. Enter the code below to complete your registration.
+                <h1 className="font-black text-2xl tracking-tight text-slate-900 dark:text-white">Verify your email</h1>
+                <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
+                  We sent a verification code to <span className="font-bold text-slate-900 dark:text-white">{email}</span>. Enter the code below to complete your registration.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="font-black text-2xl tracking-tight text-white">Create your account</h1>
-                <p className="text-xs text-white/60 mt-1">
+                <h1 className="font-black text-2xl tracking-tight text-slate-900 dark:text-white">Create your account</h1>
+                <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
                   Join Vibe to host events, manage RSVPs, or discover gatherings.
                 </p>
               </>
@@ -214,14 +214,14 @@ function SignupContent() {
 
           {/* Feedback Messages */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex flex-col gap-2 text-xs text-red-400 animate-in fade-in">
+            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex flex-col gap-2 text-xs text-red-500 dark:text-red-400 animate-in fade-in">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
                 <span>{error}</span>
               </div>
               {isExistingUser && (
                 <div className="mt-1 pt-2 border-t border-red-500/20 flex items-center justify-between">
-                  <span className="font-medium text-red-300">Ready to log in?</span>
+                  <span className="font-medium text-red-400 dark:text-red-300">Ready to log in?</span>
                   <Link
                     href={`/login?redirect=${encodeURIComponent(destination)}`}
                     className="px-3 py-1 bg-[#FF5500] text-white rounded-lg font-bold text-[11px] hover:bg-[#FF661A] transition"
@@ -234,8 +234,8 @@ function SignupContent() {
           )}
 
           {resendMessage && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-400 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <span>{resendMessage}</span>
             </div>
           )}
@@ -244,7 +244,7 @@ function SignupContent() {
           {isVerifyingOtp ? (
             <form onSubmit={handleVerifyOtp} className="space-y-5 animate-in fade-in">
               <div>
-                <label className="block text-xs font-bold text-white/80 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-white/80 mb-1.5">
                   Verification Code
                 </label>
                 <div className="relative">
@@ -258,10 +258,10 @@ function SignupContent() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="••••••••"
-                    className="w-full text-center tracking-[0.3em] sm:tracking-[0.35em] text-lg font-mono font-bold py-3 bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                    className="w-full text-center tracking-[0.3em] sm:tracking-[0.35em] text-lg font-mono font-bold py-3 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
                   />
                 </div>
-                <p className="text-[11px] text-white/50 mt-1.5 text-center">
+                <p className="text-[11px] text-slate-400 dark:text-white/50 mt-1.5 text-center">
                   Check your spam/junk folder if you do not see the email within 1 minute.
                 </p>
               </div>
@@ -319,11 +319,11 @@ function SignupContent() {
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading || loading}
                 type="button"
-                className="w-full py-3 px-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition flex items-center justify-center gap-3 shadow-xs hover:border-white/30 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-800 dark:text-white text-xs font-bold transition flex items-center justify-center gap-3 shadow-2xs hover:border-slate-300 dark:hover:border-white/30 disabled:opacity-50 cursor-pointer"
               >
                 {googleLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-white" />
                     <span>Connecting with Google...</span>
                   </>
                 ) : (
@@ -353,20 +353,20 @@ function SignupContent() {
 
               {/* Divider */}
               <div className="flex items-center gap-3 my-5">
-                <div className="h-px bg-white/10 flex-1" />
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                <div className="h-px bg-slate-200 dark:bg-white/10 flex-1" />
+                <span className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">
                   or sign up with email
                 </span>
-                <div className="h-px bg-white/10 flex-1" />
+                <div className="h-px bg-slate-200 dark:bg-white/10 flex-1" />
               </div>
 
               <form onSubmit={handlePasswordSignUp} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-white/80 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-white/80 mb-1.5">
                     Full Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
                     <input
                       type="text"
                       required
@@ -376,17 +376,17 @@ function SignupContent() {
                         if (isExistingUser) setIsExistingUser(false);
                       }}
                       placeholder="Aarav Sharma"
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#111114] border border-white/10 rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition-colors"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-white/80 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-white/80 mb-1.5">
                     Email address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
                     <input
                       type="email"
                       required
@@ -419,9 +419,9 @@ function SignupContent() {
                         }
                       }}
                       placeholder="you@example.com"
-                      className={`w-full pl-10 pr-4 py-2.5 bg-[#111114] border ${
-                        emailError ? 'border-red-500 focus:border-red-400' : 'border-white/10 focus:border-[#FF5500]'
-                      } rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none transition-colors`}
+                      className={`w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#111114] border ${
+                        emailError ? 'border-red-500 focus:border-red-400' : 'border-slate-200 dark:border-white/10 focus:border-[#FF5500]'
+                      } rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all`}
                     />
                   </div>
                   {emailSuggestion && (
@@ -432,13 +432,13 @@ function SignupContent() {
                         setEmailSuggestion(null);
                         setEmailError(null);
                       }}
-                      className="mt-1.5 text-xs text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
+                      className="mt-1.5 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg px-2.5 py-1 flex items-center gap-1.5 transition-colors text-left font-medium"
                     >
                       <span>Did you mean <span className="underline font-bold">{emailSuggestion}</span>? Click to fix.</span>
                     </button>
                   )}
                   {emailError && (
-                    <p className="mt-1 text-[11px] text-red-400 font-medium flex items-center gap-1">
+                    <p className="mt-1 text-[11px] text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
                       <AlertCircle className="w-3 h-3 shrink-0" />
                       <span>{emailError}</span>
                     </p>
@@ -446,23 +446,23 @@ function SignupContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-white/80 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-white/80 mb-1.5">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="At least 6 characters"
-                      className="w-full pl-10 pr-10 py-2.5 bg-[#111114] border border-white/10 rounded-xl text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition-colors"
+                      className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
