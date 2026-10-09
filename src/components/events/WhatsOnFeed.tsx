@@ -473,15 +473,16 @@ export default function WhatsOnFeed() {
   }, [eventsWithDistance, searchQuery, categoryFilter, distanceFilter, selectedMoods]);
 
   return (
-    <div className="w-full space-y-8 sm:space-y-12">
+    <>
       {/* Accessible semantic heading for SEO & screen readers */}
       <h1 className="sr-only">Vibe — Discover Spotlight Events & Live Experiences</h1>
 
-      {/* ========================================================================= */}
-      {/* 2. SPOTLIGHT HERO BILLBOARD CAROUSEL (Matching reference design)            */}
-      {/* ========================================================================= */}
-      {currentFlashEvent && (
-        <div
+      <div className="w-full space-y-8 sm:space-y-12">
+        {/* ========================================================================= */}
+        {/* 2. SPOTLIGHT HERO BILLBOARD CAROUSEL (Matching reference design)            */}
+        {/* ========================================================================= */}
+        {currentFlashEvent && (
+          <div
           data-cursor="view"
           className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/10 group min-h-[460px] sm:min-h-[440px] md:h-[480px] bg-black touch-pan-y select-none"
           onMouseEnter={() => setIsFlashcardPaused(true)}
@@ -835,5 +836,6 @@ export default function WhatsOnFeed() {
         </div>
       </div>
     </div>
+  </>
   );
 }
