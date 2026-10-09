@@ -428,7 +428,7 @@ function DashboardInner() {
   const broadcastTarget = hostEvents[0] || events[0] || null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#070709] text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] dark:bg-[#070709] text-neutral-900 dark:text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-12 sm:space-y-14">
@@ -437,13 +437,13 @@ function DashboardInner() {
         {/* ========================================================= */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
           <div>
-            <span className="text-[11px] sm:text-xs font-mono font-semibold tracking-widest text-neutral-400 uppercase">
+            <span className="text-[11px] sm:text-xs font-mono font-semibold tracking-widest text-neutral-500 dark:text-neutral-400 uppercase">
               YOUR HOST SPACE
             </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-white mt-2 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-neutral-900 dark:text-white mt-2 leading-tight">
               Good things are happening<span className="text-[#FF5500]">.</span>
             </h1>
-            <p className="text-sm sm:text-base text-neutral-400 mt-2 font-normal">
+            <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mt-2 font-normal">
               Your events, your guests, all together.
             </p>
           </div>
@@ -460,36 +460,36 @@ function DashboardInner() {
         {/* ========================================================= */}
         {/* 2. METRICS / KPI BAR (3 COLUMNS)                          */}
         {/* ========================================================= */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-2 pb-8 border-b border-white/[0.08]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-2 pb-8 border-b border-neutral-200 dark:border-white/[0.08]">
           {/* Column 1: Upcoming events */}
-          <div className="space-y-1 pr-4 sm:border-r sm:border-white/[0.08]">
-            <p className="text-xs text-neutral-400 font-medium">Upcoming events</p>
-            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <div className="space-y-1 pr-4 sm:border-r sm:border-neutral-200 dark:sm:border-white/[0.08]">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Upcoming events</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
               {displayMetrics.upcoming}
             </p>
-            <p className="text-xs text-emerald-400 font-medium">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               {displayMetrics.upcomingSub}
             </p>
           </div>
 
           {/* Column 2: People joining */}
-          <div className="space-y-1 pr-4 sm:border-r sm:border-white/[0.08]">
-            <p className="text-xs text-neutral-400 font-medium">People joining</p>
-            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <div className="space-y-1 pr-4 sm:border-r sm:border-neutral-200 dark:sm:border-white/[0.08]">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">People joining</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
               {displayMetrics.guests}
             </p>
-            <p className="text-xs text-emerald-400 font-medium">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               {displayMetrics.guestsSub}
             </p>
           </div>
 
           {/* Column 3: Guest messages */}
           <div className="space-y-1">
-            <p className="text-xs text-neutral-400 font-medium">Guest messages</p>
-            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Guest messages</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
               {displayMetrics.messages}
             </p>
-            <p className="text-xs text-emerald-400 font-medium">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               Stay close to your community
             </p>
           </div>
@@ -501,9 +501,9 @@ function DashboardInner() {
         <div className="space-y-6">
           {/* Section Header */}
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold text-white tracking-tight">Your events</h2>
+            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">Your events</h2>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-neutral-400 font-mono px-3 py-1 rounded-lg border border-white/10 bg-white/5">
+              <span className="text-xs text-neutral-600 dark:text-neutral-400 font-mono px-3 py-1 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 shadow-xs dark:shadow-none">
                 {isSampleWorkspace ? 'Sample host workspace' : `${profile?.name || 'Active'} workspace`}
               </span>
             </div>
@@ -515,8 +515,8 @@ function DashboardInner() {
               onClick={() => setActiveTab('upcoming')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'upcoming'
-                  ? 'bg-[#2A160E] text-[#FF6A1A] border border-[#FF5500]/30'
-                  : 'text-neutral-400 hover:text-white bg-transparent border border-transparent'
+                  ? 'bg-[#FFF1EB] text-[#FF5500] border border-[#FF5500]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-transparent border border-transparent'
               }`}
             >
               Upcoming {tabCounts.upcoming}
@@ -525,8 +525,8 @@ function DashboardInner() {
               onClick={() => setActiveTab('past')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'past'
-                  ? 'bg-[#2A160E] text-[#FF6A1A] border border-[#FF5500]/30'
-                  : 'text-neutral-400 hover:text-white bg-transparent border border-transparent'
+                  ? 'bg-[#FFF1EB] text-[#FF5500] border border-[#FF5500]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-transparent border border-transparent'
               }`}
             >
               Past
@@ -535,8 +535,8 @@ function DashboardInner() {
               onClick={() => setActiveTab('drafts')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'drafts'
-                  ? 'bg-[#2A160E] text-[#FF6A1A] border border-[#FF5500]/30'
-                  : 'text-neutral-400 hover:text-white bg-transparent border border-transparent'
+                  ? 'bg-[#FFF1EB] text-[#FF5500] border border-[#FF5500]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-transparent border border-transparent'
               }`}
             >
               Drafts
@@ -545,16 +545,16 @@ function DashboardInner() {
 
           {/* Horizontal List Rows */}
           {mappedHostEvents.length === 0 ? (
-            <div className="py-16 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
-              <p className="text-sm font-semibold text-white">
+            <div className="py-16 text-center border border-dashed border-neutral-300 dark:border-white/10 rounded-2xl bg-white dark:bg-white/[0.01]">
+              <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                 {activeTab === 'past' ? 'No past events found' : 'No draft events found'}
               </p>
-              <p className="text-xs text-neutral-500 mt-1">
+              <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
                 Any {activeTab} gatherings will appear here automatically.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-white/[0.08]">
+            <div className="divide-y divide-neutral-200 dark:divide-white/[0.08]">
               {mappedHostEvents.map((event) => {
                 const originalEv = (event as any).originalEvent as EventItem | undefined;
 
@@ -562,11 +562,11 @@ function DashboardInner() {
                   <div
                     key={event.id}
                     onClick={() => router.push(`/${event.slug}`)}
-                    className="group py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.04] transition-all rounded-xl px-3 cursor-pointer"
+                    className="group py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-neutral-100/70 dark:hover:bg-white/[0.04] transition-all rounded-xl px-3 cursor-pointer"
                   >
                     {/* Left: Thumbnail & Details */}
                     <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-                      <div className="relative w-28 sm:w-32 h-18 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-900 border border-white/10 block group-hover:border-[#FF5500]/40 transition-colors">
+                      <div className="relative w-28 sm:w-32 h-18 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 block group-hover:border-[#FF5500]/40 transition-colors">
                         <Image
                           src={event.cover_image_url}
                           alt={event.title}
@@ -577,16 +577,16 @@ function DashboardInner() {
                       </div>
 
                       <div className="min-w-0">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                           <span>Published</span>
                         </span>
 
-                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#FF5500] transition-colors mt-1 truncate">
+                        <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white group-hover:text-[#FF5500] transition-colors mt-1 truncate">
                           {event.title}
                         </h3>
 
-                        <p className="text-xs text-neutral-400 font-medium tracking-wide uppercase mt-1 truncate">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium tracking-wide uppercase mt-1 truncate">
                           {event.formatted_date_venue}
                         </p>
                       </div>
@@ -594,7 +594,7 @@ function DashboardInner() {
 
                     {/* Right: Guest Count, Inbox button & Scan passes */}
                     <div className="flex items-center gap-3 sm:gap-4 shrink-0 self-start md:self-auto pt-2 md:pt-0">
-                      <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-medium">
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300 font-medium">
                         <Users className="w-4 h-4 text-[#FF5500]" />
                         <span>{event.guests_count} guests</span>
                       </div>
@@ -605,10 +605,10 @@ function DashboardInner() {
                           setSelectedInboxEventId(event.id);
                           setIsInboxOpen(true);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-white hover:bg-neutral-100 border border-neutral-200 text-xs font-semibold text-neutral-800 shadow-xs dark:shadow-none dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:text-white transition-colors cursor-pointer"
                         title="Open guest inbox"
                       >
-                        <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
+                        <MessageSquare className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                         <span>Inbox</span>
                       </button>
 
@@ -616,10 +616,10 @@ function DashboardInner() {
                       <Link
                         href={`/organizer/check-in?eventId=${event.id}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-xs font-bold text-emerald-700 hover:text-emerald-800 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:border-emerald-500/25 dark:text-emerald-400 dark:hover:text-emerald-300 transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
                         title="Scan passes & live attendance system"
                       >
-                        <Scan className="w-3.5 h-3.5 text-emerald-400" />
+                        <Scan className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         <span>Scan passes</span>
                       </Link>
                     </div>
@@ -633,40 +633,40 @@ function DashboardInner() {
         {/* ========================================================= */}
         {/* 4. KEEP EVERYONE IN THE LOOP BANNER                       */}
         {/* ========================================================= */}
-        <div className="p-6 rounded-2xl bg-[#111114] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8">
+        <div className="p-6 rounded-2xl bg-white dark:bg-[#111114] border border-neutral-200 dark:border-white/10 shadow-xs dark:shadow-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#2A160E] border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#FFF1EB] dark:bg-[#2A160E] border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
               <Send className="w-5 h-5 -rotate-12 translate-x-0.5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Keep everyone in the loop.</h3>
-              <p className="text-xs text-neutral-400 mt-0.5">A quick update goes a long way.</p>
+              <h3 className="text-base font-bold text-neutral-900 dark:text-white">Keep everyone in the loop.</h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">A quick update goes a long way.</p>
             </div>
           </div>
 
           <button
             onClick={() => setBroadcastEvent(broadcastTarget)}
-            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs sm:text-sm font-semibold text-white transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 text-xs sm:text-sm font-semibold text-neutral-800 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:text-white transition-colors cursor-pointer self-start sm:self-auto shrink-0"
           >
             <span>Send an update</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
           </button>
         </div>
       </main>
 
       {/* ========================================================= */}
-      {/* 5. MINIMAL EDITORIAL FOOTER (MATCHING SCREENSHOT)         */}
+      {/* 5. MINIMAL EDITORIAL FOOTER                               */}
       {/* ========================================================= */}
-      <footer className="mt-20 border-t border-white/[0.08] py-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
+      <footer className="mt-20 border-t border-neutral-200 dark:border-white/[0.08] py-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 dark:text-neutral-400">
         <div className="flex items-center gap-3">
-          <span className="font-bold text-white text-sm tracking-tight">
+          <span className="font-bold text-neutral-900 dark:text-white text-sm tracking-tight">
             vibe<span className="text-[#FF5500]">.</span>
-            <span className="text-[10px] text-neutral-500 font-mono tracking-wider ml-1">BY SWANIKI</span>
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tracking-wider ml-1">BY SWANIKI</span>
           </span>
-          <span className="text-neutral-700">·</span>
-          <span className="text-neutral-500">Good people. Real connections.</span>
+          <span className="text-neutral-300 dark:text-neutral-700">·</span>
+          <span className="text-neutral-500 dark:text-neutral-500">Good people. Real connections.</span>
         </div>
-        <div className="flex items-center gap-1 text-neutral-500 hover:text-white transition-colors">
+        <div className="flex items-center gap-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors">
           <span>© 2026 Vibe by Swaniki</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
         </div>
@@ -708,7 +708,7 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#070709] flex items-center justify-center">
+        <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#070709] flex items-center justify-center">
           <RefreshCw className="w-6 h-6 animate-spin text-[#FF5500]" />
         </div>
       }
