@@ -1408,7 +1408,7 @@ export const syncEventsWithSupabase = async (options?: { organizerId?: string; i
           row.theme?.created_via === 'bot'
         ),
         flash_activity: row.flash_activity || row.theme?.flash_activity || 'other',
-        spots_limit: row.spots_limit || row.theme?.spots_limit || (row.capacity && row.capacity < 1000 ? row.capacity : undefined),
+        spots_limit: row.spots_limit || row.theme?.spots_limit || (row.theme?.has_spots_limit === true && row.capacity ? row.capacity : undefined),
         spots_filled: row.spots_filled || row.theme?.spots_filled || 0,
         whatsapp_host_phone: row.whatsapp_host_phone || row.theme?.whatsapp_host_phone || orgProfile.phone || '',
         vibe_cheers_count: row.vibe_cheers_count || row.theme?.vibe_cheers_count || 0,

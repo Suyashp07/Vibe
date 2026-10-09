@@ -225,9 +225,12 @@ export default function VibeReelCard({
   // ONLY treat as spots-limited if the creator/host explicitly asked for a specific number of spots/persons
   const hasSpotsLimit = Boolean(
     (event.spots_limit && event.spots_limit > 0) ||
-    (event.capacity && event.capacity > 0 && event.capacity < 500)
+    ((event.theme as any)?.spots_limit && (event.theme as any)?.spots_limit > 0) ||
+    ((event.theme as any)?.has_spots_limit === true && event.capacity && event.capacity > 0)
   );
-  const limit = event.spots_limit || (event.capacity && event.capacity < 500 ? event.capacity : 0);
+  const limit = hasSpotsLimit
+    ? (event.spots_limit || (event.theme as any)?.spots_limit || event.capacity || 0)
+    : 0;
 
   // Fetch real confirmed RSVP count from database only if this activity has a spots limit
   useEffect(() => {

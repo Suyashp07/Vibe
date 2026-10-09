@@ -557,10 +557,12 @@ export async function POST(req: NextRequest) {
     const isPublic = isAutoApproved;
 
     // Detect if user explicitly asked for a specific number of spots/people/players
+    // Detect if user explicitly asked for a specific number of spots/people/players
     let requestedSpots: number | undefined = undefined;
     const spotsMatch =
-      textContent.match(/\b(?:need|looking for|for|capacity|limit of|max|only)\s+(\d{1,2})\s*(?:players?|people|persons?|members?|spots?|folks?|friends?|guys?|heads?)\b/i) ||
-      textContent.match(/\b(\d{1,2})\s*(?:players?|people|persons?|members?|spots?)\s*(?:needed|wanted|open|left|only)\b/i) ||
+      textContent.match(/\b(?:need|looking for|limit of|max|capacity|only)\s+(\d{1,2})\s*(?:players?|people|persons?|members?|spots?|slots?)\b/i) ||
+      textContent.match(/\b(?:list\s+will\s+close\s+at|closes?\s+at)\s*(\d{1,2})\b/i) ||
+      textContent.match(/\b(\d{1,2})\s*(?:players?|people|persons?|members?|spots?|slots?)\s*(?:needed|wanted|open|left|only)\b/i) ||
       textContent.match(/\b(\d{1,2})\s*v\s*(\d{1,2})\b/i);
 
     if (spotsMatch) {
@@ -572,53 +574,55 @@ export async function POST(req: NextRequest) {
       }
     }
 
-      const effectiveSpotsLimit = requestedSpots || extracted.capacity;
+    const effectiveSpotsLimit = requestedSpots || (extracted.capacity && extracted.capacity > 0 ? extracted.capacity : undefined);
+    const hasExplicitSpots = Boolean(effectiveSpotsLimit);
 
-      // Insert into Supabase `public.events`
-      // All events created via WhatsApp bot belong strictly to the Vibe Instant stream
-      const insertPayload = {
-        slug: finalSlug,
-        title: extracted.title || 'Untitled Event',
-        tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
-        description:
-          extracted.description ||
-          `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
-        cover_image_url: coverImageUrl,
-        template: 'ember',
-        theme: {
-          palette: 'sunset',
-          font: 'Inter',
-          bg_style: 'solid',
-          button_style: 'pill',
-          is_flash: true,
-          created_via: 'bot',
-          source_platform: 'whatsapp',
-          flash_activity: flashActivity,
-          whatsapp_host_phone: senderPhone,
-          vibe_cheers_count: 0,
-          spots_limit: effectiveSpotsLimit,
-          spots_filled: extracted.attendees_list?.length || (effectiveSpotsLimit ? 1 : 0),
-          confidence_score: suretyScore / 100,
-          missing_aspects: surety.missingAspects,
-          approval_status: approvalStatus,
-          admin_approved: isAutoApproved,
-          upi_id: extracted.upi_id,
-          payment_instructions: extracted.payment_instructions,
-          maps_url: extracted.maps_url,
-          rules: extracted.rules,
-          attendees_list: extracted.attendees_list,
-        },
-        sections: { speakers: false, agenda: false, gallery: false, faq: true },
-        event_type: 'in-person',
-        location_name: extracted.venue_name || `${detectedCity} Venue`,
-        location_address: extracted.location_address || `${detectedCity}, India`,
-        city: detectedCity,
-        start_at: validStartAt,
-        end_at: validEndAt,
-        timezone: 'Asia/Kolkata',
-        capacity: effectiveSpotsLimit || 12,
-        is_public: isPublic,
-        status: eventStatus,
+    // Insert into Supabase `public.events`
+    // All events created via WhatsApp bot belong strictly to the Vibe Instant stream
+    const insertPayload = {
+      slug: finalSlug,
+      title: extracted.title || 'Untitled Event',
+      tagline: extracted.tagline || `Experience the vibe in ${detectedCity}`,
+      description:
+        extracted.description ||
+        `Join us for ${extracted.title || 'this gathering'} in ${detectedCity}. An intimate, curated experience bringing together passionate people.`,
+      cover_image_url: coverImageUrl,
+      template: 'ember',
+      theme: {
+        palette: 'sunset',
+        font: 'Inter',
+        bg_style: 'solid',
+        button_style: 'pill',
+        is_flash: true,
+        created_via: 'bot',
+        source_platform: 'whatsapp',
+        flash_activity: flashActivity,
+        whatsapp_host_phone: senderPhone,
+        vibe_cheers_count: 0,
+        spots_limit: effectiveSpotsLimit || undefined,
+        spots_filled: hasExplicitSpots ? (extracted.attendees_list?.length || 1) : undefined,
+        has_spots_limit: hasExplicitSpots,
+        confidence_score: suretyScore / 100,
+        missing_aspects: surety.missingAspects,
+        approval_status: approvalStatus,
+        admin_approved: isAutoApproved,
+        upi_id: extracted.upi_id,
+        payment_instructions: extracted.payment_instructions,
+        maps_url: extracted.maps_url,
+        rules: extracted.rules,
+        attendees_list: extracted.attendees_list,
+      },
+      sections: { speakers: false, agenda: false, gallery: false, faq: true },
+      event_type: 'in-person',
+      location_name: extracted.venue_name || `${detectedCity} Venue`,
+      location_address: extracted.location_address || `${detectedCity}, India`,
+      city: detectedCity,
+      start_at: validStartAt,
+      end_at: validEndAt,
+      timezone: 'Asia/Kolkata',
+      capacity: effectiveSpotsLimit || null,
+      is_public: isPublic,
+      status: eventStatus,
         confidence_score: suretyScore / 100,
         ai_generated: true,
         organizer_id: organizerId,

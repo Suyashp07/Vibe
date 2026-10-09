@@ -882,7 +882,9 @@ CRITICAL ANTI-HALLUCINATION & EXTRACTION RULES:
 6. VENUE GOOGLE MAPS LINK:
    - If a Google Maps URL is present (e.g. "https://maps.app.goo.gl/...", "maps.google.com"), extract it as "maps_url". NEVER set "ticket_url" to a Google Maps link!
 7. CAPACITY & PLAYER LIMITS:
-   - If a maximum participant count is specified (e.g. "List will close at 18 players", "Capacity: 16"), extract "capacity": 18 (integer).
+   - ONLY extract "capacity" if the host or user EXPLICITLY specifies a participant/player limit, headcount, or capacity (e.g. "List will close at 18 players", "Capacity: 16", "Limit of 10 people", "looking for 4 players").
+   - If NO participant limit or spot capacity was explicitly given by the host, set "capacity": null.
+   - ABSOLUTE ANTI-HALLUCINATION RULE: DO NOT invent, assume, or hallucinate a capacity on your own (e.g. never default to 10 or 12). If the host didn't ask for a limit, capacity MUST be null!
 8. RULES & ATTENDEE POLL ROSTER:
    - Extract any specific rules or instructions (e.g. ["Cash not allowed", "Put a ✅ in front of your name after payment"]) into "rules".
    - Extract any list of attendees or poll names (e.g. ["Bhushan D ✅", "Tushar P", ...]) into "attendees_list".

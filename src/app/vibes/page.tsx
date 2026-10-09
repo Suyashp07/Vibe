@@ -61,8 +61,9 @@ interface VibeInstantItem {
   city: string;
   description: string;
   going_count: number;
-  capacity: number;
-  spots_left: number;
+  capacity?: number;
+  spots_left?: number;
+  has_spots_limit?: boolean;
   likes_count: number;
   comments_count: number;
   cover_image_url: string;
@@ -89,8 +90,7 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
     description:
       'A small, easy-going gathering. Come solo or bring a friend — the host will share final details in chat.',
     going_count: 4,
-    capacity: 12,
-    spots_left: 8,
+    has_spots_limit: false,
     likes_count: 9,
     comments_count: 4,
     cover_image_url:
@@ -114,8 +114,7 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
     description:
       'An intimate live rooftop session under the Mumbai sunset sky. Unfiltered acoustic melodies and good conversations.',
     going_count: 2,
-    capacity: 12,
-    spots_left: 10,
+    has_spots_limit: false,
     likes_count: 24,
     comments_count: 6,
     cover_image_url:
@@ -141,6 +140,7 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
     going_count: 8,
     capacity: 14,
     spots_left: 6,
+    has_spots_limit: true,
     likes_count: 18,
     comments_count: 5,
     cover_image_url:
@@ -164,8 +164,7 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
     description:
       'Casual lightning demos, shipping war stories, and pour-over coffee with fellow indie builders in Bombay.',
     going_count: 6,
-    capacity: 10,
-    spots_left: 4,
+    has_spots_limit: false,
     likes_count: 31,
     comments_count: 8,
     cover_image_url:
@@ -296,8 +295,17 @@ function VibesContent() {
         (r) => (r.event_id === e.id || r.event_slug === e.slug) && r.status === 'confirmed'
       ).length;
       const going = Math.max(confirmedRsvps, e.spots_filled || (e.theme as any)?.spots_filled || 1);
-      const capacity = e.spots_limit || (e.theme as any)?.spots_limit || e.capacity || 12;
-      const spotsLeft = Math.max(0, capacity - going);
+      
+      // Spots limit: ONLY enabled when host/user explicitly specified participant/player/slot limit
+      const hasSpotsLimit = Boolean(
+        e.spots_limit ||
+        (e.theme as any)?.spots_limit ||
+        ((e.theme as any)?.has_spots_limit === true && e.capacity)
+      );
+      const capacity = hasSpotsLimit
+        ? (e.spots_limit || (e.theme as any)?.spots_limit || e.capacity || 0)
+        : 0;
+      const spotsLeft = hasSpotsLimit && capacity > 0 ? Math.max(0, capacity - going) : 0;
 
       let dStr = 'TODAY';
       let tStr = 'TIME TBA';
@@ -422,8 +430,9 @@ function VibesContent() {
           e.tagline ||
           'Spontaneous community gathering organized via Vibe Instant. Come solo or bring a friend.',
         going_count: going,
-        capacity,
-        spots_left: spotsLeft,
+        capacity: hasSpotsLimit ? capacity : undefined,
+        spots_left: hasSpotsLimit ? spotsLeft : undefined,
+        has_spots_limit: hasSpotsLimit,
         likes_count: Number(e.vibe_cheers_count || 0),
         comments_count: Math.max(commentsCount, (going > 1 ? going - 1 : 0)),
         cover_image_url: coverImg,
@@ -691,10 +700,6 @@ function VibesContent() {
 
   const selectedFilterLabel = ACTIVITY_FILTERS.find((f) => f.id === selectedActivity)?.label || 'All vibes';
 
-  // Story bars count
-  const storyCount = Math.min(6, Math.max(3, activeVibes.length));
-  const activeStoryIndex = currentIndex % storyCount;
-
   return (
     <div
       className="vibe-instant-container fixed inset-0 h-[100dvh] w-full bg-[#08080A] text-white overflow-hidden overscroll-none select-none flex flex-col justify-between"
@@ -782,20 +787,8 @@ function VibesContent() {
         <div className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full">
           {/* Left Card: Vertical Reel Frame */}
           <div className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0">
-            {/* Story Progress Indicators Top */}
-            <div className="absolute top-3 left-4 right-4 z-20 flex gap-1.5">
-              {Array.from({ length: storyCount }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                    i === activeStoryIndex ? 'bg-[#FF5500]' : i < activeStoryIndex ? 'bg-white/70' : 'bg-white/20'
-                  }`}
-                />
-              ))}
-            </div>
-
             {/* Badge: Community pick */}
-            <div className="absolute top-7 left-4 z-20">
+            <div className="absolute top-4 left-4 z-20">
               <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/50 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
                 {currentVibe.badge || 'Community pick'}
               </span>
@@ -926,25 +919,27 @@ function VibesContent() {
               {currentVibe.description}
             </p>
 
-            {/* Spots Capacity Bar */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-neutral-400" />
-                  <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
-                </span>
-                <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                  <Zap className="w-3 h-3 fill-[#FF5500]" />
-                  <span>{currentVibe.spots_left} spots left</span>
-                </span>
+            {/* Spots Capacity Bar - ONLY shown when host explicitly asked for spots */}
+            {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
+              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-neutral-400" />
+                    <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
+                  </span>
+                  <span className="font-bold text-[#FF5500] flex items-center gap-1">
+                    <Zap className="w-3 h-3 fill-[#FF5500]" />
+                    <span>{currentVibe.spots_left} spots left</span>
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, (currentVibe.going_count / (currentVibe.capacity || 1)) * 100)}%` }}
+                  />
+                </div>
               </div>
-              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (currentVibe.going_count / currentVibe.capacity) * 100)}%` }}
-                />
-              </div>
-            </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3 pt-1">
@@ -1005,7 +1000,6 @@ function VibesContent() {
           const vibeKey = vibe.id || vibe.slug;
           const isLiked = likedMap[vibeKey] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(vibeKey, vibe.slug) : false);
           const count = (likesCountMap[vibeKey] ?? vibe.likes_count) + (isLiked ? 1 : 0);
-          const activeStoryIndex = index % storyCount;
 
           return (
             <section
@@ -1013,20 +1007,8 @@ function VibesContent() {
               data-index={index}
               className="vibe-reel-card relative w-full h-[calc(100dvh-58px)] min-h-[calc(100dvh-58px)] max-h-[calc(100dvh-58px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none"
             >
-              {/* Story Progress Indicators Top */}
-              <div className="absolute top-2 left-4 right-4 z-20 flex gap-1.5">
-                {Array.from({ length: storyCount }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
-                      i === activeStoryIndex ? 'bg-[#FF5500]' : i < activeStoryIndex ? 'bg-white/70' : 'bg-white/20'
-                    }`}
-                  />
-                ))}
-              </div>
-
               {/* Top Left Badge */}
-              <div className="absolute top-5 left-4 z-20">
+              <div className="absolute top-3 left-4 z-20">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
                   {vibe.badge || 'Selling fast'}
                 </span>
@@ -1109,25 +1091,27 @@ function VibesContent() {
                   </p>
                 </div>
 
-                {/* Spots Bar */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-neutral-300 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>{vibe.going_count}/{vibe.capacity} going</span>
-                    </span>
-                    <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                      <Zap className="w-3 h-3 fill-[#FF5500]" />
-                      <span>{vibe.spots_left} spots left</span>
-                    </span>
+                {/* Spots Bar - ONLY shown when host explicitly asked for spots */}
+                {vibe.has_spots_limit && (vibe.capacity || 0) > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-neutral-300 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>{vibe.going_count}/{vibe.capacity} going</span>
+                      </span>
+                      <span className="font-bold text-[#FF5500] flex items-center gap-1">
+                        <Zap className="w-3 h-3 fill-[#FF5500]" />
+                        <span>{vibe.spots_left} spots left</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(100, (vibe.going_count / vibe.capacity) * 100)}%` }}
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2.5 pt-0.5">
