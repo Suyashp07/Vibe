@@ -51,8 +51,11 @@ function getAppUrl(req?: Request): string {
  * Dispatches an outbound message to a WhatsApp phone number via the bridge
  */
 async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean> {
-  const bridgeUrl = (process.env.WHATSAPP_BRIDGE_URL || 'http://localhost:3002').replace(/\/$/, '');
-  const secret = process.env.WHATSAPP_BRIDGE_SECRET || process.env.WHATSAPP_WEBHOOK_SECRET;
+  const bridgeUrl = (
+    process.env.WHATSAPP_BRIDGE_URL ||
+    'https://vibe-whatsapp-bridge.onrender.com'
+  ).replace(/\/$/, '');
+  const secret = process.env.WHATSAPP_BRIDGE_SECRET || process.env.WHATSAPP_WEBHOOK_SECRET || 'vibe_wa_sec_99a8b7c6d5e4f3a2b1';
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (secret) {
@@ -348,6 +351,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Send instant progress acknowledgment
+    if (replyTarget) {
+      const progressMsg = isFlashVibe
+        ? '⚡ *Creating your Flash Vibe with Gemini AI...* Posting directly to Vibe Instant!'
+        : '🔍 *Analyzing your event with Gemini AI...* Hang tight!';
+      sendWhatsAppReply(replyTarget, progressMsg).catch((err) => {
+        console.warn('[WhatsApp Webhook] Progress reply notice:', err.message);
+      });
+    }
+
     let extracted: ExtractedEventData;
     let coverImageUrl: string | undefined = payload.imageUrl || undefined;
 
@@ -538,7 +551,7 @@ export async function POST(req: NextRequest) {
     });
 
     const suretyScore = surety.score; // 0 to 100%
-    const isAutoApproved = surety.autoApproved;
+    const isAutoApproved = isFlashVibe || surety.autoApproved;
     const approvalStatus = isAutoApproved ? 'approved' : 'pending';
     const eventStatus = isAutoApproved ? 'live' : 'draft';
     const isPublic = isAutoApproved;
