@@ -2,7 +2,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { nanoid } from 'nanoid';
 import { TemplateType } from '@/types';
 import { INDIAN_CITIES } from '@/lib/location';
-import { calculateEventSurety } from '@/lib/eventSurety';
+import {
+  calculateEventSurety,
+  isGenericEventTitle,
+  isGenericEventVenue,
+  isGenericEventDescription,
+  isVerifiedEventPricing,
+} from '@/lib/eventSurety';
 
 export type EventCategory =
   | 'tech'
@@ -41,6 +47,12 @@ export interface ExtractedEventData {
   missing_aspects?: string[];
   approval_status?: 'approved' | 'pending';
   requires_admin_approval?: boolean;
+  date_inferred?: boolean;
+  time_inferred?: boolean;
+  venue_inferred?: boolean;
+  city_inferred?: boolean;
+  price_inferred?: boolean;
+  is_incomplete?: boolean;
 }
 
 const CANDIDATE_MODELS = [
@@ -843,86 +855,40 @@ Today's Date: ${currentDateStr} (Year: ${currentYear}, Timezone: Asia/Kolkata, U
 
 Your task is to analyze the provided event flyer image or text and extract complete, accurate, high-fidelity event data.
 
-CRITICAL EXTRACTION RULES:
-1. TITLE: Extract the EXACT main event title printed on the poster or page. Never output generic titles like "Community Gathering" or "Live Experience", and NEVER output a URL or "Source URL: ...".
-2. VENUE & CITY: Extract the exact venue name (auditorium, hall, stadium, club, cafe) and exact city. If written as "Shanmukhananda Hall: Mumbai", venue_name is "Shanmukhananda Hall" and city is "Mumbai". NEVER output generic placeholders like "Mumbai Venue" or "City Venue" when a real venue is present!
-3. DATE & TIME: Read the exact date and start time. Calculate the exact ISO timestamp with timezone +05:30 (e.g. "2026-09-26T19:30:00+05:30"). If multiple dates are listed, use the first upcoming date.
-4. COVER IMAGE: Find the main high-resolution event banner or poster image URL. NEVER select small icons, share buttons (like share_v2.png), like buttons, or SVG icons.
-5. PRICE & TICKETS:
-   - Extract the EXACT ticket pricing stated in the context or visible on the poster (e.g. "₹399 onwards", "₹799 onwards", "Free Entry").
-   - If NO price is mentioned anywhere, set "price_text" to null.
-   - NEVER make up or invent placeholder numbers!
-6. CATEGORY: Classify into: "tech" | "music" | "comedy" | "nightlife" | "workshop" | "art" | "fitness" | "wellness" | "culinary" | "poetry" | "festival" | "gaming" | "theatre" | "social".
-7. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
-
-FEW-SHOT IN-CONTEXT EXAMPLES:
-
-Example 1 (BookMyShow listing):
-Context:
-"Title: Ishqnaama - Love Across Generations Music Shows, Concerts, Events Tickets - BookMyShow
-![Image 2: banner](https://assets-in.bmscdn.com/nmcms/events/banner/desktop/media-desktop-ishqnaama-love-across-generations-0-2026-8-21-t-20-34-39.jpg)
-calendar.png) Sat 26 Sep 2026
-time.png) 7:30 PM
-location.png) Shanmukhananda Hall: Mumbai
-₹399 onwards"
-Output:
-{
-  "title": "Ishqnaama - Love Across Generations",
-  "tagline": "Seven decades of iconic Hindi cinema love songs in a live concert",
-  "description": "Ishqnaama is a live musical concert celebrating seven decades of Hindi cinema love songs from the 1960s to the 2020s, curated by Rajeev Goswami and performed by Indian Idol winners.",
-  "category": "music",
-  "venue_name": "Shanmukhananda Hall",
-  "location_address": "Shanmukhananda Hall, Mumbai, Maharashtra",
-  "city": "Mumbai",
-  "start_at": "2026-09-26T19:30:00+05:30",
-  "end_at": "2026-09-26T21:30:00+05:30",
-  "price_text": "₹399 onwards",
-  "source_platform": "bookmyshow",
-  "cover_image_url": "https://assets-in.bmscdn.com/nmcms/events/banner/desktop/media-desktop-ishqnaama-love-across-generations-0-2026-8-21-t-20-34-39.jpg",
-  "template": "bloom",
-  "confidence_score": 0.95
-}
-
-Example 2 (District.in venue/event guide):
-Context:
-"### Xclusive Superclub Pune
-Zero one, Mundhwa Rd, Fatima Nagar, Pingale Wasti, Koregaon Park Annexe, Mundhwa, Pune, Maharashtra 411036
-![Image 3: Gallery](https://cdn.district.in/assets/events/publisher/event_gallery/01M31CHEJ9ZSKK8QWYWD6TAVAV.jpg)"
-Output:
-{
-  "title": "Xclusive Superclub Pune",
-  "tagline": "The City's Premier Social Address & Nightlife Destination",
-  "description": "Experience luxury nightlife, premier DJ sets, and world-class dining at Xclusive Superclub Pune.",
-  "category": "nightlife",
-  "venue_name": "Xclusive Superclub Pune",
-  "location_address": "Zero one, Mundhwa Rd, Fatima Nagar, Koregaon Park Annexe, Pune, Maharashtra 411036",
-  "city": "Pune",
-  "start_at": "2026-10-01T20:00:00+05:30",
-  "end_at": "2026-10-02T01:30:00+05:30",
-  "price_text": "Cover charges apply",
-  "source_platform": "district",
-  "cover_image_url": "https://cdn.district.in/assets/events/publisher/event_gallery/01M31CHEJ9ZSKK8QWYWD6TAVAV.jpg",
-  "template": "ember",
-  "confidence_score": 0.9
-}
+CRITICAL ANTI-HALLUCINATION & EXTRACTION RULES:
+1. NEVER INVENT OR HALLUCINATE MISSING DATA:
+   - If NO specific date or time is mentioned in the input, set "start_at": null, "end_at": null, and "date_inferred": true. DO NOT invent arbitrary future dates or times!
+   - If NO venue or place is mentioned in the input, set "venue_name": null and "venue_inferred": true. NEVER output "TBA", "Venue TBA", or generic city placeholders!
+   - If NO city is mentioned in the input, set "city": null and "city_inferred": true. NEVER invent "Mumbai" or any default city!
+   - If NO ticket price is mentioned, set "price_text": null and "price_inferred": true. NEVER output "Free Entry" unless explicitly stated!
+   - If the user prompt is brief, vague, or a command like "new event", "create event", "event", "test": set "is_incomplete": true, "confidence_score": 0.1, and "title": null.
+2. TITLE: Extract the EXACT main event headline. If the text does not contain a real title, set "title": null.
+3. VENUE & CITY: Extract the real venue name (hall, club, cafe, turf, ground) and city.
+4. DATE & TIME: If stated, calculate the exact ISO timestamp with timezone +05:30 (e.g. "2026-09-26T19:30:00+05:30").
+5. PRICE: Extract exact pricing if visible or stated (e.g. "₹399 onwards", "Free Entry"). If not mentioned, set to null.
+6. Output ONLY valid, raw JSON (no markdown fences, no \`\`\`json, no backticks).
 
 JSON Schema:
 {
-  "title": "Exact event title (Capitalized)",
+  "title": "Exact event title (or null if missing)",
   "tagline": "Punchy 8-12 word tagline for the event card",
-  "description": "2-3 paragraphs describing what attendees can expect, who is performing/speaking, and the vibe.",
+  "description": "2-3 paragraphs describing what attendees can expect, or null if no details provided",
   "category": "tech" | "music" | "comedy" | "nightlife" | "workshop" | "art" | "fitness" | "wellness" | "culinary" | "poetry" | "festival" | "gaming" | "theatre" | "social",
-  "venue_name": "Exact venue or museum or auditorium name",
-  "location_address": "Street / Area, City, State",
-  "city": "Exact city name",
-  "start_at": "YYYY-MM-DDTHH:mm:ss+05:30",
-  "end_at": "YYYY-MM-DDTHH:mm:ss+05:30",
+  "venue_name": "Exact venue name or null",
+  "location_address": "Street / Area, City, State or null",
+  "city": "Exact city name or null",
+  "start_at": "YYYY-MM-DDTHH:mm:ss+05:30 or null",
+  "end_at": "YYYY-MM-DDTHH:mm:ss+05:30 or null",
   "ticket_url": null,
   "price_text": null,
   "source_platform": "vibe" | "district" | "unstop" | "bookmyshow" | "insider" | "luma",
   "cover_image_url": "https://...",
   "template": "grove" | "sprint" | "bloom" | "vertex" | "ember",
   "confidence_score": 0.95,
+  "is_incomplete": false,
+  "date_inferred": false,
+  "venue_inferred": false,
+  "city_inferred": false,
   "faq": [
     { "q": "Are there parking facilities available?", "a": "Valet and parking available near the venue." },
     { "q": "What is the entry gate timing?", "a": "Gates open 30 minutes prior to the scheduled start time." },
@@ -1042,6 +1008,10 @@ export function parseEventDeterministic(text: string): {
   start_at: string;
   end_at: string;
   category: EventCategory;
+  date_inferred: boolean;
+  time_inferred: boolean;
+  venue_inferred: boolean;
+  city_inferred: boolean;
 } {
   const currentYear = new Date().getFullYear();
   let title = '';
@@ -1049,6 +1019,10 @@ export function parseEventDeterministic(text: string): {
   let city = 'Mumbai';
   let state = '';
   let startAt = new Date(Date.now() + 86400000);
+  let dateInferred = true;
+  let timeInferred = true;
+  let venueInferred = true;
+  let cityInferred = true;
 
   // Clean raw input
   const cleanInput = text.replace(/^source\s+url:\s*/i, '').trim();
@@ -1058,6 +1032,7 @@ export function parseEventDeterministic(text: string): {
   if (cityObj) {
     city = cityObj.name;
     state = cityObj.state || '';
+    cityInferred = false;
   }
 
   // 2. Extract Named Title
@@ -1077,23 +1052,34 @@ export function parseEventDeterministic(text: string): {
   }
 
   // 3. Extract Venue e.g. "at Lalghati Choupati", "at Subko Cafe", "in Cyber Hub"
-  // Prioritize "at <venue>" (excluding time like "at 9 pm"), then "in <venue>" (excluding dates)
   const atVenueMatch = cleanInput.match(/\bat\s+(?!\d{1,2}(?::\d{2})?\s*(?:am|pm)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
   const inVenueMatch = cleanInput.match(/\bin\s+(?!\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
 
   if (atVenueMatch && atVenueMatch[1].trim()) {
     venue = atVenueMatch[1].trim();
+    if (!isGenericEventVenue(venue, city)) {
+      venueInferred = false;
+    }
   } else if (inVenueMatch && inVenueMatch[1].trim()) {
     venue = inVenueMatch[1].trim();
+    if (!isGenericEventVenue(venue, city)) {
+      venueInferred = false;
+    }
   } else {
-    venue = `${city} Venue`;
+    venue = '';
+    venueInferred = true;
   }
 
   // 4. Extract Date & Time e.g. "29th September at 10 am", "Sep 29", "tomorrow at 7 pm"
   const dateMatch = cleanInput.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i);
   const timeMatch = cleanInput.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
 
+  if (timeMatch) {
+    timeInferred = false;
+  }
+
   if (dateMatch) {
+    dateInferred = false;
     const day = parseInt(dateMatch[1]);
     const monthStr = dateMatch[2].toLowerCase();
     const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -1115,6 +1101,7 @@ export function parseEventDeterministic(text: string): {
       startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
     }
   } else if (/tomorrow/i.test(cleanInput)) {
+    dateInferred = false;
     const nowIst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     const tmIst = new Date(nowIst.getTime() + 86400000);
     let hours = 19;
@@ -1132,6 +1119,7 @@ export function parseEventDeterministic(text: string): {
     const min = String(minutes).padStart(2, '0');
     startAt = new Date(`${y}-${m}-${d}T${h}:${min}:00+05:30`);
   } else if (/\b(?:today|tonight)\b/i.test(cleanInput)) {
+    dateInferred = false;
     const nowIst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     let hours = /\btonight\b/i.test(cleanInput) ? 20 : 19;
     let minutes = 0;
@@ -1168,9 +1156,9 @@ export function parseEventDeterministic(text: string): {
           .replace(/[-_]/g, ' ')
           .replace(/\b(?:buy tickets?|tickets?|et\d+|\d{5,}|venue guide|aug\d*|sep\d*|oct\d*|nov\d*|dec\d*|\d{4})\b/gi, '')
           .trim();
-        title = cleanSlug || 'Curated Gathering';
+        title = cleanSlug || 'Untitled Event';
       } catch {
-        title = 'Curated Gathering';
+        title = 'Untitled Event';
       }
     } else {
       let clean = cleanInput
@@ -1179,13 +1167,13 @@ export function parseEventDeterministic(text: string): {
         .replace(/\s+on\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+/gi, '')
         .replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)/gi, '')
         .trim();
-      title = clean.length > 5 ? clean.slice(0, 50) : (cleanInput.slice(0, 50).trim() || 'Curated Gathering');
+      title = clean.length > 5 ? clean.slice(0, 50) : (cleanInput.slice(0, 50).trim() || 'Untitled Event');
     }
   }
 
   title = capitalizeWords(title);
   const category = detectCategoryFromText(`${title} ${cleanInput}`);
-  const address = state ? `${venue}, ${city}, ${state}` : `${venue}, ${city}, India`;
+  const address = venue && state ? `${venue}, ${city}, ${state}` : venue ? `${venue}, ${city}, India` : `${city}, India`;
   const endAt = new Date(startAt.getTime() + 3 * 60 * 60 * 1000);
 
   return {
@@ -1196,6 +1184,10 @@ export function parseEventDeterministic(text: string): {
     start_at: startAt.toISOString(),
     end_at: endAt.toISOString(),
     category,
+    date_inferred: dateInferred,
+    time_inferred: timeInferred,
+    venue_inferred: venueInferred,
+    city_inferred: cityInferred,
   };
 }
 
@@ -1303,55 +1295,44 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           finalCover = getCategoryCover(category, parsed.title || cleanInputText);
         }
 
-        // Title validation: reject generic titles or raw URLs
-        const isBadTitle = (t?: string) =>
-          !t ||
-          t === 'Live Experience' ||
-          t === 'Community Gathering' ||
-          t === 'Curated Gathering' ||
-          t.toLowerCase().startsWith('source url:') ||
-          /^https?:\/\//i.test(t);
-
-        let resolvedTitle = !isBadTitle(parsed.title)
+        let resolvedTitle = !isGenericEventTitle(parsed.title)
           ? parsed.title
-          : (!isBadTitle(scrapedTitle) ? scrapedTitle : deterministicData.title);
+          : (!isGenericEventTitle(scrapedTitle) ? scrapedTitle : deterministicData.title);
 
-        const phraseMatch = resolvedTitle.match(/^(.+?)\s+is\s+the\s+event(?:\s+name)?\b/i);
+        const phraseMatch = resolvedTitle ? resolvedTitle.match(/^(.+?)\s+is\s+the\s+event(?:\s+name)?\b/i) : null;
         if (phraseMatch && phraseMatch[1].trim()) {
           resolvedTitle = phraseMatch[1].trim();
         }
-        const whereMatch = resolvedTitle.match(/^(.+?)\s+where\s+(?:batch|we|people|everyone|friends)\b/i);
+        const whereMatch = resolvedTitle ? resolvedTitle.match(/^(.+?)\s+where\s+(?:batch|we|people|everyone|friends)\b/i) : null;
         if (whereMatch && whereMatch[1].trim()) {
           resolvedTitle = whereMatch[1].trim();
         }
 
-        const finalTitle = resolvedTitle;
+        const finalTitle = resolvedTitle || 'Untitled Event';
 
-        // City validation: prioritize detected city, then parsed, then scraped
-        const finalCity = (parsed.city && parsed.city.toLowerCase() !== 'unknown' ? parsed.city : null) ||
+        // City validation
+        const cityDetected = detectCityFromText(cleanInputText);
+        const finalCity = (cityDetected ? cityDetected.name : null) ||
+          (parsed.city && parsed.city.toLowerCase() !== 'unknown' ? parsed.city : null) ||
           scrapedCity ||
-          deterministicData.city ||
-          'Mumbai';
+          (deterministicData.city_inferred ? 'Mumbai' : deterministicData.city);
+        const cityIsInferred = !cityDetected && !scrapedCity && (parsed.city_inferred || deterministicData.city_inferred);
 
-        // Venue validation: NEVER allow "City Venue" or "Mumbai Venue" when scrapedVenue exists
-        const isPlaceholderVenue = (v?: string) =>
-          !v ||
-          /^(?:city|mumbai|pune|delhi|bhopal|bangalore|bengaluru)?\s*venue\b/i.test(v) ||
-          /venue\s+tba/i.test(v) ||
-          /unknown/i.test(v);
-
-        const finalVenue =
-          (!isPlaceholderVenue(scrapedVenue) ? scrapedVenue : undefined) ||
-          (!isPlaceholderVenue(parsed.venue_name) ? parsed.venue_name : undefined) ||
-          (!isPlaceholderVenue(deterministicData.venue_name) ? deterministicData.venue_name : undefined) ||
-          `${finalCity} Venue`;
+        // Venue validation: reject generic venues
+        const candidateVenue = scrapedVenue || parsed.venue_name || deterministicData.venue_name;
+        const venueIsGeneric = isGenericEventVenue(candidateVenue, finalCity);
+        const finalVenue = !venueIsGeneric ? candidateVenue : (candidateVenue || 'TBA');
+        const venueIsInferred = venueIsGeneric || parsed.venue_inferred || deterministicData.venue_inferred;
 
         const finalAddress =
           (scrapedAddress && !scrapedAddress.includes('City Venue') ? scrapedAddress : undefined) ||
           (parsed.location_address && !parsed.location_address.includes('City Venue') ? parsed.location_address : undefined) ||
           deterministicData.location_address;
 
-        // Date & Time validation: prefer exact scraped start_at when available from platform
+        // Date & Time validation
+        const dateIsInferred = parsed.date_inferred || (deterministicData.date_inferred && !scrapedStartAt);
+        const timeIsInferred = parsed.time_inferred || (deterministicData.time_inferred && !scrapedStartAt);
+
         let finalStartAt = scrapedStartAt || parsed.start_at || deterministicData.start_at;
         let finalEndAt = scrapedEndAt || parsed.end_at || deterministicData.end_at;
 
@@ -1380,6 +1361,10 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           description: parsed.description || scrapedDescription || cleanInputText,
           cover_image_url: finalCover,
           is_external: Boolean(targetUrl),
+          date_inferred: dateIsInferred,
+          time_inferred: timeIsInferred,
+          venue_inferred: venueIsInferred,
+          city_inferred: cityIsInferred,
         });
 
         return {
@@ -1392,7 +1377,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           start_at: finalStartAt,
           end_at: finalEndAt,
           ticket_url: targetUrl || parsed.ticket_url,
-          price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : 'Free Entry'),
+          price_text: scrapedPrice || parsed.price_text || (targetUrl ? 'See booking page' : undefined),
           source_platform: detectedPlatform !== 'telegram' ? detectedPlatform : parsed.source_platform || 'vibe',
           cover_image_url: finalCover,
           suggested_slug: generateSlug(finalTitle || 'event'),
@@ -1400,6 +1385,11 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           missing_aspects: surety.missingAspects,
           approval_status: surety.approvalStatus,
           requires_admin_approval: !surety.autoApproved,
+          date_inferred: dateIsInferred,
+          time_inferred: timeIsInferred,
+          venue_inferred: venueIsInferred,
+          city_inferred: cityIsInferred,
+          is_incomplete: parsed.is_incomplete || surety.tier === 'Incomplete',
         };
       } catch (err: any) {
         console.warn(`[AI Extractor Text] Model ${modelName} warning:`, err?.message || err);
@@ -1414,7 +1404,7 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     (isValidEventPoster(extractedCover) ? extractedCover : undefined) ||
     getCategoryCover(deterministicData.category, deterministicData.title);
 
-  const fallbackVenue = scrapedVenue || deterministicData.venue_name;
+  const fallbackVenue = scrapedVenue || (deterministicData.venue_inferred ? 'TBA' : deterministicData.venue_name);
   const fallbackCity = scrapedCity || deterministicData.city;
   const fallbackAddress = scrapedAddress || deterministicData.location_address;
   let fallbackStartAt = scrapedStartAt || deterministicData.start_at;
@@ -1445,6 +1435,10 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
     description: scrapedDescription || cleanInputText,
     cover_image_url: fallbackCover,
     is_external: Boolean(targetUrl),
+    date_inferred: deterministicData.date_inferred && !scrapedStartAt,
+    time_inferred: deterministicData.time_inferred && !scrapedStartAt,
+    venue_inferred: deterministicData.venue_inferred && !scrapedVenue,
+    city_inferred: deterministicData.city_inferred && !scrapedCity,
   });
 
   return {

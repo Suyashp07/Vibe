@@ -390,9 +390,16 @@ export default function AdminDashboardPage() {
         />
 
         {/* Master-Detail Two-Pane Workstation */}
-        <div className="flex-1 flex gap-6 items-start">
+        <div className="flex-1 flex gap-6 items-start min-h-0">
           {/* Left Pane: Queue List */}
-          <div className={`flex flex-col gap-2 ${selectedEvent ? 'hidden md:flex md:w-[380px] lg:w-[420px] md:shrink-0 md:max-h-[calc(100vh-160px)] md:overflow-y-auto pr-1' : 'w-full'}`}>
+          <div
+            data-lenis-prevent
+            className={`flex flex-col gap-2 ${
+              selectedEvent
+                ? 'hidden md:flex md:w-[380px] lg:w-[420px] md:shrink-0 md:max-h-[calc(100vh-140px)] md:overflow-y-auto pr-1 overscroll-contain'
+                : 'w-full'
+            }`}
+          >
             <EventApprovalQueue
               events={filteredEvents}
               loading={loading}
@@ -411,7 +418,10 @@ export default function AdminDashboardPage() {
 
           {/* Right Pane: Detail Panel Inspector */}
           {selectedEvent && (
-            <div className="fixed inset-0 z-40 bg-white md:static md:z-auto md:flex-1 md:min-w-0 md:border md:border-[#E2E8F0] md:rounded-2xl md:p-5 md:shadow-xs md:max-h-[calc(100vh-160px)] md:overflow-y-auto">
+            <div
+              data-lenis-prevent
+              className="fixed inset-0 z-40 bg-white overflow-y-auto p-4 sm:p-5 md:static md:z-auto md:flex-1 md:min-w-0 md:border md:border-[#E2E8F0] md:rounded-2xl md:p-6 md:shadow-xs md:max-h-[calc(100vh-140px)] md:overflow-y-auto overscroll-contain"
+            >
               <DetailInspector
                 event={selectedEvent}
                 duplicate={findDuplicateMatch(selectedEvent)}

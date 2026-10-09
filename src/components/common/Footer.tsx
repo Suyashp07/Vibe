@@ -75,7 +75,7 @@ const SOCIAL_MEDIA_LINKS: SocialLink[] = [
   },
 ];
 
-export default function Footer() {
+export default function Footer({ minimal = false }: { minimal?: boolean }) {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -87,6 +87,32 @@ export default function Footer() {
       setEmail('');
     }, 2500);
   };
+
+  if (minimal) {
+    return (
+      <footer className="border-t border-white/10 bg-[#050505] mt-12 py-8 text-white/50 font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-white tracking-tight text-sm">
+              vibe<span className="text-[#FF5500]">.</span>
+            </span>
+            <span className="text-[10px] tracking-widest uppercase text-white/40 font-semibold">
+              BY SWANIKI
+            </span>
+          </div>
+
+          <div className="text-white/60 font-medium">
+            Good people. Real connections.
+          </div>
+
+          <div className="flex items-center gap-1.5 text-white/50">
+            <span>© {new Date().getFullYear()} Vibe by Swaniki</span>
+            <span className="text-[#FF5500]">↗</span>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className="border-t border-white/10 bg-[#050505] mt-12 sm:mt-20 pt-10 sm:pt-16 pb-12 text-white/60 font-sans">

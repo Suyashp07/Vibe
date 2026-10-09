@@ -227,7 +227,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
         )}
         <Navbar />
         <UnifiedEventDetailView event={event} />
-        <Footer />
+        <Footer minimal={true} />
       </div>
     );
   }

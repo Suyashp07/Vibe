@@ -253,7 +253,7 @@ export default function DetailInspector({
   const surety = calculateEventSurety(event);
 
   return (
-    <div className="flex flex-col h-full space-y-5">
+    <div className="flex flex-col min-h-full space-y-5 pb-8">
       {/* Header Bar */}
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="min-w-0">
@@ -689,7 +689,7 @@ export default function DetailInspector({
       </div>
 
       {/* Editable Fields */}
-      <div className="space-y-3 max-h-[calc(100vh-420px)] overflow-y-auto pr-1">
+      <div className="space-y-3 pt-2">
         <div>
           <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Event Title</label>
           <input

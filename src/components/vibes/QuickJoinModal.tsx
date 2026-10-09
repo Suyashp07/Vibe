@@ -26,11 +26,12 @@ interface QuickJoinModalProps {
   event: EventItem;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (rsvp: RSVPItem) => void;
+  onAskHost?: () => void;
 }
 
-export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: QuickJoinModalProps) {
-  const { profile, isLoggedIn } = useAuth();
+export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAskHost }: QuickJoinModalProps) {
+  const { profile } = useAuth();
 
   // Step flow: 'details' -> 'otp' -> 'confirmed'
   const [step, setStep] = useState<'details' | 'otp' | 'confirmed'>('details');
@@ -45,19 +46,46 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
   const [error, setError] = useState('');
   const [submittedRsvp, setSubmittedRsvp] = useState<RSVPItem | null>(null);
 
-  // Prefill user data if available
+  const wasOpenRef = React.useRef(false);
+
+  // Initialize and preserve form state across tab switches and refocuses
   useEffect(() => {
-    if (isOpen) {
-      const session = profile || getLocalAuthSession();
-      if (session?.name) setName(session.name);
-      if (session?.email) setEmail(session.email);
-      if (session?.phone) setPhone(session.phone);
+    if (isOpen && !wasOpenRef.current) {
+      // Check if there is an active pending OTP session for this event in sessionStorage
+      let restoredOtp = false;
+      try {
+        const rawPending = typeof window !== 'undefined' ? sessionStorage.getItem(`vibe_pending_otp_${event.id}`) : null;
+        if (rawPending) {
+          const pending = JSON.parse(rawPending);
+          if (pending && pending.email && Date.now() - pending.timestamp < 15 * 60 * 1000) {
+            setName(pending.name || '');
+            setEmail(pending.email || '');
+            setPhone(pending.phone || '');
+            setStep('otp');
+            setError('');
+            restoredOtp = true;
+          }
+        }
+      } catch {}
+
+      if (!restoredOtp) {
+        const session = getLocalAuthSession();
+        if (session?.name && !name) setName(session.name);
+        if (session?.email && !email) setEmail(session.email);
+        if (session?.phone && !phone) setPhone(session.phone);
+        setStep('details');
+        setOtpToken('');
+        setError('');
+        setSubmittedRsvp(null);
+      }
+    } else if (!isOpen) {
       setStep('details');
       setOtpToken('');
       setError('');
       setSubmittedRsvp(null);
     }
-  }, [isOpen, profile]);
+    wasOpenRef.current = isOpen;
+  }, [isOpen, event.id]);
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -127,9 +155,12 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
         });
       } catch {}
 
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(`vibe_pending_otp_${event.id}`);
+      }
       setSubmittedRsvp(rsvp);
       setStep('confirmed');
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(rsvp);
     } catch (err: any) {
       setError(err.message || 'Could not confirm spot. Please try again.');
     } finally {
@@ -162,6 +193,18 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
       const { error: otpErr } = await sendEmailOtp(cleanEmail, 'guest');
       if (otpErr) {
         throw new Error(otpErr.message || 'Failed to send verification code');
+      }
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(
+          `vibe_pending_otp_${event.id}`,
+          JSON.stringify({
+            eventId: event.id,
+            name: name.trim(),
+            email: cleanEmail,
+            phone: cleanPhone,
+            timestamp: Date.now(),
+          })
+        );
       }
       setResendCooldown(30);
       setStep('otp');
@@ -353,6 +396,9 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
             <button
               type="button"
               onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem(`vibe_pending_otp_${event.id}`);
+                }
                 setStep('details');
                 setError('');
               }}
@@ -471,9 +517,9 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess }: Qu
                 type="button"
                 onClick={() => {
                   onClose();
-                  setTimeout(() => {
-                    if (onSuccess) onSuccess();
-                  }, 100);
+                  if (onAskHost) {
+                    onAskHost();
+                  }
                 }}
                 className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2"
               >

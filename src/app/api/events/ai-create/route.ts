@@ -39,6 +39,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!url && !imageBase64 && typeof text === 'string') {
+      const cleanPrompt = text.trim();
+      const isBareCommand =
+        /^(?:\/newevent|\/new|\/create|\/add|\/event|\/vibe|\/flash|new event|create event|add event|make event|create an event|make an event|host an event|host event|post event|post an event|event|new meetup|create meetup|vibe|flash|test|testing)$/i.test(cleanPrompt);
+      if (isBareCommand || cleanPrompt.length < 10) {
+        return NextResponse.json(
+          {
+            error: 'Please provide more details about your event (title, date/time, and venue or city).',
+            missingDetails: ['title', 'date', 'venue'],
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const supabase = getSupabaseAdmin();
     let extracted: ExtractedEventData;
     let coverImageUrl: string | undefined = undefined;
@@ -170,6 +185,10 @@ export async function POST(req: NextRequest) {
       cover_image_url: coverImageUrl,
       price_text: extracted.price_text,
       description: extracted.description,
+      date_inferred: extracted.date_inferred,
+      time_inferred: extracted.time_inferred,
+      venue_inferred: extracted.venue_inferred,
+      city_inferred: extracted.city_inferred,
     });
 
     const suretyScore = surety.score; // 0 to 100%
@@ -199,6 +218,9 @@ export async function POST(req: NextRequest) {
         missing_aspects: surety.missingAspects,
         approval_status: surety.autoApproved ? 'approved' : 'pending',
         admin_approved: surety.autoApproved,
+        date_inferred: extracted.date_inferred || false,
+        venue_inferred: extracted.venue_inferred || false,
+        city_inferred: extracted.city_inferred || false,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',

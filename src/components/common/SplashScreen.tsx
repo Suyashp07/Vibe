@@ -1,194 +1,167 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+
+const STORAGE_KEY = 'vibe_splash_seen';
+const DISPLAY_DURATION_MS = 2000;
+const FADE_DURATION_S = 0.5;
 
 export default function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('Igniting vibes...');
+  const [skipExitAnimation, setSkipExitAnimation] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  const handleDismiss = useCallback(() => {
+    setIsVisible(false);
+    try {
+      sessionStorage.setItem(STORAGE_KEY, 'true');
+    } catch {
+      // Ignore sessionStorage exceptions (e.g. private mode restrictions)
+    }
+  }, []);
 
   useEffect(() => {
-    // Quick check: if already shown in this tab session recently, skip or show ultra-fast
-    const hasSeen = sessionStorage.getItem('vibe_splash_shown');
-    if (hasSeen) {
-      setIsVisible(false);
+    // Check if splash screen was already shown in this tab session
+    try {
+      const hasSeen = sessionStorage.getItem(STORAGE_KEY);
+      if (hasSeen) {
+        setSkipExitAnimation(true);
+        setIsVisible(false);
+        return;
+      }
+    } catch {
+      // If sessionStorage fails, continue to show splash once
+    }
+
+    // Auto-dismiss after ~2 seconds
+    const timer = setTimeout(() => {
+      handleDismiss();
+    }, DISPLAY_DURATION_MS);
+
+    // Keyboard support: allow ESC to skip immediately
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleDismiss();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleDismiss]);
+
+  // Lock page scroll while visible, restore immediately upon dismissal
+  useEffect(() => {
+    if (!isVisible) {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
       return;
     }
 
-    // Step 1: Smooth progress animation
-    const startTime = Date.now();
-    const duration = 1200; // 1.2 seconds total presentation
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
 
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
-      setProgress(pct);
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
-      if (pct > 35 && pct < 75) {
-        setStatusText('Curating live experiences...');
-      } else if (pct >= 75 && pct < 100) {
-        setStatusText('Welcome to Vibe');
-      }
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [isVisible]);
 
-      if (elapsed >= duration) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsVisible(false);
-          try {
-            sessionStorage.setItem('vibe_splash_shown', 'true');
-          } catch {}
-        }, 250);
-      }
-    }, 25);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Allow clicking anywhere to skip immediately
-  const handleDismiss = () => {
-    setIsVisible(false);
-    try {
-      sessionStorage.setItem('vibe_splash_shown', 'true');
-    } catch {}
-  };
+  const effectiveDuration = shouldReduceMotion || skipExitAnimation ? 0 : FADE_DURATION_S;
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          key="vibe-splash"
+          key="vibe-splash-screen"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vibe intro screen"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: effectiveDuration, ease: 'easeOut' }}
           onClick={handleDismiss}
-          className="fixed inset-0 z-[999999] bg-[#050507] flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer"
+          className="fixed inset-0 z-[999999] bg-[#0F172A] flex flex-col items-center justify-center select-none cursor-pointer overflow-hidden px-4"
         >
-          {/* Ambient Lighting Orbs in Background */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <motion.div
-              animate={{
-                scale: [1, 1.25, 1],
-                opacity: [0.35, 0.55, 0.35],
-              }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] sm:w-[540px] h-[420px] sm:h-[540px] bg-gradient-to-tr from-[#FF5500]/25 via-[#E8621A]/20 to-amber-500/10 rounded-full blur-[110px]"
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
-          </div>
-
-          {/* Central Animated Brand Badge */}
-          <div className="relative z-10 flex flex-col items-center text-center px-4">
-            {/* Ripple Pulse Rings */}
-            <div className="relative mb-6">
-              <motion.div
-                animate={{
-                  scale: [1, 1.6, 2],
-                  opacity: [0.6, 0.25, 0],
-                }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-                className="absolute -inset-3 rounded-3xl bg-gradient-to-tr from-[#FF5500] to-amber-500 blur-md pointer-events-none"
-              />
-              <motion.div
-                animate={{
-                  scale: [1, 1.35, 1.7],
-                  opacity: [0.7, 0.3, 0],
-                }}
-                transition={{ duration: 1.8, delay: 0.35, repeat: Infinity, ease: 'easeOut' }}
-                className="absolute -inset-1.5 rounded-3xl bg-[#FF5500] blur-sm pointer-events-none"
-              />
-
-              {/* Glowing Icon Hub */}
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0, rotate: -12 }}
-                animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-                className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-[#FF5500] via-[#E8621A] to-[#FF8C42] p-[1.5px] shadow-[0_0_50px_rgba(255,85,0,0.5)] flex items-center justify-center"
-              >
-                <div className="w-full h-full rounded-[22px] bg-[#0A0A0E] flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[#FF5500]/25 to-transparent" />
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.12, 1],
-                      filter: [
-                        'drop-shadow(0 0 12px rgba(255,85,0,0.6))',
-                        'drop-shadow(0 0 24px rgba(255,140,66,0.9))',
-                        'drop-shadow(0 0 12px rgba(255,85,0,0.6))',
-                      ],
-                    }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <Zap className="w-10 h-10 sm:w-12 sm:h-12 text-[#FF5500] fill-[#FF5500]" />
-                  </motion.div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Brand Logo & Name */}
-            <motion.div
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.5, ease: 'easeOut' }}
-              className="flex items-baseline font-black tracking-tight"
-            >
-              <span className="text-4xl sm:text-5xl text-white font-sans">vibe</span>
-              <motion.span
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [0.9, 1, 0.9],
-                }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                className="ml-1 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-[#FF5500] shadow-[0_0_18px_#FF5500]"
-              />
-            </motion.div>
-
-            {/* Sub-tagline */}
-            <motion.p
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.25, duration: 0.5 }}
-              className="text-[10px] sm:text-[11px] font-bold tracking-[0.3em] uppercase text-neutral-400 mt-2 flex items-center gap-1.5"
-            >
-              <span>BY SWANIKI</span>
-              <span className="w-1 h-1 rounded-full bg-neutral-600" />
-              <span className="text-[#FF8C42] flex items-center gap-1">
-                <Sparkles className="w-2.5 h-2.5" /> LIVE PLATFORM
-              </span>
-            </motion.p>
-
-            {/* Glowing Loading Bar */}
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 180 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-              className="mt-8 relative"
-            >
-              <div className="w-44 sm:w-52 h-1.5 rounded-full bg-white/10 overflow-hidden relative shadow-inner">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-[#FF5500] via-[#FF8C42] to-amber-400 shadow-[0_0_12px_rgba(255,85,0,0.8)]"
-                  style={{ width: `${progress}%` }}
-                  transition={{ ease: 'linear' }}
-                />
-              </div>
-
-              {/* Status Message */}
-              <div className="flex items-center justify-between text-[11px] text-neutral-500 font-mono mt-2.5 px-1">
-                <span>{statusText}</span>
-                <span className="font-bold text-neutral-400">{progress}%</span>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Quick Skip Hint at Bottom */}
+          {/* Soft orange radial glow behind the logo (#E8621A) */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            transition={{ delay: 0.6, duration: 0.4 }}
-            className="absolute bottom-6 text-[10px] text-neutral-500 uppercase tracking-widest font-mono"
-          >
+            aria-hidden="true"
+            animate={
+              shouldReduceMotion
+                ? undefined
+                : {
+                    scale: [1, 1.08, 1],
+                    opacity: [0.75, 1, 0.75],
+                  }
+            }
+            transition={{
+              duration: 2.2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[440px] sm:h-[440px] md:w-[520px] md:h-[520px] rounded-full pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(232, 98, 26, 0.28) 0%, rgba(232, 98, 26, 0.10) 45%, rgba(15, 23, 42, 0) 70%)',
+              filter: 'blur(35px)',
+            }}
+          />
+
+          {/* Central content container */}
+          <div className="relative z-10 flex flex-col items-center text-center">
+            {/* Wordmark: "vibe." in Outfit Bold with "i" and "." in #E8621A */}
+            <h1
+              className="text-6xl sm:text-7xl md:text-8xl tracking-tight leading-none select-none flex items-baseline justify-center"
+              style={{
+                fontFamily: 'var(--font-outfit), Outfit, sans-serif',
+                fontWeight: 700,
+              }}
+            >
+              <span className="text-white">v</span>
+              <span className="text-[#E8621A]">i</span>
+              <span className="text-white">be</span>
+              <span className="text-[#E8621A]">.</span>
+            </h1>
+
+            {/* Small uppercase "BY SWANIKI" in gray letter-spaced text */}
+            <p className="text-[10px] sm:text-[11px] md:text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 mt-3 sm:mt-3.5">
+              BY SWANIKI
+            </p>
+
+            {/* Tagline: "Good people. Real connections." */}
+            <p className="text-sm sm:text-base font-normal text-slate-300 mt-4 sm:mt-5 tracking-wide">
+              Good people. Real connections.
+            </p>
+
+            {/* Thin animated loading bar under the tagline */}
+            <div
+              className="w-48 sm:w-56 h-[2px] bg-slate-800/80 rounded-full overflow-hidden mt-6 sm:mt-7 relative"
+              role="progressbar"
+              aria-label="Loading Vibe"
+            >
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { duration: 1.9, ease: [0.25, 0.1, 0.25, 1] }
+                }
+                className="h-full bg-[#E8621A] rounded-full shadow-[0_0_8px_rgba(232,98,26,0.7)]"
+              />
+            </div>
+          </div>
+
+          {/* Subtle dismiss hint at bottom */}
+          <div className="absolute bottom-6 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono pointer-events-none opacity-60">
             Tap anywhere to enter
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

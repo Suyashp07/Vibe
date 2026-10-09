@@ -199,6 +199,27 @@ export async function POST(req: NextRequest) {
     );
     const hasAnyLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
 
+    // Bare command / greeting guard
+    const cleanLowerText = lowerText.trim();
+    const isBareCommand =
+      /^(?:\/vibe|\/flash|\/event|\/create|vibe:|flash:|event:|⚡|new event|create event|add event|make event|test|testing)$/i.test(cleanLowerText);
+
+    if (isBareCommand && !hasImage && !hasAnyLink) {
+      const hint =
+        `💡 *To create an event on Vibe, please include details:*\n\n` +
+        `• Send */vibe <details>* (e.g. \`/vibe Turf cricket tonight 8 PM at Bandra\`)\n` +
+        `• Or send/forward any *event flyer poster*\n` +
+        `• Or paste an event link from Luma, BookMyShow, or District!`;
+      if (replyTarget) {
+        await sendWhatsAppReply(replyTarget, hint);
+      }
+      return NextResponse.json({
+        ok: true,
+        handledBy: 'guidance_hint',
+        replyText: hint,
+      });
+    }
+
     // Explicit command prefix
     const hasCommandPrefix =
       lowerText.startsWith('/vibe') ||
@@ -214,7 +235,7 @@ export async function POST(req: NextRequest) {
     const hasEventKeywords =
       /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging|tournament|rsvp|tickets?|registration|venue|timing|entry free|entry fee|curated by|hosted by|doors open|lineup|line-up|hackathon|workshop|standup|comedy|concert|gig|party)\b/i.test(textContent);
 
-    const isExplicitEvent = hasImage || hasCommandPrefix || hasTicketingLink;
+    const isExplicitEvent = hasImage || (hasCommandPrefix && textContent.length > 10) || hasTicketingLink;
     const isImplicitEvent = (textContent.length >= 25 && hasEventKeywords) || (hasAnyLink && textContent.length >= 20);
 
     if (!isExplicitEvent && !isImplicitEvent) {
@@ -448,6 +469,10 @@ export async function POST(req: NextRequest) {
       cover_image_url: coverImageUrl,
       price_text: extracted.price_text,
       description: extracted.description,
+      date_inferred: extracted.date_inferred,
+      time_inferred: extracted.time_inferred,
+      venue_inferred: extracted.venue_inferred,
+      city_inferred: extracted.city_inferred,
     });
 
     const suretyScore = surety.score; // 0 to 100%

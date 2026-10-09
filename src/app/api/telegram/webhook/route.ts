@@ -285,20 +285,50 @@ export async function POST(req: NextRequest) {
     // Handle /start or /help command
     const textContent = message.text || message.caption || '';
     const lowerText = textContent.toLowerCase();
+    const cleanLowerText = lowerText.trim();
+    const isBareCommand =
+      /^(?:\/newevent|\/new|\/create|\/add|\/event|\/vibe|\/flash|new event|create event|add event|make event|create an event|make an event|host an event|host event|post event|post an event|event|new meetup|create meetup|vibe|flash|test|testing)$/i.test(cleanLowerText);
+
+    if (isBareCommand) {
+      const guidance =
+        `✨ <b>Ready to create an event on Vibe?</b>\n\n` +
+        `Please send me your event details in any format:\n\n` +
+        `• <b>Event Name:</b> (e.g. <i>Sunset Acoustic Jam</i>)\n` +
+        `• <b>Date & Time:</b> (e.g. <i>Tomorrow 7:30 PM</i>)\n` +
+        `• <b>Venue & City:</b> (e.g. <i>Subko Cafe, Bandra, Mumbai</i>)\n` +
+        `• <b>Ticketing:</b> (e.g. <i>Free Entry / ₹499</i>)\n\n` +
+        `<i>Or simply:</i>\n` +
+        `📸 <b>Send a flyer photo</b> or poster\n` +
+        `🔗 <b>Send an event link</b> from BookMyShow, Luma, District, or Unstop!`;
+      await replyTelegram(guidance, { parse_mode: 'HTML' });
+      return NextResponse.json({ ok: true });
+    }
 
     // Check for Flash Vibe / Vibe Instant intent
     const isPhoto = Boolean(message.photo && message.photo.length > 0);
     const isImageDoc = Boolean(message.document && message.document.mime_type?.startsWith('image/'));
     const hasExternalLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
 
+    const hasEventKeywords =
+      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging|tournament|rsvp|tickets?|registration|venue|timing|entry free|entry fee|curated by|hosted by|doors open|lineup|line-up|hackathon|workshop|standup|comedy|concert|gig|party|gathering|tomorrow|tonight|pm|am)\b/i.test(textContent);
+
+    if (!isPhoto && !isImageDoc && !hasExternalLink && !hasEventKeywords && textContent.trim().length < 30) {
+      const guidance =
+        `💡 <b>To create an event, please provide more details!</b>\n\n` +
+        `Send the event name, date, time, and venue (e.g. <i>"Box cricket at Bandra Turf tonight 8 PM"</i>), or send a poster photo!`;
+      await replyTelegram(guidance, { parse_mode: 'HTML' });
+      return NextResponse.json({ ok: true });
+    }
+
     const isFlashVibe =
-      lowerText.startsWith('/vibe') ||
+      (lowerText.startsWith('/vibe') ||
       lowerText.startsWith('/flash') ||
       lowerText.startsWith('vibe:') ||
       lowerText.startsWith('flash:') ||
       lowerText.startsWith('⚡') ||
-      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging)\b/i.test(textContent) ||
-      (!isPhoto && !hasExternalLink && textContent.length < 350 && textContent.length > 5);
+      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging)\b/i.test(textContent)) &&
+      !isPhoto &&
+      !hasExternalLink;
 
     let flashActivity: string = 'other';
     if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
@@ -481,6 +511,10 @@ export async function POST(req: NextRequest) {
       cover_image_url: coverImageUrl,
       price_text: extracted.price_text,
       description: extracted.description,
+      date_inferred: extracted.date_inferred,
+      time_inferred: extracted.time_inferred,
+      venue_inferred: extracted.venue_inferred,
+      city_inferred: extracted.city_inferred,
     });
 
     const suretyPercent = surety.score; // 0 to 100%
@@ -508,7 +542,10 @@ export async function POST(req: NextRequest) {
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
         admin_approved: isAutoApproved,
-        is_flash: true,
+        date_inferred: extracted.date_inferred || false,
+        venue_inferred: extracted.venue_inferred || false,
+        city_inferred: extracted.city_inferred || false,
+        is_flash: isFlashVibe,
         created_via: 'bot',
         source_platform: 'telegram',
         flash_activity: flashActivity,

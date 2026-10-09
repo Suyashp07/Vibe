@@ -11,7 +11,14 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Check for reduced motion preference or full-viewport app pages like /vibes
     if (typeof window === 'undefined') return;
-    if (pathname === '/vibes' || pathname?.startsWith('/vibes')) {
+    if (
+      pathname === '/vibes' ||
+      pathname?.startsWith('/vibes') ||
+      pathname === '/admin' ||
+      pathname?.startsWith('/admin') ||
+      pathname === '/dashboard' ||
+      pathname?.startsWith('/dashboard')
+    ) {
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;

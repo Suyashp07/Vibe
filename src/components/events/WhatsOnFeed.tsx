@@ -464,7 +464,7 @@ export default function WhatsOnFeed() {
       {currentFlashEvent && (
         <div
           data-cursor="view"
-          className="w-full relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 group min-h-[350px] md:h-[400px] bg-black"
+          className="w-full relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 group min-h-[460px] sm:min-h-[420px] md:h-[420px] lg:h-[440px] bg-black touch-pan-y select-none"
           onMouseEnter={() => setIsFlashcardPaused(true)}
           onMouseLeave={() => setIsFlashcardPaused(false)}
         >
@@ -475,6 +475,16 @@ export default function WhatsOnFeed() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_e, info) => {
+                if (info.offset.x < -40 || info.velocity.x < -300) {
+                  setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
+                } else if (info.offset.x > 40 || info.velocity.x > 300) {
+                  setFlashcardIdx((prev) => (prev - 1 + prominentEvents.length) % prominentEvents.length);
+                }
+              }}
               className="absolute inset-0"
             >
               {/* Background Poster Image */}
@@ -487,53 +497,67 @@ export default function WhatsOnFeed() {
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
 
-              {/* Cinematic Dark Gradient Overlay matching image */}
-              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/95 via-black/80 to-black/35 pointer-events-none" />
+              {/* Multi-layer protective gradient overlay */}
+              <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black via-black/85 to-black/30 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent md:hidden pointer-events-none" />
 
               {/* Spotlight Content Overlay */}
-              <div className="flashcard-hero-overlay absolute inset-0 p-6 sm:p-8 md:p-10 flex flex-col justify-between z-10 text-white">
-                {/* Top Badge: ⚡ IN THE SPOTLIGHT */}
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-white text-[11px] font-black uppercase tracking-wider">
+              <div className="flashcard-hero-overlay absolute inset-0 p-4 sm:p-7 md:p-9 flex flex-col justify-between z-10 text-white">
+                {/* Top Badge Row: ⚡ IN THE SPOTLIGHT & Price */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-black uppercase tracking-wider shadow-sm">
                     <Zap className="w-3.5 h-3.5 fill-[#FF5500] text-[#FF5500]" />
                     <span>IN THE SPOTLIGHT</span>
                   </span>
 
-                  <span className="text-xs font-bold bg-[#FF5500]/20 border border-[#FF5500]/30 text-[#FF5500] px-3.5 py-1 rounded-full backdrop-blur-md shadow-xs">
+                  <span className="text-[11px] sm:text-xs font-bold bg-[#FF5500]/20 border border-[#FF5500]/30 text-[#FF5500] px-3 py-1 sm:px-3.5 rounded-full backdrop-blur-md shadow-xs shrink-0">
                     {currentFlashEvent.external_price_text || (isFlashcardExternal ? 'Official Site ↗' : 'Free RSVP')}
                   </span>
                 </div>
 
                 {/* Middle: Date, Venue, Grand Event Title & Tagline */}
-                <div className="space-y-2 max-w-2xl my-auto">
-                  <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-amber-300">
-                    <Calendar className="w-4 h-4 shrink-0 text-[#FF5500]" />
-                    <span>{currentFlashEvent.start_at ? formatIST(currentFlashEvent.start_at) : 'THU, 15 OCT · 7:00 PM'}</span>
-                    <span className="text-white/40">·</span>
-                    <span className="flex items-center gap-1 text-white/90 truncate">
+                <div className="space-y-2.5 sm:space-y-3 max-w-2xl my-auto py-2">
+                  {/* Date & Location Pill Tags */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-amber-300 font-bold text-[11px] sm:text-xs">
+                      <Calendar className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
+                      <span>{currentFlashEvent.start_at ? formatIST(currentFlashEvent.start_at).replace(/\s*IST/i, '') : 'Thu, 15 Oct · 7:00 PM'}</span>
+                    </span>
+
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white/90 text-[11px] sm:text-xs truncate max-w-[210px] sm:max-w-none">
                       <MapPin className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
                       <span className="truncate">{currentFlashEvent.city} · {currentFlashEvent.location_name || currentFlashEvent.event_type}</span>
                     </span>
                   </div>
 
-                  <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md">
-                    {currentFlashEvent.title}
-                  </h2>
+                  {/* Title */}
+                  <Link
+                    href={flashcardLink}
+                    target={isFlashcardExternal ? '_blank' : undefined}
+                    rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
+                    className="block group-hover:text-amber-100 transition-colors"
+                  >
+                    <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] line-clamp-2 md:line-clamp-3">
+                      {currentFlashEvent.title}
+                    </h2>
+                  </Link>
 
-                  <p className="text-xs sm:text-sm text-white/80 line-clamp-2 max-w-xl font-medium">
+                  {/* Tagline */}
+                  <p className="text-xs sm:text-sm text-white/80 line-clamp-2 max-w-xl font-normal leading-relaxed drop-shadow-md">
                     {currentFlashEvent.tagline || 'Live music. Open skies. A crowd that feels like your people.'}
                   </p>
                 </div>
 
                 {/* Bottom Row: [Find your spot ↗] + Avatar Stack + Pagination Controls */}
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-                  <div className="flex items-center gap-4 sm:gap-5 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-1 sm:pt-2 border-t border-white/10 sm:border-t-0">
+                  <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-5">
                     <Magnetic pullFactor={0.35}>
                       <Link
                         href={flashcardLink}
                         target={isFlashcardExternal ? '_blank' : undefined}
                         rel={isFlashcardExternal ? 'noopener noreferrer' : undefined}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs sm:text-sm font-black shadow-[0_0_25px_rgba(255,85,0,0.45)] transition-all cursor-pointer hover:scale-105 active:scale-95"
+                        className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs sm:text-sm font-black shadow-[0_0_25px_rgba(255,85,0,0.45)] transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
                       >
                         <span>Find your spot</span>
                         <ArrowRight className="w-4 h-4 -rotate-45" />
@@ -541,43 +565,63 @@ export default function WhatsOnFeed() {
                     </Magnetic>
 
                     {/* Avatar stack matching reference image */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <div className="flex -space-x-2">
-                        <span className="w-7 h-7 rounded-full bg-[#3B82F6] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">AS</span>
-                        <span className="w-7 h-7 rounded-full bg-[#EC4899] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">RK</span>
-                        <span className="w-7 h-7 rounded-full bg-[#10B981] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">NM</span>
-                        <span className="w-7 h-7 rounded-full bg-[#FF5500] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">+178</span>
+                        <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#3B82F6] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">AS</span>
+                        <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#EC4899] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">RK</span>
+                        <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#10B981] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">NM</span>
+                        <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#FF5500] border-2 border-black text-[9px] font-bold flex items-center justify-center text-white">+178</span>
                       </div>
-                      <span className="text-xs text-white/70 font-semibold">178 people going</span>
+                      <span className="text-[11px] sm:text-xs text-white/70 font-semibold whitespace-nowrap">178 going</span>
                     </div>
                   </div>
 
                   {/* Pagination and Chevron Controls */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono font-bold text-white/60">
-                      {String(flashcardIdx + 1).padStart(2, '0')} / {String(prominentEvents.length).padStart(2, '0')}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <Magnetic pullFactor={0.25}>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-1 sm:pt-0">
+                    {/* Dot indicators for slides on mobile */}
+                    <div className="flex items-center gap-1.5 sm:hidden">
+                      {prominentEvents.map((_, idx) => (
                         <button
-                          type="button"
-                          onClick={handlePrevFlashcard}
-                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
-                          aria-label="Previous event"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                      </Magnetic>
-                      <Magnetic pullFactor={0.25}>
-                        <button
-                          type="button"
-                          onClick={handleNextFlashcard}
-                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
-                          aria-label="Next event"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </Magnetic>
+                          key={idx}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setFlashcardIdx(idx);
+                          }}
+                          className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                            flashcardIdx === idx ? 'w-5 bg-[#FF5500]' : 'w-1.5 bg-white/30'
+                          }`}
+                          aria-label={`Go to slide ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] sm:text-xs font-mono font-bold text-white/60">
+                        {String(flashcardIdx + 1).padStart(2, '0')} / {String(prominentEvents.length).padStart(2, '0')}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Magnetic pullFactor={0.25}>
+                          <button
+                            type="button"
+                            onClick={handlePrevFlashcard}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer border border-white/10"
+                            aria-label="Previous event"
+                          >
+                            <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </button>
+                        </Magnetic>
+                        <Magnetic pullFactor={0.25}>
+                          <button
+                            type="button"
+                            onClick={handleNextFlashcard}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer border border-white/10"
+                            aria-label="Next event"
+                          >
+                            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </button>
+                        </Magnetic>
+                      </div>
                     </div>
                   </div>
                 </div>
