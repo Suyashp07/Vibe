@@ -67,7 +67,7 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
       method: 'POST',
       headers,
       body: JSON.stringify({ to: toPhone, text }),
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(10000),
     });
     return res.ok;
   } catch (err: any) {
@@ -849,10 +849,16 @@ export async function POST(req: NextRequest) {
       senderPhone,
     });
 
+    let replyDispatched = false;
+    if (replyTarget) {
+      replyDispatched = await sendWhatsAppReply(replyTarget, confirmationMsg);
+    }
+
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
       replyText: confirmationMsg,
+      replyDispatched,
       eventDetails: {
         slug: createdEventSlug,
         title: createdEventTitle,

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/whatsapp/bridge-info",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}
