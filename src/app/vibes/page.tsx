@@ -231,9 +231,11 @@ function VibesContent() {
 
   const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
     const map: Record<string, RSVPItem> = {};
+    if (!userEmail) return map;
+
     allRsvps.forEach((r) => {
       if (r.status === 'confirmed') {
-        const matchesUser = !userEmail || (r.email && r.email.trim().toLowerCase() === userEmail);
+        const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
         if (matchesUser) {
           if (r.event_id) map[r.event_id] = r;
           if (r.event_slug) map[r.event_slug] = r;
