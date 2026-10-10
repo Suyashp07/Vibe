@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth, setLocalAuthSession, AuthProfile, getInitials, isSyntheticAvatar } from '@/lib/auth';
-import { syncEventsWithSupabase, getRSVPs } from '@/lib/store';
+import { syncEventsWithSupabase, getRSVPs, getUserConfirmedPasses } from '@/lib/store';
 import { getSupabaseClient } from '@/lib/supabase';
 import LocationModal from '@/components/location/LocationModal';
 import AuthModal from '@/components/auth/AuthModal';
@@ -79,22 +79,37 @@ export default function Navbar() {
     const city = getUserCity() || 'All India';
     setActiveCity(city);
 
-    // Calculate user's active confirmed passes count for webapp badge
-    const updatePasses = () => {
+    // Calculate user's active confirmed passes count strictly from real user stat
+    const updatePasses = async () => {
       try {
-        const userEmail =
-          profile?.email ||
-          (typeof window !== 'undefined' ? localStorage.getItem('vibe_guest_email') : null);
+        const userEmail = (profile?.email || (isLoggedIn ? localStorage.getItem('vibe_guest_email') : null) || '').trim().toLowerCase();
         if (!userEmail) {
           setConfirmedPassCount(0);
           return;
         }
-        const passes = getRSVPs();
-        const target = userEmail.toLowerCase().trim();
-        const active = passes.filter(
-          (p) => p.status === 'confirmed' && (p.email || '').toLowerCase().trim() === target
-        ).length;
-        setConfirmedPassCount(active);
+
+        // 1. Initial compute from deduplicated local cache
+        const localPasses = getUserConfirmedPasses(userEmail);
+        setConfirmedPassCount(localPasses.length);
+
+        // 2. Fetch fresh real stats from Supabase API
+        const res = await fetch(`/api/rsvps/list?email=${encodeURIComponent(userEmail)}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.rsvps && Array.isArray(data.rsvps)) {
+            const seenEvents = new Set<string>();
+            const realCount = data.rsvps.filter((r: any) => {
+              if (r.status !== 'confirmed') return false;
+              const eventKey = r.event_id || r.event_slug;
+              if (eventKey) {
+                if (seenEvents.has(eventKey)) return false;
+                seenEvents.add(eventKey);
+              }
+              return true;
+            }).length;
+            setConfirmedPassCount(realCount);
+          }
+        }
       } catch {
         setConfirmedPassCount(0);
       }

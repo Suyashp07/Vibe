@@ -51,6 +51,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ count: 0, rsvps: [] });
     }
 
+    // Targeted user email RSVP lookup (for pass stats & digital wallet)
+    const userEmail = searchParams.get('email')?.trim().toLowerCase();
+    if (userEmail) {
+      const { data: rsvps, count, error } = await supabase
+        .from('rsvps')
+        .select('*, events:event_id(id, slug, title, organizer_id, start_at, location_name, city, cover_image_url, category, status)', { count: 'exact' })
+        .ilike('email', userEmail)
+        .eq('status', 'confirmed')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch user rsvps from Supabase:', error);
+        return NextResponse.json({ error: error.message, count: 0, rsvps: [] }, { status: 500 });
+      }
+
+      return NextResponse.json({ rsvps: rsvps || [], count: count || rsvps?.length || 0 });
+    }
+
     // Full RSVP list for admin
     const { data: rsvps, count, error } = await supabase
       .from('rsvps')

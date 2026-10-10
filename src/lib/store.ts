@@ -1628,33 +1628,41 @@ export const syncRSVPsWithSupabase = async (): Promise<RSVPItem[]> => {
       created_at: row.created_at || new Date().toISOString()
     }));
 
-    // Merge remote RSVPs with any pending local RSVPs without duplicating
-    const local = getRSVPs();
-    const mergedMap = new Map<string, RSVPItem>();
-
-    remoteRsvps.forEach(r => {
-      mergedMap.set(r.id, r);
-    });
-
-    local.forEach(l => {
-      // Purge any stale unconfirmed client-side dummy IDs
-      if (l.id && l.id.startsWith('r-')) return;
-      const alreadyExists = remoteRsvps.some(
-        r => r.id === l.id || (r.event_id === l.event_id && r.email?.toLowerCase() === l.email?.toLowerCase())
-      );
-      if (!alreadyExists) {
-        mergedMap.set(l.id, l);
-      }
-    });
-
-    const merged = Array.from(mergedMap.values());
-    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(merged));
+    // Clean read-through cache: Supabase is single source of truth
+    localStorage.setItem(STORAGE_KEYS.RSVPS, JSON.stringify(remoteRsvps));
     notifyListeners();
-    return merged;
+    return remoteRsvps;
   } catch (err) {
     console.warn('syncRSVPsWithSupabase note:', err);
     return getRSVPs();
   }
+};
+
+/**
+ * Returns genuine, deduplicated confirmed passes for a user.
+ * Each unique event booking counts as 1 pass.
+ */
+export const getUserConfirmedPasses = (email?: string | null): RSVPItem[] => {
+  if (!email) return [];
+  const cleanEmail = email.trim().toLowerCase();
+  const all = getRSVPs();
+
+  const seenEvents = new Set<string>();
+  const userPasses: RSVPItem[] = [];
+
+  for (const r of all) {
+    if (r.status !== 'confirmed') continue;
+    if ((r.email || '').trim().toLowerCase() !== cleanEmail) continue;
+
+    const eventKey = r.event_id || r.event_slug;
+    if (eventKey) {
+      if (seenEvents.has(eventKey)) continue;
+      seenEvents.add(eventKey);
+    }
+    userPasses.push(r);
+  }
+
+  return userPasses;
 };
 
 export const updateRSVPStatus = async (

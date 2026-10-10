@@ -215,8 +215,8 @@ function PassesInner() {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [emailInput, setEmailInput] = useState('');
 
-  // Toggle for preview sample passes
-  const [showSamplePasses, setShowSamplePasses] = useState(true);
+  // Toggle for preview sample passes (default false so user only sees their genuine passes)
+  const [showSamplePasses, setShowSamplePasses] = useState(false);
 
   // Load & Sync data from Supabase & local storage
   const loadData = async () => {
@@ -277,23 +277,35 @@ function PassesInner() {
     }
   };
 
-  // Filter real passes belonging to this guest
+  // Filter real passes belonging to this guest (deduplicated by event)
   const realGuestPasses = useMemo(() => {
     const targetEmail = guestEmail.trim().toLowerCase();
     if (!targetEmail) return [];
 
-    return rsvps
-      .filter((r) => {
-        const rEmail = (r.email || '').toLowerCase().trim();
-        return rEmail === targetEmail;
-      })
-      .map((r) => {
-        const event = events.find((e) => e.id === r.event_id || e.slug === r.event_id);
-        return { rsvp: r, event };
-      })
-      .filter(
-        (item): item is { rsvp: RSVPItem; event: EventItem } => item.event !== undefined
-      );
+    const seenEvents = new Set<string>();
+    const userPasses: { rsvp: RSVPItem; event: EventItem }[] = [];
+
+    // Prioritize newest RSVP records
+    const sorted = [...rsvps].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    for (const r of sorted) {
+      const rEmail = (r.email || '').toLowerCase().trim();
+      if (rEmail !== targetEmail) continue;
+      if (r.status !== 'confirmed') continue;
+
+      const eventKey = r.event_id || r.event_slug;
+      if (eventKey && seenEvents.has(eventKey)) continue;
+
+      const event = events.find((e) => e.id === r.event_id || e.slug === r.event_id);
+      if (event) {
+        if (eventKey) seenEvents.add(eventKey);
+        userPasses.push({ rsvp: r, event });
+      }
+    }
+
+    return userPasses;
   }, [rsvps, events, guestEmail]);
 
   // Convert real passes into display items
@@ -319,15 +331,12 @@ function PassesInner() {
     });
   }, [realGuestPasses, rsvps]);
 
-  // Combine real passes with sample passes if requested or if user has no passes yet
+  // Combine real passes with sample passes if requested
   const allAvailablePasses = useMemo<PassDisplayItem[]>(() => {
-    if (realDisplayPasses.length > 0 && !showSamplePasses) {
-      return realDisplayPasses;
+    if (realDisplayPasses.length > 0) {
+      return showSamplePasses ? [...realDisplayPasses, ...SAMPLE_PASSES] : realDisplayPasses;
     }
-    if (realDisplayPasses.length > 0 && showSamplePasses) {
-      return [...realDisplayPasses, ...SAMPLE_PASSES];
-    }
-    return SAMPLE_PASSES;
+    return showSamplePasses ? SAMPLE_PASSES : [];
   }, [realDisplayPasses, showSamplePasses]);
 
   // Sub-filtered passes according to active tab & search query
@@ -368,16 +377,14 @@ function PassesInner() {
     });
   }, [allAvailablePasses, passFilter, passSearch]);
 
-  // Attendee metrics matching Screenshot 1 exactly
-  const confirmedCount = allAvailablePasses.filter((p) => p.rsvp.status === 'confirmed').length;
-  const upcomingCount = allAvailablePasses.filter((p) => {
+  // Attendee metrics strictly derived from genuine user passes
+  const confirmedCount = realDisplayPasses.filter((p) => p.rsvp.status === 'confirmed').length;
+  const upcomingCount = realDisplayPasses.filter((p) => {
     if (p.rsvp.status === 'cancelled') return false;
-    if (p.isSample) return true;
     if (!p.event.start_at) return true;
     return new Date(p.event.start_at) >= new Date();
   }).length;
-  const pastCount = allAvailablePasses.filter((p) => {
-    if (p.isSample) return false;
+  const pastCount = realDisplayPasses.filter((p) => {
     if (!p.event.start_at) return false;
     return new Date(p.event.start_at) < new Date();
   }).length;

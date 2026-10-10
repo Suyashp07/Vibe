@@ -102,15 +102,16 @@ export async function POST(req: Request) {
 
     // Deduplication check: if attendee already registered in Supabase for this event, return confirmed record
     if (resolvedEventId && email) {
-      const { data: existingRsvp } = await supabase
+      const { data: existingRsvps } = await supabase
         .from('rsvps')
         .select('*')
         .eq('event_id', resolvedEventId)
         .ilike('email', email.trim())
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (existingRsvp) {
-        return NextResponse.json({ success: true, rsvp: existingRsvp });
+      if (existingRsvps && existingRsvps.length > 0) {
+        return NextResponse.json({ success: true, rsvp: existingRsvps[0] });
       }
     }
 
