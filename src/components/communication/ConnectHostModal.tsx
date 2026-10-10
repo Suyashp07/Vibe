@@ -1,18 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X,
-  ShieldCheck,
-  Send,
+  Sparkles,
   MessageSquare,
+  ShieldCheck,
   Lock,
-  ArrowRight,
-  ExternalLink,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { EventItem } from '@/types';
-import EventConversationModal from '@/components/communication/EventConversationModal';
 
 interface ConnectHostModalProps {
   event: EventItem | null;
@@ -23,19 +22,14 @@ interface ConnectHostModalProps {
 }
 
 /**
- * ConnectHostModal: Anti-scam, privacy-first communication portal between Host and Admitted Guests.
- * Offers dual channels:
- * 1. Host-controlled Telegram Subgroup (Join-Request gated, phone numbers 100% hidden)
- * 2. Vibe Web Console (In-browser direct messaging for guests without Telegram)
+ * ConnectHostModal: Displays an Upcoming Feature announcement modal
+ * for direct host contact throughout the platform, disabling the live feature for now.
  */
 export default function ConnectHostModal({
   event,
   isOpen,
   onClose,
-  guestEmail = '',
-  guestName = '',
 }: ConnectHostModalProps) {
-  const [activeView, setActiveView] = useState<'channel_select' | 'web_chat'>('channel_select');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -54,32 +48,10 @@ export default function ConnectHostModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !event) return null;
+  if (!isOpen) return null;
 
-  // Telegram Group invite link directly for Vibe Host Console
-  const telegramInviteCode = '4g5bx3Sp2Y41YmM1';
-  const telegramGroupUrl =
-    process.env.NEXT_PUBLIC_TELEGRAM_GROUP_URL || `https://t.me/+${telegramInviteCode}`;
-  const telegramWebUrl = `https://web.telegram.org/a/#?tgaddr=tg%3A%2F%2Fjoin%3Finvite%3D${telegramInviteCode}`;
-
-  const handleOpenTelegram = () => {
-    window.open(telegramGroupUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  if (activeView === 'web_chat') {
-    return (
-      <EventConversationModal
-        event={event}
-        isOpen={isOpen}
-        onClose={() => {
-          setActiveView('channel_select');
-          onClose();
-        }}
-        guestEmail={guestEmail}
-        guestName={guestName}
-      />
-    );
-  }
+  const eventTitle = event?.title || 'this event';
+  const hostName = event?.organizer_name || 'Event Host';
 
   const modalBody = (
     <div
@@ -93,12 +65,12 @@ export default function ConnectHostModal({
       }}
     >
       <div
-        className="dark-dialog-content relative w-full max-w-lg bg-[#0E1118] border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white overflow-hidden"
+        className="dark-dialog-content relative w-full max-w-md bg-[#0E1118] border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient background glows */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-[#E8621A]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-44 h-44 bg-[#FF5500]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Modal Close Button */}
         <button
@@ -114,114 +86,80 @@ export default function ConnectHostModal({
           <X className="w-5 h-5 pointer-events-none" />
         </button>
 
-        {/* Header with right padding to never overlap close button */}
-        <div className="mb-6 relative z-10 pr-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-3">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Anti-Scam • Zero Phone Number Leakage</span>
+        {/* Centered Graphic Header */}
+        <div className="text-center pt-2 pb-1 relative z-10">
+          <div className="relative inline-block mb-3.5">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF5500]/20 to-amber-500/15 border border-[#FF5500]/40 flex items-center justify-center mx-auto text-[#FF5500] shadow-[0_0_30px_rgba(255,85,0,0.3)]">
+              <MessageSquare className="w-8 h-8" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-md">
+              <Sparkles className="w-3.5 h-3.5 fill-black" />
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold mb-2.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Upcoming Feature</span>
           </div>
 
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Connect with Event Host
+            Direct Host Messaging
           </h2>
-          <p className="text-xs sm:text-sm text-white/60 mt-1">
-            Coordinate with <strong className="text-white/90">{event.title}</strong> organizer. All chats are host-controlled to prevent spam.
+          <p className="text-xs text-white/60 mt-1 max-w-sm mx-auto">
+            Direct connection with <strong className="text-white/90">{hostName}</strong> for <span className="text-white/80 italic">"{eventTitle}"</span> is coming soon!
           </p>
         </div>
 
-        {/* Dual Communication Options */}
-        <div className="space-y-3.5 relative z-10">
-          {/* Option 1: Telegram Subgroup */}
-          <div
-            className="group relative p-4 rounded-2xl bg-gradient-to-r from-sky-950/40 to-cyan-950/20 hover:from-sky-950/60 hover:to-cyan-950/40 border border-sky-500/30 hover:border-sky-400 transition-all shadow-lg"
-          >
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-                <Send className="w-5 h-5 -rotate-12 translate-x-[-1px] translate-y-[1px]" />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
-                    Join Vibe Host Console on Telegram
-                  </h3>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                    Host Console
-                  </span>
-                </div>
-
-                <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                  Join the official <strong>Vibe Host Console</strong> Telegram group. Admission is host-approved and your mobile number remains <strong>100% private</strong>.
-                </p>
-
-                <div className="mt-3 flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => window.open(telegramWebUrl, '_blank', 'noopener,noreferrer')}
-                    className="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95"
-                  >
-                    <span>Open in Telegram Web</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleOpenTelegram}
-                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs flex items-center gap-1.5 transition-all border border-white/10 cursor-pointer active:scale-95"
-                  >
-                    <span>Open Telegram App</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+        {/* Feature Preview Cards */}
+        <div className="my-5 space-y-2.5 relative z-10">
+          <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3 text-left">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-xs font-bold text-white">100% Anti-Spam & Private</h4>
+              <p className="text-[11px] text-white/50 mt-0.5">Your phone number and personal info remain 100% hidden and secure.</p>
             </div>
           </div>
 
-          {/* Option 2: Vibe Web Console */}
-          <div
-            onClick={() => setActiveView('web_chat')}
-            className="group relative p-4 rounded-2xl bg-gradient-to-r from-[#E8621A]/10 to-amber-950/10 hover:from-[#E8621A]/20 hover:to-amber-950/20 border border-[#E8621A]/30 hover:border-[#E8621A] transition-all cursor-pointer shadow-lg"
-          >
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#E8621A]/20 text-[#E8621A] border border-[#E8621A]/40 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-                <MessageSquare className="w-5 h-5" />
-              </div>
+          <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3 text-left">
+            <div className="w-8 h-8 rounded-xl bg-[#FF5500]/15 border border-[#FF5500]/30 text-[#FF5500] flex items-center justify-center shrink-0 mt-0.5">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-xs font-bold text-white">Real-Time Host Q&A</h4>
+              <p className="text-[11px] text-white/50 mt-0.5">Instant clarifications on venue directions, dress code, timing, and entry guidelines.</p>
+            </div>
+          </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white group-hover:text-orange-300 transition-colors">
-                    Chat via Vibe Web Console
-                  </h3>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-[#E8621A]/20 text-[#E8621A] border border-[#E8621A]/30">
-                    No App Needed
-                  </span>
-                </div>
-
-                <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                  Don&apos;t have Telegram? Chat directly in this browser window. Host replies sync directly to your screen in real time.
-                </p>
-
-                <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[#E8621A] group-hover:text-orange-400">
-                  <span>Open Web Chat</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
+          <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3 text-left">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-xs font-bold text-white">Pass-Linked Coordination</h4>
+              <p className="text-[11px] text-white/50 mt-0.5">Your confirmed passes automatically authenticate your questions with the host.</p>
             </div>
           </div>
         </div>
 
-        {/* Trust & Safety footer */}
-        <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-white/40">
-          <div className="flex items-center gap-1.5">
-            <Lock className="w-3 h-3 text-emerald-400" />
-            <span>End-to-end moderated gateway</span>
-          </div>
-          <span className="text-white/30">Auto-expires 48h after event</span>
+        {/* Disabled Notice */}
+        <div className="py-2.5 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center gap-2 text-xs text-amber-300 font-medium mb-4 relative z-10">
+          <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>Feature disabled during private rollout</span>
         </div>
+
+        {/* Action Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm transition-all cursor-pointer shadow-lg shadow-[#FF5500]/25 active:scale-[0.98] relative z-10 flex items-center justify-center gap-2"
+        >
+          <span>Got it</span>
+        </button>
       </div>
     </div>
   );
 
   return mounted ? createPortal(modalBody, document.body) : null;
 }
-

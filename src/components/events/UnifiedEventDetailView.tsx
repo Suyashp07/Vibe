@@ -118,12 +118,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   const [announcements, setAnnouncements] = useState<EventAnnouncement[]>([]);
 
   const handleAskHostClick = () => {
-    const session = getLocalAuthSession();
-    if (isLoggedIn || user || profile || session?.email) {
-      setShowConversationModal(true);
-    } else {
-      setShowAuthModal(true);
-    }
+    setShowConversationModal(true);
   };
 
   // Check if current attendee already has a confirmed RSVP for this event
@@ -331,9 +326,11 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               <button
                 onClick={handleAskHostClick}
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-white/15 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition cursor-pointer shrink-0"
+                title="Message host (Upcoming feature)"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-white/70" />
                 <span>Message</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-300 font-medium">Soon</span>
               </button>
             </div>
           </div>
@@ -460,9 +457,11 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               <button
                 onClick={handleAskHostClick}
                 className="w-full py-2.5 px-4 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition flex items-center justify-center gap-2 cursor-pointer"
+                title="Ask the host (Upcoming feature)"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-white/70" />
                 <span>Ask the host</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-300 font-medium">Soon</span>
               </button>
 
               <button

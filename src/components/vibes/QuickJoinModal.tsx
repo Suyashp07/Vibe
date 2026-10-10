@@ -522,8 +522,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   }
                 }}
                 className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2"
+                title="Ask Host (Upcoming feature)"
               >
                 <span>💬 Ask Host a Question</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
               </button>
               
               <Link

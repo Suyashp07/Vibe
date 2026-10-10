@@ -1057,9 +1057,11 @@ function VibesContent() {
               <button
                 onClick={() => openAskHost(currentVibe)}
                 className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer hover:border-white/20"
+                title="Ask host (Upcoming feature)"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
                 <span>Ask host</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-300 font-medium">Soon</span>
               </button>
 
               {(() => {
@@ -1241,9 +1243,11 @@ function VibesContent() {
                       openAskHost(vibe);
                     }}
                     className="flex-1 py-2.5 px-3 rounded-xl bg-black/60 hover:bg-black/80 border border-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md active:scale-98"
+                    title="Ask host (Upcoming feature)"
                   >
                     <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
                     <span>Ask host</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-300 font-medium">Soon</span>
                   </button>
 
                   {(() => {
