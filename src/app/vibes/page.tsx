@@ -738,11 +738,16 @@ function VibesContent() {
     const key = vibe.id || vibe.slug;
     if (commentCountsMap[key] !== undefined) return commentCountsMap[key];
     if (typeof window !== 'undefined') {
-      const live = [
+      const raw = [
         ...getComments(vibe.id),
         ...(vibe.slug && vibe.slug !== vibe.id ? getComments(vibe.slug) : []),
       ];
-      if (live.length > 0) return live.length;
+      const seen = new Set<string>();
+      for (const c of raw) {
+        const sig = `${(c.author_name || '').trim().toLowerCase()}:::${(c.body || '').trim().toLowerCase()}`;
+        seen.add(sig);
+      }
+      if (seen.size > 0) return seen.size;
     }
     return vibe.comments_count || 0;
   };
