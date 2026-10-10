@@ -433,7 +433,16 @@ function VibesContent() {
         capacity: hasSpotsLimit ? capacity : undefined,
         spots_left: hasSpotsLimit ? spotsLeft : undefined,
         has_spots_limit: hasSpotsLimit,
-        likes_count: Number(e.vibe_cheers_count || 0),
+        likes_count: Math.max(
+          Number(e.vibe_cheers_count ?? (e.theme as any)?.vibe_cheers_count ?? 0),
+          typeof window !== 'undefined'
+            ? Number(
+                localStorage.getItem(`vibe_like_count_${e.id}`) ||
+                  (e.slug ? localStorage.getItem(`vibe_like_count_${e.slug}`) : null) ||
+                  0
+              )
+            : 0
+        ),
         comments_count: Math.max(commentsCount, (going > 1 ? going - 1 : 0)),
         cover_image_url: coverImg,
         originalEvent: e,
@@ -607,32 +616,87 @@ function VibesContent() {
   const [selectedModalVibe, setSelectedModalVibe] = useState<VibeInstantItem | null>(null);
   const activeTargetVibe = selectedModalVibe || currentVibe;
 
-  // Likes handling
-  const vibeKey = currentVibe.id || currentVibe.slug;
-  const hasLiked = likedMap[vibeKey] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(vibeKey, currentVibe.slug) : false);
-  const likeCount = (likesCountMap[vibeKey] ?? currentVibe.likes_count) + (hasLiked ? 1 : 0);
+  // Toast notification for clipboard share & actions
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    toastTimerRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  }, []);
+
+  // Authoritative like data helper (single source of truth)
+  const getVibeLikeData = useCallback(
+    (vibe: VibeInstantItem) => {
+      const key = vibe.id || vibe.slug;
+      const isLiked =
+        likedMap[key] !== undefined
+          ? likedMap[key]
+          : typeof window !== 'undefined'
+          ? isFlashVibeLiked(key, vibe.slug)
+          : false;
+
+      const storedCount =
+        typeof window !== 'undefined'
+          ? Number(
+              localStorage.getItem(`vibe_like_count_${key}`) ||
+                (vibe.slug ? localStorage.getItem(`vibe_like_count_${vibe.slug}`) : null) ||
+                0
+            )
+          : 0;
+
+      const baseCount = Math.max(vibe.likes_count ?? 0, storedCount);
+      const count =
+        likesCountMap[key] !== undefined
+          ? likesCountMap[key]
+          : isLiked && baseCount === 0
+          ? 1
+          : baseCount;
+
+      return { isLiked, count: Math.max(0, count), key };
+    },
+    [likedMap, likesCountMap]
+  );
 
   const handleLikeVibe = (vibe: VibeInstantItem) => {
-    const key = vibe.id || vibe.slug;
-    const isLiked = likedMap[key] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(key, vibe.slug) : false);
-    const next = !isLiked;
-    setLikedMap((prev) => ({ ...prev, [key]: next }));
+    const { isLiked, count, key } = getVibeLikeData(vibe);
+    const nextLiked = !isLiked;
+    const nextCount = nextLiked ? count + 1 : Math.max(0, count - 1);
+
+    setLikedMap((prev) => ({ ...prev, [key]: nextLiked }));
+    setLikesCountMap((prev) => ({ ...prev, [key]: nextCount }));
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`vibe_like_count_${key}`, String(nextCount));
+      if (vibe.slug) localStorage.setItem(`vibe_like_count_${vibe.slug}`, String(nextCount));
+    }
+
     toggleFlashVibeLike(key, vibe.slug);
-    if (next) {
-      confetti({
-        particleCount: 28,
-        spread: 50,
-        origin: { y: 0.7 },
-        colors: ['#FF5500', '#FF8C42', '#FFA07A'],
-      });
+
+    if (nextLiked) {
+      try {
+        confetti({
+          particleCount: 28,
+          spread: 50,
+          origin: { y: 0.7 },
+          colors: ['#FF5500', '#FF8C42', '#FFA07A'],
+        });
+      } catch {}
     }
   };
 
   const handleLike = () => handleLikeVibe(currentVibe);
 
   const handleShareVibe = async (vibe: VibeInstantItem) => {
-    const shareUrl = `${window.location.origin}/vibes?event=${vibe.slug}`;
-    if (navigator.share) {
+    const shareUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/vibes?event=${vibe.slug}`
+        : `https://vibe.swaniki.com/vibes?event=${vibe.slug}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: vibe.title,
@@ -640,10 +704,22 @@ function VibesContent() {
           url: shareUrl,
         });
         return;
-      } catch {}
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          return;
+        }
+      }
     }
-    await navigator.clipboard.writeText(shareUrl);
-    alert('Vibe link copied to clipboard!');
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Link copied to clipboard!');
+        return;
+      }
+    } catch {}
+
+    showToast('Event link: ' + shareUrl);
   };
 
   const handleShare = () => handleShareVibe(currentVibe);
@@ -662,7 +738,10 @@ function VibesContent() {
     const key = vibe.id || vibe.slug;
     if (commentCountsMap[key] !== undefined) return commentCountsMap[key];
     if (typeof window !== 'undefined') {
-      const live = getComments(vibe.id);
+      const live = [
+        ...getComments(vibe.id),
+        ...(vibe.slug && vibe.slug !== vibe.id ? getComments(vibe.slug) : []),
+      ];
       if (live.length > 0) return live.length;
     }
     return vibe.comments_count || 0;
@@ -704,6 +783,14 @@ function VibesContent() {
     <div
       className="vibe-instant-container fixed inset-0 h-[100dvh] w-full bg-[#08080A] text-white overflow-hidden overscroll-none select-none flex flex-col justify-between"
     >
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/90 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-[#FF5500]" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Ambient Radial Glow in background (like in Screenshot 1) */}
       <div className="absolute inset-0 pointer-events-none opacity-40">
         <div className="absolute left-1/4 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FF5500]/10 rounded-full blur-[140px]" />
@@ -809,21 +896,32 @@ function VibesContent() {
             {/* Floating Action Stack (Right Edge) */}
             <div className="absolute right-3.5 bottom-5 z-20 flex flex-col items-center gap-3.5">
               {/* Flame */}
-              <button onClick={handleLike} className="flex flex-col items-center gap-1 cursor-pointer group">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                    hasLiked
-                      ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
-                      : 'bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70'
-                  }`}
-                >
-                  <Flame className="w-5 h-5 fill-current" />
-                </div>
-                <span className="text-xs font-bold text-white shadow-sm">{likeCount}</span>
-              </button>
+              {(() => {
+                const { isLiked: desktopLiked, count: desktopLikesCount } = getVibeLikeData(currentVibe);
+                return (
+                  <button
+                    type="button"
+                    onClick={handleLike}
+                    className="flex flex-col items-center gap-1 cursor-pointer group"
+                    aria-label="Like vibe"
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                        desktopLiked
+                          ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
+                          : 'bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70'
+                      }`}
+                    >
+                      <Flame className="w-5 h-5 fill-current" />
+                    </div>
+                    <span className="text-xs font-bold text-white shadow-sm">{desktopLikesCount}</span>
+                  </button>
+                );
+              })()}
 
               {/* Chat / Comments */}
               <button
+                type="button"
                 onClick={() => openComments(currentVibe)}
                 className="flex flex-col items-center gap-1 cursor-pointer group"
                 title="View & post comments"
@@ -835,7 +933,12 @@ function VibesContent() {
               </button>
 
               {/* Share */}
-              <button onClick={handleShare} className="flex flex-col items-center gap-1 cursor-pointer">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex flex-col items-center gap-1 cursor-pointer"
+                title="Share vibe"
+              >
                 <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all">
                   <Share2 className="w-4.5 h-4.5" />
                 </div>
@@ -997,9 +1100,7 @@ function VibesContent() {
         }}
       >
         {activeVibes.map((vibe, index) => {
-          const vibeKey = vibe.id || vibe.slug;
-          const isLiked = likedMap[vibeKey] ?? (typeof window !== 'undefined' ? isFlashVibeLiked(vibeKey, vibe.slug) : false);
-          const count = (likesCountMap[vibeKey] ?? vibe.likes_count) + (isLiked ? 1 : 0);
+          const { isLiked, count, key: vibeKey } = getVibeLikeData(vibe);
 
           return (
             <section
@@ -1027,58 +1128,69 @@ function VibesContent() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
               </div>
 
-              {/* Floating Action Stack (Right side) */}
-              <div className="absolute right-4 bottom-28 z-20 flex flex-col items-center gap-3.5">
+              {/* Floating Action Stack (Right side) - Elevated Z-index to z-40 and pointer-events-auto */}
+              <div className="absolute right-3.5 bottom-32 sm:bottom-28 z-40 flex flex-col items-center gap-3.5 pointer-events-auto select-none">
                 {/* Flame */}
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     handleLikeVibe(vibe);
                   }}
-                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform"
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                  aria-label="Like vibe"
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                      isLiked ? 'bg-[#FF5500] text-white shadow-lg' : 'bg-black/50 backdrop-blur-md border border-white/15 text-white'
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                      isLiked
+                        ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
+                        : 'bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80'
                     }`}
                   >
                     <Flame className="w-5 h-5 fill-current" />
                   </div>
-                  <span className="text-[11px] font-bold text-white">{count}</span>
+                  <span className="text-[11px] font-bold text-white shadow-sm">{count}</span>
                 </button>
 
                 {/* Comments */}
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     openComments(vibe);
                   }}
-                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform"
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
                   title="Comments"
+                  aria-label="Open comments"
                 >
-                  <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white flex items-center justify-center">
-                    <MessageSquare className="w-4.5 h-4.5" />
+                  <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80">
+                    <MessageSquare className="w-5 h-5" />
                   </div>
-                  <span className="text-[11px] font-bold text-white">{getVibeCommentsCount(vibe)}</span>
+                  <span className="text-[11px] font-bold text-white shadow-sm">{getVibeCommentsCount(vibe)}</span>
                 </button>
 
                 {/* Share */}
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     handleShareVibe(vibe);
                   }}
-                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform"
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                  aria-label="Share vibe"
                 >
-                  <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white flex items-center justify-center">
-                    <Share2 className="w-4.5 h-4.5" />
+                  <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80">
+                    <Share2 className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-semibold text-white">Share</span>
+                  <span className="text-[10px] font-semibold text-white shadow-sm">Share</span>
                 </button>
               </div>
 
-              {/* Bottom Overlay Card */}
-              <div className="relative z-20 px-4 pb-4 pt-8 space-y-2.5 mt-auto w-full">
+              {/* Bottom Overlay Card - pr-18 ensures no overlap with right-side action stack */}
+              <div className="relative z-20 px-4 pr-18 pb-4 pt-6 space-y-2.5 mt-auto w-full pointer-events-auto">
                 <div>
                   <p className="text-xs text-neutral-400 font-medium">
                     Hosted by {vibe.host_name}

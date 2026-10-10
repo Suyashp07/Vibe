@@ -59,7 +59,8 @@ export default function VibeCommentsModal({
     if (!vibe.id && !vibe.slug) return;
     setIsLoading(true);
 
-    const targetId = vibe.id || vibe.slug || '';
+    const isUUID = (str?: string) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+    const targetId = isUUID(vibe.id) ? vibe.id : (vibe.slug || vibe.id || '');
     const map = new Map<string, DisplayComment>();
 
     // 1. Local store comments
@@ -130,7 +131,8 @@ export default function VibeCommentsModal({
 
     const finalName = authorName.trim() || profile?.name || 'Guest';
     const finalEmail = profile?.email || `${finalName.toLowerCase().replace(/\s+/g, '')}@vibe.community`;
-    const targetId = vibe.id || vibe.slug || 'vibe-general';
+    const isUUID = (str?: string) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+    const targetId = isUUID(vibe.id) ? vibe.id : (vibe.slug || vibe.id || 'vibe-general');
 
     setIsSubmitting(true);
 
@@ -140,7 +142,11 @@ export default function VibeCommentsModal({
       }
 
       // Add to local store immediately for instant UI response
-      const stored = addComment(targetId, finalName, finalEmail, text);
+      const primaryKey = vibe.id || targetId;
+      const stored = addComment(primaryKey, finalName, finalEmail, text);
+      if (vibe.slug && vibe.slug !== primaryKey) {
+        try { addComment(vibe.slug, finalName, finalEmail, text); } catch {}
+      }
       const newDisplayItem: DisplayComment = {
         id: stored.id,
         author_name: finalName,

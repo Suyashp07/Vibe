@@ -1132,6 +1132,11 @@ export const toggleFlashVibeLike = async (
       target.theme.vibe_cheers_count = newCount;
     }
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+  } else {
+    const stored = Number(localStorage.getItem(`vibe_like_count_${eventId}`) || (slug ? localStorage.getItem(`vibe_like_count_${slug}`) : null) || 0);
+    newCount = isLiking ? stored + 1 : Math.max(0, stored - 1);
+    localStorage.setItem(`vibe_like_count_${eventId}`, String(newCount));
+    if (slug) localStorage.setItem(`vibe_like_count_${slug}`, String(newCount));
   }
   notifyListeners();
 
