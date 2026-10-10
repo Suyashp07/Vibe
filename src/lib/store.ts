@@ -1647,9 +1647,11 @@ export const getUserConfirmedPasses = (email?: string | null): RSVPItem[] => {
   if (!email) return [];
   const cleanEmail = email.trim().toLowerCase();
   const all = getRSVPs();
+  const events = getEvents();
 
   const seenEvents = new Set<string>();
   const userPasses: RSVPItem[] = [];
+  const now = Date.now();
 
   for (const r of all) {
     if (r.status !== 'confirmed') continue;
@@ -1660,6 +1662,14 @@ export const getUserConfirmedPasses = (email?: string | null): RSVPItem[] => {
       if (seenEvents.has(eventKey)) continue;
       seenEvents.add(eventKey);
     }
+
+    // Exclude expired past events so pass count matches active confirmed passes
+    const event = events.find((e) => e.id === r.event_id || e.slug === r.event_id || e.slug === r.event_slug);
+    if (event?.start_at) {
+      const startTime = new Date(event.start_at).getTime();
+      if (!isNaN(startTime) && startTime < now) continue;
+    }
+
     userPasses.push(r);
   }
 

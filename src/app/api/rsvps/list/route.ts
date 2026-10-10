@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     if (userEmail) {
       const { data: rsvps, count, error } = await supabase
         .from('rsvps')
-        .select('*, events:event_id(id, slug, title, organizer_id, start_at, location_name, city, cover_image_url, category, status)', { count: 'exact' })
+        .select('*, events:event_id(id, slug, title, organizer_id, start_at, location_name, city, cover_image_url, status)', { count: 'exact' })
         .ilike('email', userEmail)
         .eq('status', 'confirmed')
         .order('created_at', { ascending: false });

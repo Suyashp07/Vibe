@@ -82,7 +82,14 @@ export default function Navbar() {
     // Calculate user's active confirmed passes count strictly from real user stat
     const updatePasses = async () => {
       try {
-        const userEmail = (profile?.email || (isLoggedIn ? localStorage.getItem('vibe_guest_email') : null) || '').trim().toLowerCase();
+        const userEmail = (
+          profile?.email ||
+          (typeof window !== 'undefined'
+            ? localStorage.getItem('vibe_guest_email') ||
+              localStorage.getItem('vibe_user_email') ||
+              ''
+            : '')
+        ).trim().toLowerCase();
         if (!userEmail) {
           setConfirmedPassCount(0);
           return;
@@ -97,9 +104,15 @@ export default function Navbar() {
         if (res.ok) {
           const data = await res.json();
           if (data?.rsvps && Array.isArray(data.rsvps)) {
+            const now = Date.now();
             const seenEvents = new Set<string>();
             const realCount = data.rsvps.filter((r: any) => {
               if (r.status !== 'confirmed') return false;
+              // Exclude expired past events to strictly match the digital wallet active passes
+              if (r.events?.start_at) {
+                const startTime = new Date(r.events.start_at).getTime();
+                if (!isNaN(startTime) && startTime < now) return false;
+              }
               const eventKey = r.event_id || r.event_slug;
               if (eventKey) {
                 if (seenEvents.has(eventKey)) return false;
