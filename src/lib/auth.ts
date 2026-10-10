@@ -1101,7 +1101,7 @@ export const useAuth = () => {
 
             setProfile(mergedProfile);
             setLocalAuthSession(mergedProfile);
-          } else if (!local) {
+          } else if (!local?.isDemo) {
             setUser(null);
             setProfile(null);
             setLocalAuthSession(null);

@@ -1518,10 +1518,11 @@ export const getRSVPsByEvent = getEventRSVPs;
  * Check if the current browser user has already RSVP'd for a given event.
  * Matches by event_id or event_slug, and returns the RSVP record if found.
  */
-export const hasUserRSVP = (eventIdOrSlug: string): RSVPItem | null => {
+export const hasUserRSVP = (eventIdOrSlug: string, userEmail?: string): RSVPItem | null => {
+  if (!userEmail) return null;
+  const cleanEmail = userEmail.trim().toLowerCase();
   const rsvps = getEventRSVPs(eventIdOrSlug);
-  if (rsvps.length > 0) return rsvps[0];
-  return null;
+  return rsvps.find(r => r.status === 'confirmed' && (r.email || '').trim().toLowerCase() === cleanEmail) || null;
 };
 
 /**

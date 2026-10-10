@@ -222,16 +222,17 @@ function VibesContent() {
     return [];
   });
 
-  const { profile, user } = useAuth();
+  const { profile, user, isLoggedIn } = useAuth();
   const [passModalRsvp, setPassModalRsvp] = useState<RSVPItem | null>(null);
   const [passModalEvent, setPassModalEvent] = useState<EventItem | null>(null);
 
   // Check which vibes the current user has confirmed passes for
-  const userEmail = (profile?.email || user?.email || getLocalAuthSession()?.email || '').trim().toLowerCase();
+  // STRICT: Unauthenticated visitors never match any pass records
+  const userEmail = (isLoggedIn && (profile?.email || user?.email) ? (profile?.email || user?.email || '') : '').trim().toLowerCase();
 
   const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
     const map: Record<string, RSVPItem> = {};
-    if (!userEmail) return map;
+    if (!isLoggedIn || !userEmail) return map;
 
     allRsvps.forEach((r) => {
       if (r.status === 'confirmed') {
@@ -243,7 +244,7 @@ function VibesContent() {
       }
     });
     return map;
-  }, [allRsvps, userEmail]);
+  }, [allRsvps, userEmail, isLoggedIn]);
 
   const openPassModal = useCallback((rsvp: RSVPItem, vibe: VibeInstantItem) => {
     const ev = vibe.originalEvent || ({

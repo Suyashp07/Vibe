@@ -51,7 +51,9 @@ export default function VibeReelCard({
   const [connectHostOpen, setConnectHostOpen] = useState(false);
   const [quickJoinOpen, setQuickJoinOpen] = useState(false);
   const [hasRSVPd, setHasRSVPd] = useState<boolean>(() => {
-    return typeof window !== 'undefined' ? Boolean(hasUserRSVP(event.id) || hasUserRSVP(event.slug)) : false;
+    const email = profile?.email?.trim().toLowerCase();
+    if (!email) return false;
+    return typeof window !== 'undefined' ? Boolean(hasUserRSVP(event.id, email) || hasUserRSVP(event.slug, email)) : false;
   });
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [shareToast, setShareToast] = useState(false);
