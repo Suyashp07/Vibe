@@ -263,11 +263,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Detect Flash Vibe intent
-    const isFlashVibe =
-      hasCommandPrefix ||
-      (!hasImage && !hasTicketingLink && textContent.length < 400);
-
     let flashActivity: string = 'other';
     if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
     else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
@@ -277,6 +272,13 @@ export async function POST(req: NextRequest) {
     else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
     else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
     else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
+
+    // Detect Flash Vibe intent
+    const isFlashVibe =
+      hasCommandPrefix ||
+      !hasTicketingLink ||
+      Boolean(flashActivity && flashActivity !== 'other') ||
+      textContent.length < 4000;
 
     console.log('[WhatsApp Webhook] Event creation request received from:', replyTarget, {
       hasImage,
@@ -551,10 +553,11 @@ export async function POST(req: NextRequest) {
     });
 
     const suretyScore = surety.score; // 0 to 100%
-    const isAutoApproved = isFlashVibe || surety.autoApproved;
-    const approvalStatus = isAutoApproved ? 'approved' : 'pending';
-    const eventStatus = isAutoApproved ? 'live' : 'draft';
-    const isPublic = isAutoApproved;
+    // Events created directly via WhatsApp bot are instantly approved and live
+    const isAutoApproved = true;
+    const approvalStatus = 'approved';
+    const eventStatus = 'live';
+    const isPublic = true;
 
     // Detect if user explicitly asked for a specific number of spots/people/players
     // Detect if user explicitly asked for a specific number of spots/people/players
@@ -623,24 +626,23 @@ export async function POST(req: NextRequest) {
       capacity: effectiveSpotsLimit || null,
       is_public: isPublic,
       status: eventStatus,
-        confidence_score: suretyScore / 100,
-        ai_generated: true,
-        organizer_id: organizerId,
-        source_type: 'bot',
-        source_platform: 'whatsapp',
-        maps_url: extracted.maps_url,
-        external_ticket_url: finalTicketUrl,
-        external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
-        faq: extracted.faq || [],
-        rsvp_form_config: {
-          ask_plus_one: true,
-          ask_dietary: false,
-          ask_tshirt: false,
-          waitlist_enabled: true,
-          is_flash: true,
-          confirmation_message: `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`,
-        },
-      };
+      confidence_score: suretyScore / 100,
+      ai_generated: true,
+      organizer_id: organizerId,
+      source_type: 'bot',
+      source_platform: 'whatsapp',
+      external_ticket_url: finalTicketUrl,
+      external_price_text: extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry'),
+      faq: extracted.faq || [],
+      rsvp_form_config: {
+        ask_plus_one: true,
+        ask_dietary: false,
+        ask_tshirt: false,
+        waitlist_enabled: true,
+        is_flash: true,
+        confirmation_message: `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`,
+      },
+    };
 
     let createdEventSlug = finalSlug;
     let createdEventTitle = insertPayload.title;
@@ -694,9 +696,28 @@ export async function POST(req: NextRequest) {
       }
 
       try {
+        const VALID_EVENT_COLUMNS = new Set([
+          'id', 'organizer_id', 'slug', 'title', 'tagline', 'description',
+          'cover_image_url', 'template', 'theme', 'sections', 'event_type',
+          'location_name', 'location_address', 'city', 'location_lat',
+          'location_lng', 'online_link', 'start_at', 'end_at', 'timezone',
+          'capacity', 'is_public', 'status', 'ai_generated', 'faq',
+          'speakers', 'agenda', 'gallery', 'rsvp_form_config', 'whatsapp_caption',
+          'instagram_caption', 'created_at', 'updated_at', 'source_type',
+          'source_platform', 'external_ticket_url', 'external_price_text',
+          'confidence_score'
+        ]);
+
+        const sanitizedPayload: Record<string, any> = {};
+        for (const [k, v] of Object.entries(insertPayload)) {
+          if (VALID_EVENT_COLUMNS.has(k)) {
+            sanitizedPayload[k] = v;
+          }
+        }
+
         const { data: savedEvent, error: insertError } = await supabase
           .from('events')
-          .insert(insertPayload)
+          .insert(sanitizedPayload)
           .select('id, slug, title')
           .single();
 
@@ -705,6 +726,45 @@ export async function POST(req: NextRequest) {
           createdEventTitle = savedEvent.title;
         } else if (insertError) {
           console.error('[WhatsApp Webhook] Event insert error:', insertError);
+          // Fallback retry with absolute minimum required columns
+          const fallbackPayload = {
+            slug: insertPayload.slug,
+            title: insertPayload.title,
+            tagline: insertPayload.tagline,
+            description: insertPayload.description,
+            cover_image_url: insertPayload.cover_image_url,
+            template: insertPayload.template,
+            theme: insertPayload.theme,
+            sections: insertPayload.sections,
+            event_type: insertPayload.event_type,
+            location_name: insertPayload.location_name,
+            location_address: insertPayload.location_address,
+            city: insertPayload.city,
+            start_at: insertPayload.start_at,
+            end_at: insertPayload.end_at,
+            timezone: insertPayload.timezone,
+            capacity: insertPayload.capacity,
+            is_public: true,
+            status: 'live',
+            ai_generated: true,
+            source_type: 'bot',
+            source_platform: 'whatsapp',
+            faq: insertPayload.faq,
+            rsvp_form_config: insertPayload.rsvp_form_config,
+          };
+          const { data: retryEvent, error: retryErr } = await supabase
+            .from('events')
+            .insert(fallbackPayload)
+            .select('id, slug, title')
+            .single();
+
+          if (retryEvent) {
+            createdEventSlug = retryEvent.slug;
+            createdEventTitle = retryEvent.title;
+            console.log('[WhatsApp Webhook] Event successfully saved via fallback:', retryEvent.slug);
+          } else {
+            console.error('[WhatsApp Webhook] Critical: Supabase insert retry failed:', retryErr);
+          }
         }
       } catch (dbErr: any) {
         console.error('[WhatsApp Webhook] Supabase insert failed:', dbErr.message);

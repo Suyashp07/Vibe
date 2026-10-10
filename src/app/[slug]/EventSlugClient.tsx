@@ -13,12 +13,14 @@ import { ADMIN_EMAILS } from '@/lib/adminConstants';
 
 interface EventSlugClientProps {
   slug: string;
+  initialEvent?: EventItem | null;
+  initialOrganizer?: Profile | null;
 }
 
-export default function EventSlugClient({ slug }: EventSlugClientProps) {
-  const [loading, setLoading] = useState(true);
-  const [event, setEvent] = useState<EventItem | null>(null);
-  const [organizer, setOrganizer] = useState<Profile | null>(null);
+export default function EventSlugClient({ slug, initialEvent, initialOrganizer }: EventSlugClientProps) {
+  const [loading, setLoading] = useState(!initialEvent && !initialOrganizer);
+  const [event, setEvent] = useState<EventItem | null>(initialEvent || null);
+  const [organizer, setOrganizer] = useState<Profile | null>(initialOrganizer || null);
   const [organizerEvents, setOrganizerEvents] = useState<EventItem[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -47,7 +49,12 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
         (e) => e.slug.toLowerCase() === slug.toLowerCase()
       );
 
-      // 2. If not found in local store (e.g. private invite-only event), fetch via /api/events/by-slug
+      // If initialEvent was provided and local store doesn't have it yet, prioritize initialEvent
+      if (!foundEvent && initialEvent && initialEvent.slug.toLowerCase() === slug.toLowerCase()) {
+        foundEvent = initialEvent;
+      }
+
+      // 2. If not found in local store or initialEvent, fetch via /api/events/by-slug
       if (!foundEvent) {
         try {
           const res = await fetch(`/api/events/by-slug?slug=${encodeURIComponent(slug)}`);
@@ -79,7 +86,7 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
                 end_at: r.end_at,
                 timezone: r.timezone || 'Asia/Kolkata',
                 capacity: r.capacity || 50,
-                is_public: r.is_public ?? false,
+                is_public: r.is_public ?? true,
                 status: r.status || 'live',
                 ai_generated: r.ai_generated || false,
                 faq: r.faq || [],
@@ -94,9 +101,33 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
                 external_ticket_url: r.external_ticket_url || undefined,
                 external_price_text: r.external_price_text || undefined,
                 confidence_score: r.confidence_score || undefined,
+                is_flash: Boolean(
+                  r.is_flash ||
+                  r.theme?.is_flash ||
+                  r.source_type === 'bot' ||
+                  r.source_platform === 'whatsapp' ||
+                  r.created_via === 'bot' ||
+                  r.theme?.created_via === 'bot'
+                ),
+                flash_activity: r.flash_activity || r.theme?.flash_activity,
+                spots_limit: r.spots_limit || r.theme?.spots_limit,
+                spots_filled: r.spots_filled || r.theme?.spots_filled || 0,
+                whatsapp_host_phone: r.whatsapp_host_phone || r.theme?.whatsapp_host_phone || orgProfile.phone || '',
+                vibe_cheers_count: r.vibe_cheers_count || r.theme?.vibe_cheers_count || 0,
+                flash_tags: r.flash_tags || r.theme?.flash_tags || [],
                 created_at: r.created_at,
                 updated_at: r.updated_at,
               };
+
+              // Persist locally for instant future retrieval
+              if (typeof window !== 'undefined') {
+                try {
+                  const stored = JSON.parse(localStorage.getItem('vibe_events') || '[]');
+                  if (!stored.some((e: any) => e.slug.toLowerCase() === foundEvent!.slug.toLowerCase())) {
+                    localStorage.setItem('vibe_events', JSON.stringify([foundEvent, ...stored]));
+                  }
+                } catch {}
+              }
             }
           }
         } catch (e) {
@@ -111,8 +142,8 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
         return;
       }
 
-      // 2. Check if it's an organizer handle
-      const foundOrg = getOrganizerByHandle(slug);
+      // 3. Check if it's an organizer handle
+      const foundOrg = initialOrganizer || getOrganizerByHandle(slug);
       if (foundOrg) {
         setOrganizer(foundOrg);
         setOrganizerEvents(allEvents.filter((e) => e.organizer_id === foundOrg.id && isPublicLiveEvent(e)));
@@ -121,17 +152,17 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
         return;
       }
 
-      // Neither
-      setEvent(null);
-      setOrganizer(null);
+      // Neither found - only clear if nothing was preloaded
+      setEvent((prev) => prev || null);
+      setOrganizer((prev) => prev || null);
       setLoading(false);
     };
 
     resolveSlug();
-    syncEventsWithSupabase().then(() => resolveSlug()).catch(() => {});
+    syncEventsWithSupabase().catch(() => {});
     const unsub = subscribeToStore(resolveSlug);
     return () => unsub();
-  }, [slug]);
+  }, [slug, initialEvent, initialOrganizer]);
 
   const handleAdminPublish = async () => {
     if (!event) return;
@@ -170,59 +201,35 @@ export default function EventSlugClient({ slug }: EventSlugClientProps) {
   if (event) {
     const isDraft = event.status === 'draft';
 
-    // If event is unverified/draft and viewer is NOT an admin, block access
-    if (isDraft && !isAdmin) {
-      return (
-        <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col transition-colors">
-          <Navbar />
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <ShieldAlert className="w-7 h-7" />
-            </div>
-            <h2 className="font-display font-black text-2xl sm:text-3xl text-white">
-              Pending Admin Verification
-            </h2>
-            <p className="text-sm text-white/60 max-w-md">
-              &ldquo;{event.title}&rdquo; has been submitted to Vibe and is currently awaiting administrator review. It will be open for RSVPs once verified.
-            </p>
-            <Link
-              href="/discover"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF5500] text-white text-xs font-bold hover:bg-[#E04B00] shadow-sm"
-            >
-              <Compass className="w-4 h-4 text-white" />
-              <span>Browse Live Events</span>
-            </Link>
-          </div>
-          <Footer />
-        </div>
-      );
-    }
-
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] transition-colors">
-        {isDraft && isAdmin && (
+        {isDraft && (
           <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-2.5 text-xs text-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3 sticky top-0 z-50 backdrop-blur-md">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="font-bold uppercase tracking-wide text-amber-300">Admin Draft Preview:</span>
-              <span>This event is awaiting admin verification before going live.</span>
+              <span className="font-bold uppercase tracking-wide text-amber-300">
+                {isAdmin ? 'Admin Draft Preview:' : 'Host Direct Preview:'}
+              </span>
+              <span>This event was created via bot/invite and is directly accessible via this link.</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleAdminPublish}
-                disabled={isPublishing}
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold font-mono text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{isPublishing ? 'Publishing...' : 'Verify & Publish Live'}</span>
-              </button>
-              <Link
-                href="/admin/events"
-                className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white text-xs transition"
-              >
-                Command Center ↗
-              </Link>
-            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleAdminPublish}
+                  disabled={isPublishing}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold font-mono text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{isPublishing ? 'Publishing...' : 'Verify & Publish Live'}</span>
+                </button>
+                <Link
+                  href="/admin/events"
+                  className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white text-xs transition"
+                >
+                  Command Center ↗
+                </Link>
+              </div>
+            )}
           </div>
         )}
         <Navbar />
