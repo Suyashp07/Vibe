@@ -804,9 +804,28 @@ html:not(.light) .studio-workspace-container .bg-white {
 
 html:not(.light) .studio-workspace-container .bg-\[\#F8FAFC\],
 html:not(.light) .studio-workspace-container .bg-\[\#FAF8F5\],
-html:not(.light) .studio-workspace-container .bg-\[\#F1F5F9\] {
-  background-color: #111114 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+html:not(.light) .studio-workspace-container .bg-\[\#F1F5F9\],
+html:not(.light) .studio-workspace-container .bg-slate-50,
+html:not(.light) .studio-workspace-container .bg-slate-100,
+html:not(.light) .studio-workspace-container .bg-slate-200 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+html:not(.light) .studio-workspace-container .bg-slate-50:hover,
+html:not(.light) .studio-workspace-container .bg-slate-100:hover,
+html:not(.light) .studio-workspace-container .bg-slate-200:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.light) .studio-workspace-container .border-slate-200,
+html:not(.light) .studio-workspace-container .border-slate-300,
+html:not(.light) .studio-workspace-container .border-\[\#CBD5E1\],
+html:not(.light) .studio-workspace-container .border-\[\#F1F5F9\],
+html:not(.light) .studio-workspace-container .border-\[\#E2E8F0\] {
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 html:not(.light) .studio-workspace-container input,
@@ -846,4 +865,10 @@ html:not(.light) .studio-workspace-container button[class*="bg-\[\#FF5500\]"] {
   background-color: #FF5500 !important;
   color: #FFFFFF !important;
   border-color: #FF5500 !important;
+}
+
+html:not(.light) .studio-workspace-container .bg-orange-50 {
+  background-color: rgba(255, 85, 0, 0.15) !important;
+  border-color: rgba(255, 85, 0, 0.3) !important;
+  color: #FF7733 !important;
 }
