@@ -857,8 +857,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
-      replyText: confirmationMsg,
+      replyText: replyDispatched ? undefined : confirmationMsg,
       replyDispatched,
+      event: {
+        slug: createdEventSlug,
+        title: createdEventTitle,
+        url: liveEventUrl,
+      },
       eventDetails: {
         slug: createdEventSlug,
         title: createdEventTitle,

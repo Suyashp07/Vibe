@@ -189,7 +189,13 @@ async function startWhatsAppBridge() {
     sock = (0, baileys_1.default)({
         auth: state,
         logger: (0, pino_1.default)({ level: 'silent' }),
-        printQRInTerminal: false, // Handled manually with qrcodeTerminal
+        printQRInTerminal: false,
+        syncFullHistory: false, // Prevents Out-Of-Memory crashes on 512MB free tier cloud instances
+        markOnlineOnConnect: true,
+        keepAliveIntervalMs: 25_000, // Sends heartbeat every 25s to prevent WebSocket idle drops
+        connectTimeoutMs: 60_000,
+        defaultQueryTimeoutMs: 60_000,
+        browser: ['Vibe AI Studio', 'Chrome', '124.0.0.0'],
     });
     sock.ev.on('creds.update', async () => {
         await saveCreds();

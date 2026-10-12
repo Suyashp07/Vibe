@@ -93,8 +93,9 @@ async function runWhatsAppEventCreationTests() {
     console.log('\n--- Test 2: User Sends Event Details Text Blurb ---');
     sentMessages.length = 0;
 
+    const testPhone = `91${Math.floor(6000000000 + Math.random() * 3999999999)}`;
     const eventBlurb = 
-      '🚀 AI Founders Meetup Mumbai!\n' +
+      `🚀 AI Founders Meetup ${Date.now().toString().slice(-4)}!\n` +
       'Join us this Saturday at 6:30 PM at Subko Specialty Coffee Bandra West.\n' +
       'Typography, tech pitches, and filter coffee. Entry is free!\n' +
       'RSVP: https://vibe.fyi/mumbai-ai';
@@ -106,8 +107,8 @@ async function runWhatsAppEventCreationTests() {
         'x-whatsapp-webhook-secret': 'vibe_wa_sec_test_token_123',
       },
       body: JSON.stringify({
-        messageId: 'wa-create-event-1',
-        senderPhone: '916264984285',
+        messageId: `wa-create-event-${Date.now()}`,
+        senderPhone: testPhone,
         senderName: 'Suyash Pandey',
         text: eventBlurb,
       }),
@@ -125,7 +126,7 @@ async function runWhatsAppEventCreationTests() {
     // Verify confirmation message sent back to user's WhatsApp
     assert(sentMessages.length >= 2, 'Sent analysis progress + final live link message');
     const finalMsg = sentMessages[sentMessages.length - 1];
-    assert(finalMsg.to.includes('916264984285'), 'Sent to organizer phone number');
+    assert(finalMsg.to.includes(testPhone), 'Sent to organizer phone number');
     assert(finalMsg.text.includes('LIVE ON VIBE'), 'Contains live confirmation header');
     assert(finalMsg.text.includes(jsonCreate.event.url), 'Contains clickable live event URL');
     assert(finalMsg.text.includes('Subko'), 'Contains venue extracted by AI');
