@@ -14,12 +14,14 @@ import {
   X,
   Sparkles,
   Send,
-  Loader2
+  Loader2,
+  Zap,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem } from '@/types';
 import { isFlashVibeLiked, toggleFlashVibeLike } from '@/lib/store';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
+import QuickJoinModal from '@/components/vibes/QuickJoinModal';
 import { useAuth } from '@/lib/auth';
 
 interface VibeReelCardProps {
@@ -47,6 +49,7 @@ export default function VibeReelCard({
     return typeof window !== 'undefined' ? isFlashVibeLiked(event.id, event.slug) : false;
   });
   const [connectHostOpen, setConnectHostOpen] = useState(false);
+  const [quickJoinOpen, setQuickJoinOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
@@ -441,16 +444,16 @@ export default function VibeReelCard({
           </div>
         )}
 
-        {/* Action CTA: Ask Host & Details */}
+        {/* Action CTA: Join Now & Details */}
         <div className="w-full pr-12 sm:pr-14 flex gap-2">
           <button
             type="button"
-            onClick={() => setConnectHostOpen(true)}
-            className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#E8621A]/35 transition-all cursor-pointer"
-            title="Contact with host"
+            onClick={() => setQuickJoinOpen(true)}
+            className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#FF5500]/35 transition-all cursor-pointer"
+            title="Join now"
           >
-            <MessageCircle className="w-4 h-4 text-white shrink-0" />
-            <span>Contact with host</span>
+            <Zap className="w-4 h-4 text-white shrink-0 fill-current" />
+            <span>Join now</span>
           </button>
           <button
             type="button"
@@ -537,13 +540,13 @@ export default function VibeReelCard({
               type="button"
               onClick={() => {
                 setDetailsOpen(false);
-                setConnectHostOpen(true);
+                setQuickJoinOpen(true);
               }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#E8621A]/30"
-              title="Contact with host"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#FF5500]/30"
+              title="Join now"
             >
-              <MessageCircle className="w-4 h-4 text-white" />
-              <span>Contact with host</span>
+              <Zap className="w-4 h-4 text-white fill-current" />
+              <span>Join now</span>
             </button>
           </div>
         </div>
@@ -666,6 +669,20 @@ export default function VibeReelCard({
           </div>
         </div>
       )}
+
+      {/* Quick Join / RSVP Modal */}
+      <QuickJoinModal
+        event={event}
+        isOpen={quickJoinOpen}
+        onClose={() => setQuickJoinOpen(false)}
+        onSuccess={() => {
+          setQuickJoinOpen(false);
+        }}
+        onAskHost={() => {
+          setQuickJoinOpen(false);
+          setConnectHostOpen(true);
+        }}
+      />
 
       {/* Connect with Host Modal */}
       <ConnectHostModal

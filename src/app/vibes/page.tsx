@@ -24,7 +24,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { EventItem } from '@/types';
+import { EventItem, RSVPItem } from '@/types';
 import {
   getFlashVibeEvents,
   subscribeToStore,
@@ -32,11 +32,14 @@ import {
   isEventExpired,
   isFlashVibeLiked,
   toggleFlashVibeLike,
+  getRSVPs,
   getComments,
 } from '@/lib/store';
 import { getUserCity } from '@/lib/location';
 import { useAuth, getLocalAuthSession } from '@/lib/auth';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
+import QuickJoinModal from '@/components/vibes/QuickJoinModal';
+import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
 import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
 import ThemeToggle from '@/components/common/ThemeToggle';
@@ -207,7 +210,61 @@ function VibesContent() {
     return [];
   });
 
+  const [allRsvps, setAllRsvps] = useState<RSVPItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return getRSVPs();
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
   const { profile, user, isLoggedIn } = useAuth();
+  const [passModalRsvp, setPassModalRsvp] = useState<RSVPItem | null>(null);
+  const [passModalEvent, setPassModalEvent] = useState<EventItem | null>(null);
+  const [quickJoinOpen, setQuickJoinOpen] = useState(false);
+
+  // Check which vibes the current user has confirmed passes for
+  const userEmail = (isLoggedIn && (profile?.email || user?.email) ? (profile?.email || user?.email || '') : '').trim().toLowerCase();
+
+  const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
+    const map: Record<string, RSVPItem> = {};
+    if (!isLoggedIn || !userEmail) return map;
+
+    allRsvps.forEach((r) => {
+      if (r.status === 'confirmed') {
+        const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
+        if (matchesUser) {
+          if (r.event_id) map[r.event_id] = r;
+          if (r.event_slug) map[r.event_slug] = r;
+        }
+      }
+    });
+    return map;
+  }, [allRsvps, userEmail, isLoggedIn]);
+
+  const openPassModal = useCallback((rsvp: RSVPItem, vibe: VibeInstantItem) => {
+    const ev = vibe.originalEvent || ({
+      id: vibe.id,
+      slug: vibe.slug,
+      title: vibe.title,
+      description: vibe.description,
+      organizer_id: 'org-1',
+      organizer_name: vibe.host_name,
+      cover_image_url: vibe.cover_image_url,
+      city: vibe.city,
+      location_name: vibe.location_name,
+      start_at: new Date().toISOString(),
+      capacity: vibe.capacity,
+      spots_limit: vibe.capacity,
+      spots_filled: vibe.going_count,
+    } as EventItem);
+
+    setPassModalRsvp(rsvp);
+    setPassModalEvent(ev);
+  }, []);
 
   const filterDropdownRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number>(0);
@@ -235,7 +292,10 @@ function VibesContent() {
   // Map real store events into VibeInstantItem format
   const convertedStoreVibes = useMemo<VibeInstantItem[]>(() => {
     return storeEvents.map((e, idx) => {
-      const going = e.spots_filled || (e.theme as any)?.spots_filled || 1;
+      const confirmedRsvps = allRsvps.filter(
+        (r) => (r.event_id === e.id || r.event_slug === e.slug) && r.status === 'confirmed'
+      ).length;
+      const going = Math.max(confirmedRsvps, e.spots_filled || (e.theme as any)?.spots_filled || 1);
       
       // Spots limit: ONLY enabled when host/user explicitly specified participant/player/slot limit
       const hasSpotsLimit = Boolean(
@@ -402,7 +462,7 @@ function VibesContent() {
         originalEvent: e,
       };
     });
-  }, [storeEvents]);
+  }, [storeEvents, allRsvps]);
 
   // Combine vibes: Strictly prioritize REAL vibes from Supabase/bots!
   // Only fall back to DEFAULT_VIBES_LIST if zero real vibes exist.
@@ -755,6 +815,11 @@ function VibesContent() {
     setConnectHostOpen(true);
   };
 
+  const openQuickJoin = (vibe?: VibeInstantItem) => {
+    setSelectedModalVibe(vibe || currentVibe);
+    setQuickJoinOpen(true);
+  };
+
 
 
   // Build temporary EventItem for Modals if originalEvent is not set
@@ -1044,16 +1109,31 @@ function VibesContent() {
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Action Buttons: Join Now */}
             <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={() => openAskHost(currentVibe)}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
-                title="Contact with host"
-              >
-                <MessageCircle className="w-4 h-4 text-white" />
-                <span>Contact with host</span>
-              </button>
+              {(() => {
+                const currentRsvp = userPassMap[currentVibe.id] || userPassMap[currentVibe.slug];
+                if (currentRsvp) {
+                  return (
+                    <button
+                      onClick={() => openPassModal(currentRsvp, currentVibe)}
+                      className="w-full py-3 px-4 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>You're in · View pass</span>
+                    </button>
+                  );
+                }
+                return (
+                  <button
+                    onClick={() => openQuickJoin(currentVibe)}
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    <span>Join now</span>
+                  </button>
+                );
+              })()}
             </div>
 
             {/* Keyboard Hint */}
@@ -1202,25 +1282,72 @@ function VibesContent() {
                   </div>
                 )}
 
-                {/* Action Buttons */}
+                {/* Action Buttons: Join Now */}
                 <div className="flex items-center gap-2.5 pt-0.5">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openAskHost(vibe);
-                    }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-2 backdrop-blur-md shadow-lg cursor-pointer"
-                    title="Contact with host"
-                  >
-                    <MessageCircle className="w-4 h-4 text-white" />
-                    <span>Contact with host</span>
-                  </button>
+                  {(() => {
+                    const userRsvp = userPassMap[vibe.id] || userPassMap[vibe.slug];
+                    if (userRsvp) {
+                      return (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openPassModal(userRsvp, vibe);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>You're in · View pass</span>
+                        </button>
+                      );
+                    }
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openQuickJoin(vibe);
+                        }}
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Join now</span>
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             </section>
           );
         })}
       </main>
+
+      {/* Quick Join Modal with Email OTP verification */}
+      <QuickJoinModal
+        event={modalEvent}
+        isOpen={quickJoinOpen}
+        onClose={() => setQuickJoinOpen(false)}
+        onAskHost={() => {
+          setQuickJoinOpen(false);
+          setConnectHostOpen(true);
+        }}
+        onSuccess={(confirmedRsvp) => {
+          confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+          if (confirmedRsvp) {
+            setAllRsvps((prev) => [confirmedRsvp, ...prev.filter((r) => r.id !== confirmedRsvp.id)]);
+          }
+        }}
+      />
+
+      {/* Digital Pass Modal for Confirmed RSVPs */}
+      {passModalRsvp && passModalEvent && (
+        <DigitalPassModal
+          rsvp={passModalRsvp}
+          event={passModalEvent}
+          onClose={() => {
+            setPassModalRsvp(null);
+            setPassModalEvent(null);
+          }}
+        />
+      )}
 
       {/* Connect Host Modal */}
       <ConnectHostModal

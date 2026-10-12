@@ -452,15 +452,6 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 <span>Book Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'}</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </a>
-            ) : isBotEvent ? (
-              <button
-                onClick={handleAskHostClick}
-                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
-                title="Contact with host"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Contact with host</span>
-              </button>
             ) : confirmedRsvp ? (
               <button
                 onClick={() => setShowRsvpModal(true)}
