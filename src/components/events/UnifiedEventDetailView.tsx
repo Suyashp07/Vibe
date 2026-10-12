@@ -14,6 +14,7 @@ import {
   Ticket,
   Lock,
   MessageSquare,
+  MessageCircle,
   SlidersHorizontal,
   Users,
 } from 'lucide-react';
@@ -454,12 +455,11 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             ) : isBotEvent ? (
               <button
                 onClick={handleAskHostClick}
-                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
-                title="Ask Organizer (Upcoming feature)"
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
+                title="Contact with host"
               >
-                <MessageSquare className="w-4 h-4" />
-                <span>Ask Organizer 💬</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
+                <MessageCircle className="w-4 h-4" />
+                <span>Contact with host</span>
               </button>
             ) : confirmedRsvp ? (
               <button

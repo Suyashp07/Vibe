@@ -838,7 +838,7 @@ export async function POST(req: NextRequest) {
           mapsInfoLine +
           `\n✅ *Auto-Approved:* High completeness surety score (${suretyScore}% Surety)\n\n` +
           `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
-          `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
+          `💬 _Guests who click "Contact with host" on this page will message you directly here on WhatsApp!_`;
       }
     } else {
       const missingList = surety.missingAspects.length > 0

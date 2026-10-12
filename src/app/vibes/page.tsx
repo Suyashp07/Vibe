@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Flame,
   MessageSquare,
+  MessageCircle,
   Share2,
   Calendar,
   Clock,
@@ -990,12 +991,11 @@ function VibesContent() {
             <div className="flex items-center gap-3 pt-1">
               <button
                 onClick={() => openAskHost(currentVibe)}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
-                title="Ask host (Upcoming feature)"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
+                title="Contact with host"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-white" />
-                <span>Ask host 💬</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/25 text-white font-medium">Soon</span>
+                <MessageCircle className="w-4 h-4 text-white" />
+                <span>Contact with host</span>
               </button>
             </div>
 
@@ -1152,12 +1152,11 @@ function VibesContent() {
                       e.stopPropagation();
                       openAskHost(vibe);
                     }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md active:scale-98 shadow-lg cursor-pointer"
-                    title="Ask host (Upcoming feature)"
+                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-2 backdrop-blur-md shadow-lg cursor-pointer"
+                    title="Contact with host"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 text-white" />
-                    <span>Ask host 💬</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/25 text-white font-medium">Soon</span>
+                    <MessageCircle className="w-4 h-4 text-white" />
+                    <span>Contact with host</span>
                   </button>
                 </div>
               </div>

@@ -447,11 +447,10 @@ export default function VibeReelCard({
             type="button"
             onClick={() => setConnectHostOpen(true)}
             className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#E8621A]/35 transition-all cursor-pointer"
-            title="Ask Host (Upcoming feature)"
+            title="Contact with host"
           >
-            <MessageSquare className="w-4 h-4 text-white shrink-0" />
-            <span>Ask Host 💬</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
+            <MessageCircle className="w-4 h-4 text-white shrink-0" />
+            <span>Contact with host</span>
           </button>
           <button
             type="button"
@@ -541,11 +540,10 @@ export default function VibeReelCard({
                 setConnectHostOpen(true);
               }}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#E8621A]/30"
-              title="Ask Host (Upcoming feature)"
+              title="Contact with host"
             >
-              <MessageSquare className="w-4 h-4 text-white" />
-              <span>Ask Host 💬</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
+              <MessageCircle className="w-4 h-4 text-white" />
+              <span>Contact with host</span>
             </button>
           </div>
         </div>
