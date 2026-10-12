@@ -139,7 +139,7 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
     spots_left: 6,
     has_spots_limit: true,
     likes_count: 18,
-    comments_count: 5,
+    comments_count: 0,
     cover_image_url:
       'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
   },
@@ -163,7 +163,7 @@ const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
     going_count: 6,
     has_spots_limit: false,
     likes_count: 31,
-    comments_count: 8,
+    comments_count: 0,
     cover_image_url:
       'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=1200&auto=format&fit=crop&q=80',
   },
@@ -349,7 +349,20 @@ function VibesContent() {
         }
       }
 
-      const commentsCount = typeof window !== 'undefined' ? getComments(e.id).length : 0;
+      const commentsCount = typeof window !== 'undefined'
+        ? (() => {
+            const raw = [
+              ...getComments(e.id),
+              ...(e.slug && e.slug !== e.id ? getComments(e.slug) : []),
+            ];
+            const seen = new Set<string>();
+            for (const c of raw) {
+              const sig = `${(c.author_name || '').trim().toLowerCase()}:::${(c.body || '').trim().toLowerCase()}`;
+              seen.add(sig);
+            }
+            return seen.size;
+          })()
+        : 0;
 
       return {
         id: e.id,
@@ -384,7 +397,7 @@ function VibesContent() {
               )
             : 0
         ),
-        comments_count: Math.max(commentsCount, (going > 1 ? going - 1 : 0)),
+        comments_count: commentsCount,
         cover_image_url: coverImg,
         originalEvent: e,
       };
@@ -676,8 +689,11 @@ function VibesContent() {
   };
 
   const getVibeCommentsCount = (vibe: VibeInstantItem) => {
+    if (!vibe) return 0;
     const key = vibe.id || vibe.slug;
-    if (commentCountsMap[key] !== undefined) return commentCountsMap[key];
+    if (key && commentCountsMap[key] !== undefined) return commentCountsMap[key];
+    if (vibe.slug && commentCountsMap[vibe.slug] !== undefined) return commentCountsMap[vibe.slug];
+    if (vibe.id && commentCountsMap[vibe.id] !== undefined) return commentCountsMap[vibe.id];
     if (typeof window !== 'undefined') {
       const raw = [
         ...getComments(vibe.id),
@@ -688,10 +704,51 @@ function VibesContent() {
         const sig = `${(c.author_name || '').trim().toLowerCase()}:::${(c.body || '').trim().toLowerCase()}`;
         seen.add(sig);
       }
-      if (seen.size > 0) return seen.size;
+      return seen.size;
     }
     return vibe.comments_count || 0;
   };
+
+  // Fetch real comments count from DB for current vibe so it's always accurate
+  useEffect(() => {
+    if (!currentVibe) return;
+    const targetId = currentVibe.id || currentVibe.slug;
+    if (!targetId) return;
+
+    let isMounted = true;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+    const lookupId = isUUID ? targetId : (currentVibe.slug || currentVibe.id || '');
+
+    fetch(`/api/events/comments?eventId=${encodeURIComponent(lookupId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isMounted || !data) return;
+        const dbList = Array.isArray(data.comments) ? data.comments : [];
+        const rawStore = typeof window !== 'undefined' ? [
+          ...getComments(currentVibe.id),
+          ...(currentVibe.slug && currentVibe.slug !== currentVibe.id ? getComments(currentVibe.slug) : []),
+        ] : [];
+        const seen = new Set<string>();
+        for (const c of dbList) {
+          seen.add(`${(c.user_name || c.author_name || '').trim().toLowerCase()}:::${(c.content || c.body || '').trim().toLowerCase()}`);
+        }
+        for (const c of rawStore) {
+          seen.add(`${(c.author_name || '').trim().toLowerCase()}:::${(c.body || '').trim().toLowerCase()}`);
+        }
+        const total = seen.size;
+        setCommentCountsMap((prev) => ({
+          ...prev,
+          [targetId]: total,
+          ...(currentVibe.id ? { [currentVibe.id]: total } : {}),
+          ...(currentVibe.slug ? { [currentVibe.slug]: total } : {}),
+        }));
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentVibe?.id, currentVibe?.slug]);
 
   const openAskHost = (vibe?: VibeInstantItem) => {
     setSelectedModalVibe(vibe || currentVibe);

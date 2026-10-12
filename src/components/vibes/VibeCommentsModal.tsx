@@ -132,7 +132,8 @@ export default function VibeCommentsModal({
     merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     setComments(merged);
     setIsLoading(false);
-  }, [vibe.id, vibe.slug]);
+    onCommentAdded?.(merged.length);
+  }, [vibe.id, vibe.slug, onCommentAdded]);
 
   useEffect(() => {
     if (!isOpen) return;
