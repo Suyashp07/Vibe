@@ -273,12 +273,13 @@ export async function POST(req: NextRequest) {
     else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
     else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
 
-    // Detect Flash Vibe intent
+    // Detect Flash Vibe intent: explicitly tagged or spontaneous hangout without poster/ticket links
     const isFlashVibe =
-      hasCommandPrefix ||
-      !hasTicketingLink ||
+      (hasCommandPrefix ||
       Boolean(flashActivity && flashActivity !== 'other') ||
-      textContent.length < 4000;
+      /\b(quick meetup|hangout|flash|pickup|spontaneous|anyone up for|box cricket)\b/i.test(textContent)) &&
+      !hasImage &&
+      !hasTicketingLink;
 
     console.log('[WhatsApp Webhook] Event creation request received from:', replyTarget, {
       hasImage,
@@ -470,7 +471,9 @@ export async function POST(req: NextRequest) {
         // If extracted start date is in the past by > 1 hour, shift forward to future
         if (parsedTime < Date.now() - 3600000) {
           console.log('[WhatsApp Webhook] Extracted start_at is in past, adjusting forward:', extracted.start_at);
-          validStartAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+          validStartAt = isFlashVibe
+            ? new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
+            : new Date(Date.now() + 86400000).toISOString();
         } else {
           validStartAt = new Date(extracted.start_at).toISOString();
         }
@@ -553,13 +556,11 @@ export async function POST(req: NextRequest) {
     });
 
     const suretyScore = surety.score; // 0 to 100%
-    // Events created directly via WhatsApp bot are instantly approved and live
-    const isAutoApproved = true;
-    const approvalStatus = 'approved';
-    const eventStatus = 'live';
-    const isPublic = true;
+    const isAutoApproved = surety.autoApproved;
+    const approvalStatus = isAutoApproved ? 'approved' : 'pending';
+    const eventStatus = isAutoApproved ? 'live' : 'draft';
+    const isPublic = isAutoApproved;
 
-    // Detect if user explicitly asked for a specific number of spots/people/players
     // Detect if user explicitly asked for a specific number of spots/people/players
     let requestedSpots: number | undefined = undefined;
     const spotsMatch =
@@ -581,7 +582,6 @@ export async function POST(req: NextRequest) {
     const hasExplicitSpots = Boolean(effectiveSpotsLimit);
 
     // Insert into Supabase `public.events`
-    // All events created via WhatsApp bot belong strictly to the Vibe Instant stream
     const insertPayload = {
       slug: finalSlug,
       title: extracted.title || 'Untitled Event',
@@ -596,7 +596,7 @@ export async function POST(req: NextRequest) {
         font: 'Inter',
         bg_style: 'solid',
         button_style: 'pill',
-        is_flash: true,
+        is_flash: isFlashVibe,
         created_via: 'bot',
         source_platform: 'whatsapp',
         flash_activity: flashActivity,
@@ -609,6 +609,12 @@ export async function POST(req: NextRequest) {
         missing_aspects: surety.missingAspects,
         approval_status: approvalStatus,
         admin_approved: isAutoApproved,
+        date_inferred: extracted.date_inferred,
+        time_inferred: extracted.time_inferred,
+        venue_inferred: extracted.venue_inferred,
+        city_inferred: extracted.city_inferred,
+        surety_score: suretyScore,
+        surety_tier: surety.tier,
         upi_id: extracted.upi_id,
         payment_instructions: extracted.payment_instructions,
         maps_url: extracted.maps_url,
@@ -639,8 +645,8 @@ export async function POST(req: NextRequest) {
         ask_dietary: false,
         ask_tshirt: false,
         waitlist_enabled: true,
-        is_flash: true,
-        confirmation_message: `You're confirmed for ${extracted.title || 'this flash vibe'}! Coordinate directly with host on WhatsApp.`,
+        is_flash: isFlashVibe,
+        confirmation_message: `You're confirmed for ${extracted.title || 'this event'}! Coordinate directly with host on WhatsApp.`,
       },
     };
 
@@ -743,9 +749,9 @@ export async function POST(req: NextRequest) {
             start_at: insertPayload.start_at,
             end_at: insertPayload.end_at,
             timezone: insertPayload.timezone,
-            capacity: insertPayload.capacity,
-            is_public: true,
-            status: 'live',
+            is_public: isPublic,
+            status: eventStatus,
+            confidence_score: suretyScore / 100,
             ai_generated: true,
             source_type: 'bot',
             source_platform: 'whatsapp',
@@ -782,15 +788,33 @@ export async function POST(req: NextRequest) {
       minute: '2-digit',
     });
 
+    const isDateInferred = Boolean(extracted.date_inferred);
+    const isTimeInferred = Boolean(extracted.time_inferred);
+    const isVenueInferred = Boolean(extracted.venue_inferred);
+
+    let timeNote = '';
+    if (isDateInferred && isTimeInferred) {
+      timeNote = ' _(Tentative - date & time not specified)_';
+    } else if (isDateInferred) {
+      timeNote = ' _(Tentative - date not specified)_';
+    } else if (isTimeInferred) {
+      timeNote = ' _(Tentative - start time not specified)_';
+    }
+
+    const venueNote = isVenueInferred ? ' _(Venue TBA)_' : '';
+
     const appUrl = getAppUrl();
     const liveEventUrl = `${appUrl}/${createdEventSlug}`;
     const liveReelUrl = `${appUrl}/vibes?event=${createdEventSlug}`;
 
-    const paymentInfoLine = extracted.upi_id || extracted.price_text
-      ? `💳 *Payment:* ${extracted.price_text || `UPI ${extracted.upi_id}`}\n`
+    const paymentInfoLine = extracted.price_text || extracted.upi_id
+      ? `💳 *Payment:* ${extracted.price_text || 'Free Entry'}${extracted.upi_id ? ` (UPI: ${extracted.upi_id})` : ''}\n`
       : '';
+    const spotsLabel = ['cricket', 'badminton', 'pickleball', 'football', 'sports'].includes(flashActivity)
+      ? 'players'
+      : 'spots';
     const spotsInfoLine = effectiveSpotsLimit
-      ? `👥 *Capacity:* ${extracted.attendees_list?.length ? `${extracted.attendees_list.length}/` : ''}${effectiveSpotsLimit} players\n`
+      ? `👥 *Capacity:* ${extracted.attendees_list?.length ? `${extracted.attendees_list.length}/` : ''}${effectiveSpotsLimit} ${spotsLabel}\n`
       : '';
     const mapsInfoLine = extracted.maps_url
       ? `🗺️ *Maps:* ${extracted.maps_url}\n`
@@ -801,14 +825,14 @@ export async function POST(req: NextRequest) {
     if (isAutoApproved) {
       if (isFlashVibe) {
         confirmationMsg =
-          `⚡ *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
+          `⚡ *YOUR FLASH VIBE IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
           `🔥 *${createdEventTitle}*\n` +
-          `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-          `🕒 ${dateStr}\n` +
+          `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
+          `🕒 ${dateStr} IST${timeNote}\n` +
           paymentInfoLine +
           spotsInfoLine +
           mapsInfoLine +
-          `\n✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
+          `\n✅ *Auto-Approved:* High completeness surety score (${suretyScore}% Surety)\n\n` +
           `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
           `🌐 *Full Event & RSVP Pass:*\n${liveEventUrl}\n\n` +
           `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
@@ -816,12 +840,12 @@ export async function POST(req: NextRequest) {
         confirmationMsg = 
           `🎉 *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE!* (${suretyScore}% Surety)\n\n` +
           `📌 *${createdEventTitle}*\n` +
-          `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-          `🕒 ${dateStr}\n` +
+          `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
+          `🕒 ${dateStr} IST${timeNote}\n` +
           paymentInfoLine +
           spotsInfoLine +
           mapsInfoLine +
-          `\n✅ *Auto-Approved:* Full event details verified (${suretyScore}% Surety)\n\n` +
+          `\n✅ *Auto-Approved:* High completeness surety score (${suretyScore}% Surety)\n\n` +
           `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
           `💬 _Guests who click "Ask Organizer" on this page will message you directly here on WhatsApp!_`;
       }
@@ -831,15 +855,16 @@ export async function POST(req: NextRequest) {
         : '• Place / venue details not fully specified';
 
       confirmationMsg =
-        `⏳ *EVENT SUBMITTED FOR ADMIN APPROVAL* (${suretyScore}% Surety)\n\n` +
+        `⏳ *EVENT SUBMITTED FOR ADMIN APPROVAL* (${suretyScore}% Surety - ${surety.tier})\n\n` +
         `📌 *${createdEventTitle}*\n` +
-        `📍 ${insertPayload.location_name}, ${insertPayload.city}\n` +
-        `🕒 ${dateStr}\n` +
+        `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
+        `🕒 ${dateStr} IST${timeNote}\n` +
         paymentInfoLine +
         spotsInfoLine +
         mapsInfoLine +
         `\n⚠️ *Aspects Not Given By User:* \n${missingList}\n\n` +
-        `🛡️ _Because event surety is under 90%, our team has queued your event for admin approval. Once approved, it will be published live!_\n\n` +
+        `🛡️ *Status: Pending Admin Review*\n` +
+        `_Because event completeness is under 90% (${suretyScore}%), our curation team has queued your event for quick admin review. Once approved, it will be published live!_\n\n` +
         `🔗 *Review Draft Preview:*\n${liveEventUrl}`;
     }
 
