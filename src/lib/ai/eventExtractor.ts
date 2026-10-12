@@ -84,17 +84,20 @@ export function detectCityFromText(text: string): { name: string; state?: string
   if (/\b(lalghati|mp nagar|new market|arera|kolar|db mall|bhojpur)\b/i.test(lower)) {
     return { name: 'Bhopal', state: 'Madhya Pradesh' };
   }
-  if (/\b(bandra|andheri|juhu|worli|powai|dadar|colaba|lower parel|chembur|navi mumbai|thane)\b/i.test(lower)) {
+  if (/\b(bandra|andheri|juhu|worli|powai|dadar|colaba|lower parel|chembur|navi mumbai|thane|malad|borivali|bkc|ghatkopar|goregaon|kandivali|santacruz|vile parle|khar|matunga|mahim|marine lines|nariman point)\b/i.test(lower)) {
     return { name: 'Mumbai', state: 'Maharashtra' };
   }
-  if (/\b(koramangala|indiranagar|whitefield|hsr|bellandur|jayanagar|mg road)\b/i.test(lower)) {
+  if (/\b(koramangala|indiranagar|whitefield|hsr|bellandur|jayanagar|mg road|marathahalli|jp nagar|electronic city|sarjapur|hebbal|malleshwaram|church street|cubbon|btm|btm layout|indira nagar|hsr layout)\b/i.test(lower)) {
     return { name: 'Bengaluru', state: 'Karnataka' };
   }
-  if (/\b(koregaon park|kothrud|viman nagar|baner|wakad|hinjewadi|shivajinagar|aundh|magarpatta|hadapsar|senapati bapat)\b/i.test(lower)) {
+  if (/\b(nibm|salunke vihar|wanowrie|kondhwa|camp|deccan|fc road|karve nagar|bavdhan|pashan|swargate|kalyani nagar|yerwada|balewadi|vimannagar|khadki|koregaon park|kothrud|viman nagar|baner|wakad|hinjewadi|shivajinagar|aundh|magarpatta|hadapsar|senapati bapat)\b/i.test(lower)) {
     return { name: 'Pune', state: 'Maharashtra' };
   }
-  if (/\b(cp|connaught place|hauz khas|saket|gurugram|gurgaon|noida|cyber hub)\b/i.test(lower)) {
+  if (/\b(cp|connaught place|hauz khas|saket|gurugram|gurgaon|noida|cyber hub|gk|greater kailash|vasant kunj|dwarka|aerocity|rohini|pitampura|janakpuri|dlf)\b/i.test(lower)) {
     return { name: 'Delhi NCR', state: 'Delhi' };
+  }
+  if (/\b(gachibowli|hitec city|jubilee hills|banjara hills|kondapur|madhapur|kukatpally|begumpet|somajiguda|charminar)\b/i.test(lower)) {
+    return { name: 'Hyderabad', state: 'Telangana' };
   }
 
   return null;
@@ -373,15 +376,15 @@ export function detectSubtopicFromText(text: string): string | null {
 
 export function detectCategoryFromText(text: string): EventCategory {
   const lower = text.toLowerCase();
+  if (lower.match(/\b(pickleball|pickle ball|badminton|tennis|squash|football|cricket|turf|futsal|basketball|volleyball|fitness|workout|gym|marathon|run|running|cycl|5k|10k|sports?|tournament|match)\b/)) return 'fitness';
   if (lower.match(/\b(yoga|meditation|breathwork|healing|pranayama|mindfulness|pilates)\b/)) return 'wellness';
-  if (lower.match(/\b(hackathon|code|coding|developer|ai|pitch|founder|demo day|web3|crypto|software|startup|tech)\b/)) return 'tech';
+  if (lower.match(/\b(hackathon|code|coding|developer|\bai\b|genai|llm|pitch|founder|demo day|web3|crypto|software|startup|tech|technology)\b/)) return 'tech';
   if (lower.match(/\b(comedy|standup|stand-up|open mic|comic|laugh|roast)\b/)) return 'comedy';
   if (lower.match(/\b(concert|band|gig|dj|music|acoustic|live music|techno|sufi|singing)\b/)) return 'music';
   if (lower.match(/\b(club|nightclub|party|cocktail|pub crawl|dj night|bar night|afterparty)\b/)) return 'nightlife';
   if (lower.match(/\b(workshop|masterclass|pottery|craft|origami|baking|cooking class|diy)\b/)) return 'workshop';
   if (lower.match(/\b(poetry|shayari|ghazal|spoken word|storytelling|kavi|book club|literature)\b/)) return 'poetry';
   if (lower.match(/\b(art|painting|canvas|gallery|sculpture|sketching|exhibition)\b/)) return 'art';
-  if (lower.match(/\b(marathon|run|running|cycl|5k|10k|football|cricket|badminton|pickleball|tennis|fitness|workout)\b/)) return 'fitness';
   if (lower.match(/\b(garba|dandiya|diwali|navratri|holi|festival|carnival|mela)\b/)) return 'festival';
   if (lower.match(/\b(chess|board game|boardgame|catan|poker|trivia|quiz|esports|bgmi)\b/)) return 'gaming';
   if (lower.match(/\b(theatre|theater|play|drama|natak|monologue|acting)\b/)) return 'theatre';
@@ -867,13 +870,25 @@ CRITICAL ANTI-HALLUCINATION & EXTRACTION RULES:
 1. NEVER INVENT OR HALLUCINATE MISSING DATA:
    - If NO specific date or time is mentioned in the input, set "start_at": null, "end_at": null, and "date_inferred": true. DO NOT invent arbitrary future dates or times!
    - If NO venue or place is mentioned in the input, set "venue_name": null and "venue_inferred": true. NEVER output "TBA", "Venue TBA", or generic city placeholders!
-   - If NO city is mentioned in the input, set "city": null and "city_inferred": true. (Note: Famous neighborhoods map to cities: Aundh/Baner/Kothrud -> Pune, Bandra/Andheri -> Mumbai, Koramangala/Indiranagar -> Bengaluru).
+   - If NO city or locality is mentioned in the input, set "city": null and "city_inferred": true. (Note: Famous neighborhoods map to cities: NIBM/Aundh/Baner/Kothrud/Koregaon Park/Viman Nagar -> Pune, Bandra/Andheri/Juhu/BKC/Colaba -> Mumbai, Koramangala/Indiranagar/HSR/Whitefield -> Bengaluru, Gachibowli/Hitec City/Jubilee Hills -> Hyderabad, CP/Saket/Gurugram/Noida -> Delhi NCR). If any of these localities are mentioned in the venue or text, set "city" to the matching city and set "city_inferred": false.
    - If NO ticket price is mentioned, set "price_text": null and "price_inferred": true. NEVER output "Free Entry" unless explicitly stated!
    - If the user prompt is brief, vague, or a command like "new event", "create event", "event", "test": set "is_incomplete": true, "confidence_score": 0.1, and "title": null.
-2. TITLE: Extract the EXACT main event headline (e.g. "*Badminton*" -> "Badminton"). If the text does not contain a real title, set "title": null.
+2. TITLE: Extract the EXACT main event headline (e.g. "*Badminton*" -> "Badminton", "Pickle Mexicano" -> "Pickle Mexicano"). If the text does not contain a real title, set "title": null.
 3. VENUE & CITY: Extract the real venue name (hall, club, cafe, turf, ground, arena) and city.
-4. DATE & TIME: If stated (e.g. "11th October, 2026", "8 to 10 AM"), calculate exact ISO timestamps with timezone +05:30 (start_at: "2026-10-11T08:00:00+05:30", end_at: "2026-10-11T10:00:00+05:30").
-5. PRICE & UPI PAYMENTS:
+   - Common patterns like "Where: [Venue], [Area]" (e.g. "Where: Pickle Haus Arena, NIBM" or "Where: Subko, Bandra"):
+     - "venue_name": "Pickle Haus Arena"
+     - "location_address": "NIBM, Pune, Maharashtra"
+     - "city": "Pune" (NIBM is in Pune)
+     - "venue_inferred": false
+     - "city_inferred": false
+4. DATE & TIME: If stated (e.g. "14th Oct", "Wednesday, 14th Oct", "7:30-10PM", "8 to 10 AM"):
+   - Calculate exact ISO timestamps with timezone +05:30 (e.g. start_at: "2026-10-14T19:30:00+05:30", end_at: "2026-10-14T22:00:00+05:30").
+   - Set "date_inferred": false and "time_inferred": false.
+   - For evening times like "7:30-10PM", 7:30 is 19:30 IST (+05:30), NOT 2:00 PM!
+5. CATEGORY SELECTION:
+   - If the event is pickleball, badminton, tennis, football, cricket, tournament, or match: set "category": "fitness". NEVER categorize sports matches or games as "tech"!
+   - Set "category": "tech" ONLY for software, coding, AI, hackathons, or tech startup demos.
+6. PRICE & UPI PAYMENTS:
    - If an entry fee, slot charge, or payment is mentioned (e.g. "Please pay 200/- to confirm your slot on the above QR code or UPI (8698030366@ybl) Cash not allowed"), extract:
      - "ticket_price": 200
      - "price_text": "₹200 per slot (UPI: 8698030366@ybl)"
@@ -1098,13 +1113,26 @@ export function parseEventDeterministic(text: string): {
     }
   }
 
-  // 3. Extract Venue e.g. "Location - *Sportygen Badminton Arena - Aundh*", "Venue: Subko Cafe"
-  const locationPrefixMatch = cleanInput.match(/(?:location|venue|place|arena|turf|ground)\s*[:-]\s*([^\n\(\,]+)/i);
+  // 3. Extract Venue e.g. "Location - *Sportygen Badminton Arena - Aundh*", "Venue: Subko Cafe", "Where: Pickle Haus Arena, NIBM"
+  const locationPrefixMatch = cleanInput.match(/(?:location|venue|place|arena|turf|ground|where|spot|stadium|court|hall)\s*[:-]\s*([^\n\(\)]+)/i);
   const atVenueMatch = cleanInput.match(/\bat\s+(?!\d{1,2}(?::\d{2})?\s*(?:am|pm)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
   const inVenueMatch = cleanInput.match(/\bin\s+(?!\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b)([A-Za-z0-9\s&'-]+?)(?:\s+(?:at|on|in|from|dated|named|called|timing|\.|\,)|$)/i);
 
   if (locationPrefixMatch && locationPrefixMatch[1].trim()) {
-    venue = locationPrefixMatch[1].trim().replace(/^\*+|\*+$/g, '');
+    const rawLoc = locationPrefixMatch[1].trim().replace(/^\*+|\*+$/g, '');
+    const commaParts = rawLoc.split(',').map((s) => s.trim()).filter(Boolean);
+    if (commaParts.length >= 2) {
+      venue = commaParts[0];
+      const localityPart = commaParts.slice(1).join(', ');
+      const locCity = detectCityFromText(localityPart);
+      if (locCity) {
+        city = locCity.name;
+        state = locCity.state || state;
+        cityInferred = false;
+      }
+    } else {
+      venue = rawLoc;
+    }
     if (!isGenericEventVenue(venue, city)) {
       venueInferred = false;
     }
@@ -1183,10 +1211,12 @@ export function parseEventDeterministic(text: string): {
   const upiId = upiMatch ? upiMatch[1] : undefined;
 
   // 7. Price & Payment Extraction
-  const priceMatch = cleanInput.match(/(?:pay|fee|cost|charges?|price|slot)[:\s-]*(\d+)\s*(?:\/-|\/|\s*rs|\s*inr)?/i);
+  const priceMatch = cleanInput.match(/(?:pay|fee|cost|charges?|price|slot|how much|entry(?:\s+fee)?)\s*[:=-]?\s*(?:inr|rs\.?|₹)?\s*(\d+)/i);
   const ticketPrice = priceMatch ? parseInt(priceMatch[1], 10) : undefined;
   const priceText = ticketPrice
-    ? (upiId ? `₹${ticketPrice} per slot (UPI: ${upiId})` : `₹${ticketPrice}`)
+    ? (upiId ? `₹${ticketPrice} per slot (UPI: ${upiId})` : `INR ${ticketPrice} only`)
+    : /free entry|free/i.test(cleanInput)
+    ? 'Free Entry'
     : undefined;
 
   let paymentInstructions: string | undefined = undefined;
@@ -1195,7 +1225,7 @@ export function parseEventDeterministic(text: string): {
   }
 
   // 8. Capacity Extraction
-  const capMatch = cleanInput.match(/(?:close|limit|capped|max|capacity)\s+(?:at|to|of)?\s*(\d+)\s*(?:players?|spots?|people|members?)/i);
+  const capMatch = cleanInput.match(/(?:close|limit|capped|max|capacity|total\s+slots?|slots?)\s*(?:at|to|of|:)?\s*(\d+)\s*(?:players?|spots?|people|members?|only)?/i);
   const capacity = capMatch ? parseInt(capMatch[1], 10) : undefined;
 
   // 9. Rules Extraction
@@ -1215,7 +1245,17 @@ export function parseEventDeterministic(text: string): {
 
   // Clean Fallback Title if not yet found
   if (!title) {
-    title = 'Badminton';
+    const firstLine = cleanInput.split('\n')[0].trim();
+    const cleanedHeadline = firstLine
+      .replace(/\s+(?:this|on|at|every)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b.*/i, '')
+      .replace(/\s*\(.*?\)/g, '')
+      .replace(/^\*+|\*+$/g, '')
+      .trim();
+    if (cleanedHeadline.length >= 3 && cleanedHeadline.length <= 60 && !isGenericEventTitle(cleanedHeadline)) {
+      title = cleanedHeadline;
+    } else {
+      title = 'Community Gathering';
+    }
   }
 
   title = capitalizeWords(title);
@@ -1385,7 +1425,13 @@ Page Content Excerpt: ${scraped.bodySnippet || 'None'}
           (parsed.city && parsed.city.toLowerCase() !== 'unknown' ? parsed.city : null) ||
           scrapedCity ||
           (deterministicData.city_inferred ? 'Mumbai' : deterministicData.city);
-        const cityIsInferred = !cityDetected && !scrapedCity && (parsed.city_inferred || deterministicData.city_inferred);
+        const cityExplicitlyGiven = Boolean(
+          cityDetected ||
+          scrapedCity ||
+          (parsed.city && parsed.city_inferred === false && parsed.city.toLowerCase() !== 'unknown' && parsed.city.toLowerCase() !== 'india') ||
+          (!deterministicData.city_inferred && deterministicData.city)
+        );
+        const cityIsInferred = !cityExplicitlyGiven;
 
         // Venue validation: reject generic venues
         const candidateVenue = scrapedVenue || parsed.venue_name || deterministicData.venue_name;

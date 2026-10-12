@@ -46,11 +46,13 @@ export async function GET(req: NextRequest) {
         try {
           const d = new Date(e.start_at);
           dateDisplay = d.toLocaleDateString('en-US', {
+            timeZone: 'Asia/Kolkata',
             month: 'short',
             day: 'numeric',
             year: 'numeric',
           });
           timeDisplay = d.toLocaleTimeString('en-US', {
+            timeZone: 'Asia/Kolkata',
             hour: 'numeric',
             minute: '2-digit',
           });

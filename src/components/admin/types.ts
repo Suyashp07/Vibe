@@ -66,13 +66,17 @@ export function toDateInputValue(val?: string | null, startAt?: string | null): 
   if (startAt) {
     try {
       const d = new Date(startAt);
-      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+      if (!isNaN(d.getTime())) {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
+      }
     } catch {}
   }
   if (val) {
     try {
       const d = new Date(val);
-      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+      if (!isNaN(d.getTime())) {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
+      }
     } catch {}
   }
   return '';
@@ -84,9 +88,12 @@ export function toTimeInputValue(val?: string | null, startAt?: string | null): 
     try {
       const d = new Date(startAt);
       if (!isNaN(d.getTime())) {
-        const h = String(d.getHours()).padStart(2, '0');
-        const m = String(d.getMinutes()).padStart(2, '0');
-        return `${h}:${m}`;
+        return d.toLocaleTimeString('en-GB', {
+          timeZone: 'Asia/Kolkata',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
       }
     } catch {}
   }
@@ -104,17 +111,18 @@ export function toTimeInputValue(val?: string | null, startAt?: string | null): 
 }
 
 export function getCategoryValue(cat?: string | null): string {
-  if (!cat) return 'Tech & AI';
+  if (!cat) return 'Social & Mixers';
   const match = CATEGORIES.find(
     (c) => c.toLowerCase() === cat.toLowerCase() || cat.toLowerCase().includes(c.toLowerCase())
   );
   if (match) return match;
+  if (/pickleball|tennis|badminton|cricket|football|sports|fitness|workout|marathon|run/i.test(cat)) return 'Wellness & Fitness';
   if (/music|concert|dj|band|singer|live/i.test(cat)) return 'Music & Concerts';
-  if (/tech|ai|code|hackathon|developer|crypto/i.test(cat)) return 'Tech & AI';
+  if (/tech|ai|code|hackathon|developer|crypto|software/i.test(cat)) return 'Tech & AI';
   if (/comedy|standup|laugh/i.test(cat)) return 'Comedy & Standup';
   if (/party|nightlife|mixer|social/i.test(cat)) return 'Social & Mixers';
   if (/art|design|creative|photo/i.test(cat)) return 'Design & Creative';
-  if (/yoga|fitness|wellness|run|marathon|badminton|sports/i.test(cat)) return 'Wellness & Fitness';
+  if (/yoga|fitness|wellness/i.test(cat)) return 'Wellness & Fitness';
   if (/food|drink|chai|coffee|dinner/i.test(cat)) return 'Food & Drinks';
   return 'Other';
 }

@@ -354,16 +354,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Send instant progress acknowledgment
-    if (replyTarget) {
-      const progressMsg = isFlashVibe
-        ? '⚡ *Creating your Flash Vibe with Gemini AI...* Posting directly to Vibe Instant!'
-        : '🔍 *Analyzing your event with Gemini AI...* Hang tight!';
-      sendWhatsAppReply(replyTarget, progressMsg).catch((err) => {
-        console.warn('[WhatsApp Webhook] Progress reply notice:', err.message);
-      });
-    }
-
+    // Proceed directly to event extraction without preliminary noise
     let extracted: ExtractedEventData;
     let coverImageUrl: string | undefined = payload.imageUrl || undefined;
 
@@ -884,13 +875,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       handledBy: 'event_creation',
-      replyText: replyDispatched ? undefined : confirmationMsg,
-      replyDispatched,
-      event: {
-        slug: createdEventSlug,
-        title: createdEventTitle,
-        url: liveEventUrl,
-      },
+      // When already dispatched directly via bridge /send-message, omit event object
+      // to prevent older bridge daemons from firing fallback replyToSend
+      event: replyDispatched
+        ? undefined
+        : {
+            slug: createdEventSlug,
+            title: createdEventTitle,
+            url: liveEventUrl,
+          },
       eventDetails: {
         slug: createdEventSlug,
         title: createdEventTitle,

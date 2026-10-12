@@ -120,19 +120,21 @@ async function runWhatsAppEventCreationTests() {
     console.log('[Webhook Response]:', jsonCreate);
     assert(jsonCreate.ok === true, 'Webhook returned ok');
     assert(jsonCreate.handledBy === 'event_creation', 'Handled by event_creation pipeline');
-    assert(jsonCreate.event?.slug, 'Event slug generated');
-    assert(jsonCreate.event?.url, 'Live event URL returned');
+    const eventUrl = jsonCreate.eventDetails?.url || jsonCreate.event?.url;
+    const eventSlug = jsonCreate.eventDetails?.slug || jsonCreate.event?.slug;
+    assert(eventSlug, 'Event slug generated');
+    assert(eventUrl, 'Live event URL returned');
 
-    // Verify confirmation message sent back to user's WhatsApp
-    assert(sentMessages.length >= 2, 'Sent analysis progress + final live link message');
+    // Verify confirmation message sent back to user's WhatsApp (clean single message)
+    assert(sentMessages.length >= 1, 'Sent final live link confirmation message');
     const finalMsg = sentMessages[sentMessages.length - 1];
     assert(finalMsg.to.includes(testPhone), 'Sent to organizer phone number');
     console.log('Final sent message:\n', finalMsg.text);
     assert(finalMsg.text.includes('VIBE') || finalMsg.text.includes('APPROVAL'), 'Contains confirmation header');
-    assert(finalMsg.text.includes(jsonCreate.event.url), 'Contains clickable live event URL');
+    assert(finalMsg.text.includes(eventUrl), 'Contains clickable live event URL');
     assert(finalMsg.text.includes('Subko'), 'Contains venue extracted by AI');
     console.log('✅ [PASS] Event successfully created from WhatsApp text blurb!');
-    console.log('   Live URL sent to organizer:', jsonCreate.event.url);
+    console.log('   Live URL sent to organizer:', eventUrl);
 
     // -------------------------------------------------------------
     // TEST 3: Host ↔ Guest Quoted Reply Still Works (No Regression)
