@@ -614,13 +614,13 @@ export async function POST(req: NextRequest) {
     const appUrl = getAppUrl(req);
     const adminEventsUrl = `${appUrl}/admin/events`;
 
+    const liveLink = `${appUrl}/${finalSlug}`;
     let previewText: string;
     let inlineKeyboard: any[];
 
     if (isAutoApproved) {
       if (isFlashVibe) {
         const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
-        const liveLink = `${appUrl}/${finalSlug}`;
         previewText = `⚡ <b>YOUR FLASH VIBE IS AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
           `🔥 <b>${extracted.title}</b>\n` +
           `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
@@ -637,7 +637,6 @@ export async function POST(req: NextRequest) {
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       } else {
-        const liveLink = `${appUrl}/${finalSlug}`;
         previewText = `🎉 <b>EVENT AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
           `📌 <b>Title:</b> ${extracted.title}\n` +
           `🏷️ <b>Category:</b> ${detectedCategory}\n` +
@@ -659,14 +658,16 @@ export async function POST(req: NextRequest) {
         ? surety.missingAspects.map(a => `• ${a}`).join('\n')
         : '• Specific venue place or start time not given';
 
-      previewText = `⏳ <b>EVENT SUBMITTED FOR ADMIN APPROVAL</b> (${suretyPercent}% Surety)\n\n` +
+      previewText = `⏳ <b>EVENT DRAFT CREATED — AWAITING ADMIN APPROVAL</b>\n\n` +
+        `Your event has been received, but requires admin approval before it can go live.\n\n` +
         `📌 <b>Title:</b> ${extracted.title}\n` +
-        `🗓️ <b>Date:</b> ${dateStr} IST\n` +
+        `🗓️ <b>Schedule:</b> ${dateStr} IST\n` +
         `📍 <b>Venue:</b> ${extracted.venue_name || 'Not given'} (${detectedCity})\n` +
         `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n\n` +
-        `⚠️ <b>Aspects Not Given By User:</b>\n${missingList}\n\n` +
-        `🛡️ <b>STATUS: PENDING ADMIN APPROVAL</b>\n` +
-        `<i>Because event surety is under 90%, it requires Admin Approval before going live. An admin can review and approve it with 1 click.</i>`;
+        `🔍 <b>Details Needed to Go Live:</b> (${suretyPercent}% Completeness)\n${missingList}\n\n` +
+        `🛡️ <b>Why is Admin Approval Required?</b>\n` +
+        `<i>Because some key event details are missing or unverified, our team reviews each draft to keep Vibe authentic. Once approved by an admin, your event will automatically be published live!</i>\n\n` +
+        `🔗 <b>Draft Preview Link:</b> <a href="${liveLink}">${liveLink}</a>`;
 
       inlineKeyboard = [
         [{ text: '🛡️ Review & Approve in Admin Center ↗', url: adminEventsUrl }],

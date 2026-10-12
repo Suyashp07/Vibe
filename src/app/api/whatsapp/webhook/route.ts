@@ -855,17 +855,19 @@ export async function POST(req: NextRequest) {
         : '• Place / venue details not fully specified';
 
       confirmationMsg =
-        `⏳ *EVENT SUBMITTED FOR ADMIN APPROVAL* (${suretyScore}% Surety - ${surety.tier})\n\n` +
-        `📌 *${createdEventTitle}*\n` +
-        `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
-        `🕒 ${dateStr} IST${timeNote}\n` +
+        `⏳ *EVENT DRAFT CREATED — AWAITING ADMIN APPROVAL*\n\n` +
+        `Your event has been received, but requires admin approval before it can go live.\n\n` +
+        `📌 *Event:* ${createdEventTitle}\n` +
+        `📍 *Location:* ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
+        `🕒 *Schedule:* ${dateStr} IST${timeNote}\n` +
         paymentInfoLine +
         spotsInfoLine +
         mapsInfoLine +
-        `\n⚠️ *Aspects Not Given By User:* \n${missingList}\n\n` +
-        `🛡️ *Status: Pending Admin Review*\n` +
-        `_Because event completeness is under 90% (${suretyScore}%), our curation team has queued your event for quick admin review. Once approved, it will be published live!_\n\n` +
-        `🔗 *Review Draft Preview:*\n${liveEventUrl}`;
+        `\n🔍 *Details Needed to Go Live:* (${suretyScore}% Completeness)\n${missingList}\n\n` +
+        `🛡️ *Why is Admin Approval Required?*\n` +
+        `Because some key event details are missing or unverified, our team reviews each draft to keep Vibe authentic. Once approved by an admin, your event will automatically be published live!\n\n` +
+        `🔗 *Draft Preview Link:*\n${liveEventUrl}\n\n` +
+        `💡 _You can share more details anytime or wait for our team to approve your event!_`;
     }
 
     console.log('[WhatsApp Webhook] Event successfully created via WhatsApp:', {
