@@ -15,15 +15,34 @@ import {
   Lock,
   MessageSquare,
   SlidersHorizontal,
+  Users,
 } from 'lucide-react';
 import { EventItem, RSVPItem, EventAnnouncement } from '@/types';
-import { getRSVPsByEvent, getAnnouncements, subscribeToStore } from '@/lib/store';
+import { getRSVPsByEvent, getAnnouncements, subscribeToStore, syncRSVPsWithSupabase } from '@/lib/store';
 import { getLocalAuthSession, useAuth } from '@/lib/auth';
 import RSVPForm from '@/components/ui/RSVPForm';
 import ShareEventModal from '@/components/events/ShareEventModal';
 import AnnouncementBanner from '@/components/communication/AnnouncementBanner';
 import AuthModal from '@/components/auth/AuthModal';
 import EventConversationModal from '@/components/communication/EventConversationModal';
+
+const AVATAR_COLORS = [
+  'bg-amber-600/90',
+  'bg-rose-600/90',
+  'bg-teal-600/90',
+  'bg-indigo-600/90',
+  'bg-purple-600/90',
+  'bg-emerald-600/90',
+];
+
+function getAttendeeInitials(name?: string) {
+  if (!name) return 'V';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
 
 function ResponsiveEventPoster({ src, title }: { src?: string; title: string }) {
   const [currentSrc, setCurrentSrc] = useState(src);
@@ -121,17 +140,44 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
     setShowConversationModal(true);
   };
 
+  const [eventRsvps, setEventRsvps] = useState<RSVPItem[]>(() => getRSVPsByEvent(event.id));
+
+  // Sync real-time RSVPs from Supabase and listen to local updates
+  useEffect(() => {
+    const refreshRsvps = () => {
+      setEventRsvps(getRSVPsByEvent(event.id));
+    };
+    refreshRsvps();
+    syncRSVPsWithSupabase().then(() => refreshRsvps()).catch(() => {});
+    const unsub = subscribeToStore(refreshRsvps);
+    return () => unsub();
+  }, [event.id]);
+
+  const confirmedRsvps = eventRsvps.filter((r) => r.status === 'confirmed');
+  const confirmedCount = confirmedRsvps.length;
+  const dynamicGoingCount = Math.max(
+    confirmedCount,
+    event.spots_filled || (event.theme as any)?.spots_filled || 0
+  );
+
+  const isSampleEvent = Boolean(
+    event.id?.startsWith('sample-') ||
+    event.id?.startsWith('sample_') ||
+    event.slug?.startsWith('sample-') ||
+    (event as any).isSample
+  );
+
   // Check if current attendee already has a confirmed RSVP for this event
   useEffect(() => {
     const session = getLocalAuthSession();
-    if (session?.email) {
-      const allRsvps = getRSVPsByEvent(event.id);
-      const match = allRsvps.find((r) => r.email?.toLowerCase() === session.email?.toLowerCase());
+    const userEmail = (session?.email || user?.email || profile?.email || '').toLowerCase().trim();
+    if (userEmail) {
+      const match = confirmedRsvps.find((r) => (r.email || '').toLowerCase().trim() === userEmail);
       if (match) {
         setConfirmedRsvp(match);
       }
     }
-  }, [event.id]);
+  }, [confirmedRsvps, user?.email, profile?.email]);
 
   useEffect(() => {
     setAnnouncements(getAnnouncements(event.id));
@@ -140,9 +186,6 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
     });
     return () => unsub();
   }, [event.id]);
-
-  const rsvps = getRSVPsByEvent(event.id);
-  const confirmedCount = rsvps.filter((r) => r.status === 'confirmed').length;
 
   const isExternal = event.source_type === 'external';
   const rawTicketUrl = event.external_ticket_url?.trim();
@@ -425,32 +468,43 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               </button>
             )}
 
-            <div className="text-[11px] text-white/40 text-center">
-              Sample event · No payment or booking
-            </div>
+            {isSampleEvent && (
+              <div className="text-[11px] text-white/40 text-center">
+                Sample preview · No payment or booking required
+              </div>
+            )}
 
             <div className="border-t border-white/10" />
 
-            {/* Attendees Social Proof */}
-            <div className="flex items-center gap-2.5">
-              <div className="flex -space-x-2">
-                <div className="w-6 h-6 rounded-full bg-amber-600/90 border-2 border-[#0D0D10] text-[9px] font-bold text-white flex items-center justify-center">
-                  AG
+            {/* Dynamic Attendees Social Proof */}
+            {dynamicGoingCount > 0 ? (
+              <div className="flex items-center gap-2.5">
+                <div className="flex -space-x-2">
+                  {confirmedRsvps.slice(0, 3).map((r, i) => (
+                    <div
+                      key={r.id || i}
+                      className={`w-6 h-6 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} border-2 border-[#0D0D10] text-[9px] font-bold text-white flex items-center justify-center shadow-xs`}
+                      title={`${r.name || 'Confirmed Guest'}`}
+                    >
+                      {getAttendeeInitials(r.name)}
+                    </div>
+                  ))}
+                  {dynamicGoingCount > Math.min(confirmedRsvps.length, 3) && (
+                    <div className="w-6 h-6 rounded-full bg-zinc-800 border-2 border-[#0D0D10] text-[9px] font-bold text-white/70 flex items-center justify-center shadow-xs">
+                      +{dynamicGoingCount - Math.min(confirmedRsvps.length, 3)}
+                    </div>
+                  )}
                 </div>
-                <div className="w-6 h-6 rounded-full bg-rose-600/90 border-2 border-[#0D0D10] text-[9px] font-bold text-white flex items-center justify-center">
-                  RK
-                </div>
-                <div className="w-6 h-6 rounded-full bg-teal-600/90 border-2 border-[#0D0D10] text-[9px] font-bold text-white flex items-center justify-center">
-                  NM
-                </div>
-                <div className="w-6 h-6 rounded-full bg-zinc-800 border-2 border-[#0D0D10] text-[9px] font-bold text-white/70 flex items-center justify-center">
-                  +00
-                </div>
+                <span className="text-xs font-medium text-white/70">
+                  {dynamicGoingCount} {dynamicGoingCount === 1 ? 'person' : 'people'} going
+                </span>
               </div>
-              <span className="text-xs font-medium text-white/70">
-                {Math.max(128, confirmedCount)} people going
-              </span>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-400/90">
+                <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Be the first to reserve a spot!</span>
+              </div>
+            )}
 
             {/* Secondary Buttons */}
             <div className="space-y-2.5">
