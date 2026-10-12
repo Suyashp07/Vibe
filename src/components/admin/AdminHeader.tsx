@@ -7,7 +7,8 @@ import {
   Link2,
   Plus,
   ExternalLink,
-  LogOut
+  LogOut,
+  Activity,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -38,6 +39,14 @@ export default function AdminHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin/analytics"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/20 text-xs font-semibold rounded-full transition-colors cursor-pointer"
+          >
+            <Activity className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+            <span className="hidden sm:inline">Analytics</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-600 text-white font-mono font-bold">LIVE</span>
+          </Link>
           <button
             onClick={onOpenUrlModal}
             className="flex items-center gap-1.5 px-3 py-1.5 border border-[#0A0A0A] text-[#0A0A0A] text-xs font-semibold rounded-full hover:bg-[#F8FAFC] transition-colors cursor-pointer"

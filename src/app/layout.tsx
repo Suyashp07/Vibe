@@ -44,6 +44,7 @@ import SmoothScroll from '@/components/common/SmoothScroll';
 import AmbientBackground from '@/components/common/AmbientBackground';
 import { ThemeProvider } from '@/components/common/ThemeContext';
 import SplashScreen from '@/components/common/SplashScreen';
+import PlatformTelemetry from '@/components/common/PlatformTelemetry';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -124,6 +125,7 @@ export default function RootLayout({
           </SmoothScroll>
           <PWARegister />
           <AutoLocationDetector />
+          <PlatformTelemetry />
         </ThemeProvider>
       </body>
     </html>

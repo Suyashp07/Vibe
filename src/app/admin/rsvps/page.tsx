@@ -13,6 +13,7 @@ import {
   Clock,
   ShieldCheck
 } from 'lucide-react';
+import AdminNavigation from '@/components/admin/AdminNavigation';
 
 export default function AdminRsvpsPage() {
   const [rsvps, setRsvps] = useState<any[]>([]);
@@ -81,7 +82,9 @@ export default function AdminRsvpsPage() {
   const checkedInCount = rsvps.filter((r) => r.checked_in).length;
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-12">
+      <AdminNavigation activeSection="rsvps" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
