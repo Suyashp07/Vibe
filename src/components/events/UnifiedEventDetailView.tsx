@@ -18,7 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import { EventItem, RSVPItem, EventAnnouncement } from '@/types';
-import { getRSVPsByEvent, getAnnouncements, subscribeToStore, syncRSVPsWithSupabase } from '@/lib/store';
+import { getRSVPsByEvent, getAnnouncements, subscribeToStore, syncRSVPsWithSupabase, isFlashVibeEvent } from '@/lib/store';
 import { getLocalAuthSession, useAuth } from '@/lib/auth';
 import RSVPForm from '@/components/ui/RSVPForm';
 import ShareEventModal from '@/components/events/ShareEventModal';
@@ -188,6 +188,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   }, [event.id]);
 
   const isExternal = event.source_type === 'external';
+  const isBotEvent = isFlashVibeEvent(event);
   const rawTicketUrl = event.external_ticket_url?.trim();
   const normalizedTicketUrl = rawTicketUrl
     ? rawTicketUrl.startsWith('http://') || rawTicketUrl.startsWith('https://')
@@ -426,14 +427,16 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 <span className="text-3xl font-black text-white font-sans">
                   {event.external_price_text || (isExternal ? 'Official Ticketing' : '₹499')}
                 </span>
-                {!isExternal && (
+                {!isExternal && !isBotEvent && (
                   <span className="text-xs text-white/50 font-normal">per person</span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-emerald-400/90 mt-2 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>1 guest pass · Instant confirmation</span>
-              </div>
+              {!isBotEvent && (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400/90 mt-2 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>1 guest pass · Instant confirmation</span>
+                </div>
+              )}
             </div>
 
             {/* CTA Button */}
@@ -448,6 +451,16 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 <span>Book Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'}</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </a>
+            ) : isBotEvent ? (
+              <button
+                onClick={handleAskHostClick}
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
+                title="Ask Organizer (Upcoming feature)"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Ask Organizer 💬</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
+              </button>
             ) : confirmedRsvp ? (
               <button
                 onClick={() => setShowRsvpModal(true)}
@@ -537,7 +550,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
       </div>
 
       {/* Clean RSVP Modal */}
-      {!isExternal && showRsvpModal && (
+      {!isExternal && !isBotEvent && showRsvpModal && (
         <div 
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
           onClick={(e) => {

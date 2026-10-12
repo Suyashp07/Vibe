@@ -834,8 +834,8 @@ export async function POST(req: NextRequest) {
           mapsInfoLine +
           `\n✅ *Auto-Approved:* High completeness surety score (${suretyScore}% Surety)\n\n` +
           `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
-          `🌐 *Full Event & RSVP Pass:*\n${liveEventUrl}\n\n` +
-          `📲 _Forward this link to your group or squad — friends can swipe to your card and tap "I'm In" to join in 1 second!_`;
+          `🌐 *Full Event Link:*\n${liveEventUrl}\n\n` +
+          `📲 _Forward this link to your group or squad to invite friends!_`;
       } else {
         confirmationMsg = 
           `🎉 *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE!* (${suretyScore}% Surety)\n\n` +

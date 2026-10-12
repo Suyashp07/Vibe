@@ -13,15 +13,13 @@ import {
   Users,
   X,
   Sparkles,
-  TicketCheck,
   Send,
   Loader2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem } from '@/types';
-import { isFlashVibeLiked, toggleFlashVibeLike, hasUserRSVP } from '@/lib/store';
+import { isFlashVibeLiked, toggleFlashVibeLike } from '@/lib/store';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
-import QuickJoinModal from '@/components/vibes/QuickJoinModal';
 import { useAuth } from '@/lib/auth';
 
 interface VibeReelCardProps {
@@ -49,12 +47,6 @@ export default function VibeReelCard({
     return typeof window !== 'undefined' ? isFlashVibeLiked(event.id, event.slug) : false;
   });
   const [connectHostOpen, setConnectHostOpen] = useState(false);
-  const [quickJoinOpen, setQuickJoinOpen] = useState(false);
-  const [hasRSVPd, setHasRSVPd] = useState<boolean>(() => {
-    const email = profile?.email?.trim().toLowerCase();
-    if (!email) return false;
-    return typeof window !== 'undefined' ? Boolean(hasUserRSVP(event.id, email) || hasUserRSVP(event.slug, email)) : false;
-  });
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
@@ -449,38 +441,27 @@ export default function VibeReelCard({
           </div>
         )}
 
-        {/* RSVP-Gated CTA: "I'm In" before RSVP, "Ask Host" after */}
+        {/* Action CTA: Ask Host & Details */}
         <div className="w-full pr-12 sm:pr-14 flex gap-2">
-          {!hasRSVPd ? (
-            /* Primary CTA: Quick Join / RSVP */
-            <button
-              type="button"
-              onClick={() => setQuickJoinOpen(true)}
-              className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#E8621A]/35 transition-all cursor-pointer"
-              title="Join this event"
-            >
-              <Sparkles className="w-4 h-4 text-white shrink-0" />
-              <span>I'm In ⚡</span>
-            </button>
-          ) : (
-            /* After RSVP: Show confirmed badge + unlocked chat */
-            <>
-              <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold shrink-0">
-                <TicketCheck className="w-4 h-4" />
-                <span>Joined</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setConnectHostOpen(true)}
-                className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#E8621A]/35 transition-all cursor-pointer"
-                title="Ask Host (Upcoming feature)"
-              >
-                <MessageSquare className="w-4 h-4 text-white shrink-0" />
-                <span>Ask Host 💬</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
-              </button>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => setConnectHostOpen(true)}
+            className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#E8621A]/35 transition-all cursor-pointer"
+            title="Ask Host (Upcoming feature)"
+          >
+            <MessageSquare className="w-4 h-4 text-white shrink-0" />
+            <span>Ask Host 💬</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDetailsOpen(true)}
+            className="py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md"
+            title="View Details"
+          >
+            <Info className="w-4 h-4 text-white/80 shrink-0" />
+            <span>Details</span>
+          </button>
         </div>
       </div>
 
@@ -553,33 +534,19 @@ export default function VibeReelCard({
           </div>
 
           <div className="pt-4 border-t border-white/10 flex items-center gap-3">
-            {!hasRSVPd ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setDetailsOpen(false);
-                  setQuickJoinOpen(true);
-                }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#E8621A]/30"
-              >
-                <Sparkles className="w-4 h-4 text-white" />
-                <span>I'm In ⚡ — Reserve My Spot</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setDetailsOpen(false);
-                  setConnectHostOpen(true);
-                }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#E8621A]/30"
-                title="Ask Host (Upcoming feature)"
-              >
-                <MessageSquare className="w-4 h-4 text-white" />
-                <span>Ask Host 💬</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setDetailsOpen(false);
+                setConnectHostOpen(true);
+              }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#E8621A]/30"
+              title="Ask Host (Upcoming feature)"
+            >
+              <MessageSquare className="w-4 h-4 text-white" />
+              <span>Ask Host 💬</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 text-white font-medium">Soon</span>
+            </button>
           </div>
         </div>
       )}
@@ -590,18 +557,6 @@ export default function VibeReelCard({
           ✅ Link copied to clipboard!
         </div>
       )}
-
-      {/* Quick Join / RSVP Modal */}
-      <QuickJoinModal
-        event={event}
-        isOpen={quickJoinOpen}
-        onClose={() => setQuickJoinOpen(false)}
-        onSuccess={() => {
-          setHasRSVPd(true);
-          setRealRsvpCount((prev) => (prev !== null ? prev + 1 : (event.spots_filled || 0) + 1));
-          setQuickJoinOpen(false);
-        }}
-      />
 
       {/* ========== COMMENTS DRAWER ========== */}
       {commentsOpen && (
@@ -714,16 +669,14 @@ export default function VibeReelCard({
         </div>
       )}
 
-      {/* Connect with Host Modal (only accessible after RSVP) */}
-      {hasRSVPd && (
-        <ConnectHostModal
-          event={event}
-          isOpen={connectHostOpen}
-          onClose={() => setConnectHostOpen(false)}
-          guestEmail={profile?.email}
-          guestName={profile?.name}
-        />
-      )}
+      {/* Connect with Host Modal */}
+      <ConnectHostModal
+        event={event}
+        isOpen={connectHostOpen}
+        onClose={() => setConnectHostOpen(false)}
+        guestEmail={profile?.email}
+        guestName={profile?.name}
+      />
     </div>
   );
 }

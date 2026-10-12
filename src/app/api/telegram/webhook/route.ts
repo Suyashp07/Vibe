@@ -627,13 +627,13 @@ export async function POST(req: NextRequest) {
           `🕒 ${dateStr} IST\n\n` +
           `✅ <i>Auto-Approved: All required details verified!</i>\n\n` +
           `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
-          `🌐 <b>Full Event & RSVP Pass:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
+          `🌐 <b>Full Event Page:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
           `📋 <b>Tap to copy link:</b> <code>${instantLink}</code>\n\n` +
-          `📲 <i>Forward this link to your squad — anyone can swipe to your card and tap "I'm In" to join!</i>`;
+          `📲 <i>Forward this link to your squad to invite friends!</i>`;
 
         inlineKeyboard = [
           [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
-          [{ text: '🌐 View Event & RSVP ↗', url: liveLink }],
+          [{ text: '🌐 View Event Page ↗', url: liveLink }],
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       } else {
