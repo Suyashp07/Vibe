@@ -146,7 +146,7 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
   // 2. Formulate stable, structured ticket serial & verified digital pass payload
   const { ticketSerial, passHash, verificationUrl } = useMemo(() => {
     const serial = getPassSerialNumber(currentRsvp, event);
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://vibe-seven-pied.vercel.app';
+    const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'https://vive.swaniki.com');
     const url = `${origin}/organizer/check-in?rsvpId=${encodeURIComponent(currentRsvp.id)}&eventId=${encodeURIComponent(event.id)}`;
 
     return { ticketSerial: serial, passHash: 'Verified Pass', verificationUrl: url };

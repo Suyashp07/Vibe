@@ -54,8 +54,10 @@ export const viewport: Viewport = {
   themeColor: '#0F172A',
 };
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vive.swaniki.com';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://vibe-seven-pied.vercel.app'),
+  metadataBase: new URL(appUrl.startsWith('http') ? appUrl : `https://${appUrl}`),
   title: 'Vibe by Swaniki — Whitelabel Event Network',
   description: 'Design, distribute, and collect RSVPs for boutique cultural gatherings, tech summits, and live mixers across India with AI verification.',
   manifest: '/manifest.json',

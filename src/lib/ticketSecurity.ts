@@ -67,7 +67,7 @@ export function generateDynamicQRPayload(rsvpId: string, eventId: string, now = 
   const hash = generateTicketHash(rsvpId, eventId, timeSlice);
   const token = `VIBE-${timeSlice.toString(36).toUpperCase()}-${hash}`;
 
-  const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://vibe-seven-pied.vercel.app');
+  const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'https://vive.swaniki.com'));
   const qrPayloadUrl = `${origin}/organizer/check-in?rsvpId=${encodeURIComponent(rsvpId)}&eventId=${encodeURIComponent(eventId)}&t=${timeSlice}&h=${hash}`;
 
   // Structured string compatible with direct scanner or URL scanning
