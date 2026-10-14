@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { verifyStaffSession } from '@/lib/adminAuth';
 import { ADMIN_EMAILS } from '@/lib/adminConstants';
 import { getTelemetrySummary } from '@/lib/telemetry';
+import { getLiveSuperadminRegistry } from '@/lib/superadminManager';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,8 +67,20 @@ export async function GET(req: NextRequest) {
       guest: profilesList.filter((p) => p.role === 'guest' || !p.role).length,
     };
 
+    // 3. Superadmin Access Accounts Directory
+    // Reconstruct live registry from audit_logs + profiles + dynamic grants, excluding revoked emails
+    const { superAdminsList, grantedEmails, revokedEmails } = await getLiveSuperadminRegistry(
+      supabase,
+      profilesList
+    );
+
     // Enrich registered IDs list with activity metrics
     const signedUpUsers = profilesList.map((p) => {
+      const cleanEmail = (p.email || '').toLowerCase().trim();
+      const isSuper =
+        !revokedEmails.has(cleanEmail) &&
+        (p.role === 'super_admin' || ADMIN_EMAILS.includes(cleanEmail) || grantedEmails.has(cleanEmail));
+
       const hostedEvents = eventsList.filter((e) => e.organizer_id === p.id).length;
       const passBookings = rsvpsList.filter((r) => r.email?.toLowerCase() === p.email?.toLowerCase()).length;
       return {
@@ -76,70 +89,13 @@ export async function GET(req: NextRequest) {
         name: p.name || 'Anonymous User',
         handle: p.handle || null,
         avatar_url: p.avatar_url || null,
-        role: p.role || 'guest',
+        role: isSuper ? 'super_admin' : (p.role || 'guest'),
         created_at: p.created_at,
         hosted_events_count: hostedEvents,
         rsvps_count: passBookings,
-        is_super_admin: p.role === 'super_admin' || ADMIN_EMAILS.includes((p.email || '').toLowerCase()),
+        is_super_admin: isSuper,
       };
     });
-
-    // 3. Superadmin Access Accounts Directory
-    // Combine Whitelist emails + Database Profiles with role='super_admin' + Dynamic grants
-    const dynamicSuperAdmins = Array.from(global.__vibeDynamicSuperAdmins || []);
-    const superAdminMap = new Map<string, {
-      email: string;
-      name?: string;
-      source: 'whitelist' | 'database' | 'granted';
-      isPrimaryFounder: boolean;
-      created_at?: string;
-      userId?: string;
-    }>();
-
-    // Whitelist emails
-    ADMIN_EMAILS.forEach((email) => {
-      const clean = email.toLowerCase().trim();
-      const matchedProfile = profilesList.find((p) => (p.email || '').toLowerCase() === clean);
-      superAdminMap.set(clean, {
-        email: clean,
-        name: matchedProfile?.name || 'Vibe Founding Member',
-        source: 'whitelist',
-        isPrimaryFounder: ['pandeysuyash100@gmail.com', 'suyashpersonal@gmail.com'].includes(clean),
-        created_at: matchedProfile?.created_at,
-        userId: matchedProfile?.id,
-      });
-    });
-
-    // Database profiles with super_admin role
-    profilesList.forEach((p) => {
-      if (p.role === 'super_admin' && p.email) {
-        const clean = p.email.toLowerCase().trim();
-        const existing = superAdminMap.get(clean);
-        superAdminMap.set(clean, {
-          email: clean,
-          name: p.name || existing?.name || 'Super Administrator',
-          source: existing ? existing.source : 'database',
-          isPrimaryFounder: ['pandeysuyash100@gmail.com', 'suyashpersonal@gmail.com'].includes(clean),
-          created_at: p.created_at,
-          userId: p.id,
-        });
-      }
-    });
-
-    // Dynamically granted
-    dynamicSuperAdmins.forEach((email) => {
-      const clean = email.toLowerCase().trim();
-      if (!superAdminMap.has(clean)) {
-        superAdminMap.set(clean, {
-          email: clean,
-          name: 'Granted Administrator',
-          source: 'granted',
-          isPrimaryFounder: false,
-        });
-      }
-    });
-
-    const superAdminsList = Array.from(superAdminMap.values());
 
     // 4. Supabase Database Utilization
     const eventsBreakdown = {

@@ -27,7 +27,8 @@ import {
   Mail,
   Copy,
   Check,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
 import AdminNavigation from '@/components/admin/AdminNavigation';
 
@@ -138,6 +139,7 @@ export default function AdminAnalyticsPage() {
   const [grantNotes, setGrantNotes] = useState('');
   const [granting, setGranting] = useState(false);
   const [grantError, setGrantError] = useState<string | null>(null);
+  const [revokingEmail, setRevokingEmail] = useState<string | null>(null);
 
   // Fetch real-time analytics data
   const fetchAnalytics = useCallback(async (isSilent = false) => {
@@ -221,13 +223,15 @@ export default function AdminAnalyticsPage() {
 
   // Revoke Superadmin Access
   const handleRevokeSuperadmin = async (email: string) => {
+    const cleanEmail = email.toLowerCase().trim();
     const confirmed = confirm(
-      `Are you sure you want to revoke superadmin access for ${email}? They will no longer be able to manage accounts or access privileged admin tools.`
+      `Are you sure you want to revoke superadmin access for ${cleanEmail}? They will no longer be able to manage accounts or access privileged admin tools.`
     );
     if (!confirmed) return;
 
+    setRevokingEmail(cleanEmail);
     try {
-      const res = await fetch(`/api/admin/superadmins/grant?email=${encodeURIComponent(email)}`, {
+      const res = await fetch(`/api/admin/superadmins/grant?email=${encodeURIComponent(cleanEmail)}`, {
         method: 'DELETE',
       });
       const resJson = await res.json();
@@ -235,10 +239,27 @@ export default function AdminAnalyticsPage() {
         throw new Error(resJson.error || 'Failed to revoke access');
       }
 
-      showToast(`Revoked superadmin access for ${email}`);
+      // Optimistically remove from UI list immediately
+      setData((prev: any) => {
+        if (!prev) return prev;
+        const currentList = prev.superadmins?.list || [];
+        const nextList = currentList.filter((a: any) => a.email.toLowerCase().trim() !== cleanEmail);
+        return {
+          ...prev,
+          superadmins: {
+            ...prev.superadmins,
+            count: nextList.length,
+            list: nextList,
+          },
+        };
+      });
+
+      showToast(`Revoked superadmin access for ${cleanEmail}`);
       await fetchAnalytics(true);
     } catch (err: any) {
       alert(err.message || 'Failed to revoke access');
+    } finally {
+      setRevokingEmail(null);
     }
   };
 
@@ -561,10 +582,15 @@ export default function AdminAnalyticsPage() {
                         ) : (
                           <button
                             onClick={() => handleRevokeSuperadmin(admin.email)}
-                            className="p-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition cursor-pointer"
+                            disabled={revokingEmail === admin.email}
+                            className="p-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition cursor-pointer disabled:opacity-50"
                             title="Revoke Superadmin Access"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {revokingEmail === admin.email ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         )}
                       </td>

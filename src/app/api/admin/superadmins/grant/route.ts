@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyStaffSession } from '@/lib/adminAuth';
 import { logAuditEvent } from '@/lib/audit';
-import { ADMIN_EMAILS } from '@/lib/adminConstants';
+import { ADMIN_EMAILS, PRIMARY_FOUNDERS } from '@/lib/adminConstants';
 
 export const dynamic = 'force-dynamic';
 
@@ -146,8 +146,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Protection rule: Cannot revoke the primary founder accounts
-    const primaryOwners = ['pandeysuyash100@gmail.com', 'suyashpersonal@gmail.com'];
-    if (primaryOwners.includes(email)) {
+    if (PRIMARY_FOUNDERS.includes(email)) {
       return NextResponse.json(
         { error: 'Protected Account: Primary organization founders cannot be revoked' },
         { status: 403 }

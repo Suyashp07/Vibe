@@ -3,8 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-import { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail } from './adminConstants';
-export { ADMIN_EMAILS, isStaffRole, isSuperAdminEmail };
+import { ADMIN_EMAILS, PRIMARY_FOUNDERS, isStaffRole, isSuperAdminEmail } from './adminConstants';
+import { getLiveSuperadminRegistry } from './superadminManager';
+export { ADMIN_EMAILS, PRIMARY_FOUNDERS, isStaffRole, isSuperAdminEmail };
 
 /**
  * Server-side verification of staff / admin status
@@ -74,16 +75,34 @@ export async function verifyStaffSession(req?: NextRequest): Promise<{
     return { authorized: false, user: null, role: 'none', isSuperAdmin: false, error: 'Unauthorized: No active cryptographic session' };
   }
 
-  const cleanEmail = user.email.toLowerCase();
+  const cleanEmail = user.email.toLowerCase().trim();
 
-  // 4. Check whitelist first
+  // 4. Primary founders ALWAYS have immutable superadmin access
+  if (PRIMARY_FOUNDERS.includes(cleanEmail)) {
+    return { authorized: true, user: { id: user.id, email: cleanEmail }, role: 'super_admin', isSuperAdmin: true };
+  }
+
+  // 5. Query live superadmin registry for dynamic grants/revocations
+  const adminClient = createClient(supabaseUrl, serviceKey || anonKey, { auth: { persistSession: false } });
+  try {
+    const { grantedEmails, revokedEmails } = await getLiveSuperadminRegistry(adminClient);
+    if (revokedEmails.has(cleanEmail)) {
+      return { authorized: false, user, role: 'unauthorized', isSuperAdmin: false, error: 'Access revoked' };
+    }
+    if (grantedEmails.has(cleanEmail)) {
+      return { authorized: true, user: { id: user.id, email: cleanEmail }, role: 'super_admin', isSuperAdmin: true };
+    }
+  } catch (err) {
+    console.warn('Superadmin registry check failed:', err);
+  }
+
+  // 6. Whitelist check (if not revoked)
   const isSuper = isSuperAdminEmail(cleanEmail);
   if (isSuper) {
     return { authorized: true, user: { id: user.id, email: cleanEmail }, role: 'super_admin', isSuperAdmin: true };
   }
 
-  // 5. Query database profiles table via service role client to check assigned role
-  const adminClient = createClient(supabaseUrl, serviceKey || anonKey, { auth: { persistSession: false } });
+  // 7. Query database profiles table via service role client to check assigned role
   let profileRole: string | null = null;
   try {
     const { data: profile } = await adminClient
