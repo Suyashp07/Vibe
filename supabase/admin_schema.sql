@@ -131,3 +131,16 @@ CREATE POLICY "Super admins can manage all profiles"
     )
   );
 
+-- 6. EXACT DATABASE STORAGE RPC
+CREATE OR REPLACE FUNCTION public.get_db_size()
+RETURNS json
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT json_build_object(
+    'database_bytes', pg_database_size(current_database()),
+    'database_mb', round((pg_database_size(current_database())::numeric / (1024 * 1024)), 2)
+  );
+$$;
+
+

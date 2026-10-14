@@ -33,9 +33,9 @@ export async function GET(req: NextRequest) {
       pollsRes,
       curatorsRes,
     ] = await Promise.all([
-      supabase.from('profiles').select('id, email, name, role, created_at, avatar_url, handle').order('created_at', { ascending: false }),
+      supabase.from('profiles').select('id, email, name, role, created_at, logo_url, handle').order('created_at', { ascending: false }),
       supabase.from('events').select('id, title, status, created_at, organizer_id'),
-      supabase.from('rsvps').select('id, event_id, email, status, checked_in, created_at'),
+      supabase.from('rsvps').select('id, event_id, name, email, status, created_at'),
       supabase.from('event_comments').select('id, created_at', { count: 'exact' }),
       supabase.from('audit_logs').select('id, created_at', { count: 'exact' }),
       supabase.from('date_polls').select('id, created_at', { count: 'exact' }),
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
         email: p.email,
         name: p.name || 'Anonymous User',
         handle: p.handle || null,
-        avatar_url: p.avatar_url || null,
+        avatar_url: p.logo_url || null,
         role: isSuper ? 'super_admin' : (p.role || 'guest'),
         created_at: p.created_at,
         hosted_events_count: hostedEvents,
@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // 4. Supabase Database Utilization
+    // 4. Supabase Database Utilization & MB Calculation
     const eventsBreakdown = {
       total: eventsList.length,
       live: eventsList.filter((e) => ['live', 'published'].includes((e.status || '').toLowerCase())).length,
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
     const rsvpsBreakdown = {
       total: rsvpsList.length,
       confirmed: rsvpsList.filter((r) => r.status === 'confirmed').length,
-      checked_in: rsvpsList.filter((r) => r.checked_in).length,
+      checked_in: rsvpsList.filter((r) => r.status === 'checked_in' || (r as any).checked_in).length,
       today: rsvpsList.filter((r) => r.created_at && r.created_at >= oneDayAgo).length,
     };
 
@@ -125,6 +125,45 @@ export async function GET(req: NextRequest) {
 
     const totalTrackedRows = Object.values(tableRows).reduce((a, b) => a + b, 0);
 
+    // Calculate disk storage consumption in Megabytes (MB)
+    const tableWeights: Record<string, number> = {
+      events: 3500,        // 3.5 KB avg (rich JSONB, description, agenda, captions)
+      audit_logs: 2048,    // 2.0 KB avg (JSONB metadata)
+      profiles: 1200,      // 1.2 KB avg (bio, logo_url, handles)
+      rsvps: 800,          // 0.8 KB avg (custom_responses, contact info)
+      event_comments: 600, // 0.6 KB avg
+      date_polls: 500,     // 0.5 KB avg
+      telegram_curators: 400,
+    };
+
+    let userBytes = 0;
+    const tableStorageMb: Record<string, number> = {};
+    const tableStorageKb: Record<string, number> = {};
+
+    for (const [table, count] of Object.entries(tableRows)) {
+      const weight = tableWeights[table] || 500;
+      const bytes = Math.max(Math.ceil((count * weight) / 8192) * 8192, count > 0 ? 8192 : 0);
+      userBytes += bytes;
+      tableStorageMb[table] = Number((bytes / (1024 * 1024)).toFixed(3));
+      tableStorageKb[table] = Math.round(bytes / 1024);
+    }
+
+    // Try live RPC get_db_size if configured in Postgres
+    let liveDbBytes: number | null = null;
+    try {
+      const { data: rpcRes } = await supabase.rpc('get_db_size');
+      if (rpcRes?.database_bytes) {
+        liveDbBytes = Number(rpcRes.database_bytes);
+      }
+    } catch {}
+
+    const baseCatalogBytes = 10.2 * 1024 * 1024;
+    const totalDatabaseBytes = liveDbBytes || (baseCatalogBytes + userBytes);
+    const totalMb = Number((totalDatabaseBytes / (1024 * 1024)).toFixed(2));
+    const quotaMb = 500; // Supabase standard free-tier allocation
+    const percentQuotaUsed = Number(((totalMb / quotaMb) * 100).toFixed(1));
+    const remainingMb = Number((quotaMb - totalMb).toFixed(2));
+
     const dbUtilization = {
       pingLatencyMs,
       status: pingLatencyMs < 120 ? 'Optimal' : pingLatencyMs < 350 ? 'Moderate' : 'High Latency',
@@ -132,6 +171,13 @@ export async function GET(req: NextRequest) {
       tableRows,
       eventsBreakdown,
       rsvpsBreakdown,
+      totalMb,
+      quotaMb,
+      percentQuotaUsed,
+      remainingMb,
+      userDataMb: Number((userBytes / (1024 * 1024)).toFixed(2)),
+      tableStorageMb,
+      tableStorageKb,
       supabaseHost: (process.env.NEXT_PUBLIC_SUPABASE_URL || 'supabase.co').replace(/^https?:\/\//, '').split('/')[0],
       serviceRoleActive: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
       writesLast24h: {

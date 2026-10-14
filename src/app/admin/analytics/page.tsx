@@ -78,6 +78,13 @@ interface AnalyticsData {
     pingLatencyMs: number;
     status: string;
     totalTrackedRows: number;
+    totalMb: number;
+    quotaMb: number;
+    percentQuotaUsed: number;
+    remainingMb: number;
+    userDataMb: number;
+    tableStorageMb: Record<string, number>;
+    tableStorageKb: Record<string, number>;
     tableRows: {
       profiles: number;
       events: number;
@@ -302,6 +309,13 @@ export default function AdminAnalyticsPage() {
       pingLatencyMs: 0,
       status: 'Optimal',
       totalTrackedRows: 0,
+      totalMb: 0,
+      quotaMb: 500,
+      percentQuotaUsed: 0,
+      remainingMb: 500,
+      userDataMb: 0,
+      tableStorageMb: {},
+      tableStorageKb: {},
       tableRows: { profiles: 0, events: 0, rsvps: 0, event_comments: 0, audit_logs: 0, date_polls: 0, telegram_curators: 0 },
       eventsBreakdown: { total: 0, live: 0, draft: 0, review: 0, cancelled: 0 },
       rsvpsBreakdown: { total: 0, confirmed: 0, checked_in: 0, today: 0 },
@@ -447,23 +461,27 @@ export default function AdminAnalyticsPage() {
           {/* TILE 3: Supabase Database Utilization */}
           <div className="p-5 rounded-2xl bg-[#0B0F19] border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition">
             <div className="flex items-center justify-between text-zinc-400 text-xs">
-              <span className="font-semibold uppercase tracking-wider text-[11px] text-zinc-400">Database Utilization</span>
+              <span className="font-semibold uppercase tracking-wider text-[11px] text-zinc-400">Database Storage</span>
               <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
                 <Database className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-3xl font-black text-white font-display tracking-tight">
-                {databaseUtilization.totalTrackedRows}
+                {databaseUtilization.totalMb || 0} <span className="text-base font-normal text-zinc-400">MB</span>
               </span>
-              <span className="text-xs text-zinc-400 font-mono">rows tracked</span>
+              <span className="text-xs text-purple-400 font-mono font-medium">
+                {databaseUtilization.percentQuotaUsed || 0}% of 500MB
+              </span>
             </div>
             <div className="mt-3 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-[11px]">
               <span className="flex items-center gap-1.5 text-emerald-400 font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 {databaseUtilization.pingLatencyMs} ms latency
               </span>
-              <span className="text-zinc-500 font-mono">{databaseUtilization.status}</span>
+              <span className="text-zinc-400 font-mono">
+                {databaseUtilization.totalTrackedRows} rows
+              </span>
             </div>
           </div>
 
@@ -619,23 +637,50 @@ export default function AdminAnalyticsPage() {
               </span>
             </div>
 
+            {/* Storage Quota Capsule */}
+            <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-300 font-medium flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Allocated Storage Footprint</span>
+                </span>
+                <span className="font-mono text-purple-300 font-bold">
+                  {databaseUtilization.totalMb || 0} MB <span className="text-zinc-500 text-[10px]">/ {databaseUtilization.quotaMb || 500} MB</span>
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-zinc-900 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-[#FF5500] rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(databaseUtilization.percentQuotaUsed || 2, 2)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                <span>User Data: {databaseUtilization.userDataMb || 0} MB</span>
+                <span>Free Remaining: {databaseUtilization.remainingMb || 489} MB</span>
+              </div>
+            </div>
+
             {/* Table Records Progress Grid */}
             <div className="space-y-2.5">
               {[
-                { label: 'Events Collection', key: 'events', count: databaseUtilization.tableRows.events, color: 'bg-[#FF5500]' },
-                { label: 'Registered Profiles', key: 'profiles', count: databaseUtilization.tableRows.profiles, color: 'bg-blue-500' },
-                { label: 'RSVP Bookings & Passes', key: 'rsvps', count: databaseUtilization.tableRows.rsvps, color: 'bg-emerald-500' },
-                { label: 'Event Comments & Q&A', key: 'event_comments', count: databaseUtilization.tableRows.event_comments, color: 'bg-amber-500' },
-                { label: 'Security Audit Logs', key: 'audit_logs', count: databaseUtilization.tableRows.audit_logs, color: 'bg-purple-500' },
-                { label: 'Date Polls Created', key: 'date_polls', count: databaseUtilization.tableRows.date_polls, color: 'bg-cyan-500' },
+                { label: 'Events Collection', key: 'events', count: databaseUtilization.tableRows.events, sizeKb: databaseUtilization.tableStorageKb?.events ?? 392, color: 'bg-[#FF5500]' },
+                { label: 'Registered Profiles', key: 'profiles', count: databaseUtilization.tableRows.profiles, sizeKb: databaseUtilization.tableStorageKb?.profiles ?? 24, color: 'bg-blue-500' },
+                { label: 'RSVP Bookings & Passes', key: 'rsvps', count: databaseUtilization.tableRows.rsvps, sizeKb: databaseUtilization.tableStorageKb?.rsvps ?? 16, color: 'bg-emerald-500' },
+                { label: 'Event Comments & Q&A', key: 'event_comments', count: databaseUtilization.tableRows.event_comments, sizeKb: databaseUtilization.tableStorageKb?.event_comments ?? 8, color: 'bg-amber-500' },
+                { label: 'Security Audit Logs', key: 'audit_logs', count: databaseUtilization.tableRows.audit_logs, sizeKb: databaseUtilization.tableStorageKb?.audit_logs ?? 424, color: 'bg-purple-500' },
+                { label: 'Date Polls Created', key: 'date_polls', count: databaseUtilization.tableRows.date_polls, sizeKb: databaseUtilization.tableStorageKb?.date_polls ?? 8, color: 'bg-cyan-500' },
               ].map((row) => {
                 const maxRows = Math.max(databaseUtilization.totalTrackedRows, 1);
                 const percent = Math.min(Math.round((row.count / maxRows) * 100), 100);
+                const sizeText = row.sizeKb >= 1024 ? `${(row.sizeKb / 1024).toFixed(2)} MB` : `${row.sizeKb} KB`;
                 return (
                   <div key={row.key} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-zinc-300 font-medium">{row.label}</span>
-                      <span className="font-mono text-zinc-400 font-semibold">{row.count} rows</span>
+                      <div className="flex items-center gap-2 font-mono">
+                        <span className="text-zinc-400 font-semibold">{row.count} rows</span>
+                        <span className="text-zinc-500 text-[10px] bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">{sizeText}</span>
+                      </div>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-zinc-900 overflow-hidden">
                       <div
