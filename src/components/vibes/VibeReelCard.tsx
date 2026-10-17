@@ -444,12 +444,12 @@ export default function VibeReelCard({
           </div>
         )}
 
-        {/* Action CTA: Join Now & Details */}
-        <div className="w-full pr-12 sm:pr-14 flex gap-2">
+        {/* Action CTA: Join Now & Connect with Host & Details */}
+        <div className="w-full pr-12 sm:pr-14 flex items-center gap-2">
           <button
             type="button"
             onClick={() => setQuickJoinOpen(true)}
-            className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#FF5500]/35 transition-all cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#FF5500]/35 transition-all cursor-pointer"
             title="Join now"
           >
             <Zap className="w-4 h-4 text-white shrink-0 fill-current" />
@@ -457,12 +457,21 @@ export default function VibeReelCard({
           </button>
           <button
             type="button"
+            onClick={() => setConnectHostOpen(true)}
+            className="py-3 px-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md shrink-0"
+            title="Connect with host"
+          >
+            <MessageCircle className="w-4 h-4 text-[#FF8C42] shrink-0" />
+            <span>Connect with host</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setDetailsOpen(true)}
-            className="py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md"
+            className="py-3 px-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md shrink-0"
             title="View Details"
           >
             <Info className="w-4 h-4 text-white/80 shrink-0" />
-            <span>Details</span>
+            <span className="hidden sm:inline">Details</span>
           </button>
         </div>
       </div>
@@ -535,18 +544,30 @@ export default function VibeReelCard({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/10 flex items-center gap-3">
+          <div className="pt-4 border-t border-white/10 flex items-center gap-2">
             <button
               type="button"
               onClick={() => {
                 setDetailsOpen(false);
                 setQuickJoinOpen(true);
               }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#FF5500]/30"
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#FF5500]/30"
               title="Join now"
             >
               <Zap className="w-4 h-4 text-white fill-current" />
               <span>Join now</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDetailsOpen(false);
+                setConnectHostOpen(true);
+              }}
+              className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0"
+              title="Connect with host"
+            >
+              <MessageCircle className="w-4 h-4 text-[#FF8C42]" />
+              <span>Connect with host</span>
             </button>
           </div>
         </div>

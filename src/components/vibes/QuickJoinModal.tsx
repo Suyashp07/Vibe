@@ -14,7 +14,8 @@ import {
   MapPin,
   KeyRound,
   RotateCcw,
-  Ticket
+  Ticket,
+  MessageCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem, RSVPItem } from '@/types';
@@ -509,7 +510,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             )}
 
             <p className="text-[10px] text-white/50 max-w-xs mx-auto mb-6">
-              💬 Direct host messaging is now unlocked — coordinate meeting spots or ask questions right away!
+              💬 Direct host messaging will be available soon — stay tuned for updates!
             </p>
 
             <div className="space-y-2.5">
@@ -521,10 +522,11 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                     onAskHost();
                   }
                 }}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#FF5500]/30 flex items-center justify-center gap-2"
                 title="Contact with host"
               >
-                <span>💬 Contact with host</span>
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>Contact with host</span>
               </button>
               
               <Link

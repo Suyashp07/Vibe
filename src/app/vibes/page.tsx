@@ -1109,15 +1109,15 @@ function VibesContent() {
               </div>
             )}
 
-            {/* Action Buttons: Join Now */}
-            <div className="flex items-center gap-3 pt-1">
+            {/* Action Buttons: Join Now & Connect with Host */}
+            <div className="flex items-center gap-2.5 pt-1">
               {(() => {
                 const currentRsvp = userPassMap[currentVibe.id] || userPassMap[currentVibe.slug];
                 if (currentRsvp) {
                   return (
                     <button
                       onClick={() => openPassModal(currentRsvp, currentVibe)}
-                      className="w-full py-3 px-4 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
+                      className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                       <span>You're in · View pass</span>
@@ -1127,13 +1127,23 @@ function VibesContent() {
                 return (
                   <button
                     onClick={() => openQuickJoin(currentVibe)}
-                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Zap className="w-3.5 h-3.5 fill-current" />
                     <span>Join now</span>
                   </button>
                 );
               })()}
+
+              <button
+                type="button"
+                onClick={() => openAskHost(currentVibe)}
+                className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
+                title="Connect with host"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+                <span>Connect with host</span>
+              </button>
             </div>
 
             {/* Keyboard Hint */}
@@ -1282,8 +1292,8 @@ function VibesContent() {
                   </div>
                 )}
 
-                {/* Action Buttons: Join Now */}
-                <div className="flex items-center gap-2.5 pt-0.5">
+                {/* Action Buttons: Join Now & Connect with Host */}
+                <div className="flex items-center gap-2 pt-0.5">
                   {(() => {
                     const userRsvp = userPassMap[vibe.id] || userPassMap[vibe.slug];
                     if (userRsvp) {
@@ -1293,7 +1303,7 @@ function VibesContent() {
                             e.stopPropagation();
                             openPassModal(userRsvp, vibe);
                           }}
-                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
+                          className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                           <span>You're in · View pass</span>
@@ -1306,13 +1316,26 @@ function VibesContent() {
                           e.stopPropagation();
                           openQuickJoin(vibe);
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer"
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer"
                       >
                         <Zap className="w-3.5 h-3.5 fill-current" />
                         <span>Join now</span>
                       </button>
                     );
                   })()}
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openAskHost(vibe);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer active:scale-[0.98] transition-all shrink-0"
+                    title="Connect with host"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+                    <span>Connect with host</span>
+                  </button>
                 </div>
               </div>
             </section>
