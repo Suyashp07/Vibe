@@ -20,6 +20,7 @@ import { calculateEventSurety } from '@/lib/eventSurety';
 import { nanoid } from 'nanoid';
 import { telegramAdapter } from '@/lib/communication/adapters/telegramAdapter';
 import { conversationService } from '@/lib/communication/conversationService';
+import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,11 +41,11 @@ function getAppUrl(req?: Request): string {
   }
 
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1') && !envUrl.includes('vibe-by-swaniki.vercel.app')) {
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
     return envUrl.replace(/\/$/, '');
   }
 
-  return 'https://vibe-seven-pied.vercel.app';
+  return 'https://vibe.swaniki.com';
 }
 
 export async function GET() {
@@ -98,14 +99,22 @@ export async function POST(req: NextRequest) {
 
         await answerTelegramCallback(cq.id, '⚡ Published to Vibe Instant!');
 
+        const eventUrl = `${appUrl}/${updatedEvent.slug}`;
         const instantLink = `${appUrl}/vibes?event=${updatedEvent.slug}`;
-        const publishedText = `⚡ <b>EVENT IS LIVE ON VIBE INSTANT!</b>\n\n📌 <b>${updatedEvent.title}</b>\n📍 ${updatedEvent.location_name}\n🔗 <a href="${instantLink}">${instantLink}</a>\n\n<i>Swipe full-screen in the Vibe Instant reels stream right now!</i>`;
+        const publishedText = `⚡ <b>EVENT IS LIVE ON VIBE!</b>\n\n` +
+          `📌 <b>${updatedEvent.title}</b>\n` +
+          `📍 ${updatedEvent.location_name}\n\n` +
+          `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${eventUrl}">${eventUrl}</a>\n\n` +
+          `📱 <b>Vibe Instant Reel:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
+          `📋 <b>Tap to copy link:</b> <code>${eventUrl}</code>\n\n` +
+          `<i>Guests can RSVP & view tickets directly on Vibe!</i>`;
 
         await editTelegramMessage(chatId, messageId, publishedText, {
           parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
-              [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
+              [{ text: '🌐 Open Event Link ↗', url: eventUrl }],
+              [{ text: '⚡ View in Vibe Instant ↗', url: instantLink }],
             ],
           },
         });
@@ -612,28 +621,28 @@ export async function POST(req: NextRequest) {
 
     // 4. Send Confirmation Card with Inline Buttons to Telegram
     const appUrl = getAppUrl(req);
-    const adminEventsUrl = `${appUrl}/admin/events`;
-
     const liveLink = `${appUrl}/${finalSlug}`;
+    const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
+    const adminEventsUrl = `${appUrl}${ADMIN_BASE_PATH}`;
+
     let previewText: string;
     let inlineKeyboard: any[];
 
     if (isAutoApproved) {
       if (isFlashVibe) {
-        const instantLink = `${appUrl}/vibes?event=${finalSlug}`;
         previewText = `⚡ <b>YOUR FLASH VIBE IS AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
           `🔥 <b>${extracted.title}</b>\n` +
           `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
           `🕒 ${dateStr} IST\n\n` +
           `✅ <i>Auto-Approved: All required details verified!</i>\n\n` +
-          `📱 <b>Open in Vibe Instant:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
-          `🌐 <b>Full Event Page:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
-          `📋 <b>Tap to copy link:</b> <code>${instantLink}</code>\n\n` +
+          `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
+          `📱 <b>Vibe Instant Reel:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
+          `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>\n\n` +
           `📲 <i>Forward this link to your squad to invite friends!</i>`;
 
         inlineKeyboard = [
+          [{ text: '🌐 Open Event Link ↗', url: liveLink }],
           [{ text: '⚡ Open in Vibe Instant ↗', url: instantLink }],
-          [{ text: '🌐 View Event Page ↗', url: liveLink }],
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       } else {
@@ -644,12 +653,12 @@ export async function POST(req: NextRequest) {
           `📍 <b>Venue:</b> ${extracted.venue_name} (${detectedCity})\n` +
           `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n` +
           `✅ <i>Auto-Approved: High completeness surety score.</i>\n\n` +
-          `🔗 <b>Live Link:</b> <a href="${liveLink}">${liveLink}</a>\n\n` +
-          `📋 <b>Tap to copy link:</b> <code>${liveLink}</code>`;
+          `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
+          `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>`;
 
         inlineKeyboard = [
-          [{ text: '🌐 View Live Event Page ↗', url: liveLink }],
-          [{ text: '🛡️ Manage in Admin Command Center ↗', url: adminEventsUrl }],
+          [{ text: '🌐 Open Event Link ↗', url: liveLink }],
+          [{ text: '⚡ View Reel in Instant ↗', url: instantLink }],
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       }
@@ -658,19 +667,20 @@ export async function POST(req: NextRequest) {
         ? surety.missingAspects.map(a => `• ${a}`).join('\n')
         : '• Specific venue place or start time not given';
 
-      previewText = `⏳ <b>EVENT DRAFT CREATED — AWAITING ADMIN APPROVAL</b>\n\n` +
-        `Your event has been received, but requires admin approval before it can go live.\n\n` +
+      previewText = `⏳ <b>EVENT CREATED — SAVED AS DRAFT</b>\n\n` +
+        `Your event has been recorded on Vibe!\n\n` +
         `📌 <b>Title:</b> ${extracted.title}\n` +
         `🗓️ <b>Schedule:</b> ${dateStr} IST\n` +
         `📍 <b>Venue:</b> ${extracted.venue_name || 'Not given'} (${detectedCity})\n` +
         `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n\n` +
-        `🔍 <b>Details Needed to Go Live:</b> (${suretyPercent}% Completeness)\n${missingList}\n\n` +
-        `🛡️ <b>Why is Admin Approval Required?</b>\n` +
-        `<i>Because some key event details are missing or unverified, our team reviews each draft to keep Vibe authentic. Once approved by an admin, your event will automatically be published live!</i>\n\n` +
-        `🔗 <b>Draft Preview Link:</b> <a href="${liveLink}">${liveLink}</a>`;
+        `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
+        `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>\n\n` +
+        `🔍 <b>Details Needed for Public Discovery:</b> (${suretyPercent}% Completeness)\n${missingList}\n\n` +
+        `<i>Your link is active! You can review your page or tap Instant Publish below.</i>`;
 
       inlineKeyboard = [
-        [{ text: '🛡️ Review & Approve in Admin Center ↗', url: adminEventsUrl }],
+        [{ text: '🌐 Open Event Link ↗', url: liveLink }],
+        [{ text: '⚡ Instant Publish to Live', callback_data: `publish:${savedEvent.id}` }],
         [{ text: '❌ Discard Draft', callback_data: `discard:${savedEvent.id}` }],
       ];
     }

@@ -9,7 +9,7 @@ import OrganizerProfileView from '@/components/organizer/OrganizerProfileView';
 import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase, isPublicLiveEvent } from '@/lib/store';
 import { EventItem, Profile } from '@/types';
 import { Compass, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
-import { ADMIN_EMAILS } from '@/lib/adminConstants';
+import { ADMIN_EMAILS, ADMIN_BASE_PATH } from '@/lib/adminConstants';
 
 interface EventSlugClientProps {
   slug: string;
@@ -223,7 +223,7 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
                   <span>{isPublishing ? 'Publishing...' : 'Verify & Publish Live'}</span>
                 </button>
                 <Link
-                  href="/admin/events"
+                  href={ADMIN_BASE_PATH}
                   className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white text-xs transition"
                 >
                   Command Center ↗

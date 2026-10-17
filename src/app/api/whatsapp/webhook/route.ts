@@ -33,18 +33,11 @@ function getAppUrl(req?: Request): string {
   }
 
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  if (envUrl && !envUrl.includes('vibe-by-swaniki.vercel.app') && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
     return envUrl.replace(/\/$/, '');
   }
 
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  return 'https://vibe-seven-pied.vercel.app';
+  return 'https://vibe.swaniki.com';
 }
 
 /**
@@ -857,8 +850,8 @@ export async function POST(req: NextRequest) {
         `\n🔍 *Details Needed to Go Live:* (${suretyScore}% Completeness)\n${missingList}\n\n` +
         `🛡️ *Why is Admin Approval Required?*\n` +
         `Because some key event details are missing or unverified, our team reviews each draft to keep Vibe authentic. Once approved by an admin, your event will automatically be published live!\n\n` +
-        `🔗 *Draft Preview Link:*\n${liveEventUrl}\n\n` +
-        `💡 _You can share more details anytime or wait for our team to approve your event!_`;
+        `🔗 *ACTUAL EVENT LINK:*\n${liveEventUrl}\n\n` +
+        `💡 _You can open your event link right now to preview your page or share more details anytime!_`;
     }
 
     console.log('[WhatsApp Webhook] Event successfully created via WhatsApp:', {

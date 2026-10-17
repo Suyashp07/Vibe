@@ -10,6 +10,7 @@ import {
   LogOut,
   Activity,
 } from 'lucide-react';
+import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 
 interface AdminHeaderProps {
   email?: string;
@@ -40,7 +41,7 @@ export default function AdminHeader({
 
         <div className="flex items-center gap-2">
           <Link
-            href="/admin/analytics"
+            href={`${ADMIN_BASE_PATH}/analytics`}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/20 text-xs font-semibold rounded-full transition-colors cursor-pointer"
           >
             <Activity className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />

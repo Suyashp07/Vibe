@@ -30,15 +30,16 @@ export default function AdminAuditLogsPage() {
         ? '/api/admin/audit-logs?limit=100'
         : `/api/admin/audit-logs?limit=100&targetType=${targetTypeFilter}`;
       const res = await fetch(url);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ logs: [] }));
       if (data.tablePending) {
         setTablePending(true);
       } else {
         setTablePending(false);
       }
-      setLogs(data.logs || []);
+      setLogs(Array.isArray(data.logs) ? data.logs : []);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load audit logs:', err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }

@@ -40,6 +40,7 @@ import { getUserCity, INDIAN_CITIES } from '@/lib/location';
 import BrandLogo from '@/components/common/BrandLogo';
 import Magnetic from '@/components/common/MagneticButton';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -362,7 +363,7 @@ export default function Navbar() {
 
                         {isStaff && (
                           <Link
-                            href="/admin"
+                            href={ADMIN_BASE_PATH}
                             onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#FF5500] hover:bg-white/10 transition-colors font-bold border-t border-white/10"
                           >

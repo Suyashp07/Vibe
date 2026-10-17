@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
+import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,6 +17,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       pathname?.startsWith('/vibes') ||
       pathname === '/admin' ||
       pathname?.startsWith('/admin') ||
+      pathname === ADMIN_BASE_PATH ||
+      pathname?.startsWith(ADMIN_BASE_PATH) ||
       pathname === '/dashboard' ||
       pathname?.startsWith('/dashboard')
     ) {

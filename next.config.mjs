@@ -51,23 +51,22 @@ const nextConfig = {
         destination: '/vibes',
         permanent: true,
       },
-      {
-        source: '/admin/scanner',
-        destination: '/organizer/check-in',
-        permanent: true,
-      },
-      {
-        source: '/admin/events',
-        destination: '/admin',
-        permanent: true,
-      },
     ];
   },
   async rewrites() {
+    const adminSecret = (process.env.NEXT_PUBLIC_ADMIN_ROUTE_PREFIX || 'control-99f').replace(/^\//, '').trim();
     return [
       {
         source: '/discover',
         destination: '/',
+      },
+      {
+        source: `/${adminSecret}`,
+        destination: '/admin',
+      },
+      {
+        source: `/${adminSecret}/:path*`,
+        destination: '/admin/:path*',
       },
     ];
   },

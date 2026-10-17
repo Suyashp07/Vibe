@@ -15,6 +15,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 
 interface AdminNavigationProps {
   activeSection?: 'queue' | 'analytics' | 'users' | 'rsvps' | 'audit' | 'ingestion';
@@ -29,51 +30,51 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
     {
       id: 'queue',
       label: 'Queue',
-      href: '/admin',
+      href: ADMIN_BASE_PATH,
       icon: ShieldCheck,
       badge: null,
-      isActive: pathname === '/admin',
+      isActive: pathname === ADMIN_BASE_PATH || pathname === '/admin',
     },
     {
       id: 'analytics',
       label: 'Real-Time Analytics',
-      href: '/admin/analytics',
+      href: `${ADMIN_BASE_PATH}/analytics`,
       icon: Activity,
       badge: 'LIVE',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      isActive: pathname.startsWith('/admin/analytics'),
+      isActive: pathname.startsWith(`${ADMIN_BASE_PATH}/analytics`) || pathname.startsWith('/admin/analytics'),
     },
     {
       id: 'users',
       label: 'Users & Access',
-      href: '/admin/users',
+      href: `${ADMIN_BASE_PATH}/users`,
       icon: Users,
       badge: null,
-      isActive: pathname.startsWith('/admin/users'),
+      isActive: pathname.startsWith(`${ADMIN_BASE_PATH}/users`) || pathname.startsWith('/admin/users'),
     },
     {
       id: 'rsvps',
       label: 'RSVPs',
-      href: '/admin/rsvps',
+      href: `${ADMIN_BASE_PATH}/rsvps`,
       icon: Ticket,
       badge: null,
-      isActive: pathname.startsWith('/admin/rsvps'),
+      isActive: pathname.startsWith(`${ADMIN_BASE_PATH}/rsvps`) || pathname.startsWith('/admin/rsvps'),
     },
     {
       id: 'audit',
       label: 'Audit Logs',
-      href: '/admin/audit-logs',
+      href: `${ADMIN_BASE_PATH}/audit-logs`,
       icon: FileText,
       badge: null,
-      isActive: pathname.startsWith('/admin/audit-logs'),
+      isActive: pathname.startsWith(`${ADMIN_BASE_PATH}/audit-logs`) || pathname.startsWith('/admin/audit-logs'),
     },
     {
       id: 'ingestion',
       label: 'Ingestion',
-      href: '/admin/ingestion',
+      href: `${ADMIN_BASE_PATH}/ingestion`,
       icon: Radio,
       badge: null,
-      isActive: pathname.startsWith('/admin/ingestion'),
+      isActive: pathname.startsWith(`${ADMIN_BASE_PATH}/ingestion`) || pathname.startsWith('/admin/ingestion'),
     },
   ];
 

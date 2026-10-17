@@ -10,6 +10,13 @@ export const ADMIN_EMAILS: string[] = [
     : []),
 ].map((e) => e.trim().toLowerCase());
 
+// Secret obfuscated path for the admin workstation (Default: 'control-99f')
+export const ADMIN_SECRET_SLUG: string = (
+  process.env.NEXT_PUBLIC_ADMIN_ROUTE_PREFIX || 'control-99f'
+).replace(/^\//, '').trim();
+
+export const ADMIN_BASE_PATH: string = `/${ADMIN_SECRET_SLUG}`;
+
 export function isStaffRole(role?: string, email?: string): boolean {
   if (email && ADMIN_EMAILS.includes(email.toLowerCase())) return true;
   return role === 'super_admin' || role === 'curator';
