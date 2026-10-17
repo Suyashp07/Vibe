@@ -41,8 +41,13 @@ import BrandLogo from '@/components/common/BrandLogo';
 import Magnetic from '@/components/common/MagneticButton';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
+import { useMobileGestures } from '@/hooks/useMobileGestures';
 
-export default function Navbar() {
+interface NavbarProps {
+  bottomNavOnly?: boolean;
+}
+
+export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, isLoggedIn, isStaff, signOut } = useAuth();
@@ -55,6 +60,12 @@ export default function Navbar() {
   const [activeCity, setActiveCity] = useState<string>('All India');
   const [confirmedPassCount, setConfirmedPassCount] = useState(0);
   const [imageError, setImageError] = useState(false);
+
+  const navRef = useRef<HTMLElement | null>(null);
+  const { gestureFeedback } = useMobileGestures({
+    navRef,
+    enableGlobalSwipe: true,
+  });
 
   useEffect(() => {
     setImageError(false);
@@ -184,7 +195,8 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/10 shadow-lg text-white">
+      {!bottomNavOnly && (
+        <header className="sticky top-0 z-40 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/10 shadow-lg text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6 relative">
             {/* Left: Brand Logo + Location Selector */}
@@ -406,27 +418,52 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+      )}
 
-      {/* Mobile WebApp Fixed Bottom Navigation Bar (Dark Styled) */}
+      {/* Floating Gesture Navigation HUD Feedback */}
+      <AnimatePresence>
+        {gestureFeedback && (
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.92 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="md:hidden fixed bottom-18 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-4 py-1.5 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white text-xs font-bold shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center gap-2"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#FF5500] animate-pulse" />
+            <span className="tracking-tight">{gestureFeedback.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile WebApp Fixed Bottom Navigation Bar (Dark Styled with Swipe Gestures) */}
       <nav
+        ref={navRef}
         aria-label="Mobile Web App Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/10 px-3 py-1.5 flex items-center justify-around shadow-2xl pb-[max(env(safe-area-inset-bottom),0.5rem)] text-white"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/10 px-3 py-1.5 flex items-center justify-around shadow-2xl pb-[max(env(safe-area-inset-bottom),0.5rem)] text-white select-none touch-manipulation"
       >
         {/* 1. Discover Tab */}
         <Link
           href="/"
-          className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+          className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname === '/' ? 'text-[#FF5500] font-black' : 'text-white/60 hover:text-white'
           }`}
         >
           <Compass className={`w-5 h-5 ${pathname === '/' ? 'stroke-[2.5]' : ''}`} />
           <span className="text-[10px] tracking-tight">Discover</span>
+          {pathname === '/' && (
+            <motion.span
+              layoutId="mobile-nav-pill"
+              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#FF5500] shadow-[0_0_8px_rgba(255,85,0,0.9)]"
+              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
         </Link>
 
         {/* 2. ⚡ Vibe Instant Tab */}
         <Link
           href="/vibes"
-          className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+          className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
               ? 'text-[#FF5500] font-black'
               : 'text-white/60 hover:text-[#FF5500]'
@@ -437,35 +474,58 @@ export default function Navbar() {
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#FF5500] animate-ping" />
           </div>
           <span className="text-[10px] font-bold tracking-tight">Instant</span>
+          {(pathname.startsWith('/vibes') || pathname.startsWith('/vibe')) && (
+            <motion.span
+              layoutId="mobile-nav-pill"
+              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#FF5500] shadow-[0_0_8px_rgba(255,85,0,0.9)]"
+              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
         </Link>
 
         {/* 3. Floating Center + Host Button */}
         <Link
           href="/create"
-          className="flex flex-col items-center -mt-4 group"
+          className="relative flex flex-col items-center -mt-4 group"
           title="Host an event"
         >
-          <div className="w-11 h-11 rounded-full bg-[#FF5500] text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border-2 border-[#0A0A0A]">
+          <div className={`w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border-2 border-[#0A0A0A] ${
+            pathname.startsWith('/create') ? 'bg-gradient-to-tr from-[#FF5500] to-[#FF8C42] ring-2 ring-[#FF5500]/50' : 'bg-[#FF5500]'
+          }`}>
             <Plus className="w-5 h-5 stroke-[3]" />
           </div>
           <span className="text-[10px] font-bold text-white mt-0.5">+ Host</span>
+          {pathname.startsWith('/create') && (
+            <motion.span
+              layoutId="mobile-nav-pill"
+              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#FF5500] shadow-[0_0_8px_rgba(255,85,0,0.9)]"
+              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
         </Link>
 
         {/* 4. Host Dashboard Tab */}
         <Link
           href="/dashboard"
-          className={`flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+          className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/dashboard') ? 'text-[#FF5500] font-bold' : 'text-white/60 hover:text-white'
           }`}
         >
           <LayoutDashboard className="w-5 h-5" />
           <span className="text-[10px] tracking-tight">Dashboard</span>
+          {pathname.startsWith('/dashboard') && (
+            <motion.span
+              layoutId="mobile-nav-pill"
+              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#FF5500] shadow-[0_0_8px_rgba(255,85,0,0.9)]"
+              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
         </Link>
 
         {/* 5. Passes Tab */}
         <Link
           href="/passes"
-          className={`relative flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+          className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/passes') || pathname.startsWith('/guest')
               ? 'text-[#FF5500] font-black'
               : 'text-white/60 hover:text-white'
@@ -480,6 +540,13 @@ export default function Navbar() {
             )}
           </div>
           <span className="text-[10px] tracking-tight">Passes</span>
+          {(pathname.startsWith('/passes') || pathname.startsWith('/guest')) && (
+            <motion.span
+              layoutId="mobile-nav-pill"
+              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#FF5500] shadow-[0_0_8px_rgba(255,85,0,0.9)]"
+              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
         </Link>
       </nav>
 

@@ -43,6 +43,7 @@ import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
 import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import Navbar from '@/components/common/Navbar';
 
 interface VibeInstantItem {
   id: string;
@@ -704,6 +705,31 @@ function VibesContent() {
 
   const handleLike = () => handleLikeVibe(currentVibe);
 
+  // Mobile double-tap to like gesture handler
+  const [doubleTapVibeId, setDoubleTapVibeId] = useState<string | null>(null);
+  const lastTapRef = useRef<{ [key: string]: number }>({});
+
+  const handleMobileCardTap = (vibe: VibeInstantItem, e: React.MouseEvent | React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, select')) return;
+
+    const key = vibe.id || vibe.slug;
+    const now = Date.now();
+    const last = lastTapRef.current[key] || 0;
+
+    if (now - last < 320) {
+      const { isLiked } = getVibeLikeData(vibe);
+      if (!isLiked) {
+        handleLikeVibe(vibe);
+      }
+      setDoubleTapVibeId(key);
+      setTimeout(() => setDoubleTapVibeId(null), 900);
+      lastTapRef.current[key] = 0;
+    } else {
+      lastTapRef.current[key] = now;
+    }
+  };
+
   const handleShareVibe = async (vibe: VibeInstantItem) => {
     const shareUrl =
       typeof window !== 'undefined'
@@ -1160,7 +1186,7 @@ function VibesContent() {
       <main
         ref={mobileFeedRef}
         onScroll={handleMobileScroll}
-        className="flex flex-col md:hidden flex-1 relative w-full h-[calc(100dvh-58px)] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar"
+        className="flex flex-col md:hidden flex-1 relative w-full h-[calc(100dvh-114px)] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar"
         style={{
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'y mandatory',
@@ -1168,13 +1194,24 @@ function VibesContent() {
       >
         {activeVibes.map((vibe, index) => {
           const { isLiked, count, key: vibeKey } = getVibeLikeData(vibe);
+          const isDoubleTapped = doubleTapVibeId === (vibe.id || vibe.slug);
 
           return (
             <section
               key={vibeKey || index}
               data-index={index}
-              className="vibe-reel-card relative w-full h-[calc(100dvh-58px)] min-h-[calc(100dvh-58px)] max-h-[calc(100dvh-58px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none"
+              onClick={(e) => handleMobileCardTap(vibe, e)}
+              className="vibe-reel-card relative w-full h-[calc(100dvh-114px)] min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation cursor-pointer"
             >
+              {/* Double-tap animated Flame Pop */}
+              {isDoubleTapped && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center animate-in zoom-in-50 fade-in duration-200">
+                  <div className="w-20 h-20 rounded-full bg-[#FF5500]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,85,0,0.8)] animate-bounce">
+                    <Flame className="w-12 h-12 text-white fill-white" />
+                  </div>
+                </div>
+              )}
+
               {/* Top Left Badge */}
               <div className="absolute top-3 left-4 z-20">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
@@ -1402,6 +1439,9 @@ function VibesContent() {
           setCommentCountsMap((prev) => ({ ...prev, [key]: newCount }));
         }}
       />
+
+      {/* Mobile Bottom Navigation Bar & Swipe Gestures */}
+      <Navbar bottomNavOnly />
     </div>
   );
 }
