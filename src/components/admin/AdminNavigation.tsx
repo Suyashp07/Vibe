@@ -155,8 +155,14 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
                 <span className="text-xs font-semibold text-white max-w-[130px] truncate" title={email}>
                   {email.split('@')[0]}
                 </span>
-                <span className="text-[10px] text-amber-400 font-mono capitalize">
-                  {profile?.role === 'super_admin' ? 'Super Admin' : profile?.role || 'Staff'}
+                <span className="text-[10px] text-amber-400 font-mono">
+                  {email === 'pandeysuyash100@gmail.com'
+                    ? 'Developer Admin'
+                    : email === 'mail.jaiswal@gmail.com'
+                    ? 'Owner Admin'
+                    : profile?.role === 'super_admin'
+                    ? 'Super Admin'
+                    : profile?.role || 'Staff'}
                 </span>
               </div>
             </div>

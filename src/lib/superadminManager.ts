@@ -1,11 +1,20 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { PRIMARY_FOUNDERS, ADMIN_EMAILS } from './adminConstants';
+import {
+  PRIMARY_FOUNDERS,
+  ADMIN_EMAILS,
+  IMMUTABLE_ADMINS,
+  getImmutableAdmin,
+  DEPRECATED_ADMIN_EMAILS,
+} from './adminConstants';
 
 export interface SuperAdminEntry {
   email: string;
   name?: string;
   source: 'whitelist' | 'database' | 'granted';
   isPrimaryFounder: boolean;
+  isImmutable: boolean;
+  tier: 'developer_admin' | 'owner_admin' | 'super_admin';
+  tierLabel: string;
   created_at?: string;
   userId?: string;
   grantedBy?: string;
@@ -13,7 +22,7 @@ export interface SuperAdminEntry {
 
 /**
  * Reconstructs live superadmin grants and revocations from Supabase
- * using audit_logs + profiles + hardcoded founders.
+ * using audit_logs + profiles + immutable administrators.
  * This guarantees persistence across serverless lambda cold starts
  * without needing extra migrations.
  */
@@ -29,6 +38,9 @@ export async function getLiveSuperadminRegistry(
   const revokedEmails = new Set<string>();
   const grantMetadata = new Map<string, { grantedBy?: string; grantedAt?: string; notes?: string }>();
 
+  // Ensure deprecated admins are always marked as revoked/blocked
+  DEPRECATED_ADMIN_EMAILS.forEach((dep) => revokedEmails.add(dep));
+
   // 1. Replay audit_logs for superadmin grant/revoke actions in chronological order
   try {
     const { data: auditEvents } = await supabase
@@ -43,7 +55,10 @@ export async function getLiveSuperadminRegistry(
         const email = String(rawEmail).toLowerCase().trim();
         if (!email || !email.includes('@')) continue;
 
-        // Primary founders can NEVER be revoked
+        // Deprecated admins can NEVER be granted
+        if (DEPRECATED_ADMIN_EMAILS.includes(email)) continue;
+
+        // Immutable administrators can NEVER be revoked
         if (PRIMARY_FOUNDERS.includes(email)) continue;
 
         if (event.action === 'grant_superadmin') {
@@ -73,7 +88,7 @@ export async function getLiveSuperadminRegistry(
     if (dbGrants && Array.isArray(dbGrants)) {
       for (const g of dbGrants) {
         const email = String(g.email || '').toLowerCase().trim();
-        if (email && !revokedEmails.has(email)) {
+        if (email && !revokedEmails.has(email) && !DEPRECATED_ADMIN_EMAILS.includes(email)) {
           grantedEmails.add(email);
           if (!grantMetadata.has(email)) {
             grantMetadata.set(email, {
@@ -92,50 +107,61 @@ export async function getLiveSuperadminRegistry(
   // 3. Build unified superadmin map
   const superAdminMap = new Map<string, SuperAdminEntry>();
 
-  // A. Primary founders ALWAYS have access
-  PRIMARY_FOUNDERS.forEach((founderEmail) => {
-    const clean = founderEmail.toLowerCase().trim();
+  // A. Immutable Administrators (Developer Admin & Owner Admin) ALWAYS have access
+  IMMUTABLE_ADMINS.forEach((immutable) => {
+    const clean = immutable.email.toLowerCase().trim();
     const matchedProfile = profilesList.find((p) => (p.email || '').toLowerCase() === clean);
     superAdminMap.set(clean, {
       email: clean,
-      name: matchedProfile?.name || 'Vibe Founding Member',
+      name: matchedProfile?.name || immutable.name,
       source: 'whitelist',
       isPrimaryFounder: true,
+      isImmutable: true,
+      tier: immutable.tier,
+      tierLabel: immutable.roleTitle,
       created_at: matchedProfile?.created_at,
       userId: matchedProfile?.id,
     });
   });
 
-  // B. Whitelist emails from env/constants (EXCLUDING any that have been revoked)
+  // B. Whitelist emails from env/constants (EXCLUDING deprecated or revoked)
   ADMIN_EMAILS.forEach((email) => {
     const clean = email.toLowerCase().trim();
-    if (revokedEmails.has(clean)) return; // REVOKED! Do not show
+    if (revokedEmails.has(clean) || DEPRECATED_ADMIN_EMAILS.includes(clean)) return;
 
     if (!superAdminMap.has(clean)) {
       const matchedProfile = profilesList.find((p) => (p.email || '').toLowerCase() === clean);
+      const imm = getImmutableAdmin(clean);
       superAdminMap.set(clean, {
         email: clean,
-        name: matchedProfile?.name || 'Vibe Administrator',
+        name: matchedProfile?.name || (imm ? imm.name : 'Vibe Administrator'),
         source: 'whitelist',
-        isPrimaryFounder: false,
+        isPrimaryFounder: Boolean(imm),
+        isImmutable: Boolean(imm),
+        tier: imm ? imm.tier : 'super_admin',
+        tierLabel: imm ? imm.roleTitle : 'Super Admin',
         created_at: matchedProfile?.created_at,
         userId: matchedProfile?.id,
       });
     }
   });
 
-  // C. Profiles table with role = 'super_admin' (EXCLUDING any that have been revoked)
+  // C. Profiles table with role = 'super_admin' (EXCLUDING deprecated or revoked)
   profilesList.forEach((p) => {
     if (p.role === 'super_admin' && p.email) {
       const clean = p.email.toLowerCase().trim();
-      if (revokedEmails.has(clean)) return; // REVOKED! Do not show
+      if (revokedEmails.has(clean) || DEPRECATED_ADMIN_EMAILS.includes(clean)) return;
 
       const existing = superAdminMap.get(clean);
+      const imm = getImmutableAdmin(clean);
       superAdminMap.set(clean, {
         email: clean,
-        name: p.name || existing?.name || 'Super Administrator',
+        name: p.name || existing?.name || (imm ? imm.name : 'Super Administrator'),
         source: existing ? existing.source : 'database',
-        isPrimaryFounder: PRIMARY_FOUNDERS.includes(clean),
+        isPrimaryFounder: Boolean(imm),
+        isImmutable: Boolean(imm),
+        tier: imm ? imm.tier : 'super_admin',
+        tierLabel: imm ? imm.roleTitle : 'Super Admin',
         created_at: p.created_at,
         userId: p.id,
       });
@@ -145,16 +171,20 @@ export async function getLiveSuperadminRegistry(
   // D. Dynamically granted emails from audit trail / grants table
   grantedEmails.forEach((email) => {
     const clean = email.toLowerCase().trim();
-    if (revokedEmails.has(clean)) return;
+    if (revokedEmails.has(clean) || DEPRECATED_ADMIN_EMAILS.includes(clean)) return;
 
     if (!superAdminMap.has(clean)) {
       const meta = grantMetadata.get(clean);
       const matchedProfile = profilesList.find((p) => (p.email || '').toLowerCase() === clean);
+      const imm = getImmutableAdmin(clean);
       superAdminMap.set(clean, {
         email: clean,
-        name: matchedProfile?.name || 'Granted Administrator',
+        name: matchedProfile?.name || (imm ? imm.name : 'Granted Administrator'),
         source: 'granted',
-        isPrimaryFounder: false,
+        isPrimaryFounder: Boolean(imm),
+        isImmutable: Boolean(imm),
+        tier: imm ? imm.tier : 'super_admin',
+        tierLabel: imm ? imm.roleTitle : 'Super Admin',
         created_at: meta?.grantedAt || matchedProfile?.created_at,
         grantedBy: meta?.grantedBy,
         userId: matchedProfile?.id,

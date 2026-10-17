@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyStaffSession } from '@/lib/adminAuth';
 import { logAuditEvent } from '@/lib/audit';
+import { PRIMARY_FOUNDERS, getImmutableAdmin } from '@/lib/adminConstants';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,6 +125,16 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
+    // Protection rule: Immutable admin accounts cannot have their role demoted
+    if (existing?.email && (PRIMARY_FOUNDERS.includes(existing.email.toLowerCase()) || getImmutableAdmin(existing.email))) {
+      if (sanitizedUpdates.role && sanitizedUpdates.role !== 'super_admin') {
+        return NextResponse.json(
+          { error: 'Forbidden: Immutable admin accounts (Developer Admin / Owner Admin) cannot be demoted' },
+          { status: 403 }
+        );
+      }
+    }
+
     // 1. Update public.profiles
     const { data: updated, error: profileError } = await supabase
       .from('profiles')
@@ -209,6 +220,14 @@ export async function DELETE(req: NextRequest) {
       .select('email, name, role')
       .eq('id', id)
       .single();
+
+    // Protection rule: Immutable admin accounts cannot be deleted
+    if (existing?.email && (PRIMARY_FOUNDERS.includes(existing.email.toLowerCase()) || getImmutableAdmin(existing.email))) {
+      return NextResponse.json(
+        { error: 'Forbidden: Immutable admin accounts (Developer Admin / Owner Admin) cannot be deleted' },
+        { status: 403 }
+      );
+    }
 
     // 1. Delete from public.profiles
     const { error: profileDeleteErr } = await supabase.from('profiles').delete().eq('id', id);

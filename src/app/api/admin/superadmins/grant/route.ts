@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyStaffSession } from '@/lib/adminAuth';
 import { logAuditEvent } from '@/lib/audit';
-import { ADMIN_EMAILS, PRIMARY_FOUNDERS } from '@/lib/adminConstants';
+import { ADMIN_EMAILS, PRIMARY_FOUNDERS, getImmutableAdmin, DEPRECATED_ADMIN_EMAILS } from '@/lib/adminConstants';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +47,13 @@ export async function POST(req: NextRequest) {
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'A valid email address is required' }, { status: 400 });
+    }
+
+    if (DEPRECATED_ADMIN_EMAILS.includes(email)) {
+      return NextResponse.json(
+        { error: 'Forbidden: This account has been deprecated and cannot be granted administrative privileges' },
+        { status: 403 }
+      );
     }
 
     const supabase = getAdminClient();
@@ -145,10 +152,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Email parameter is required' }, { status: 400 });
     }
 
-    // Protection rule: Cannot revoke the primary founder accounts
-    if (PRIMARY_FOUNDERS.includes(email)) {
+    // Protection rule: Cannot revoke immutable administrator accounts (Developer Admin / Owner Admin)
+    if (PRIMARY_FOUNDERS.includes(email) || getImmutableAdmin(email)) {
       return NextResponse.json(
-        { error: 'Protected Account: Primary organization founders cannot be revoked' },
+        { error: 'Protected Account: Immutable administrators (Developer Admin / Owner Admin) cannot be revoked' },
         { status: 403 }
       );
     }

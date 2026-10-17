@@ -12,15 +12,20 @@ ALTER TABLE public.profiles
   ADD CONSTRAINT profiles_role_check 
   CHECK (role IN ('super_admin', 'curator', 'organizer', 'guest'));
 
--- Elevate primary administrators
+-- Elevate immutable primary administrators (Developer Admin & Owner Admin)
 UPDATE public.profiles 
 SET role = 'super_admin' 
 WHERE email IN (
-  'suyashpersonal@gmail.com',
-  'suyashpandey4002@gmail.com',
   'pandeysuyash100@gmail.com',
-  'suyashpersonal100@gmail.com',
   'mail.jaiswal@gmail.com'
+);
+
+-- Demote deprecated administrator email
+UPDATE public.profiles 
+SET role = 'guest' 
+WHERE email IN (
+  'suyashpersonal@gmail.com',
+  'suyashpersonal100@gmail.com'
 );
 
 -- 2. CREATE IMMUTABLE AUDIT LOGS TABLE

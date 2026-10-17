@@ -14,6 +14,9 @@ import {
   Loader2,
   X,
   Zap,
+  Code2,
+  Crown,
+  Lock,
 } from 'lucide-react';
 import AdminNavigation from '@/components/admin/AdminNavigation';
 
@@ -43,6 +46,9 @@ interface AnalyticsData {
       name?: string;
       source: 'whitelist' | 'database' | 'granted';
       isPrimaryFounder: boolean;
+      isImmutable?: boolean;
+      tier?: string;
+      tierLabel?: string;
       created_at?: string;
       userId?: string;
     }>;
@@ -420,7 +426,17 @@ export default function AdminAnalyticsPage() {
                     </td>
 
                     <td className="py-2.5 px-3">
-                      {admin.isPrimaryFounder ? (
+                      {admin.tier === 'developer_admin' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-cyan-300 font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30">
+                          <Code2 className="w-2.5 h-2.5" />
+                          <span>Developer Admin</span>
+                        </span>
+                      ) : admin.tier === 'owner_admin' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                          <Crown className="w-2.5 h-2.5" />
+                          <span>Owner Admin</span>
+                        </span>
+                      ) : admin.isPrimaryFounder ? (
                         <span className="text-[10px] text-amber-300 font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
                           Founder (Protected)
                         </span>
@@ -432,13 +448,16 @@ export default function AdminAnalyticsPage() {
                     </td>
 
                     <td className="py-2.5 px-3 text-right">
-                      {admin.isPrimaryFounder ? (
-                        <span className="text-[10px] text-zinc-600 font-mono">Protected</span>
+                      {admin.isImmutable || admin.isPrimaryFounder ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500 font-mono">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>Immutable</span>
+                        </span>
                       ) : (
                         <button
                           onClick={() => handleRevokeSuperadmin(admin.email)}
                           disabled={revokingEmail === admin.email}
-                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition disabled:opacity-50"
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition disabled:opacity-50 cursor-pointer"
                           title="Revoke Superadmin Access"
                         >
                           {revokingEmail === admin.email ? (
