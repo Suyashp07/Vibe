@@ -24,6 +24,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 import { EventItem, RSVPItem } from '@/types';
 import {
   getFlashVibeEvents,
@@ -190,6 +191,7 @@ function VibesContent() {
   const [selectedActivity, setSelectedActivity] = useState<string>('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [scrollDirection, setScrollDirection] = useState<'next' | 'prev'>('next');
 
   // Modals
   const [connectHostOpen, setConnectHostOpen] = useState(false);
@@ -515,18 +517,22 @@ function VibesContent() {
   // Current active vibe
   const currentVibe = activeVibes[currentIndex] || activeVibes[0] || DEFAULT_VIBES_LIST[0];
 
-  // Up/down navigation
+  // Up/down navigation with directional tracking
   const handlePrev = useCallback(() => {
+    setScrollDirection('prev');
     setCurrentIndex((prev) => Math.max(0, prev - 1));
   }, []);
 
   const handleNext = useCallback(() => {
+    setScrollDirection('next');
     setCurrentIndex((prev) => Math.min(activeVibes.length - 1, prev + 1));
   }, [activeVibes.length]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         handlePrev();
@@ -539,22 +545,66 @@ function VibesContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePrev, handleNext]);
 
-  // Mouse wheel navigation
+  // High-precision trackpad & mouse wheel momentum-absorbing navigation
   useEffect(() => {
-    let wheeling = false;
+    let accumulatedDelta = 0;
+    let lastWheelTime = 0;
+    let isLocked = false;
+    let lockTimer: NodeJS.Timeout | null = null;
+
     const onWheel = (e: WheelEvent) => {
-      if (wheeling) return;
-      if (Math.abs(e.deltaY) > 30) {
-        wheeling = true;
-        if (e.deltaY > 0) handleNext();
-        else handlePrev();
-        setTimeout(() => {
-          wheeling = false;
-        }, 380);
+      // Don't intercept if scrolling inside a modal, dropdown or input
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest(
+          '[role="dialog"], .comments-modal, input, textarea, select, .no-vibe-scroll'
+        )
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+
+      // If currently locked after a card transition:
+      if (isLocked) {
+        // Absorb trailing momentum events from trackpad deceleration
+        if (lockTimer) clearTimeout(lockTimer);
+        lockTimer = setTimeout(() => {
+          isLocked = false;
+          accumulatedDelta = 0;
+        }, 160);
+        return;
+      }
+
+      // If user paused between swipes (>180ms), reset accumulator so old gestures don't linger
+      if (now - lastWheelTime > 180) {
+        accumulatedDelta = 0;
+      }
+      lastWheelTime = now;
+      accumulatedDelta += e.deltaY;
+
+      // Threshold: 55px accumulated movement triggers single card flip
+      if (Math.abs(accumulatedDelta) >= 55) {
+        isLocked = true;
+        if (accumulatedDelta > 0) {
+          handleNext();
+        } else {
+          handlePrev();
+        }
+        accumulatedDelta = 0;
+
+        // Keep locked for 400ms to allow card slide animation to play and absorb inertia
+        lockTimer = setTimeout(() => {
+          isLocked = false;
+        }, 420);
       }
     };
+
     window.addEventListener('wheel', onWheel, { passive: true });
-    return () => window.removeEventListener('wheel', onWheel);
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      if (lockTimer) clearTimeout(lockTimer);
+    };
   }, [handleNext, handlePrev]);
 
   // Lock document & body to prevent outer page rubber-banding / scrolling on mobile
@@ -972,16 +1022,28 @@ function VibesContent() {
               </span>
             </div>
 
-            {/* Visual Media */}
-            <div className="absolute inset-0 z-0">
-              <Image
-                src={currentVibe.cover_image_url}
-                alt={currentVibe.title}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+            {/* Visual Media with Buttery Spring Directional Motion */}
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={currentVibe.id || currentVibe.slug}
+                  initial={{ opacity: 0, y: scrollDirection === 'next' ? 65 : -65, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: scrollDirection === 'next' ? -65 : 65, scale: 0.98 }}
+                  transition={{ duration: 0.36, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 w-full h-full"
+                >
+                  <Image
+                    src={currentVibe.cover_image_url}
+                    alt={currentVibe.title}
+                    fill
+                    unoptimized
+                    priority
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             {/* Floating Action Stack (Right Edge) */}
@@ -1067,115 +1129,126 @@ function VibesContent() {
           </div>
 
           {/* Right Card: Details & Actions */}
-          <div className="w-[380px] lg:w-[420px] rounded-3xl bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-2xl flex flex-col justify-between shrink-0 space-y-4">
-            {/* Host Identity */}
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
-                {currentVibe.host_initials}
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">{currentVibe.host_name}</h4>
-                <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
-                  <span className="text-amber-400">★</span>
-                  <span>{currentVibe.host_rating} · {currentVibe.host_vibes_count} vibes hosted</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Category Tag & Headline */}
-            <div>
-              <span className="text-xs font-mono font-bold tracking-wider text-[#FF5500] uppercase">
-                {currentVibe.category}
-              </span>
-              <h2 className="text-2xl lg:text-[26px] font-black tracking-tight text-white mt-1 leading-tight">
-                {currentVibe.title}
-              </h2>
-            </div>
-
-            {/* Specs */}
-            <div className="space-y-2 text-xs font-medium text-neutral-300">
-              <div className="flex items-center gap-2.5">
-                <Calendar className="w-4 h-4 text-neutral-400 shrink-0" />
-                <span>{currentVibe.formatted_date}</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
-                <span>{currentVibe.formatted_time}</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-                <span>{currentVibe.location_name}</span>
-              </div>
-            </div>
-
-            {/* Description */}
-            <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-              {currentVibe.description}
-            </p>
-
-            {/* Spots Capacity Bar - ONLY shown when host explicitly asked for spots */}
-            {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-neutral-400" />
-                    <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
-                  </span>
-                  <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                    <Zap className="w-3 h-3 fill-[#FF5500]" />
-                    <span>{currentVibe.spots_left} spots left</span>
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, (currentVibe.going_count / (currentVibe.capacity || 1)) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons: Join Now & Connect with Host */}
-            <div className="flex items-center gap-2.5 pt-1">
-              {(() => {
-                const currentRsvp = userPassMap[currentVibe.id] || userPassMap[currentVibe.slug];
-                if (currentRsvp) {
-                  return (
-                    <button
-                      onClick={() => openPassModal(currentRsvp, currentVibe)}
-                      className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>You're in · View pass</span>
-                    </button>
-                  );
-                }
-                return (
-                  <button
-                    onClick={() => openQuickJoin(currentVibe)}
-                    className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Zap className="w-3.5 h-3.5 fill-current" />
-                    <span>Join now</span>
-                  </button>
-                );
-              })()}
-
-              <button
-                type="button"
-                onClick={() => openAskHost(currentVibe)}
-                className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
-                title="Connect with host"
+          <div className="w-[380px] lg:w-[420px] rounded-3xl bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-2xl flex flex-col justify-between shrink-0 space-y-4 overflow-hidden relative min-h-[560px] lg:min-h-[620px]">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentVibe.id || currentVibe.slug}
+                initial={{ opacity: 0, y: scrollDirection === 'next' ? 24 : -24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: scrollDirection === 'next' ? -24 : 24 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col justify-between h-full space-y-4 w-full"
               >
-                <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
-                <span>Connect with host</span>
-              </button>
-            </div>
+                {/* Host Identity */}
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
+                    {currentVibe.host_initials}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{currentVibe.host_name}</h4>
+                    <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
+                      <span className="text-amber-400">★</span>
+                      <span>{currentVibe.host_rating} · {currentVibe.host_vibes_count} vibes hosted</span>
+                    </p>
+                  </div>
+                </div>
 
-            {/* Keyboard Hint */}
-            <p className="text-[11px] text-white/40 font-medium text-center">
-              Use ↑ ↓ to browse vibes
-            </p>
+                {/* Category Tag & Headline */}
+                <div>
+                  <span className="text-xs font-mono font-bold tracking-wider text-[#FF5500] uppercase">
+                    {currentVibe.category}
+                  </span>
+                  <h2 className="text-2xl lg:text-[26px] font-black tracking-tight text-white mt-1 leading-tight">
+                    {currentVibe.title}
+                  </h2>
+                </div>
+
+                {/* Specs */}
+                <div className="space-y-2 text-xs font-medium text-neutral-300">
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>{currentVibe.formatted_date}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>{currentVibe.formatted_time}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>{currentVibe.location_name}</span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
+                  {currentVibe.description}
+                </p>
+
+                {/* Spots Capacity Bar - ONLY shown when host explicitly asked for spots */}
+                {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
+                  <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
+                      </span>
+                      <span className="font-bold text-[#FF5500] flex items-center gap-1">
+                        <Zap className="w-3 h-3 fill-[#FF5500]" />
+                        <span>{currentVibe.spots_left} spots left</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, (currentVibe.going_count / (currentVibe.capacity || 1)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons: Join Now & Connect with Host */}
+                <div className="flex items-center gap-2.5 pt-1">
+                  {(() => {
+                    const currentRsvp = userPassMap[currentVibe.id] || userPassMap[currentVibe.slug];
+                    if (currentRsvp) {
+                      return (
+                        <button
+                          onClick={() => openPassModal(currentRsvp, currentVibe)}
+                          className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>You're in · View pass</span>
+                        </button>
+                      );
+                    }
+                    return (
+                      <button
+                        onClick={() => openQuickJoin(currentVibe)}
+                        className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Join now</span>
+                      </button>
+                    );
+                  })()}
+
+                  <button
+                    type="button"
+                    onClick={() => openAskHost(currentVibe)}
+                    className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
+                    title="Connect with host"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+                    <span>Connect with host</span>
+                  </button>
+                </div>
+
+                {/* Keyboard & Trackpad Hint */}
+                <p className="text-[11px] text-white/40 font-medium text-center">
+                  Scroll or use ↑ ↓ to browse vibes
+                </p>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </main>
