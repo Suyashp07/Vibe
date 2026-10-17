@@ -78,9 +78,9 @@ export default function AutoLocationDetector() {
         }
       },
       {
-        timeout: 10000,
-        enableHighAccuracy: true,
-        maximumAge: 0,
+        timeout: 5000,
+        enableHighAccuracy: false,
+        maximumAge: 300000,
       }
     );
   };

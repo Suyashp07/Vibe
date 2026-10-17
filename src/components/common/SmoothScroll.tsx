@@ -10,9 +10,16 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // Check for reduced motion preference or full-viewport app pages like /vibes
     if (typeof window === 'undefined') return;
+
+    // Do NOT run Lenis on mobile/touch screens or full-viewport app pages
+    const isTouchDevice =
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.innerWidth < 768 ||
+      'ontouchstart' in window;
+
     if (
+      isTouchDevice ||
       pathname === '/vibes' ||
       pathname?.startsWith('/vibes') ||
       pathname === '/admin' ||
@@ -32,15 +39,16 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    // Initialize buttery smooth scroll with Lenis
+    // Initialize buttery smooth desktop scroll with Lenis (Zero touch interception)
     const lenis = new Lenis({
-      duration: 1.15,
+      duration: 0.85,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.5,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 0, // Never hijack native touch momentum
+      syncTouch: false,
     });
 
     lenisRef.current = lenis;

@@ -1326,18 +1326,31 @@ export const deleteEvent = async (id: string, slug?: string): Promise<boolean> =
   }
 };
 
-export const syncEventsWithSupabase = async (options?: { organizerId?: string; includePrivate?: boolean }): Promise<EventItem[]> => {
-  try {
-    let url = `/api/events/list?t=${Date.now()}`;
-    if (options?.organizerId) {
-      url += `&organizer_id=${encodeURIComponent(options.organizerId)}`;
-    }
-    if (options?.includePrivate) {
-      url += `&include_private=true`;
-    }
+let inFlightSyncEvents: Promise<EventItem[]> | null = null;
+let lastSyncEventsTimestamp = 0;
+const SYNC_EVENTS_CACHE_MS = 12000;
 
-    const res = await fetch(url, {
-      cache: 'no-store',
+export const syncEventsWithSupabase = async (options?: { organizerId?: string; includePrivate?: boolean; force?: boolean }): Promise<EventItem[]> => {
+  // If general sync without filters and within cache window, return cached local events instantly
+  if (!options?.organizerId && !options?.includePrivate && !options?.force && isClient) {
+    if (inFlightSyncEvents) return inFlightSyncEvents;
+    if (Date.now() - lastSyncEventsTimestamp < SYNC_EVENTS_CACHE_MS) {
+      return getEvents();
+    }
+  }
+
+  const syncPromise = (async () => {
+    try {
+      let url = `/api/events/list?t=${Date.now()}`;
+      if (options?.organizerId) {
+        url += `&organizer_id=${encodeURIComponent(options.organizerId)}`;
+      }
+      if (options?.includePrivate) {
+        url += `&include_private=true`;
+      }
+
+      const res = await fetch(url, {
+        cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
     });
     if (!res.ok) return getEvents();
@@ -1484,10 +1497,22 @@ export const syncEventsWithSupabase = async (options?: { organizerId?: string; i
       notifyListeners();
     }
     return merged;
-  } catch (err) {
-    console.warn('Failed to sync events with Supabase:', err);
-    return getEvents();
+    } catch (err) {
+      console.warn('Failed to sync events with Supabase:', err);
+      return getEvents();
+    } finally {
+      if (!options?.organizerId && !options?.includePrivate) {
+        lastSyncEventsTimestamp = Date.now();
+        inFlightSyncEvents = null;
+      }
+    }
+  })();
+
+  if (!options?.organizerId && !options?.includePrivate) {
+    inFlightSyncEvents = syncPromise;
   }
+
+  return syncPromise;
 };
 
 
@@ -1854,51 +1879,68 @@ export const getDatePollsByOrganizer = (organizerIdOrHandle: string): DatePoll[]
   );
 };
 
+let inFlightSyncDatePolls: Promise<DatePoll[]> | null = null;
+let lastSyncDatePollsTimestamp = 0;
+const SYNC_POLLS_CACHE_MS = 20000;
+
 export const syncDatePollsWithSupabase = async (): Promise<DatePoll[]> => {
   if (!isClient) return getDatePolls();
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project')) {
-      return getDatePolls();
-    }
-    const res = await fetch(`${supabaseUrl}/rest/v1/date_polls?select=*,profiles:organizer_id(id,name,handle,logo_url)&order=created_at.desc`, {
-      headers: {
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
-      },
-      cache: 'no-store'
-    });
-    if (res.ok) {
-      const rows = await res.json();
-      if (Array.isArray(rows)) {
-        const local = getDatePolls();
-        const synced: DatePoll[] = rows.map(r => ({
-          id: r.id,
-          organizer_id: r.organizer_id || '',
-          organizer_name: r.profiles?.name || 'Community Organizer',
-          organizer_handle: r.profiles?.handle || 'host',
-          title: r.title,
-          slug: r.slug,
-          description: r.description || '',
-          options: Array.isArray(r.options) ? r.options : [],
-          created_at: r.created_at
-        }));
-        const merged = [...synced];
-        local.forEach(lp => {
-          if (!merged.some(mp => mp.slug.toLowerCase() === lp.slug.toLowerCase() || mp.id === lp.id)) {
-            merged.push(lp);
-          }
-        });
-        localStorage.setItem(STORAGE_KEYS.POLLS, JSON.stringify(merged));
-        notifyListeners();
-        return merged;
-      }
-    }
-  } catch (e) {
-    console.warn('Error syncing date polls with Supabase:', e);
+  if (inFlightSyncDatePolls) return inFlightSyncDatePolls;
+  if (Date.now() - lastSyncDatePollsTimestamp < SYNC_POLLS_CACHE_MS) {
+    return getDatePolls();
   }
-  return getDatePolls();
+
+  const pollPromise = (async () => {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project')) {
+        return getDatePolls();
+      }
+      const res = await fetch(`${supabaseUrl}/rest/v1/date_polls?select=*,profiles:organizer_id(id,name,handle,logo_url)&order=created_at.desc`, {
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows)) {
+          const local = getDatePolls();
+          const synced: DatePoll[] = rows.map(r => ({
+            id: r.id,
+            organizer_id: r.organizer_id || '',
+            organizer_name: r.profiles?.name || 'Community Organizer',
+            organizer_handle: r.profiles?.handle || 'host',
+            title: r.title,
+            slug: r.slug,
+            description: r.description || '',
+            options: Array.isArray(r.options) ? r.options : [],
+            created_at: r.created_at
+          }));
+          const merged = [...synced];
+          local.forEach(lp => {
+            if (!merged.some(mp => mp.slug.toLowerCase() === lp.slug.toLowerCase() || mp.id === lp.id)) {
+              merged.push(lp);
+            }
+          });
+          localStorage.setItem(STORAGE_KEYS.POLLS, JSON.stringify(merged));
+          notifyListeners();
+          return merged;
+        }
+      }
+    } catch (e) {
+      console.warn('Error syncing date polls with Supabase:', e);
+    } finally {
+      lastSyncDatePollsTimestamp = Date.now();
+      inFlightSyncDatePolls = null;
+    }
+    return getDatePolls();
+  })();
+
+  inFlightSyncDatePolls = pollPromise;
+  return pollPromise;
 };
 
 export const fetchDatePollBySlug = async (slug: string): Promise<DatePoll | undefined> => {

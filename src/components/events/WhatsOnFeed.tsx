@@ -786,17 +786,10 @@ export default function WhatsOnFeed() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredEvents.map((event, idx) => (
-              <motion.div
+            {filteredEvents.map((event) => (
+              <div
                 key={event.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{
-                  duration: 0.35,
-                  delay: (idx % 4) * 0.06,
-                }}
-                className="h-full flex flex-col"
+                className="h-full flex flex-col transition-all duration-200"
               >
                 <EventCard
                   event={event}
@@ -805,7 +798,7 @@ export default function WhatsOnFeed() {
                   activeCategory={categoryFilter}
                   onTagClick={handleTagClick}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         )}

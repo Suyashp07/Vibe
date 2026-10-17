@@ -25,6 +25,17 @@
   --warning-bg: rgba(245, 158, 11, 0.12);
 }
 
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: auto;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background-color: #050505;
   color: #F3F4F6;
@@ -32,6 +43,23 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hardware accelerated backdrop blur layers to prevent WebKit foggy rasterization */
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-xl,
+.backdrop-blur-2xl {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Crisp image rendering */
+img {
+  image-rendering: -webkit-optimize-contrast;
 }
 
 /* Custom interactive cursor styles */
@@ -198,6 +226,7 @@ html.light .spotlight-card::before {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Master Prompt: Hover lift: translateY(-1px) + shadow bloom */
