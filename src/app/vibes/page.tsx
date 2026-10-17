@@ -517,6 +517,18 @@ function VibesContent() {
   // Current active vibe
   const currentVibe = activeVibes[currentIndex] || activeVibes[0] || DEFAULT_VIBES_LIST[0];
 
+  // State for tactile overscroll bounce on boundaries
+  const [overscrollOffset, setOverscrollOffset] = useState<number>(0);
+  const overscrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerBoundaryBounce = useCallback((direction: 'top' | 'bottom') => {
+    if (overscrollTimerRef.current) clearTimeout(overscrollTimerRef.current);
+    setOverscrollOffset(direction === 'top' ? 14 : -14);
+    overscrollTimerRef.current = setTimeout(() => {
+      setOverscrollOffset(0);
+    }, 220);
+  }, []);
+
   // Up/down navigation with directional tracking
   const handlePrev = useCallback(() => {
     setScrollDirection('prev');
@@ -535,25 +547,32 @@ function VibesContent() {
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        handlePrev();
+        if (currentIndex > 0) {
+          handlePrev();
+        } else {
+          triggerBoundaryBounce('top');
+        }
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        handleNext();
+        if (currentIndex < activeVibes.length - 1) {
+          handleNext();
+        } else {
+          triggerBoundaryBounce('bottom');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePrev, handleNext]);
+  }, [currentIndex, activeVibes.length, handlePrev, handleNext, triggerBoundaryBounce]);
 
   // High-precision trackpad & mouse wheel momentum-absorbing navigation
   useEffect(() => {
     let accumulatedDelta = 0;
     let lastWheelTime = 0;
-    let isLocked = false;
-    let lockTimer: NodeJS.Timeout | null = null;
+    let lockUntil = 0;
 
     const onWheel = (e: WheelEvent) => {
-      // Don't intercept if scrolling inside a modal, dropdown or input
+      // Don't intercept if scrolling inside a modal, dropdown, input or comments
       const target = e.target as HTMLElement | null;
       if (
         target?.closest(
@@ -564,48 +583,68 @@ function VibesContent() {
       }
 
       const now = Date.now();
+      const delta = e.deltaY;
 
-      // If currently locked after a card transition:
-      if (isLocked) {
-        // Absorb trailing momentum events from trackpad deceleration
-        if (lockTimer) clearTimeout(lockTimer);
-        lockTimer = setTimeout(() => {
-          isLocked = false;
-          accumulatedDelta = 0;
-        }, 160);
+      // 1. If currently in transition lockout (animation running):
+      if (now < lockUntil) {
+        lastWheelTime = now;
         return;
       }
 
-      // If user paused between swipes (>180ms), reset accumulator so old gestures don't linger
-      if (now - lastWheelTime > 180) {
+      // 2. Trackpad inertia reset:
+      // If user paused between swipes (> 90ms), reset accumulator so old momentum doesn't linger
+      if (now - lastWheelTime > 90) {
         accumulatedDelta = 0;
       }
       lastWheelTime = now;
-      accumulatedDelta += e.deltaY;
 
-      // Threshold: 55px accumulated movement triggers single card flip
-      if (Math.abs(accumulatedDelta) >= 55) {
-        isLocked = true;
-        if (accumulatedDelta > 0) {
+      // If user reverses scroll direction, reset accumulator immediately for instant response
+      if ((accumulatedDelta > 0 && delta < 0) || (accumulatedDelta < 0 && delta > 0)) {
+        accumulatedDelta = 0;
+      }
+
+      accumulatedDelta += delta;
+
+      // Threshold: 50px accumulated movement triggers single card flip.
+      // Physical mouse wheel notch usually has deltaMode 1 or abs(deltaY) >= 80.
+      const isDiscreteMouse = e.deltaMode !== 0 || Math.abs(delta) >= 80;
+      const threshold = isDiscreteMouse ? 35 : 50;
+
+      if (Math.abs(accumulatedDelta) >= threshold) {
+        const isNext = accumulatedDelta > 0;
+        accumulatedDelta = 0;
+
+        // Boundary check
+        if (isNext && currentIndex >= activeVibes.length - 1) {
+          triggerBoundaryBounce('bottom');
+          lockUntil = now + 140; // Short boundary lock so reverse direction works immediately
+          return;
+        }
+
+        if (!isNext && currentIndex <= 0) {
+          triggerBoundaryBounce('top');
+          lockUntil = now + 140;
+          return;
+        }
+
+        // Trigger vibe transition
+        if (isNext) {
           handleNext();
         } else {
           handlePrev();
         }
-        accumulatedDelta = 0;
 
-        // Keep locked for 400ms to allow card slide animation to play and absorb inertia
-        lockTimer = setTimeout(() => {
-          isLocked = false;
-        }, 420);
+        // Lock for 320ms to allow smooth slide animation to complete and absorb inertia tail
+        lockUntil = now + 320;
       }
     };
 
     window.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       window.removeEventListener('wheel', onWheel);
-      if (lockTimer) clearTimeout(lockTimer);
+      if (overscrollTimerRef.current) clearTimeout(overscrollTimerRef.current);
     };
-  }, [handleNext, handlePrev]);
+  }, [currentIndex, activeVibes.length, handleNext, handlePrev, triggerBoundaryBounce]);
 
   // Lock document & body to prevent outer page rubber-banding / scrolling on mobile
   useEffect(() => {
@@ -1011,26 +1050,50 @@ function VibesContent() {
       {/* ========================================================= */}
       {/* 2. DESKTOP VIEW (SPLIT-SCREEN CARD - SCREENSHOT 1)        */}
       {/* ========================================================= */}
-      <main className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4">
-        <div className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full">
-          {/* Left Card: Vertical Reel Frame */}
-          <div className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0">
+      <main className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4 select-none">
+        <motion.div
+          animate={{ y: overscrollOffset }}
+          transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+          className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full"
+        >
+          {/* Left Card: Vertical Reel Frame with Mouse/Trackpad Drag Gesture */}
+          <motion.div
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.22}
+            onDragEnd={(_, info) => {
+              if (info.offset.y < -45 || info.velocity.y < -250) {
+                if (currentIndex < activeVibes.length - 1) {
+                  handleNext();
+                } else {
+                  triggerBoundaryBounce('bottom');
+                }
+              } else if (info.offset.y > 45 || info.velocity.y > 250) {
+                if (currentIndex > 0) {
+                  handlePrev();
+                } else {
+                  triggerBoundaryBounce('top');
+                }
+              }
+            }}
+            className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 cursor-grab active:cursor-grabbing group"
+          >
             {/* Badge: Community pick */}
-            <div className="absolute top-4 left-4 z-20">
+            <div className="absolute top-4 left-4 z-20 pointer-events-none">
               <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/50 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
                 {currentVibe.badge || 'Community pick'}
               </span>
             </div>
 
             {/* Visual Media with Buttery Spring Directional Motion */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.div
                   key={currentVibe.id || currentVibe.slug}
                   initial={{ opacity: 0, y: scrollDirection === 'next' ? 65 : -65, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: scrollDirection === 'next' ? -65 : 65, scale: 0.98 }}
-                  transition={{ duration: 0.36, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute inset-0 w-full h-full"
                 >
                   <Image
@@ -1046,8 +1109,11 @@ function VibesContent() {
               </AnimatePresence>
             </div>
 
-            {/* Floating Action Stack (Right Edge) */}
-            <div className="absolute right-3.5 bottom-5 z-20 flex flex-col items-center gap-3.5">
+            {/* Floating Action Stack (Right Edge) - stopPropagation prevents dragging when clicking actions */}
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute right-3.5 bottom-5 z-20 flex flex-col items-center gap-3.5"
+            >
               {/* Flame */}
               {(() => {
                 const { isLiked: desktopLiked, count: desktopLikesCount } = getVibeLikeData(currentVibe);
@@ -1055,7 +1121,7 @@ function VibesContent() {
                   <button
                     type="button"
                     onClick={handleLike}
-                    className="flex flex-col items-center gap-1 cursor-pointer group"
+                    className="flex flex-col items-center gap-1 cursor-pointer group/flame"
                     aria-label="Like vibe"
                   >
                     <div
@@ -1076,10 +1142,10 @@ function VibesContent() {
               <button
                 type="button"
                 onClick={() => openComments(currentVibe)}
-                className="flex flex-col items-center gap-1 cursor-pointer group"
+                className="flex flex-col items-center gap-1 cursor-pointer group/chat"
                 title="View & post comments"
               >
-                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover:text-white group-hover:bg-[#FF5500]/20 group-hover:border-[#FF5500]/40 flex items-center justify-center transition-all group-hover:scale-105 active:scale-95 shadow-md">
+                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover/chat:text-white group-hover/chat:bg-[#FF5500]/20 group-hover/chat:border-[#FF5500]/40 flex items-center justify-center transition-all group-hover/chat:scale-105 active:scale-95 shadow-md">
                   <MessageSquare className="w-4.5 h-4.5" />
                 </div>
                 <span className="text-xs font-bold text-white shadow-sm">{getVibeCommentsCount(currentVibe)}</span>
@@ -1089,54 +1155,82 @@ function VibesContent() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex flex-col items-center gap-1 cursor-pointer"
+                className="flex flex-col items-center gap-1 cursor-pointer group/share"
                 title="Share vibe"
               >
-                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all">
+                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all group-hover/share:scale-105 active:scale-95">
                   <Share2 className="w-4.5 h-4.5" />
                 </div>
                 <span className="text-[10px] font-semibold text-white/80 shadow-sm">Share</span>
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Center Floating Navigation Chevrons */}
-          <div className="flex flex-col gap-2 z-20 shrink-0">
+          {/* Center Floating Navigation Chevrons & Pill Progress Indicator */}
+          <div className="flex flex-col items-center gap-3 z-20 shrink-0">
             <button
               onClick={handlePrev}
               disabled={currentIndex === 0}
               className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
                 currentIndex === 0
                   ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
-                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105'
+                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
               }`}
-              title="Previous vibe (Up Arrow)"
+              title="Previous vibe (Up Arrow / Scroll Up)"
+              aria-label="Previous vibe"
             >
               <ChevronUp className="w-4 h-4" />
             </button>
+
+            {/* Vertical Pill Progress Indicator */}
+            <div className="flex flex-col items-center gap-1.5 py-1">
+              {activeVibes.slice(0, 8).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setScrollDirection(idx > currentIndex ? 'next' : 'prev');
+                    setCurrentIndex(idx);
+                  }}
+                  className={`rounded-full transition-all duration-300 ${
+                    idx === currentIndex
+                      ? 'w-1.5 h-5 bg-[#FF5500] shadow-[0_0_10px_rgba(255,85,0,0.8)]'
+                      : 'w-1.5 h-1.5 bg-white/25 hover:bg-white/60'
+                  }`}
+                  title={`Jump to vibe ${idx + 1}`}
+                  aria-label={`Jump to vibe ${idx + 1}`}
+                />
+              ))}
+              {activeVibes.length > 8 && (
+                <span className="text-[10px] font-mono font-bold text-white/40 pt-0.5">
+                  {currentIndex + 1}/{activeVibes.length}
+                </span>
+              )}
+            </div>
+
             <button
               onClick={handleNext}
               disabled={currentIndex >= activeVibes.length - 1}
               className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
                 currentIndex >= activeVibes.length - 1
                   ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
-                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105'
+                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
               }`}
-              title="Next vibe (Down Arrow)"
+              title="Next vibe (Down Arrow / Scroll Down)"
+              aria-label="Next vibe"
             >
               <ChevronDown className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Right Card: Details & Actions */}
+          {/* Right Card: Details & Actions (Synchronized with Reel) */}
           <div className="w-[380px] lg:w-[420px] rounded-3xl bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-2xl flex flex-col justify-between shrink-0 space-y-4 overflow-hidden relative min-h-[560px] lg:min-h-[620px]">
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={currentVibe.id || currentVibe.slug}
-                initial={{ opacity: 0, y: scrollDirection === 'next' ? 24 : -24 }}
+                initial={{ opacity: 0, y: scrollDirection === 'next' ? 40 : -40 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: scrollDirection === 'next' ? -24 : 24 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                exit={{ opacity: 0, y: scrollDirection === 'next' ? -40 : 40 }}
+                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
                 className="flex flex-col justify-between h-full space-y-4 w-full"
               >
                 {/* Host Identity */}
@@ -1243,14 +1337,14 @@ function VibesContent() {
                   </button>
                 </div>
 
-                {/* Keyboard & Trackpad Hint */}
+                {/* Keyboard, Mouse & Trackpad Hint */}
                 <p className="text-[11px] text-white/40 font-medium text-center">
-                  Scroll or use ↑ ↓ to browse vibes
+                  Scroll or drag card · Use ↑ ↓ to browse vibes
                 </p>
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
       </main>
 
       {/* ========================================================= */}
