@@ -116,32 +116,59 @@ async function getSlugEntity(rawSlug: string): Promise<{ event: EventItem | null
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug = (params.slug || '').toLowerCase();
   const { event, organizer } = await getSlugEntity(slug);
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/$/, '');
+  const canonicalUrl = `${baseUrl}/${slug}`;
 
   if (event) {
-    const ogImageUrl = `/api/og/${slug}?format=whatsapp`;
+    const ogImageUrl = `${baseUrl}/api/og/${slug}?title=${encodeURIComponent(event.title)}&city=${encodeURIComponent(event.city || 'India')}`;
+    const desc = event.tagline || event.description || `Join ${event.title} in ${event.city} on Vibe.`;
     return {
-      title: `${event.title} · Vibe by Swaniki`,
-      description: `${event.tagline || event.description} — ${event.city} · ${event.location_name}`,
+      title: `${event.title} — ${event.city} · Vibe by Swaniki`,
+      description: `${desc} — ${event.city} · ${event.location_name}`,
       openGraph: {
         title: event.title,
-        description: event.tagline || event.description,
-        url: `/${slug}`,
+        description: desc,
+        url: canonicalUrl,
         siteName: 'Vibe by Swaniki',
+        locale: 'en_IN',
+        type: 'website',
         images: [
           {
-            url: ogImageUrl,
-            width: 1280,
-            height: 720,
+            url: event.cover_image_url || ogImageUrl,
+            width: 1200,
+            height: 630,
             alt: event.title,
           },
         ],
-        type: 'website',
+      },
+      keywords: [
+        event.title,
+        `events in ${event.city}`,
+        `${event.city} events`,
+        event.location_name || '',
+        'vibe events',
+        'book tickets',
+        'rsvp pass',
+        'things to do in ' + event.city,
+      ].filter(Boolean),
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-image-preview': 'large',
+        },
       },
       twitter: {
         card: 'summary_large_image',
-        title: event.title,
-        description: event.tagline || event.description,
-        images: [ogImageUrl],
+        title: `${event.title} — ${event.city}`,
+        description: desc,
+        images: [event.cover_image_url || ogImageUrl],
+        creator: '@Swaniki',
       },
     };
   }
@@ -149,7 +176,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (organizer) {
     return {
       title: `${organizer.name} (@${organizer.handle}) · Vibe by Swaniki`,
-      description: organizer.bio,
+      description: organizer.bio || `Explore events curated by ${organizer.name} on Vibe.`,
+      alternates: {
+        canonical: canonicalUrl,
+      },
     };
   }
 
@@ -161,5 +191,97 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { event, organizer } = await getSlugEntity(params.slug);
-  return <EventSlugClient slug={params.slug} initialEvent={event} initialOrganizer={organizer} />;
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/$/, '');
+  const canonicalUrl = `${baseUrl}/${params.slug}`;
+
+  // Build Google Event Rich Results Schema (JSON-LD)
+  let eventSchemaJson: any = null;
+  let breadcrumbJson: any = null;
+
+  if (event) {
+    const rawPrice = event.external_price_text || (event as any).price_text || '';
+    const numericPrice = rawPrice.replace(/[^0-9]/g, '') || '0';
+    const isFree = rawPrice.toLowerCase().includes('free') || numericPrice === '0';
+
+    eventSchemaJson = {
+      '@context': 'https://schema.org',
+      '@type': 'Event',
+      name: event.title,
+      description: event.tagline || event.description,
+      startDate: event.start_at || new Date().toISOString(),
+      endDate: event.end_at || new Date(Date.now() + 10800000).toISOString(),
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      eventStatus: 'https://schema.org/EventScheduled',
+      location: {
+        '@type': 'Place',
+        name: event.location_name || `${event.city} Venue`,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: event.location_address || event.location_name || '',
+          addressLocality: event.city || 'Pune',
+          addressRegion: 'MH',
+          addressCountry: 'IN',
+        },
+      },
+      image: [
+        event.cover_image_url || `${baseUrl}/api/og/${event.slug}`,
+      ],
+      organizer: {
+        '@type': 'Organization',
+        name: event.organizer_name || 'Vibe by Swaniki',
+        url: baseUrl,
+      },
+      offers: {
+        '@type': 'Offer',
+        url: canonicalUrl,
+        price: isFree ? '0' : numericPrice,
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock',
+        validFrom: event.created_at || new Date().toISOString(),
+      },
+    };
+
+    breadcrumbJson = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: baseUrl,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: `Events in ${event.city || 'India'}`,
+          item: `${baseUrl}/?city=${encodeURIComponent(event.city || 'India')}`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: event.title,
+          item: canonicalUrl,
+        },
+      ],
+    };
+  }
+
+  return (
+    <>
+      {eventSchemaJson && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchemaJson) }}
+        />
+      )}
+      {breadcrumbJson && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJson) }}
+        />
+      )}
+      <EventSlugClient slug={params.slug} initialEvent={event} initialOrganizer={organizer} />
+    </>
+  );
 }

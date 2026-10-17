@@ -54,12 +54,39 @@ export const viewport: Viewport = {
   themeColor: '#0F172A',
 };
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vive.swaniki.com';
+const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/$/, '');
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl.startsWith('http') ? appUrl : `https://${appUrl}`),
-  title: 'Vibe by Swaniki — Whitelabel Event Network',
-  description: 'Design, distribute, and collect RSVPs for boutique cultural gatherings, tech summits, and live mixers across India with AI verification.',
+  title: {
+    default: 'Vibe by Swaniki — Whitelabel Event Network & Discovery in India',
+    template: '%s | Vibe by Swaniki',
+  },
+  description:
+    'Discover, host, and book tickets for boutique cultural gatherings, live music gigs, sports tournaments, comedy nights, and tech mixers across Mumbai, Pune, Bengaluru, Delhi, Hyderabad, and all of India.',
+  keywords: [
+    'events in india',
+    'events in pune',
+    'events in mumbai',
+    'events in bengaluru',
+    'events in delhi',
+    'events in hyderabad',
+    'book event tickets',
+    'vibe events',
+    'vibe instant',
+    'live concerts',
+    'standup comedy',
+    'box cricket tournament',
+    'casual meetups',
+    'rsvp events',
+    'swaniki',
+    'cultural gatherings',
+    'weekend events',
+  ],
+  authors: [{ name: 'Swaniki', url: 'https://vibe.swaniki.com' }],
+  creator: 'Swaniki',
+  publisher: 'Swaniki',
+  category: 'events',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
@@ -70,17 +97,82 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Vibe',
   },
-  other: {
-    'mobile-web-app-capable': 'yes',
+  alternates: {
+    canonical: appUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   applicationName: 'Vibe by Swaniki',
   openGraph: {
-    title: 'Vibe by Swaniki — Create events that feel alive',
-    description: 'Whitelabel event pages with editorial warmth, live RSVP tracking, and AI-powered storytelling.',
+    title: 'Vibe by Swaniki — Whitelabel Event Experiences & Discovery in India',
+    description:
+      'Design, distribute, and collect RSVPs for boutique cultural gatherings, tech summits, live music, and sports meetups across India with instant verification.',
+    url: appUrl,
     siteName: 'Vibe by Swaniki',
     locale: 'en_IN',
     type: 'website',
+    images: [
+      {
+        url: `${appUrl}/api/og/home?title=${encodeURIComponent('Vibe by Swaniki — Live Events & Experiences')}`,
+        width: 1200,
+        height: 630,
+        alt: 'Vibe by Swaniki — Event Experiences Across India',
+      },
+    ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vibe by Swaniki — Whitelabel Event Network',
+    description:
+      'Discover and host live music gigs, sports meetups, comedy nights, and tech mixers across India with instant RSVP passes.',
+    images: [`${appUrl}/api/og/home?title=${encodeURIComponent('Vibe by Swaniki — Live Events & Experiences')}`],
+    site: '@Swaniki',
+    creator: '@Swaniki',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'geo.region': 'IN-MH',
+    'geo.placename': 'India',
+    'geo.position': '18.5204;73.8567',
+    ICBM: '18.5204, 73.8567',
+  },
+};
+
+const jsonLdWebsite = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Vibe by Swaniki',
+  alternateName: ['Vibe', 'Vibe Events', 'Swaniki Vibe'],
+  url: 'https://vibe.swaniki.com',
+  description:
+    'Discover, host, and book tickets for boutique cultural gatherings, live music gigs, sports tournaments, comedy nights, and tech mixers across India.',
+  inLanguage: 'en-IN',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://vibe.swaniki.com/?search={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
+const jsonLdOrganization = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Vibe by Swaniki',
+  url: 'https://vibe.swaniki.com',
+  logo: 'https://vibe.swaniki.com/icons/icon-512.png',
+  sameAs: ['https://swaniki.com'],
 };
 
 export default function RootLayout({
@@ -95,6 +187,15 @@ export default function RootLayout({
       className={`dark ${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}
     >
       <head>
+        {/* Google Knowledge Graph & Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebsite) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

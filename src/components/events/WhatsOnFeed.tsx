@@ -475,7 +475,9 @@ export default function WhatsOnFeed() {
   return (
     <>
       {/* Accessible semantic heading for SEO & screen readers */}
-      <h1 className="sr-only">Vibe — Discover Spotlight Events & Live Experiences</h1>
+      <h1 className="sr-only">
+        Vibe by Swaniki — Discover Live Events, Cultural Gatherings, Gigs, Sports & Spontaneous Meetups in India
+      </h1>
 
       <div className="w-full space-y-8 sm:space-y-12">
         {/* ========================================================================= */}
