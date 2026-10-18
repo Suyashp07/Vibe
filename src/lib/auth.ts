@@ -533,6 +533,44 @@ export const checkEmailAlreadyRegistered = async (email: string): Promise<boolea
 };
 
 /**
+ * Developer / Localhost Quick Sign-in
+ * Instantly logs in locally as an admin, host, or custom test account for development.
+ */
+export const loginAsDev = (
+  email: string = 'pandeysuyash100@gmail.com',
+  name?: string,
+  role?: 'super_admin' | 'curator' | 'organizer' | 'guest'
+): AuthProfile => {
+  const cleanEmail = normalizeEmail(email);
+  const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+  const resolvedRole = isSuper ? 'super_admin' : (role || 'organizer');
+
+  const defaultName = cleanEmail.includes('pandeysuyash')
+    ? 'Suyash Pandey'
+    : cleanEmail.includes('jaiswal')
+    ? 'Ankur Jaiswal'
+    : cleanEmail.split('@')[0];
+
+  const profile: AuthProfile = {
+    id: `dev-${cleanEmail.replace(/[^a-z0-9]/g, '-')}`,
+    email: cleanEmail,
+    name: name || defaultName,
+    role: resolvedRole,
+    handle: cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+    bio: isSuper ? 'Platform Admin & Verified Community Lead' : 'Community Host & Organizer',
+    brand_color: '#FF5500',
+    brand_font: 'Inter',
+    onboarded: true,
+    isDemo: true,
+  };
+  setLocalAuthSession(profile);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('vibe_auth_changed'));
+  }
+  return profile;
+};
+
+/**
  * Sign in with Email and Password (Host or Guest)
  */
 export const signInWithPassword = async (
@@ -1181,9 +1219,12 @@ export const useAuth = () => {
           setProfile(mergedProfile);
           setLocalAuthSession(mergedProfile);
         } else {
-          setUser(null);
-          setProfile(null);
-          setLocalAuthSession(null);
+          const currentLocal = getLocalAuthSession();
+          if (!currentLocal?.isDemo) {
+            setUser(null);
+            setProfile(null);
+            setLocalAuthSession(null);
+          }
         }
       });
       authListener = data.subscription;

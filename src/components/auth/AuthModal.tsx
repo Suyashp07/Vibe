@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   KeyRound,
   RotateCcw,
-  ArrowLeft
+  ArrowLeft,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import {
   signInWithPassword,
@@ -24,7 +26,8 @@ import {
   signInWithGoogle,
   getSupabaseClient,
   useAuth,
-  validateEmailInput
+  validateEmailInput,
+  loginAsDev
 } from '@/lib/auth';
 
 type AuthMode = 'signin' | 'signup';
@@ -58,6 +61,16 @@ export default function AuthModal({
   const [message, setMessage] = useState('');
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        setIsLocalhost(true);
+      }
+    }
+  }, []);
 
   // OTP Verification Mode
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -594,6 +607,54 @@ export default function AuthModal({
                 </>
               )}
             </button>
+
+            {/* Localhost Fast Login */}
+            {isLocalhost && (
+              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-amber-500 mb-2">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Localhost Quick Login</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loginAsDev('pandeysuyash100@gmail.com');
+                      onClose();
+                      if (onAuthenticated) onAuthenticated();
+                      router.push(destination);
+                    }}
+                    className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500 hover:text-black border border-amber-500/20 text-left transition cursor-pointer group"
+                  >
+                    <span className="flex items-center gap-0.5 text-[9px] uppercase font-mono text-amber-500 group-hover:text-black font-bold">
+                      <ShieldCheck className="w-3 h-3" />
+                      Dev Admin
+                    </span>
+                    <span className="block text-xs font-semibold truncate text-gray-900 dark:text-white group-hover:text-black">
+                      Suyash P.
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loginAsDev('mail.jaiswal@gmail.com');
+                      onClose();
+                      if (onAuthenticated) onAuthenticated();
+                      router.push(destination);
+                    }}
+                    className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500 hover:text-black border border-amber-500/20 text-left transition cursor-pointer group"
+                  >
+                    <span className="flex items-center gap-0.5 text-[9px] uppercase font-mono text-amber-500 group-hover:text-black font-bold">
+                      <ShieldCheck className="w-3 h-3" />
+                      Owner Admin
+                    </span>
+                    <span className="block text-xs font-semibold truncate text-gray-900 dark:text-white group-hover:text-black">
+                      Ankur J.
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

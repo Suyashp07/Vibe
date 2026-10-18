@@ -222,7 +222,12 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-[#0F172A] hover:font-medium transition-colors">
+                <Link href="/profile" className="hover:text-[#0F172A] hover:font-medium transition-colors">
+                  My Profile & Brand
+                </Link>
+              </li>
+              <li>
+                <Link href="/passes" className="hover:text-[#0F172A] hover:font-medium transition-colors">
                   Guest Passes & Tickets
                 </Link>
               </li>

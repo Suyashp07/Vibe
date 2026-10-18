@@ -340,6 +340,19 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
                       <div className="py-1">
                         <Link
+                          href="/profile"
+                          onClick={() => setDropdownOpen(false)}
+                          className={`flex items-center gap-2.5 px-4 py-2 text-xs transition-colors font-medium ${
+                            pathname === '/profile'
+                              ? 'bg-[#FF5500]/15 text-[#FF5500] font-bold'
+                              : 'text-white/90 hover:bg-white/10'
+                          }`}
+                        >
+                          <User className="w-4 h-4 text-[#FF5500]" />
+                          <span>My Profile & Brand</span>
+                        </Link>
+
+                        <Link
                           href="/passes"
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-xs text-white/90 hover:bg-white/10 transition-colors font-medium"

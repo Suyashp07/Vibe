@@ -11,16 +11,36 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
-import { signInWithPassword, signInWithGoogle, sendEmailOtp, verifyEmailOtp, validateEmailInput } from '@/lib/auth';
+import {
+  signInWithPassword,
+  signInWithGoogle,
+  sendEmailOtp,
+  verifyEmailOtp,
+  validateEmailInput,
+  loginAsDev
+} from '@/lib/auth';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
+
+  const [isLocalhost, setIsLocalhost] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        setIsLocalhost(true);
+      }
+    }
+  }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -162,6 +182,52 @@ function LoginContent() {
               Sign in to manage your events, check RSVPs, or create new gatherings.
             </p>
           </div>
+
+          {/* Localhost Fast Login Box */}
+          {isLocalhost && (
+            <div className="mb-6 p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-transparent border border-amber-500/25 text-xs animate-in fade-in">
+              <div className="flex items-center gap-1.5 font-bold text-amber-500 mb-1">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Localhost Fast Sign-in</span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-white/70 mb-3 leading-relaxed">
+                Running on localhost? Bypass OAuth redirects or email codes and test directly with full role permissions:
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginAsDev('pandeysuyash100@gmail.com');
+                    router.push(destination);
+                  }}
+                  className="p-2.5 rounded-lg bg-white dark:bg-white/10 hover:bg-amber-500 hover:text-black dark:hover:text-black font-semibold text-[11px] border border-slate-200 dark:border-white/10 transition text-left cursor-pointer group shadow-2xs"
+                >
+                  <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 group-hover:text-black font-mono font-bold uppercase tracking-wider mb-0.5">
+                    <ShieldCheck className="w-3 h-3" />
+                    Developer Admin
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white group-hover:text-black truncate block">Suyash Pandey</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginAsDev('mail.jaiswal@gmail.com');
+                    router.push(destination);
+                  }}
+                  className="p-2.5 rounded-lg bg-white dark:bg-white/10 hover:bg-amber-500 hover:text-black dark:hover:text-black font-semibold text-[11px] border border-slate-200 dark:border-white/10 transition text-left cursor-pointer group shadow-2xs"
+                >
+                  <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 group-hover:text-black font-mono font-bold uppercase tracking-wider mb-0.5">
+                    <ShieldCheck className="w-3 h-3" />
+                    Owner Admin
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white group-hover:text-black truncate block">Ankur Jaiswal</span>
+                </button>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-white/40 pt-1">
+                <span>Tip: Add <code className="text-amber-500">http://localhost:3000/**</code> in Supabase to enable Google OAuth locally</span>
+              </div>
+            </div>
+          )}
 
           {/* Google One-Click Login */}
           <button
