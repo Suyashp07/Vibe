@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import UnifiedEventDetailView from '@/components/events/UnifiedEventDetailView';
+import EventTemplateView from '@/components/templates/EventTemplateView';
 import OrganizerProfileView from '@/components/organizer/OrganizerProfileView';
 import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase, isPublicLiveEvent } from '@/lib/store';
 import { EventItem, Profile } from '@/types';
@@ -200,6 +201,9 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
   // Render Event Page
   if (event) {
     const isDraft = event.status === 'draft';
+    const isExternal = Boolean(
+      event.source_type === 'external' || event.is_external || event.external_ticket_url
+    );
 
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] transition-colors">
@@ -233,7 +237,11 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
           </div>
         )}
         <Navbar />
-        <UnifiedEventDetailView event={event} />
+        {isExternal ? (
+          <UnifiedEventDetailView event={event} />
+        ) : (
+          <EventTemplateView event={event} />
+        )}
         <Footer minimal={true} />
       </div>
     );

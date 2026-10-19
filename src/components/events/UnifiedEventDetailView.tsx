@@ -14,37 +14,15 @@ import {
   ArrowUpRight,
   Ticket,
   Lock,
-  MessageSquare,
-  MessageCircle,
   SlidersHorizontal,
   Users,
 } from 'lucide-react';
 import { EventItem, RSVPItem, EventAnnouncement } from '@/types';
-import { getRSVPsByEvent, getAnnouncements, subscribeToStore, syncRSVPsWithSupabase, isFlashVibeEvent } from '@/lib/store';
+import { getRSVPsByEvent, getAnnouncements, subscribeToStore, isFlashVibeEvent } from '@/lib/store';
 import { getLocalAuthSession, useAuth } from '@/lib/auth';
 import RSVPForm from '@/components/ui/RSVPForm';
 import ShareEventModal from '@/components/events/ShareEventModal';
 import AnnouncementBanner from '@/components/communication/AnnouncementBanner';
-import AuthModal from '@/components/auth/AuthModal';
-import EventConversationModal from '@/components/communication/EventConversationModal';
-
-const AVATAR_COLORS = [
-  'bg-amber-600/90',
-  'bg-rose-600/90',
-  'bg-teal-600/90',
-  'bg-indigo-600/90',
-  'bg-purple-600/90',
-  'bg-emerald-600/90',
-];
-
-function getAttendeeInitials(name?: string) {
-  if (!name) return 'V';
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
 
 function ResponsiveEventPoster({ src, title }: { src?: string; title: string }) {
   const [currentSrc, setCurrentSrc] = useState(src);
@@ -130,66 +108,15 @@ function formatWhenDate(dateStr?: string) {
 }
 
 export default function UnifiedEventDetailView({ event }: { event: EventItem }) {
-  const { isLoggedIn, profile, user } = useAuth();
+  const { user, profile } = useAuth();
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showConversationModal, setShowConversationModal] = useState(false);
   const [confirmedRsvp, setConfirmedRsvp] = useState<RSVPItem | null>(null);
   const [announcements, setAnnouncements] = useState<EventAnnouncement[]>([]);
 
-  const handleAskHostClick = () => {
-    setShowConversationModal(true);
-  };
-
-  const [eventRsvps, setEventRsvps] = useState<RSVPItem[]>(() => getRSVPsByEvent(event.id));
-
-  // Sync real-time RSVPs from Supabase and listen to local updates
-  useEffect(() => {
-    const refreshRsvps = () => {
-      setEventRsvps(getRSVPsByEvent(event.id));
-    };
-    refreshRsvps();
-    syncRSVPsWithSupabase().then(() => refreshRsvps()).catch(() => {});
-    const unsub = subscribeToStore(refreshRsvps);
-    return () => unsub();
-  }, [event.id]);
-
-  const confirmedRsvps = eventRsvps.filter((r) => r.status === 'confirmed');
-  const confirmedCount = confirmedRsvps.length;
-  const dynamicGoingCount = Math.max(
-    confirmedCount,
-    event.spots_filled || (event.theme as any)?.spots_filled || 0
+  const isExternal = Boolean(
+    event.source_type === 'external' || event.is_external || event.external_ticket_url
   );
-
-  const isSampleEvent = Boolean(
-    event.id?.startsWith('sample-') ||
-    event.id?.startsWith('sample_') ||
-    event.slug?.startsWith('sample-') ||
-    (event as any).isSample
-  );
-
-  // Check if current attendee already has a confirmed RSVP for this event
-  useEffect(() => {
-    const session = getLocalAuthSession();
-    const userEmail = (session?.email || user?.email || profile?.email || '').toLowerCase().trim();
-    if (userEmail) {
-      const match = confirmedRsvps.find((r) => (r.email || '').toLowerCase().trim() === userEmail);
-      if (match) {
-        setConfirmedRsvp(match);
-      }
-    }
-  }, [confirmedRsvps, user?.email, profile?.email]);
-
-  useEffect(() => {
-    setAnnouncements(getAnnouncements(event.id));
-    const unsub = subscribeToStore(() => {
-      setAnnouncements(getAnnouncements(event.id));
-    });
-    return () => unsub();
-  }, [event.id]);
-
-  const isExternal = event.source_type === 'external';
   const isBotEvent = isFlashVibeEvent(event);
   const rawTicketUrl = event.external_ticket_url?.trim();
   const normalizedTicketUrl = rawTicketUrl
@@ -215,14 +142,32 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   const mapQuery = encodeURIComponent(`${event.location_name || ''} ${event.city || ''}`);
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
-  const rawTitle = (event.title || 'Sameera Bharadwaj, live').trim();
+  const rawTitle = (event.title || 'Event Details').trim();
   const cleanTitle = rawTitle.endsWith('.') ? rawTitle.slice(0, -1) : rawTitle;
 
-  const hostName = event.organizer_name || 'Swaniki Social';
-  const hostBio = (event as any).organizer_bio || (event.organizer_handle ? `@${event.organizer_handle}` : 'Bringing people together');
-  const hostInitials = (hostName.split(' ').map((w) => w[0]).join('') || 'SS').slice(0, 2).toUpperCase();
-
   const isPrivate = event.is_public === false || String(event.is_public) === 'false';
+
+  // Check if current attendee already has a confirmed RSVP for this event
+  useEffect(() => {
+    if (isExternal) return;
+    const session = getLocalAuthSession();
+    const userEmail = (session?.email || user?.email || profile?.email || '').toLowerCase().trim();
+    if (userEmail) {
+      const allRsvps = getRSVPsByEvent(event.id);
+      const match = allRsvps.find((r) => (r.email || '').toLowerCase().trim() === userEmail);
+      if (match) {
+        setConfirmedRsvp(match);
+      }
+    }
+  }, [event.id, isExternal, user?.email, profile?.email]);
+
+  useEffect(() => {
+    setAnnouncements(getAnnouncements(event.id));
+    const unsub = subscribeToStore(() => {
+      setAnnouncements(getAnnouncements(event.id));
+    });
+    return () => unsub();
+  }, [event.id]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 w-full font-sans text-white">
@@ -246,10 +191,12 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
       </div>
 
       {/* Host Announcements Banner */}
-      <AnnouncementBanner
-        announcements={announcements}
-        brandColor={event.organizer_brand_color}
-      />
+      {announcements.length > 0 && (
+        <AnnouncementBanner
+          announcements={announcements}
+          brandColor={event.organizer_brand_color}
+        />
+      )}
 
       {/* Main 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
@@ -288,42 +235,16 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             </div>
           </div>
 
-          {/* External Partner Trust Callout */}
-          {isExternal && (
-            <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#23150F] border border-[#FF5500]/25 flex items-center justify-center text-[#FF5500] shrink-0">
-                  <Ticket className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs sm:text-sm font-bold text-white truncate">
-                    Ticketing Partner: {displayPlatform}
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-white/50 truncate">
-                    Official passes, entry verification & checkout are fulfilled directly on {displayPlatform}
-                  </div>
-                </div>
-              </div>
-              {normalizedTicketUrl && (
-                <a
-                  href={normalizedTicketUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white text-xs font-bold whitespace-nowrap inline-flex items-center justify-center gap-1.5 transition shadow-sm shrink-0 cursor-pointer"
-                >
-                  <Ticket className="w-3.5 h-3.5" />
-                  <span>Book on {displayPlatform}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </a>
-              )}
-            </div>
-          )}
-
           {/* Event Header Information */}
           <div className="space-y-1.5">
-            {/* Category · City Meta */}
-            <div className="text-xs text-white/50 font-medium tracking-wide">
-              {categoryName} · {cityName}
+            <div className="flex items-center gap-2 text-xs text-white/50 font-medium tracking-wide">
+              <span>{categoryName} · {cityName}</span>
+              {isExternal && (
+                <>
+                  <span>•</span>
+                  <span className="text-[#FF5500] font-semibold">Official Partner: {displayPlatform}</span>
+                </>
+              )}
             </div>
 
             {/* Title with styled period */}
@@ -333,9 +254,11 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             </h1>
 
             {/* Tagline */}
-            <p className="text-sm font-normal text-white/60 leading-relaxed pt-0.5">
-              {event.tagline || 'A good time, with good people.'}
-            </p>
+            {event.tagline && (
+              <p className="text-sm font-normal text-white/60 leading-relaxed pt-0.5">
+                {event.tagline}
+              </p>
+            )}
           </div>
 
           {/* Schedule & Location Blocks */}
@@ -379,70 +302,27 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
           {/* Description Section */}
           <div className="pt-2 space-y-2.5">
-            <h2 className="text-base sm:text-lg font-bold text-white">About this Vibe</h2>
+            <h2 className="text-base sm:text-lg font-bold text-white">About this Event</h2>
             <div className="text-xs sm:text-sm text-white/70 leading-relaxed font-normal whitespace-pre-line">
-              {event.description ||
-                'An evening of soulful music under the open sky. Join Sameera Bharadwaj for a live performance that brings familiar favourites and fresh sounds together. Bring your friends, find your spot, and let the night unfold.'}
+              {event.description || 'Details for this experience will be updated soon.'}
             </div>
           </div>
 
-          {/* Host Profile Row */}
-          <div className="border-t border-white/10 pt-5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-3">
-              YOUR HOST
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                {event.organizer_logo ? (
-                  <Image
-                    src={event.organizer_logo}
-                    alt={hostName}
-                    width={40}
-                    height={40}
-                    className="rounded-full object-cover border border-white/10 shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#1E1714] border border-[#FF5500]/20 text-[#FF5500] flex items-center justify-center text-xs font-bold shrink-0">
-                    {hostInitials}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="text-xs sm:text-sm font-bold text-white truncate">
-                    {hostName}
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-white/50 truncate">
-                    {hostBio}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleAskHostClick}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-white/15 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition cursor-pointer shrink-0"
-                title="Message host (Upcoming feature)"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-white/70" />
-                <span>Message</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-300 font-medium">Soon</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Before You Arrive Checklist */}
+          {/* Before You Arrive Checklist (Clean without host fluff) */}
           <div className="border-t border-white/10 pt-5 space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white">Before you arrive</h2>
             <div className="space-y-2.5">
               <div className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
                 <Clock className="w-4 h-4 text-[#FF5500] shrink-0" />
-                <span>Doors open 30 minutes before the event.</span>
+                <span>Doors open 30 minutes before the scheduled time.</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
                 <Ticket className="w-4 h-4 text-[#FF5500] shrink-0" />
-                <span>Keep your guest pass handy at the entrance.</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
-                <MessageSquare className="w-4 h-4 text-[#FF5500] shrink-0" />
-                <span>Have a question? Your host is a message away.</span>
+                <span>
+                  {isExternal
+                    ? `Keep your ${displayPlatform} ticket confirmation handy at the venue.`
+                    : 'Keep your digital guest pass handy at the entrance.'}
+                </span>
               </div>
             </div>
           </div>
@@ -455,7 +335,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             <div className="flex items-center justify-between">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Spots available</span>
+                <span>{isExternal ? 'Official Ticketing' : 'Spots available'}</span>
               </div>
               <Ticket className="w-4 h-4 text-white/40" />
             </div>
@@ -463,10 +343,12 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             {/* Header */}
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Your spot is waiting.
+                {isExternal ? 'Book your spot' : 'Your spot is waiting.'}
               </h3>
               <p className="text-xs sm:text-sm text-white/50 mt-1">
-                Make a plan worth showing up for.
+                {isExternal
+                  ? `Tickets are officially managed on ${displayPlatform}.`
+                  : 'Make a plan worth showing up for.'}
               </p>
             </div>
 
@@ -474,18 +356,15 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black text-white font-sans">
-                  {event.external_price_text || (isExternal ? 'Official Ticketing' : '₹499')}
+                  {event.external_price_text || (isExternal ? 'Official Tickets' : '₹499')}
                 </span>
                 {!isExternal && !isBotEvent && (
                   <span className="text-xs text-white/50 font-normal">per person</span>
                 )}
               </div>
-              {!isBotEvent && (
-                <div className="flex items-center gap-1.5 text-xs text-emerald-400/90 mt-2 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>1 guest pass · Instant confirmation</span>
-                </div>
-              )}
+              <div className="text-xs text-white/50 mt-1">
+                {isExternal ? `Fulfilled directly on ${displayPlatform}` : 'Instant RSVP Confirmation'}
+              </div>
             </div>
 
             {/* CTA Button */}
@@ -501,7 +380,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                   <span>Book Tickets on {displayPlatform}</span>
                   <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
-                <p className="text-[11px] text-white/50 text-center">
+                <p className="text-[11px] text-white/40 text-center">
                   Redirects securely to the official event page on {displayPlatform}
                 </p>
               </div>
@@ -525,75 +404,23 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               </button>
             )}
 
-            {isSampleEvent && (
-              <div className="text-[11px] text-white/40 text-center">
-                Sample preview · No payment or booking required
-              </div>
-            )}
-
             <div className="border-t border-white/10" />
 
-            {/* Dynamic Attendees Social Proof */}
-            {dynamicGoingCount > 0 ? (
-              <div className="flex items-center gap-2.5">
-                <div className="flex -space-x-2">
-                  {confirmedRsvps.slice(0, 3).map((r, i) => (
-                    <div
-                      key={r.id || i}
-                      className={`w-6 h-6 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} border-2 border-[#0D0D10] text-[9px] font-bold text-white flex items-center justify-center shadow-xs`}
-                      title={`${r.name || 'Confirmed Guest'}`}
-                    >
-                      {getAttendeeInitials(r.name)}
-                    </div>
-                  ))}
-                  {dynamicGoingCount > Math.min(confirmedRsvps.length, 3) && (
-                    <div className="w-6 h-6 rounded-full bg-zinc-800 border-2 border-[#0D0D10] text-[9px] font-bold text-white/70 flex items-center justify-center shadow-xs">
-                      +{dynamicGoingCount - Math.min(confirmedRsvps.length, 3)}
-                    </div>
-                  )}
-                </div>
-                <span className="text-xs font-medium text-white/70">
-                  {dynamicGoingCount} {dynamicGoingCount === 1 ? 'person' : 'people'} going
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-400/90">
-                <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Be the first to reserve a spot!</span>
-              </div>
-            )}
-
-            {/* Secondary Buttons */}
-            <div className="space-y-2.5">
-              <button
-                onClick={handleAskHostClick}
-                className="w-full py-2.5 px-4 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition flex items-center justify-center gap-2 cursor-pointer"
-                title="Ask the host (Upcoming feature)"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-white/70" />
-                <span>Ask the host</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-300 font-medium">Soon</span>
-              </button>
-
+            {/* Secondary Action: Clean Share Button */}
+            <div>
               <button
                 onClick={() => setShowShareModal(true)}
                 className="w-full py-2.5 px-4 rounded-xl border border-white/10 bg-[#111114] hover:bg-white/10 text-xs font-semibold text-white transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5 text-white/70" />
-                <span>Invite a friend</span>
+                <span>Invite friends</span>
               </button>
-            </div>
-
-            {/* Direct Connection Guarantee */}
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 text-center pt-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Direct connection with your host</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Clean RSVP Modal */}
+      {/* Clean RSVP Modal for Native Events */}
       {!isExternal && !isBotEvent && showRsvpModal && (
         <div 
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
@@ -627,29 +454,10 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         event={event}
       />
 
-      {/* Auth Modal for Unauthenticated Guests */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthenticated={() => {
-          setShowAuthModal(false);
-          setShowConversationModal(true);
-        }}
-      />
-
-      {/* Vibe Host ↔ Guest Communication Gateway Modal */}
-      <EventConversationModal
-        event={event}
-        isOpen={showConversationModal}
-        onClose={() => setShowConversationModal(false)}
-        guestName={profile?.name || user?.user_metadata?.full_name}
-        guestEmail={user?.email || profile?.email}
-      />
-
       {/* Sticky Mobile Booking Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-[#09090B]/95 backdrop-blur-xl border-t border-white/10 z-40 lg:hidden flex items-center justify-between gap-3 shadow-2xl">
         <div className="min-w-0">
-          <div className="text-xs font-bold text-white truncate">
+          <div className="text-base sm:text-lg font-black text-white truncate">
             {event.external_price_text || (isExternal ? 'Official Passes' : '₹499')}
           </div>
           <div className="text-[10px] text-white/50 truncate">
@@ -662,27 +470,18 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             href={normalizedTicketUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#FF5500]/25 flex items-center gap-1.5 shrink-0"
           >
-            <Ticket className="w-3.5 h-3.5" />
             <span>Book Tickets</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </a>
-        ) : confirmedRsvp ? (
-          <button
-            onClick={() => setShowRsvpModal(true)}
-            className="px-4 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>View Pass</span>
-          </button>
         ) : (
           <button
             onClick={() => setShowRsvpModal(true)}
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#FF5500]/25 flex items-center gap-1.5 shrink-0"
           >
-            <Ticket className="w-3.5 h-3.5" />
-            <span>Reserve Spot</span>
+            <span>Reserve spot</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
