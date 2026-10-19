@@ -559,8 +559,10 @@ export function parseIndianDateTime(dateStr?: string, timeStr?: string): Date | 
     }
   }
 
-  // Return a real Date object in IST
-  const d = new Date(year, monthIdx, day, hours, mins, 0);
+  // Return a real Date object with explicit IST (+05:30) offset
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const isoStr = `${year}-${pad(monthIdx + 1)}-${pad(day)}T${pad(hours)}:${pad(mins)}:00+05:30`;
+  const d = new Date(isoStr);
   return isNaN(d.getTime()) ? null : d;
 }
 
@@ -700,13 +702,21 @@ export async function scrapeUrlMetadata(url: string): Promise<{
     }
     if (jsonLd.startDate) {
       try {
-        const d = new Date(jsonLd.startDate);
+        let rawStart = String(jsonLd.startDate).trim();
+        if (rawStart && !rawStart.includes('Z') && !rawStart.match(/[+-]\d{2}:?\d{2}$/)) {
+          rawStart = `${rawStart}+05:30`;
+        }
+        const d = new Date(rawStart);
         if (!isNaN(d.getTime())) startAt = d.toISOString();
       } catch {}
     }
     if (jsonLd.endDate) {
       try {
-        const d = new Date(jsonLd.endDate);
+        let rawEnd = String(jsonLd.endDate).trim();
+        if (rawEnd && !rawEnd.includes('Z') && !rawEnd.match(/[+-]\d{2}:?\d{2}$/)) {
+          rawEnd = `${rawEnd}+05:30`;
+        }
+        const d = new Date(rawEnd);
         if (!isNaN(d.getTime())) endAt = d.toISOString();
       } catch {}
     }

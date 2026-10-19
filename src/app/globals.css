@@ -363,6 +363,20 @@ html.light .bg-\[\#111114\] {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
+html.light .bg-\[\#0A0A0C\],
+html.light .bg-\[\#0a0a0c\] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Badges overlaying dark images/posters must ALWAYS keep crisp white text and contrast */
+html.light [data-preserve-contrast="true"],
+html.light [data-preserve-contrast="true"] *,
+html.light .preserve-light-contrast,
+html.light .preserve-light-contrast * {
+  color: #FFFFFF !important;
+}
+
 html.light .border-white\/10 {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }

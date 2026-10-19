@@ -6,7 +6,6 @@ import {
   Instagram,
   Linkedin,
   Youtube,
-  QrCode,
   Facebook
 } from 'lucide-react';
 
@@ -64,31 +63,31 @@ const SOCIAL_MEDIA_LINKS: SocialLink[] = [
 export default function Footer({ minimal = false }: { minimal?: boolean }) {
   if (minimal) {
     return (
-      <footer className="border-t border-white/10 bg-[#0A0A0C] py-8 text-white/50 font-sans">
+      <footer className="border-t border-black/10 dark:border-white/10 bg-white dark:bg-[#0A0A0C] py-8 text-neutral-500 dark:text-white/50 font-sans transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white tracking-tight text-base font-outfit">
+            <span className="font-bold text-neutral-900 dark:text-white tracking-tight text-base font-outfit">
               vibe<span className="text-[#FF5500]">.</span>
             </span>
             <a
               href="https://swaniki.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] tracking-[0.25em] uppercase text-white/40 hover:text-white font-semibold transition-colors"
+              className="text-[10px] tracking-[0.25em] uppercase text-neutral-400 dark:text-white/40 hover:text-neutral-900 dark:hover:text-white font-semibold transition-colors"
             >
               BY SWANIKI
             </a>
           </div>
 
-          <div className="text-center sm:text-left text-[11px] text-white/40">
+          <div className="text-center sm:text-left text-[11px] text-neutral-500 dark:text-white/40">
             © {new Date().getFullYear()} Vibe by Swaniki. All rights reserved.
           </div>
 
-          <div className="flex items-center gap-5 text-xs text-white/60">
-            <Link href="/terms" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-5 text-xs text-neutral-600 dark:text-white/60">
+            <Link href="/terms" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
               Terms &amp; Conditions
             </Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">
+            <Link href="/privacy" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
               Privacy Policy
             </Link>
           </div>
@@ -98,15 +97,15 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
   }
 
   return (
-    <footer className="border-t border-white/10 bg-[#0A0A0C] mt-16 sm:mt-24 pt-12 sm:pt-16 pb-10 text-white/60 font-sans">
+    <footer className="border-t border-black/10 dark:border-white/10 bg-white dark:bg-[#0A0A0C] mt-16 sm:mt-24 pt-12 sm:pt-16 pb-10 text-neutral-600 dark:text-white/60 font-sans transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main 5-Column Grid (District Style) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10 pb-12">
+        {/* Main 4-Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 pb-12">
           {/* Column 1: Brand Wordmark + Social Handles */}
           <div className="space-y-4">
             <div className="space-y-0.5">
               <Link href="/" className="inline-block group">
-                <span className="font-black text-2xl tracking-tight text-white block">
+                <span className="font-black text-2xl tracking-tight text-neutral-900 dark:text-white block">
                   vibe<span className="text-[#FF5500]">.</span>
                 </span>
               </Link>
@@ -114,7 +113,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                 href="https://swaniki.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] tracking-[0.25em] uppercase text-white/40 hover:text-white font-semibold transition-colors block"
+                className="text-[10px] tracking-[0.25em] uppercase text-neutral-400 dark:text-white/40 hover:text-neutral-900 dark:hover:text-white font-semibold transition-colors block"
               >
                 BY SWANIKI
               </a>
@@ -132,7 +131,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                     rel="noopener noreferrer"
                     aria-label={item.ariaLabel}
                     title={item.name}
-                    className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 text-white/70 hover:text-white hover:border-white/30 hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200"
+                    className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/[0.04] border border-black/10 dark:border-white/10 text-neutral-600 dark:text-white/70 hover:text-neutral-900 dark:hover:text-white hover:border-black/20 dark:hover:border-white/30 hover:bg-black/10 dark:hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200"
                   >
                     {Icon ? <Icon className="w-3.5 h-3.5" /> : item.customIcon}
                   </a>
@@ -143,14 +142,14 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
 
           {/* Column 2: Help */}
           <div className="space-y-3">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-white">
+            <h4 className="text-xs uppercase font-bold tracking-wider text-neutral-900 dark:text-white">
               Help
             </h4>
-            <ul className="space-y-2.5 text-xs text-white/60">
+            <ul className="space-y-2.5 text-xs text-neutral-600 dark:text-white/60">
               <li>
                 <a
                   href="mailto:hello@swaniki.com"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors"
                 >
                   Contact Us
                 </a>
@@ -160,7 +159,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                   href="https://swaniki.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors"
                 >
                   Corporate Announcements
                 </a>
@@ -168,7 +167,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
               <li>
                 <a
                   href="mailto:grievance@swaniki.com"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors"
                 >
                   Grievance Redressal
                 </a>
@@ -178,27 +177,27 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
 
           {/* Column 3: Quick Links */}
           <div className="space-y-3">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-white">
+            <h4 className="text-xs uppercase font-bold tracking-wider text-neutral-900 dark:text-white">
               Quick Links
             </h4>
-            <ul className="space-y-2.5 text-xs text-white/60">
+            <ul className="space-y-2.5 text-xs text-neutral-600 dark:text-white/60">
               <li>
-                <Link href="/create" className="hover:text-white transition-colors">
+                <Link href="/create" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
                   List your events
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-white transition-colors">
+                <Link href="/dashboard" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
                   Host dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/discover" className="hover:text-white transition-colors">
+                <Link href="/discover" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
                   Discover events
                 </Link>
               </li>
               <li>
-                <Link href="/passes" className="hover:text-white transition-colors">
+                <Link href="/passes" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
                   My Booked Passes
                 </Link>
               </li>
@@ -207,19 +206,19 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
 
           {/* Column 4: Useful Links */}
           <div className="space-y-3">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-white">
+            <h4 className="text-xs uppercase font-bold tracking-wider text-neutral-900 dark:text-white">
               Useful Links
             </h4>
-            <ul className="space-y-2.5 text-xs text-white/60">
+            <ul className="space-y-2.5 text-xs text-neutral-600 dark:text-white/60">
               <li>
                 <a
                   href="https://swaniki.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors flex items-center gap-1"
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors flex items-center gap-1"
                 >
                   <span>Swaniki</span>
-                  <span className="text-[10px] text-white/40">↗</span>
+                  <span className="text-[10px] text-neutral-400 dark:text-white/40">↗</span>
                 </a>
               </li>
               <li>
@@ -227,67 +226,47 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                   href="https://swaniki.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors flex items-center gap-1"
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors flex items-center gap-1"
                 >
                   <span>Swaniki Tech</span>
-                  <span className="text-[10px] text-white/40">↗</span>
+                  <span className="text-[10px] text-neutral-400 dark:text-white/40">↗</span>
                 </a>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-white transition-colors">
+                <Link href="/terms" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
                   Community Guidelines
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-white transition-colors">
+                <Link href="/privacy" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
                   DPDP Act Compliance
                 </Link>
               </li>
             </ul>
           </div>
-
-          {/* Column 5: Download App (District QR Card Style) */}
-          <div className="space-y-3">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-white">
-              Download App
-            </h4>
-            <div className="p-3 bg-[#111114] border border-white/10 rounded-2xl flex items-center gap-3 shadow-xs">
-              <div className="w-14 h-14 bg-white p-1 rounded-xl flex items-center justify-center shrink-0">
-                <QrCode className="w-12 h-12 text-[#0A0A0C]" />
-              </div>
-              <div className="space-y-0.5 min-w-0">
-                <span className="text-xs font-bold text-white block truncate">
-                  Scan to Download
-                </span>
-                <span className="text-[10px] text-white/50 block leading-tight">
-                  Available on iOS &amp; Android
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Bottom Bar: Legal Agreement & Direct Policy Links (Exact District UX) */}
-        <div className="pt-8 border-t border-white/[0.08] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
-          <div className="space-y-1 max-w-2xl text-white/40">
-            <p className="text-xs text-white/60 font-medium">
-              © {new Date().getFullYear()} District &amp; Vibe by Swaniki. All rights reserved.
+        <div className="pt-8 border-t border-black/10 dark:border-white/[0.08] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
+          <div className="space-y-1 max-w-2xl text-neutral-500 dark:text-white/40">
+            <p className="text-xs text-neutral-600 dark:text-white/60 font-medium">
+              © {new Date().getFullYear()} Vibe by Swaniki. All rights reserved.
             </p>
             <p className="text-[11px] leading-relaxed">
               By accessing this page, you confirm that you have read, understood, and agreed to our Terms of Service, Cookie Policy, Privacy Policy, and Content Guidelines.
             </p>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-white/60 shrink-0 self-start md:self-center">
+          <div className="flex items-center gap-6 text-xs text-neutral-600 dark:text-white/60 shrink-0 self-start md:self-center">
             <Link
               href="/terms"
-              className="hover:text-white transition-colors font-medium underline-offset-4 hover:underline"
+              className="hover:text-neutral-900 dark:hover:text-white transition-colors font-medium underline-offset-4 hover:underline"
             >
               Terms &amp; Conditions
             </Link>
             <Link
               href="/privacy"
-              className="hover:text-white transition-colors font-medium underline-offset-4 hover:underline"
+              className="hover:text-neutral-900 dark:hover:text-white transition-colors font-medium underline-offset-4 hover:underline"
             >
               Privacy Policy
             </Link>

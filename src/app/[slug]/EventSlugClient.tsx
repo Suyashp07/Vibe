@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import UnifiedEventDetailView from '@/components/events/UnifiedEventDetailView';
-import EventTemplateView from '@/components/templates/EventTemplateView';
 import OrganizerProfileView from '@/components/organizer/OrganizerProfileView';
 import { getEvents, getOrganizerByHandle, subscribeToStore, syncEventsWithSupabase, isPublicLiveEvent } from '@/lib/store';
 import { EventItem, Profile } from '@/types';
@@ -237,11 +236,7 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
           </div>
         )}
         <Navbar />
-        {isExternal ? (
-          <UnifiedEventDetailView event={event} />
-        ) : (
-          <EventTemplateView event={event} />
-        )}
+        <UnifiedEventDetailView event={event} />
         <Footer minimal={true} />
       </div>
     );

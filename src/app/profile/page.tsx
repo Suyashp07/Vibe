@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [dob, setDob] = useState('');
   const [age, setAge] = useState<string>('');
-  const [gender, setGender] = useState('prefer_not_to_say');
+  const [gender, setGender] = useState('male');
   const [city, setCity] = useState('Mumbai');
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
@@ -103,7 +103,9 @@ export default function ProfilePage() {
       setDob(profile.dob || '');
       const calculated = calculateAge(profile.dob);
       setAge(profile.age ? String(profile.age) : calculated !== null ? String(calculated) : '');
-      setGender(profile.gender || 'prefer_not_to_say');
+      const validGenders = ['male', 'female', 'other'];
+      const profileGender = profile.gender?.toLowerCase() || '';
+      setGender(validGenders.includes(profileGender) ? profileGender : 'male');
       setCity(profile.city || 'Mumbai');
       setPhone(profile.phone || '');
       setBio(profile.bio || '');
@@ -118,7 +120,7 @@ export default function ProfilePage() {
     setName('Suyash P');
     setDob('2000-05-15');
     setAge('24');
-    setGender('prefer_not_to_say');
+    setGender('male');
     setCity('Mumbai');
     setPhone('+91 98765 43210');
     setBio('Good music, new places, and great company..');
@@ -135,7 +137,9 @@ export default function ProfilePage() {
       setDob(profile.dob || '');
       const calculated = calculateAge(profile.dob);
       setAge(profile.age ? String(profile.age) : calculated !== null ? String(calculated) : '');
-      setGender(profile.gender || 'prefer_not_to_say');
+      const validGenders = ['male', 'female', 'other'];
+      const profileGender = profile.gender?.toLowerCase() || '';
+      setGender(validGenders.includes(profileGender) ? profileGender : 'male');
       setCity(profile.city || 'Mumbai');
       setPhone(profile.phone || '');
       setBio(profile.bio || '');
@@ -143,16 +147,6 @@ export default function ProfilePage() {
       setShowHomeCity(profile.show_city_consent === true);
     }
     setErrorMessage('');
-  };
-
-  // Update age whenever DOB changes
-  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setDob(val);
-    const calculated = calculateAge(val);
-    if (calculated !== null) {
-      setAge(String(calculated));
-    }
   };
 
   // Upload custom profile photo
@@ -193,7 +187,7 @@ export default function ProfilePage() {
         avatar_url: avatarUrl.trim(),
         dob: dob || undefined,
         age: cleanAge && !isNaN(cleanAge) ? cleanAge : undefined,
-        gender: gender || 'prefer_not_to_say',
+        gender: gender || 'male',
         city: city.trim() || 'Mumbai',
         phone: phone.trim() || undefined,
         bio: bio.trim() || undefined,
@@ -686,36 +680,6 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Date of Birth */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-white/80 block">
-                        Date of birth
-                      </label>
-                      <input
-                        type="date"
-                        value={dob}
-                        onChange={handleDobChange}
-                        max={new Date().toISOString().split('T')[0]}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition scheme-dark"
-                      />
-                    </div>
-
-                    {/* Age */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-white/80 block">
-                        Age
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="120"
-                        value={age}
-                        onChange={(e) => setAge(e.target.value)}
-                        placeholder="Your age"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition"
-                      />
-                    </div>
-
                     {/* Gender */}
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 block">
@@ -726,10 +690,8 @@ export default function ProfilePage() {
                         onChange={(e) => setGender(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#FF5500] transition cursor-pointer"
                       >
-                        <option value="prefer_not_to_say">Rather not say</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
-                        <option value="non_binary">Non-binary</option>
                         <option value="other">Other</option>
                       </select>
                     </div>
