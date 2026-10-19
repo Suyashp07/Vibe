@@ -28,6 +28,7 @@ export interface AuthProfile {
   dpdp_consent_version?: string;
   communication_consent?: boolean;
   public_profile_consent?: boolean;
+  show_city_consent?: boolean;
   onboarded?: boolean;
   isDemo?: boolean;
 }

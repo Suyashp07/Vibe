@@ -4,41 +4,49 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 const STORAGE_KEY = 'vibe_splash_seen';
-const DISPLAY_DURATION_MS = 650; // Snappy 650ms intro on first-ever visit
-const FADE_DURATION_S = 0.28;
+const DISPLAY_DURATION_MS = 2000;
+const FADE_DURATION_S = 0.5;
 
 export default function SplashScreen() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [skipExitAnimation, setSkipExitAnimation] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   const handleDismiss = useCallback(() => {
     setIsVisible(false);
     try {
       sessionStorage.setItem(STORAGE_KEY, 'true');
-      localStorage.setItem(STORAGE_KEY, 'true');
     } catch {
-      // Ignore storage exceptions
+      // Ignore sessionStorage exceptions (e.g. private mode restrictions)
     }
   }, []);
 
   useEffect(() => {
-    // Only show on first-ever visit in current session/browser
+    // Clear any stale permanent localStorage suppression if set previously
     try {
-      const hasSeenSession = sessionStorage.getItem(STORAGE_KEY);
-      const hasSeenLocal = localStorage.getItem(STORAGE_KEY);
-      if (hasSeenSession || hasSeenLocal) {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+
+    // Check if splash screen was already shown in this tab session
+    try {
+      const hasSeen = sessionStorage.getItem(STORAGE_KEY);
+      if (hasSeen) {
+        setSkipExitAnimation(true);
+        setIsVisible(false);
         return;
       }
     } catch {
-      return;
+      // If sessionStorage fails, continue to show splash once
     }
 
-    setIsVisible(true);
-
+    // Auto-dismiss after ~2 seconds
     const timer = setTimeout(() => {
       handleDismiss();
     }, DISPLAY_DURATION_MS);
 
+    // Keyboard support: allow ESC to skip immediately
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleDismiss();
@@ -52,7 +60,27 @@ export default function SplashScreen() {
     };
   }, [handleDismiss]);
 
-  const effectiveDuration = shouldReduceMotion ? 0 : FADE_DURATION_S;
+  // Lock page scroll while visible, restore immediately upon dismissal
+  useEffect(() => {
+    if (!isVisible) {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      return;
+    }
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [isVisible]);
+
+  const effectiveDuration = shouldReduceMotion || skipExitAnimation ? 0 : FADE_DURATION_S;
 
   return (
     <AnimatePresence>
@@ -66,16 +94,29 @@ export default function SplashScreen() {
           exit={{ opacity: 0 }}
           transition={{ duration: effectiveDuration, ease: 'easeOut' }}
           onClick={handleDismiss}
-          className="fixed inset-0 z-[999999] bg-[#050505]/95 backdrop-blur-2xl flex flex-col items-center justify-center select-none cursor-pointer overflow-hidden px-4"
+          className="fixed inset-0 z-[999999] bg-[#0F172A] flex flex-col items-center justify-center select-none cursor-pointer overflow-hidden px-4"
         >
           {/* Soft orange radial glow behind the logo (#E8621A) */}
-          <div
+          <motion.div
             aria-hidden="true"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] rounded-full pointer-events-none"
+            animate={
+              shouldReduceMotion
+                ? undefined
+                : {
+                    scale: [1, 1.08, 1],
+                    opacity: [0.75, 1, 0.75],
+                  }
+            }
+            transition={{
+              duration: 2.2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[440px] sm:h-[440px] md:w-[520px] md:h-[520px] rounded-full pointer-events-none"
             style={{
               background:
-                'radial-gradient(circle, rgba(232, 98, 26, 0.22) 0%, rgba(232, 98, 26, 0.05) 50%, transparent 70%)',
-              filter: 'blur(30px)',
+                'radial-gradient(circle, rgba(232, 98, 26, 0.28) 0%, rgba(232, 98, 26, 0.10) 45%, rgba(15, 23, 42, 0) 70%)',
+              filter: 'blur(35px)',
             }}
           />
 
@@ -95,19 +136,19 @@ export default function SplashScreen() {
               <span className="text-[#E8621A]">.</span>
             </h1>
 
-            {/* Small uppercase "BY SWANIKI" */}
-            <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 mt-2 sm:mt-2.5">
+            {/* Small uppercase "BY SWANIKI" in gray letter-spaced text */}
+            <p className="text-[10px] sm:text-[11px] md:text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 mt-3 sm:mt-3.5">
               BY SWANIKI
             </p>
 
-            {/* Tagline */}
-            <p className="text-xs sm:text-sm font-normal text-slate-300 mt-3 tracking-wide">
+            {/* Tagline: "Good people. Real connections." */}
+            <p className="text-sm sm:text-base font-normal text-slate-300 mt-4 sm:mt-5 tracking-wide">
               Good people. Real connections.
             </p>
 
             {/* Thin animated loading bar under the tagline */}
             <div
-              className="w-40 sm:w-48 h-[2px] bg-white/10 rounded-full overflow-hidden mt-5 relative"
+              className="w-48 sm:w-56 h-[2px] bg-slate-800/80 rounded-full overflow-hidden mt-6 sm:mt-7 relative"
               role="progressbar"
               aria-label="Loading Vibe"
             >
@@ -117,14 +158,15 @@ export default function SplashScreen() {
                 transition={
                   shouldReduceMotion
                     ? { duration: 0 }
-                    : { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }
+                    : { duration: 1.9, ease: [0.25, 0.1, 0.25, 1] }
                 }
                 className="h-full bg-[#E8621A] rounded-full shadow-[0_0_8px_rgba(232,98,26,0.7)]"
               />
             </div>
           </div>
 
-          <div className="absolute bottom-6 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono pointer-events-none opacity-60">
+          {/* Subtle dismiss hint at bottom */}
+          <div className="absolute bottom-6 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono pointer-events-none opacity-60">
             Tap anywhere to enter
           </div>
         </motion.div>
