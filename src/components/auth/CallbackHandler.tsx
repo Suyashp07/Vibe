@@ -119,6 +119,13 @@ export function CallbackHandler({
             brand_color: dbProf?.brand_color || meta.brand_color || '#0A0A0A',
             brand_font: 'Inter',
             phone: dbProf?.phone || meta.phone,
+            city: meta.city || dbProf?.city || 'Mumbai',
+            gender: meta.gender || dbProf?.gender || 'male',
+            dob: meta.dob || dbProf?.dob,
+            age: meta.age || dbProf?.age,
+            public_profile_consent: meta.public_profile_consent ?? true,
+            show_city_consent: meta.show_city_consent ?? false,
+            dpdp_consent: meta.dpdp_consent ?? true,
             onboarded: dbProf?.onboarded !== undefined ? dbProf.onboarded : (assignedRole === 'guest' || Boolean(dbProf?.handle)),
             isDemo: false
           };

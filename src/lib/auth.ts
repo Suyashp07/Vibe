@@ -335,6 +335,13 @@ export const verifyEmailOtp = async (
       bio: profileData?.bio,
       brand_color: profileData?.brand_color || pendingSignup?.brand_color || '#E8621A',
       brand_font: profileData?.brand_font || pendingSignup?.brand_font || 'Playfair Display',
+      city: data.user.user_metadata?.city || profileData?.city || 'Mumbai',
+      gender: data.user.user_metadata?.gender || profileData?.gender || 'male',
+      dob: data.user.user_metadata?.dob || profileData?.dob,
+      age: data.user.user_metadata?.age || profileData?.age,
+      public_profile_consent: data.user.user_metadata?.public_profile_consent ?? true,
+      show_city_consent: data.user.user_metadata?.show_city_consent ?? false,
+      dpdp_consent: data.user.user_metadata?.dpdp_consent ?? true,
       onboarded: profileData?.onboarded !== undefined ? profileData.onboarded : Boolean(profileData?.handle && profileData?.handle !== email.split('@')[0]),
       isDemo: false,
     };
@@ -421,9 +428,49 @@ export const signUpWithEmailOtp = async (
  * Update authenticated profile locally and in Supabase
  */
 export const updateAuthProfile = async (updates: Partial<AuthProfile>): Promise<{ data: AuthProfile | null; error: any }> => {
-  const current = getLocalAuthSession();
+  let current = getLocalAuthSession();
   if (!current) {
-    return { data: null, error: { message: 'No active session found. Please sign in.' } };
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        const { data: sessionData } = await client.auth.getSession();
+        if (sessionData?.session?.user) {
+          const user = sessionData.session.user;
+          const userEmail = (user.email || '').toLowerCase();
+          const meta = user.user_metadata || {};
+          current = {
+            id: user.id,
+            email: userEmail,
+            name: meta.name || userEmail.split('@')[0] || 'User',
+            role: 'organizer',
+            city: meta.city || 'Mumbai',
+            gender: meta.gender || 'male',
+            dob: meta.dob,
+            age: meta.age,
+            phone: meta.phone,
+            bio: meta.bio,
+            avatar_url: meta.avatar_url || '',
+            onboarded: true,
+            isDemo: false,
+          };
+        }
+      } catch {}
+    }
+  }
+
+  if (!current) {
+    // Generate guest fallback profile so changes are never lost
+    current = {
+      id: `guest-${Date.now()}`,
+      email: 'guest@vibe.local',
+      name: updates.name || 'Guest User',
+      role: 'guest',
+      avatar_url: '',
+      city: 'Mumbai',
+      gender: 'male',
+      onboarded: true,
+      isDemo: true,
+    };
   }
 
   const updated: AuthProfile = {
@@ -433,6 +480,24 @@ export const updateAuthProfile = async (updates: Partial<AuthProfile>): Promise<
   };
 
   setLocalAuthSession(updated);
+
+  // Warm the memory cache with the updated profile immediately
+  profileDbCache.set(updated.id, {
+    data: {
+      ...updated,
+      logo_url: updated.avatar_url,
+    },
+    timestamp: Date.now(),
+  });
+
+  // Background server sync via admin service endpoint
+  try {
+    fetch('/api/profile/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    }).catch((apiErr) => console.warn('Background profile API sync notice:', apiErr));
+  } catch {}
 
   // Sync with store organizers
   if (updated.role === 'organizer' && updated.handle) {
@@ -457,9 +522,31 @@ export const updateAuthProfile = async (updates: Partial<AuthProfile>): Promise<
     }
   }
 
-  // Sync to Supabase if available
+  // Sync to Supabase client directly if session exists
   const client = getSupabaseClient();
   if (client && !updated.isDemo) {
+    // 1. Sync custom fields into Supabase Auth user_metadata (permanent across devices/sessions)
+    try {
+      await client.auth.updateUser({
+        data: {
+          name: updated.name,
+          avatar_url: updated.avatar_url,
+          city: updated.city,
+          gender: updated.gender,
+          dob: updated.dob,
+          age: updated.age,
+          phone: updated.phone,
+          bio: updated.bio,
+          public_profile_consent: updated.public_profile_consent,
+          show_city_consent: updated.show_city_consent,
+          dpdp_consent: updated.dpdp_consent,
+        },
+      });
+    } catch (authErr) {
+      console.warn('Supabase auth.updateUser exception:', authErr);
+    }
+
+    // 2. Sync to public.profiles table
     try {
       const { error } = await client
         .from('profiles')
@@ -688,6 +775,13 @@ export const signInWithPassword = async (
       brand_color: dbProfile?.brand_color || meta.brand_color || '#0A0A0A',
       brand_font: 'Inter',
       phone: dbProfile?.phone || meta.phone,
+      city: meta.city || dbProfile?.city || 'Mumbai',
+      gender: meta.gender || dbProfile?.gender || 'male',
+      dob: meta.dob || dbProfile?.dob,
+      age: meta.age || dbProfile?.age,
+      public_profile_consent: meta.public_profile_consent ?? true,
+      show_city_consent: meta.show_city_consent ?? false,
+      dpdp_consent: meta.dpdp_consent ?? true,
       onboarded: dbProfile?.onboarded !== undefined ? dbProfile.onboarded : (assignedRole === 'guest' || Boolean(dbProfile?.handle)),
       isDemo: false,
     };
@@ -917,6 +1011,13 @@ export const verifySignupOtp = async (
       }),
       brand_color: '#0A0A0A',
       brand_font: 'Inter',
+      city: meta.city || 'Mumbai',
+      gender: meta.gender || 'male',
+      dob: meta.dob,
+      age: meta.age,
+      public_profile_consent: meta.public_profile_consent ?? true,
+      show_city_consent: meta.show_city_consent ?? false,
+      dpdp_consent: meta.dpdp_consent ?? true,
       onboarded: false,
       isDemo: false,
     };
@@ -1099,6 +1200,13 @@ export const useAuth = () => {
               brand_color: meta.brand_color || safeLocal?.brand_color || '#E8621A',
               brand_font: meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
               phone: meta.phone || safeLocal?.phone,
+              city: safeLocal?.city || meta.city || 'Mumbai',
+              gender: safeLocal?.gender || meta.gender || 'male',
+              dob: safeLocal?.dob || meta.dob,
+              age: safeLocal?.age || meta.age,
+              public_profile_consent: safeLocal?.public_profile_consent ?? meta.public_profile_consent ?? true,
+              show_city_consent: safeLocal?.show_city_consent ?? meta.show_city_consent ?? false,
+              dpdp_consent: safeLocal?.dpdp_consent ?? meta.dpdp_consent ?? true,
               onboarded: safeLocal?.onboarded ?? meta.onboarded ?? false,
               isDemo: false,
             };
@@ -1137,24 +1245,27 @@ export const useAuth = () => {
 
               mergedProfile = {
                 ...mergedProfile,
-                name: dbProf.name || mergedProfile.name,
+                name: mergedProfile.name || dbProf.name,
                 role: resolvedRole as any,
-                handle: dbProf.handle || mergedProfile.handle,
-                bio: dbProf.bio || mergedProfile.bio,
+                handle: mergedProfile.handle || dbProf.handle,
+                bio: mergedProfile.bio || dbProf.bio,
                 avatar_url: resolvedAvatar,
-                brand_color: dbProf.brand_color || mergedProfile.brand_color,
-                brand_font: dbProf.brand_font || mergedProfile.brand_font,
-                phone: dbProf.phone || mergedProfile.phone,
+                brand_color: mergedProfile.brand_color || dbProf.brand_color,
+                brand_font: mergedProfile.brand_font || dbProf.brand_font,
+                phone: mergedProfile.phone || dbProf.phone,
+                city: mergedProfile.city || dbProf.city || 'Mumbai',
+                gender: mergedProfile.gender || dbProf.gender || 'male',
+                dob: mergedProfile.dob || dbProf.dob,
+                age: mergedProfile.age || dbProf.age,
                 onboarded: dbProf.onboarded !== undefined ? dbProf.onboarded : mergedProfile.onboarded,
               };
             }
 
             setProfile(mergedProfile);
             setLocalAuthSession(mergedProfile);
-          } else if (!local?.isDemo) {
+          } else if (!local) {
             setUser(null);
             setProfile(null);
-            setLocalAuthSession(null);
           }
         } catch (e) {
           console.warn('Auth session check failed:', e);
@@ -1217,26 +1328,30 @@ export const useAuth = () => {
           const mergedProfile: AuthProfile = {
             id: session.user.id,
             email: userEmail,
-            name: dbProf?.name || meta.name || safeLocal?.name || session.user.email?.split('@')[0] || 'User',
+            name: safeLocal?.name || meta.name || dbProf?.name || session.user.email?.split('@')[0] || 'User',
             role: resolvedRole,
-            handle: dbProf?.handle || meta.handle || safeLocal?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
-            bio: dbProf?.bio || meta.bio || safeLocal?.bio || '',
+            handle: safeLocal?.handle || meta.handle || dbProf?.handle || session.user.email?.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+            bio: safeLocal?.bio || meta.bio || dbProf?.bio || '',
             avatar_url: resolvedAvatar,
-            brand_color: dbProf?.brand_color || meta.brand_color || safeLocal?.brand_color || '#E8621A',
-            brand_font: dbProf?.brand_font || meta.brand_font || safeLocal?.brand_font || 'Playfair Display',
-            phone: dbProf?.phone || meta.phone || safeLocal?.phone,
-            onboarded: dbProf?.onboarded !== undefined ? dbProf.onboarded : (safeLocal?.onboarded ?? meta.onboarded ?? false),
+            brand_color: safeLocal?.brand_color || meta.brand_color || dbProf?.brand_color || '#E8621A',
+            brand_font: safeLocal?.brand_font || meta.brand_font || dbProf?.brand_font || 'Playfair Display',
+            phone: safeLocal?.phone || meta.phone || dbProf?.phone,
+            city: safeLocal?.city || meta.city || dbProf?.city || 'Mumbai',
+            gender: safeLocal?.gender || meta.gender || dbProf?.gender || 'male',
+            dob: safeLocal?.dob || meta.dob || dbProf?.dob,
+            age: safeLocal?.age || meta.age || dbProf?.age,
+            public_profile_consent: safeLocal?.public_profile_consent ?? meta.public_profile_consent ?? true,
+            show_city_consent: safeLocal?.show_city_consent ?? meta.show_city_consent ?? false,
+            dpdp_consent: safeLocal?.dpdp_consent ?? meta.dpdp_consent ?? true,
+            onboarded: safeLocal?.onboarded ?? dbProf?.onboarded ?? meta.onboarded ?? false,
             isDemo: false,
           };
           setProfile(mergedProfile);
           setLocalAuthSession(mergedProfile);
-        } else {
-          const currentLocal = getLocalAuthSession();
-          if (!currentLocal?.isDemo) {
-            setUser(null);
-            setProfile(null);
-            setLocalAuthSession(null);
-          }
+        } else if (_event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
+          setLocalAuthSession(null);
         }
       });
       authListener = data.subscription;

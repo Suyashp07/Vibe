@@ -31,6 +31,7 @@ import Footer from '@/components/common/Footer';
 import {
   useAuth,
   updateAuthProfile,
+  setLocalAuthSession,
   signOut,
   getInitials,
   isSyntheticAvatar,
@@ -149,23 +150,52 @@ export default function ProfilePage() {
     setErrorMessage('');
   };
 
-  // Upload custom profile photo
+  // Upload custom profile photo with automatic canvas optimization (under 30KB)
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('Image file is too large. Please choose an image under 5MB.');
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMessage('Image file is too large. Please choose an image under 15MB.');
       return;
     }
 
     const reader = new FileReader();
+    reader.onerror = () => setErrorMessage('Could not read image file.');
     reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setAvatarUrl(dataUrl);
+      const rawDataUrl = event.target?.result as string;
+      if (!rawDataUrl) return;
+
+      const img = new window.Image();
+      img.onerror = () => setAvatarUrl(rawDataUrl);
+      img.onload = () => {
+        const maxDim = 320;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          setAvatarUrl(canvas.toDataURL('image/jpeg', 0.85));
+        } else {
+          setAvatarUrl(rawDataUrl);
+        }
         setSaveSuccess(false);
-      }
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
@@ -173,8 +203,6 @@ export default function ProfilePage() {
   // Save changes
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
-
     setIsSaving(true);
     setErrorMessage('');
     setSaveSuccess(false);
@@ -182,8 +210,30 @@ export default function ProfilePage() {
     try {
       const cleanAge = age ? parseInt(age, 10) : calculateAge(dob);
 
+      // If user is not yet logged into Supabase, create a local session so their changes are not lost
+      let activeProfile = profile;
+      if (!activeProfile) {
+        const guestId = `guest-${Date.now()}`;
+        activeProfile = {
+          id: guestId,
+          email: 'guest@vibe.local',
+          name: name.trim() || 'Guest User',
+          role: 'guest',
+          avatar_url: avatarUrl.trim(),
+          city: city.trim() || 'Mumbai',
+          gender: gender || 'male',
+          dob: dob || undefined,
+          age: cleanAge && !isNaN(cleanAge) ? cleanAge : undefined,
+          phone: phone.trim() || undefined,
+          bio: bio.trim() || undefined,
+          onboarded: true,
+          isDemo: true,
+        };
+        setLocalAuthSession(activeProfile);
+      }
+
       const updates: Partial<AuthProfile> & { show_city_consent?: boolean } = {
-        name: name.trim() || profile.name,
+        name: name.trim() || activeProfile.name,
         avatar_url: avatarUrl.trim(),
         dob: dob || undefined,
         age: cleanAge && !isNaN(cleanAge) ? cleanAge : undefined,
@@ -202,6 +252,17 @@ export default function ProfilePage() {
       const res = await updateAuthProfile(updates);
       if (res.error) {
         throw new Error(res.error.message || 'Failed to update profile');
+      }
+
+      if (res.data) {
+        setName(res.data.name || '');
+        setAvatarUrl(res.data.avatar_url || '');
+        setGender(res.data.gender || 'male');
+        setCity(res.data.city || 'Mumbai');
+        setPhone(res.data.phone || '');
+        setBio(res.data.bio || '');
+        if (res.data.dob) setDob(res.data.dob);
+        if (res.data.age) setAge(String(res.data.age));
       }
 
       setSaveSuccess(true);
