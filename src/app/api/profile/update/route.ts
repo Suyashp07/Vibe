@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Upsert into public.profiles
-    const profilePayload: Record<string, any> = {
+    const fullPayload: Record<string, any> = {
       name: name || undefined,
       handle: handle || undefined,
       bio: bio || undefined,
@@ -71,25 +71,51 @@ export async function POST(req: NextRequest) {
       brand_color: brand_color || undefined,
       brand_font: brand_font || undefined,
       phone: phone || undefined,
+      city: city || undefined,
+      gender: gender || undefined,
+      dob: dob || undefined,
+      age: age ? parseInt(String(age), 10) : undefined,
+      public_profile_consent: public_profile_consent !== undefined ? public_profile_consent : undefined,
+      show_city_consent: show_city_consent !== undefined ? show_city_consent : undefined,
+      dpdp_consent: dpdp_consent !== undefined ? dpdp_consent : undefined,
       onboarded: true,
     };
 
     if (id && !id.startsWith('guest-') && !id.startsWith('dev-')) {
-      profilePayload.id = id;
+      fullPayload.id = id;
     }
     if (email) {
-      profilePayload.email = email;
+      fullPayload.email = email;
     }
     if (role) {
-      profilePayload.role = role;
+      fullPayload.role = role;
     }
 
     if (id && !id.startsWith('guest-') && !id.startsWith('dev-')) {
       const { error: upsertErr } = await supabase
         .from('profiles')
-        .upsert(profilePayload);
+        .upsert(fullPayload);
+
+      // If columns do not exist in profiles table yet, gracefully fall back to base columns
       if (upsertErr) {
-        console.warn('Server profiles table upsert warning:', upsertErr.message);
+        if (upsertErr.message?.toLowerCase().includes('column') || upsertErr.code === '42703') {
+          const basePayload = {
+            id,
+            email: email || undefined,
+            role: role || undefined,
+            name: name || undefined,
+            handle: handle || undefined,
+            bio: bio || undefined,
+            logo_url: avatar_url || undefined,
+            brand_color: brand_color || undefined,
+            brand_font: brand_font || undefined,
+            phone: phone || undefined,
+            onboarded: true,
+          };
+          await supabase.from('profiles').upsert(basePayload);
+        } else {
+          console.warn('Server profiles table upsert warning:', upsertErr.message);
+        }
       }
     }
 
