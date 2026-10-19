@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Ticket,
   Lock,
   MessageSquare,
@@ -197,6 +198,15 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
       : `https://${rawTicketUrl}`
     : '';
 
+  const rawPlatform = (event.source_platform || '').toLowerCase().trim();
+  let displayPlatform = 'Official Ticketing Partner';
+  if (rawPlatform === 'district') displayPlatform = 'District';
+  else if (rawPlatform === 'bookmyshow') displayPlatform = 'BookMyShow';
+  else if (rawPlatform === 'insider' || rawPlatform === 'paytm') displayPlatform = 'Paytm Insider';
+  else if (rawPlatform === 'unstop') displayPlatform = 'Unstop';
+  else if (rawPlatform === 'luma') displayPlatform = 'Luma';
+  else if (rawPlatform) displayPlatform = rawPlatform.charAt(0).toUpperCase() + rawPlatform.slice(1);
+
   const { dateText, tzText } = formatWhenDate(event.start_at);
 
   const cityName = event.city || 'Mumbai';
@@ -265,11 +275,49 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 )}
               </span>
 
-              <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md text-[11px] font-semibold text-white shadow-sm border border-white/10">
-                Selling fast
-              </span>
+              {isExternal ? (
+                <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-bold text-white shadow-sm border border-white/20 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                  <span>via {displayPlatform}</span>
+                </span>
+              ) : (
+                <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md text-[11px] font-semibold text-white shadow-sm border border-white/10">
+                  Selling fast
+                </span>
+              )}
             </div>
           </div>
+
+          {/* External Partner Trust Callout */}
+          {isExternal && (
+            <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#23150F] border border-[#FF5500]/25 flex items-center justify-center text-[#FF5500] shrink-0">
+                  <Ticket className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs sm:text-sm font-bold text-white truncate">
+                    Ticketing Partner: {displayPlatform}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-white/50 truncate">
+                    Official passes, entry verification & checkout are fulfilled directly on {displayPlatform}
+                  </div>
+                </div>
+              </div>
+              {normalizedTicketUrl && (
+                <a
+                  href={normalizedTicketUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white text-xs font-bold whitespace-nowrap inline-flex items-center justify-center gap-1.5 transition shadow-sm shrink-0 cursor-pointer"
+                >
+                  <Ticket className="w-3.5 h-3.5" />
+                  <span>Book on {displayPlatform}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Event Header Information */}
           <div className="space-y-1.5">
@@ -442,16 +490,21 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
             {/* CTA Button */}
             {isExternal && normalizedTicketUrl ? (
-              <a
-                href={normalizedTicketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
-              >
-                <Ticket className="w-4 h-4" />
-                <span>Book Tickets on {event.source_platform ? event.source_platform.toUpperCase() : 'Official Site'}</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </a>
+              <div className="space-y-2">
+                <a
+                  href={normalizedTicketUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
+                >
+                  <Ticket className="w-4 h-4" />
+                  <span>Book Tickets on {displayPlatform}</span>
+                  <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </a>
+                <p className="text-[11px] text-white/50 text-center">
+                  Redirects securely to the official event page on {displayPlatform}
+                </p>
+              </div>
             ) : confirmedRsvp ? (
               <button
                 onClick={() => setShowRsvpModal(true)}
@@ -592,6 +645,47 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         guestName={profile?.name || user?.user_metadata?.full_name}
         guestEmail={user?.email || profile?.email}
       />
+
+      {/* Sticky Mobile Booking Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-[#09090B]/95 backdrop-blur-xl border-t border-white/10 z-40 lg:hidden flex items-center justify-between gap-3 shadow-2xl">
+        <div className="min-w-0">
+          <div className="text-xs font-bold text-white truncate">
+            {event.external_price_text || (isExternal ? 'Official Passes' : '₹499')}
+          </div>
+          <div className="text-[10px] text-white/50 truncate">
+            {isExternal ? `via ${displayPlatform}` : 'Instant Confirmation'}
+          </div>
+        </div>
+
+        {isExternal && normalizedTicketUrl ? (
+          <a
+            href={normalizedTicketUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+          >
+            <Ticket className="w-3.5 h-3.5" />
+            <span>Book Tickets</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
+        ) : confirmedRsvp ? (
+          <button
+            onClick={() => setShowRsvpModal(true)}
+            className="px-4 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>View Pass</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowRsvpModal(true)}
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+          >
+            <Ticket className="w-3.5 h-3.5" />
+            <span>Reserve Spot</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

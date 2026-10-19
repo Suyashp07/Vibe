@@ -10,18 +10,37 @@ export default function PWARegister() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // 1. Register Service Worker
+    // 1. Register Service Worker (Disable and auto-clean on localhost to avoid stale cache)
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then((reg) => {
-            console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
-          })
-          .catch((err) => {
-            console.warn('[PWA] ServiceWorker registration failed:', err);
+      const isLocal =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+
+      if (isLocal) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister();
+          }
+        });
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            for (const name of names) {
+              caches.delete(name);
+            }
           });
-      });
+        }
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then((reg) => {
+              console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
+            })
+            .catch((err) => {
+              console.warn('[PWA] ServiceWorker registration failed:', err);
+            });
+        });
+      }
     }
 
     // Check standalone state

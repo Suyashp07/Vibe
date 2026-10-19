@@ -6,6 +6,7 @@ import { saveEvent } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { getUserCity } from '@/lib/location';
 import { nanoid } from 'nanoid';
+import { getCategoryCover } from '@/lib/ai/eventExtractor';
 
 interface CreateVibeModalProps {
   isOpen: boolean;
@@ -84,7 +85,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
       title: title.trim(),
       tagline: `Spontaneous meetup in ${city} • ${timeText}`,
       description: `Spontaneous flash meetup for ${title.trim()} at ${locationName.trim()}, ${city}. Come join our squad!`,
-      cover_image_url: FLASH_COVERS[activity] || FLASH_COVERS['other'],
+      cover_image_url: getCategoryCover(activity, `${title} ${locationName}`),
       template: 'ember',
       theme: {
         palette: 'sunset',

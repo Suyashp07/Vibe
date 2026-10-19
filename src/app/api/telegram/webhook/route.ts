@@ -342,7 +342,7 @@ export async function POST(req: NextRequest) {
     let flashActivity: string = 'other';
     if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
     else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
-    else if (/\b(pickleball|paddle)\b/i.test(textContent)) flashActivity = 'pickleball';
+    else if (/\b(pickleball|paddle|pickle|picklebot|pickle bot|dink|dinking)\b/i.test(textContent)) flashActivity = 'pickleball';
     else if (/\b(football|futsal|soccer)\b/i.test(textContent)) flashActivity = 'football';
     else if (/\b(chai|coffee|cafe|tea)\b/i.test(textContent)) flashActivity = 'coffee';
     else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';

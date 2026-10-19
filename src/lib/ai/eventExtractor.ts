@@ -276,8 +276,19 @@ export const CATEGORY_COVERS: Record<string, string[]> = {
 export const SUBTOPIC_COVERS: Record<string, string[]> = {
   pickleball: [
     'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1617083934555-563d76bcf641?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1627993077759-994c979cf667?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600679472829-3044539ce8ed?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1200&auto=format&fit=crop&q=80',
   ],
   badminton: [
     'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
@@ -353,7 +364,7 @@ export const SUBTOPIC_COVERS: Record<string, string[]> = {
 
 export function detectSubtopicFromText(text: string): string | null {
   const lower = text.toLowerCase();
-  if (lower.match(/\b(pickleball|pickle ball|pickle-ball)\b/)) return 'pickleball';
+  if (lower.match(/\b(pickleball|pickle ball|pickle-ball|pickle|pickler|picklers|picklebot|pickle bot|paddle ball|paddle|dink|dinking|kitchen rally)\b/)) return 'pickleball';
   if (lower.match(/\b(badminton|shuttlecock)\b/)) return 'badminton';
   if (lower.match(/\b(cricket|gully cricket|box cricket)\b/)) return 'cricket';
   if (lower.match(/\b(football|soccer|futsal)\b/)) return 'football';
@@ -376,7 +387,7 @@ export function detectSubtopicFromText(text: string): string | null {
 
 export function detectCategoryFromText(text: string): EventCategory {
   const lower = text.toLowerCase();
-  if (lower.match(/\b(pickleball|pickle ball|badminton|tennis|squash|football|cricket|turf|futsal|basketball|volleyball|fitness|workout|gym|marathon|run|running|cycl|5k|10k|sports?|tournament|match)\b/)) return 'fitness';
+  if (lower.match(/\b(pickleball|pickle ball|pickle-ball|pickle|paddle ball|picklebot|pickle bot|dink|badminton|tennis|squash|football|cricket|turf|futsal|basketball|volleyball|fitness|workout|gym|marathon|run|running|cycl|5k|10k|sports?|tournament|match)\b/)) return 'fitness';
   if (lower.match(/\b(yoga|meditation|breathwork|healing|pranayama|mindfulness|pilates)\b/)) return 'wellness';
   if (lower.match(/\b(hackathon|code|coding|developer|\bai\b|genai|llm|pitch|founder|demo day|web3|crypto|software|startup|tech|technology)\b/)) return 'tech';
   if (lower.match(/\b(comedy|standup|stand-up|open mic|comic|laugh|roast)\b/)) return 'comedy';
@@ -407,7 +418,19 @@ export function getCategoryCover(category?: string, seedText?: string): string {
     }
   }
 
+  // Check direct subtopic match (e.g. category === 'pickleball')
   let cat = category?.toLowerCase();
+  if (cat && SUBTOPIC_COVERS[cat]) {
+    const list = SUBTOPIC_COVERS[cat];
+    const seed = seedText || cat;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    return list[Math.abs(hash) % list.length];
+  }
+
   if (!cat || !CATEGORY_COVERS[cat]) {
     cat = seedText ? detectCategoryFromText(seedText) : 'default';
   }

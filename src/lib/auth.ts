@@ -14,9 +14,20 @@ export interface AuthProfile {
   handle?: string;
   bio?: string;
   avatar_url?: string;
+  dob?: string;
+  age?: number | string;
+  city?: string;
+  gender?: string;
+  instagram?: string;
   brand_color?: string;
   brand_font?: string;
   phone?: string;
+  // DPDP Act 2023 Compliance & Consent Fields
+  dpdp_consent?: boolean;
+  dpdp_consent_at?: string;
+  dpdp_consent_version?: string;
+  communication_consent?: boolean;
+  public_profile_consent?: boolean;
   onboarded?: boolean;
   isDemo?: boolean;
 }

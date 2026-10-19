@@ -7,12 +7,14 @@ import { MapPin, Calendar, Users, ArrowUpRight } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST, getEventRSVPs } from '@/lib/store';
 import { getEventDisplayTags } from '@/lib/eventTags';
+import { getUserCity } from '@/lib/location';
 import TiltCard from '@/components/common/TiltCard';
 
 interface EventCardProps {
   event: EventItem;
   showStatus?: boolean;
   distanceKm?: number | null;
+  userCity?: string;
   activeMoods?: string[];
   activeCategory?: string;
   onTagClick?: (tag: string, type: 'mood' | 'category' | 'source') => void;
@@ -22,6 +24,7 @@ export default function EventCard({
   event,
   showStatus = true,
   distanceKm,
+  userCity,
   activeMoods = [],
   activeCategory = 'All',
   onTagClick,
@@ -29,6 +32,14 @@ export default function EventCard({
   const router = useRouter();
   const rsvps = getEventRSVPs(event.id);
   const count = rsvps.length;
+
+  // Check if event is happening in the active user city
+  const currentCity = (userCity || (typeof window !== 'undefined' ? getUserCity() : '') || 'All India').trim();
+  const isAllIndia = currentCity.toLowerCase() === 'all india' || !currentCity;
+  const isSameCity = !isAllIndia && Boolean(
+    event.city &&
+    event.city.toLowerCase().trim() === currentCity.toLowerCase()
+  );
 
   const isExternal = event.source_type === 'external';
   const rawTicketUrl = event.external_ticket_url?.trim();
@@ -48,11 +59,8 @@ export default function EventCard({
       return;
     }
 
-    if (hasExternalLink) {
-      window.open(normalizedTicketUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      router.push(`/${event.slug}`);
-    }
+    // Always open the rich event details page on Vibe first!
+    router.push(`/${event.slug}`);
   };
 
   return (
@@ -76,9 +84,9 @@ export default function EventCard({
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
           {hasExternalLink ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white/20 bg-black/70 text-white backdrop-blur-md inline-flex items-center gap-1 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white/20 bg-black/70 text-white backdrop-blur-md inline-flex items-center gap-1.5 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
               <span>{event.source_platform ? event.source_platform.toUpperCase() : 'PARTNER'}</span>
-              <ArrowUpRight className="w-2.5 h-2.5 text-[#FF5500]" />
             </span>
           ) : (
             <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white/15 bg-black/60 text-white/90 backdrop-blur-md">
@@ -120,10 +128,16 @@ export default function EventCard({
           </button>
         )}
 
-        {/* Bottom Right Distance Badge */}
-        {typeof distanceKm === 'number' && (
-          <span className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-amber-300 border border-amber-400/30 shadow-xs pointer-events-none">
-            {distanceKm < 1 ? '< 1 km away' : `${Math.round(distanceKm)} km away`}
+        {/* Bottom Right Distance or City Badge */}
+        {isSameCity && typeof distanceKm === 'number' && distanceKm < 100 ? (
+          <span className="absolute bottom-3 right-3 bg-black/85 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-amber-300 border border-amber-400/30 shadow-xs pointer-events-none flex items-center gap-1">
+            <MapPin className="w-2.5 h-2.5 text-amber-400" />
+            <span>{distanceKm < 1 ? '< 1 km away' : `${Math.round(distanceKm)} km away`}</span>
+          </span>
+        ) : (
+          <span className="absolute bottom-3 right-3 bg-black/85 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-white/95 border border-white/20 shadow-xs pointer-events-none flex items-center gap-1">
+            <MapPin className="w-2.5 h-2.5 text-[#FF5500]" />
+            <span>{event.city || 'India'}</span>
           </span>
         )}
       </div>
@@ -228,7 +242,7 @@ export default function EventCard({
             {event.city} · {event.event_type}
           </span>
           <span className="text-xs font-bold text-white group-hover:text-[#FF5500] transition-colors inline-flex items-center gap-1">
-            <span>Explore</span>
+            <span>{hasExternalLink ? 'View Details' : 'Explore'}</span>
             <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </span>
         </div>
