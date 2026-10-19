@@ -235,6 +235,20 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
             )}
           </div>
         )}
+        {Boolean(event.is_flash || event.source_platform === 'whatsapp' || (event as any).source_type === 'bot') && (
+          <div className="bg-gradient-to-r from-[#E8621A]/20 via-[#E8621A]/10 to-transparent border-b border-[#E8621A]/30 px-4 py-2 text-xs text-white flex items-center justify-between gap-3 sticky top-0 z-40 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#E8621A] animate-pulse shrink-0" />
+              <span className="font-semibold text-white">This meetup is live on Vibe Instant</span>
+            </div>
+            <Link
+              href={`/vibes?event=${encodeURIComponent(event.slug)}`}
+              className="px-3 py-1 rounded-full bg-[#E8621A] hover:bg-[#d05312] text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm shrink-0"
+            >
+              <span>⚡ Open in Vibe Instant ↗</span>
+            </Link>
+          </div>
+        )}
         <Navbar />
         <UnifiedEventDetailView event={event} />
         <Footer minimal={true} />

@@ -565,14 +565,16 @@ function VibesContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, activeVibes.length, handlePrev, handleNext, triggerBoundaryBounce]);
 
-  // High-precision trackpad & mouse wheel momentum-absorbing navigation
+  // High-precision trackpad & mouse wheel momentum-absorbing navigation (strictly 1 event per scroll)
   useEffect(() => {
     let accumulatedDelta = 0;
-    let lastWheelTime = 0;
-    let lockUntil = 0;
+    let isTransitioning = false;
+    let unlockTimer: NodeJS.Timeout | null = null;
+    let silenceTimer: NodeJS.Timeout | null = null;
+    let lastWheelTimestamp = 0;
 
     const onWheel = (e: WheelEvent) => {
-      // Don't intercept if scrolling inside a modal, dropdown, input or comments
+      // Don't intercept if scrolling inside a modal, dropdown, input, comments or details pane
       const target = e.target as HTMLElement | null;
       if (
         target?.closest(
@@ -585,63 +587,76 @@ function VibesContent() {
       const now = Date.now();
       const delta = e.deltaY;
 
-      // 1. If currently in transition lockout (animation running):
-      if (now < lockUntil) {
-        lastWheelTime = now;
+      // Always reset silence timer on every wheel event.
+      // A trackpad gesture is only considered finished when no wheel events occur for 180ms.
+      if (silenceTimer) clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        isTransitioning = false;
+        accumulatedDelta = 0;
+      }, 180);
+
+      // If we are currently transitioning from a previous scroll trigger,
+      // completely absorb all remaining momentum / inertia events from the same swipe.
+      if (isTransitioning) {
+        lastWheelTimestamp = now;
         return;
       }
 
-      // 2. Trackpad inertia reset:
-      // If user paused between swipes (> 90ms), reset accumulator so old momentum doesn't linger
-      if (now - lastWheelTime > 90) {
+      // Reset accumulated movement if user paused (> 100ms) or reversed direction
+      if (
+        now - lastWheelTimestamp > 100 ||
+        (accumulatedDelta > 0 && delta < 0) ||
+        (accumulatedDelta < 0 && delta > 0)
+      ) {
         accumulatedDelta = 0;
       }
-      lastWheelTime = now;
-
-      // If user reverses scroll direction, reset accumulator immediately for instant response
-      if ((accumulatedDelta > 0 && delta < 0) || (accumulatedDelta < 0 && delta > 0)) {
-        accumulatedDelta = 0;
-      }
-
+      lastWheelTimestamp = now;
       accumulatedDelta += delta;
 
-      // Threshold: 50px accumulated movement triggers single card flip.
-      // Physical mouse wheel notch usually has deltaMode 1 or abs(deltaY) >= 80.
+      // Threshold: 60px for trackpad, 40px for discrete mouse wheel notch
       const isDiscreteMouse = e.deltaMode !== 0 || Math.abs(delta) >= 80;
-      const threshold = isDiscreteMouse ? 35 : 50;
+      const threshold = isDiscreteMouse ? 40 : 60;
 
       if (Math.abs(accumulatedDelta) >= threshold) {
         const isNext = accumulatedDelta > 0;
         accumulatedDelta = 0;
 
-        // Boundary check
+        // Immediately lock until the current swipe gesture fully dies out
+        isTransitioning = true;
+
+        // Minimum animation cooldown of 500ms
+        if (unlockTimer) clearTimeout(unlockTimer);
+        unlockTimer = setTimeout(() => {
+          if (Date.now() - lastWheelTimestamp >= 120) {
+            isTransitioning = false;
+          }
+        }, 500);
+
+        // Boundary checks
         if (isNext && currentIndex >= activeVibes.length - 1) {
           triggerBoundaryBounce('bottom');
-          lockUntil = now + 140; // Short boundary lock so reverse direction works immediately
           return;
         }
 
         if (!isNext && currentIndex <= 0) {
           triggerBoundaryBounce('top');
-          lockUntil = now + 140;
           return;
         }
 
-        // Trigger vibe transition
+        // Trigger single vibe transition
         if (isNext) {
           handleNext();
         } else {
           handlePrev();
         }
-
-        // Lock for 320ms to allow smooth slide animation to complete and absorb inertia tail
-        lockUntil = now + 320;
       }
     };
 
     window.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       window.removeEventListener('wheel', onWheel);
+      if (unlockTimer) clearTimeout(unlockTimer);
+      if (silenceTimer) clearTimeout(silenceTimer);
       if (overscrollTimerRef.current) clearTimeout(overscrollTimerRef.current);
     };
   }, [currentIndex, activeVibes.length, handleNext, handlePrev, triggerBoundaryBounce]);

@@ -39,6 +39,7 @@ import {
 } from '@/lib/auth';
 import { INDIAN_CITIES } from '@/lib/location';
 import AuthModal from '@/components/auth/AuthModal';
+import { uploadAvatarImage } from '@/lib/supabase';
 
 // Illustrated presets
 const AVATAR_PRESETS = [
@@ -150,14 +151,29 @@ export default function ProfilePage() {
     setErrorMessage('');
   };
 
-  // Upload custom profile photo with automatic canvas optimization (under 30KB)
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload custom profile photo with automatic canvas optimization and Supabase Storage upload
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 15 * 1024 * 1024) {
       setErrorMessage('Image file is too large. Please choose an image under 15MB.');
       return;
+    }
+
+    setErrorMessage('');
+
+    // Attempt direct upload to Supabase Storage first to get a clean public URL (under 90 bytes)
+    // This prevents massive base64 strings in cookies which causes 494 REQUEST_HEADER_TOO_LARGE!
+    try {
+      const publicUrl = await uploadAvatarImage(file);
+      if (publicUrl) {
+        setAvatarUrl(publicUrl);
+        setSaveSuccess(false);
+        return;
+      }
+    } catch {
+      // Continue to canvas fallback
     }
 
     const reader = new FileReader();
@@ -189,7 +205,16 @@ export default function ProfilePage() {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          setAvatarUrl(canvas.toDataURL('image/jpeg', 0.85));
+          canvas.toBlob(async (blob) => {
+            if (blob) {
+              const uploaded = await uploadAvatarImage(blob);
+              if (uploaded) {
+                setAvatarUrl(uploaded);
+                return;
+              }
+            }
+            setAvatarUrl(canvas.toDataURL('image/jpeg', 0.85));
+          }, 'image/jpeg', 0.85);
         } else {
           setAvatarUrl(rawDataUrl);
         }

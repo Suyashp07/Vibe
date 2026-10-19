@@ -527,10 +527,15 @@ export const updateAuthProfile = async (updates: Partial<AuthProfile>): Promise<
   if (client && !updated.isDemo) {
     // 1. Sync custom fields into Supabase Auth user_metadata (permanent across devices/sessions)
     try {
+      // CRITICAL: Strip any base64 data URIs so Supabase auth tokens NEVER exceed cookie size limits (prevents 494 REQUEST_HEADER_TOO_LARGE)
+      const safeAvatarUrl = updated.avatar_url?.startsWith('http')
+        ? updated.avatar_url
+        : undefined;
+
       await client.auth.updateUser({
         data: {
           name: updated.name,
-          avatar_url: updated.avatar_url,
+          avatar_url: safeAvatarUrl,
           city: updated.city,
           gender: updated.gender,
           dob: updated.dob,

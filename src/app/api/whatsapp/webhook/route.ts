@@ -24,20 +24,23 @@ function getSupabaseAdmin() {
 }
 
 function getAppUrl(req?: Request): string {
+  let base = 'https://vibe.swaniki.com';
+
   if (req) {
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
-      const proto = req.headers.get('x-forwarded-proto') || 'https';
-      return `${proto}://${host}`;
+    const host = (req.headers.get('x-forwarded-host') || req.headers.get('host') || '').trim();
+    if (host && (host.includes('vibe.swaniki.com') || host.includes('vive.swaniki.com'))) {
+      const proto = (req.headers.get('x-forwarded-proto') || 'https').trim();
+      base = `${proto}://${host}`;
+    }
+  } else if (process.env.NEXT_PUBLIC_APP_URL) {
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL.trim();
+    if (envUrl.includes('vibe.swaniki.com') || envUrl.includes('vive.swaniki.com')) {
+      base = envUrl;
     }
   }
 
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-    return envUrl.replace(/\/$/, '');
-  }
-
-  return 'https://vibe.swaniki.com';
+  // Strictly strip all whitespace, newlines, carriage returns, and trailing slashes
+  return base.replace(/[\r\n\s\t]+/g, '').replace(/\/+$/, '');
 }
 
 /**
@@ -336,7 +339,7 @@ export async function POST(req: NextRequest) {
                 existingEvent: {
                   slug: ev.slug,
                   title: ev.title,
-                  url: `${getAppUrl()}/${ev.slug}`,
+                  url: `${getAppUrl(req)}/vibes?event=${encodeURIComponent(ev.slug)}`,
                 },
               });
             }
@@ -675,7 +678,7 @@ export async function POST(req: NextRequest) {
                 existingEvent: {
                   slug: recentDuplicate.slug,
                   title: recentDuplicate.title,
-                  url: `${getAppUrl()}/${recentDuplicate.slug}`,
+                  url: `${getAppUrl(req)}/vibes?event=${encodeURIComponent(recentDuplicate.slug)}`,
                 },
               });
             }
@@ -787,9 +790,10 @@ export async function POST(req: NextRequest) {
 
     const venueNote = isVenueInferred ? ' _(Venue TBA)_' : '';
 
-    const appUrl = getAppUrl();
-    const liveEventUrl = `${appUrl}/${createdEventSlug}`;
-    const liveReelUrl = `${appUrl}/vibes?event=${createdEventSlug}`;
+    const appUrl = getAppUrl(req);
+    const cleanSlug = String(createdEventSlug || '').replace(/[\r\n\s\t]+/g, '').trim();
+    const liveReelUrl = `${appUrl}/vibes?event=${encodeURIComponent(cleanSlug)}`;
+    const liveEventUrl = `${appUrl}/${encodeURIComponent(cleanSlug)}`;
 
     const paymentInfoLine = extracted.price_text || extracted.upi_id
       ? `💳 *Payment:* ${extracted.price_text || 'Free Entry'}${extracted.upi_id ? ` (UPI: ${extracted.upi_id})` : ''}\n`
@@ -807,32 +811,18 @@ export async function POST(req: NextRequest) {
     // Send confirmation message to the organizer's WhatsApp
     let confirmationMsg = '';
     if (isAutoApproved) {
-      if (isFlashVibe) {
-        confirmationMsg =
-          `⚡ *YOUR FLASH VIBE IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
-          `🔥 *${createdEventTitle}*\n` +
-          `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
-          `🕒 ${dateStr} IST${timeNote}\n` +
-          paymentInfoLine +
-          spotsInfoLine +
-          mapsInfoLine +
-          `\n✅ *Auto-Approved:* High completeness surety score (${suretyScore}% Surety)\n\n` +
-          `📱 *Open in Vibe Instant:*\n${liveReelUrl}\n\n` +
-          `🌐 *Full Event Link:*\n${liveEventUrl}\n\n` +
-          `📲 _Forward this link to your group or squad to invite friends!_`;
-      } else {
-        confirmationMsg = 
-          `🎉 *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE!* (${suretyScore}% Surety)\n\n` +
-          `📌 *${createdEventTitle}*\n` +
-          `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
-          `🕒 ${dateStr} IST${timeNote}\n` +
-          paymentInfoLine +
-          spotsInfoLine +
-          mapsInfoLine +
-          `\n✅ *Auto-Approved:* High completeness surety score (${suretyScore}% Surety)\n\n` +
-          `🔗 *Live Event Link:*\n${liveEventUrl}\n\n` +
-          `💬 _Guests who click "Contact with host" on this page will message you directly here on WhatsApp!_`;
-      }
+      confirmationMsg =
+        `⚡ *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
+        `🔥 *${createdEventTitle}*\n` +
+        `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
+        `🕒 ${dateStr} IST${timeNote}\n` +
+        paymentInfoLine +
+        spotsInfoLine +
+        mapsInfoLine +
+        `\n✅ *Status:* Published live on Vibe Instant!\n\n` +
+        `📱 *VIBE INSTANT REEL LINK:*\n${liveReelUrl}\n\n` +
+        `🌐 *Standard Event Webpage:*\n${liveEventUrl}\n\n` +
+        `📲 _Forward your Vibe Instant link to WhatsApp groups or friends to invite them!_`;
     } else {
       const missingList = surety.missingAspects.length > 0
         ? surety.missingAspects.map(a => `• ${a}`).join('\n')
@@ -840,7 +830,7 @@ export async function POST(req: NextRequest) {
 
       confirmationMsg =
         `⏳ *EVENT DRAFT CREATED — AWAITING ADMIN APPROVAL*\n\n` +
-        `Your event has been received, but requires admin approval before it can go live.\n\n` +
+        `Your event has been received, but requires admin review before going live.\n\n` +
         `📌 *Event:* ${createdEventTitle}\n` +
         `📍 *Location:* ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
         `🕒 *Schedule:* ${dateStr} IST${timeNote}\n` +
@@ -848,11 +838,15 @@ export async function POST(req: NextRequest) {
         spotsInfoLine +
         mapsInfoLine +
         `\n🔍 *Details Needed to Go Live:* (${suretyScore}% Completeness)\n${missingList}\n\n` +
-        `🛡️ *Why is Admin Approval Required?*\n` +
-        `Because some key event details are missing or unverified, our team reviews each draft to keep Vibe authentic. Once approved by an admin, your event will automatically be published live!\n\n` +
-        `🔗 *ACTUAL EVENT LINK:*\n${liveEventUrl}\n\n` +
-        `💡 _You can open your event link right now to preview your page or share more details anytime!_`;
+        `📱 *VIBE INSTANT PREVIEW LINK:*\n${liveReelUrl}\n\n` +
+        `🌐 *Standard Webpage Preview:*\n${liveEventUrl}\n\n` +
+        `💡 _You can open the Vibe Instant link right now to preview how your event looks!_`;
     }
+
+    // Defensive check: Ensure no accidental newlines split the URL domain and path
+    confirmationMsg = confirmationMsg
+      .replace(/(https?:\/\/[^\s\r\n]+)[\r\n]+(\/[^\s\r\n]+)/g, '$1$2')
+      .trim();
 
     console.log('[WhatsApp Webhook] Event successfully created via WhatsApp:', {
       slug: createdEventSlug,

@@ -473,7 +473,12 @@ async function startWhatsAppBridge() {
             console.log(`[WhatsApp Bridge] Webhook forwarded successfully to ${targetUrl}:`, resData);
 
             // Directly send confirmation / reply back to the WhatsApp user IF not already dispatched
-            const replyToSend = resData.replyText;
+            let replyToSend = resData.replyText;
+            if (replyToSend && typeof replyToSend === 'string') {
+              replyToSend = replyToSend
+                .replace(/(https?:\/\/[^\s\r\n]+)[\r\n]+(\/[^\s\r\n]+)/g, '$1$2')
+                .trim();
+            }
 
             if (replyToSend && sock) {
               const targetJid = remoteJid || (senderPhone ? `${senderPhone}@s.whatsapp.net` : '');

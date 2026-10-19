@@ -93,6 +93,38 @@ export const uploadCoverImage = async (file: File): Promise<string | null> => {
 };
 
 /**
+ * Upload avatar image to Supabase Storage (bucket: 'event-covers', path: 'avatars/...')
+ * Prevents base64 strings in cookies which causes 494 REQUEST_HEADER_TOO_LARGE.
+ */
+export const uploadAvatarImage = async (fileOrBlob: File | Blob): Promise<string | null> => {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  try {
+    const fileName = `avatars/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+
+    const { error: uploadError } = await client.storage
+      .from('event-covers')
+      .upload(fileName, fileOrBlob, {
+        contentType: 'image/jpeg',
+        cacheControl: '31536000',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.warn('Supabase avatar storage upload notice:', uploadError.message);
+      return null;
+    }
+
+    const { data } = client.storage.from('event-covers').getPublicUrl(fileName);
+    return data.publicUrl;
+  } catch (err) {
+    console.warn('Failed to upload avatar to Supabase:', err);
+    return null;
+  }
+};
+
+/**
  * Realtime subscription to live Host Announcements for a specific event
  */
 export const subscribeToAnnouncementsRealtime = (
