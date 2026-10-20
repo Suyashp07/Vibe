@@ -22,6 +22,8 @@ import {
   Sparkles,
   CheckCircle2,
   Ticket,
+  Shield,
+  Lock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -213,6 +215,53 @@ function VibesContent() {
     return [];
   });
 
+  const [targetVibeEvent, setTargetVibeEvent] = useState<EventItem | null>(null);
+
+  // When a direct event link is opened (?event=<slug> or ?id=...), fetch the exact event directly
+  // so it renders immediately even on fresh devices, different cities, or before store sync finishes.
+  useEffect(() => {
+    if (!targetSlug) return;
+    let isCancelled = false;
+    const cleanTarget = targetSlug.trim().toLowerCase();
+
+    // Check if event already exists in storeEvents
+    const existing = storeEvents.find(
+      (e) => (e.slug && e.slug.toLowerCase() === cleanTarget) || e.id === targetSlug
+    );
+
+    if (existing) {
+      setTargetVibeEvent(existing);
+      if (existing.city) {
+        setActiveCity(existing.city);
+      }
+      setSelectedActivity('all');
+      return;
+    }
+
+    // Fetch directly from server by slug or id
+    fetch(`/api/events/by-slug?slug=${encodeURIComponent(targetSlug)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled && data?.event) {
+          const ev = data.event;
+          setTargetVibeEvent(ev);
+          setStoreEvents((prev) => {
+            const alreadyIn = prev.some((p) => p.id === ev.id || p.slug === ev.slug);
+            return alreadyIn ? prev : [ev, ...prev];
+          });
+          if (ev.city) {
+            setActiveCity(ev.city);
+          }
+          setSelectedActivity('all');
+        }
+      })
+      .catch((err) => console.warn('Direct targeted vibe fetch warning:', err));
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [targetSlug]);
+
   const [allRsvps, setAllRsvps] = useState<RSVPItem[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -229,24 +278,25 @@ function VibesContent() {
   const [passModalEvent, setPassModalEvent] = useState<EventItem | null>(null);
   const [quickJoinOpen, setQuickJoinOpen] = useState(false);
 
-  // Check which vibes the current user has confirmed passes for
-  const userEmail = (isLoggedIn && (profile?.email || user?.email) ? (profile?.email || user?.email || '') : '').trim().toLowerCase();
+  // Check which vibes the current user has confirmed passes or pending requests for
+  const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
+  const userEmail = (
+    profile?.email || user?.email || localSession?.email || ''
+  ).trim().toLowerCase();
 
   const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
     const map: Record<string, RSVPItem> = {};
-    if (!isLoggedIn || !userEmail) return map;
+    if (!userEmail) return map;
 
     allRsvps.forEach((r) => {
-      if (r.status === 'confirmed') {
-        const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
-        if (matchesUser) {
-          if (r.event_id) map[r.event_id] = r;
-          if (r.event_slug) map[r.event_slug] = r;
-        }
+      const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
+      if (matchesUser) {
+        if (r.event_id) map[r.event_id] = r;
+        if (r.event_slug) map[r.event_slug] = r;
       }
     });
     return map;
-  }, [allRsvps, userEmail, isLoggedIn]);
+  }, [allRsvps, userEmail]);
 
   const openPassModal = useCallback((rsvp: RSVPItem, vibe: VibeInstantItem) => {
     const ev = vibe.originalEvent || ({
@@ -292,9 +342,18 @@ function VibesContent() {
     return () => unsub();
   }, []);
 
+  // Combine store events ensuring targeted vibe event is at index 0
+  const combinedStoreEvents = useMemo(() => {
+    if (!targetVibeEvent) return storeEvents;
+    const filtered = storeEvents.filter(
+      (e) => e.id !== targetVibeEvent.id && e.slug?.toLowerCase() !== targetVibeEvent.slug?.toLowerCase()
+    );
+    return [targetVibeEvent, ...filtered];
+  }, [storeEvents, targetVibeEvent]);
+
   // Map real store events into VibeInstantItem format
   const convertedStoreVibes = useMemo<VibeInstantItem[]>(() => {
-    return storeEvents.map((e, idx) => {
+    return combinedStoreEvents.map((e, idx) => {
       const confirmedRsvps = allRsvps.filter(
         (r) => (r.event_id === e.id || r.event_slug === e.slug) && r.status === 'confirmed'
       ).length;
@@ -474,6 +533,15 @@ function VibesContent() {
       // Prioritize events matching the user's active/detected city first, then by date / newest
       const targetCity = (activeCity || '').toLowerCase().trim();
       const sorted = [...convertedStoreVibes].sort((a, b) => {
+        // The targeted event ALWAYS stays at index 0 (top position)
+        if (targetSlug) {
+          const clean = targetSlug.toLowerCase().trim();
+          const aIsTarget = (a.slug && a.slug.toLowerCase() === clean) || a.id === targetSlug;
+          const bIsTarget = (b.slug && b.slug.toLowerCase() === clean) || b.id === targetSlug;
+          if (aIsTarget) return -1;
+          if (bIsTarget) return 1;
+        }
+
         const aCityMatch = Boolean(targetCity && targetCity !== 'all' && a.city.toLowerCase().includes(targetCity));
         const bCityMatch = Boolean(targetCity && targetCity !== 'all' && b.city.toLowerCase().includes(targetCity));
         if (aCityMatch && !bCityMatch) return -1;
@@ -487,7 +555,7 @@ function VibesContent() {
     }
 
     return DEFAULT_VIBES_LIST;
-  }, [convertedStoreVibes, activeCity]);
+  }, [convertedStoreVibes, activeCity, targetSlug]);
 
   // Filtered vibes
   const filteredVibes = useMemo(() => {
@@ -496,10 +564,17 @@ function VibesContent() {
     if (!filter || !filter.match) return allVibes;
 
     return allVibes.filter((v) => {
+      // Never filter out the directly targeted event
+      if (targetSlug) {
+        const clean = targetSlug.toLowerCase().trim();
+        if ((v.slug && v.slug.toLowerCase() === clean) || v.id === targetSlug) {
+          return true;
+        }
+      }
       const text = `${v.category} ${v.title} ${v.description}`.toLowerCase();
       return filter.match!.some((m) => text.includes(m));
     });
-  }, [allVibes, selectedActivity]);
+  }, [allVibes, selectedActivity, targetSlug]);
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
@@ -526,8 +601,9 @@ function VibesContent() {
   // Jump to targeted vibe if query param is provided
   useEffect(() => {
     if (!targetSlug || activeVibes.length === 0) return;
+    const cleanTarget = targetSlug.toLowerCase().trim();
     const idx = activeVibes.findIndex(
-      (v) => v.slug.toLowerCase() === targetSlug.toLowerCase() || v.id === targetSlug
+      (v) => (v.slug && v.slug.toLowerCase() === cleanTarget) || v.id === targetSlug
     );
     if (idx !== -1) {
       setCurrentIndex(idx);
@@ -981,6 +1057,16 @@ function VibesContent() {
           const isDoubleTapped = doubleTapVibeId === (vibe.id || vibe.slug);
           const commentsCount = getVibeCommentsCount(vibe);
           const currentRsvp = userPassMap[vibe.id] || userPassMap[vibe.slug];
+          const isCurated = Boolean(
+            (vibe.originalEvent as any)?.theme?.require_approval ??
+            (vibe.originalEvent as any)?.rsvp_form_config?.require_approval ??
+            false
+          );
+          const isClosed = Boolean(
+            (vibe.originalEvent as any)?.theme?.registrations_closed ||
+            (vibe.originalEvent as any)?.status === 'closed' ||
+            (vibe.capacity && vibe.going_count >= vibe.capacity)
+          );
           const vibeKey = vibe.id || vibe.slug || `vibe-${index}`;
 
           return (
@@ -995,11 +1081,17 @@ function VibesContent() {
               <div className="hidden md:flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full px-4 select-none h-full py-2">
                 {/* Left Card: Vertical Reel Frame */}
                 <div className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[540px] lg:h-[600px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 group">
-                  {/* Badge: Community pick */}
-                  <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                    <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/50 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
+                  {/* Badge: Community pick / Curated tag */}
+                  <div className="absolute top-4 left-4 z-20 pointer-events-none flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
                       {vibe.badge || 'Community pick'}
                     </span>
+                    {isCurated && (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/85 backdrop-blur-md text-black border border-amber-400 shadow-sm flex items-center gap-1">
+                        <Shield className="w-3 h-3 fill-current" />
+                        <span>Curated</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Cover Image */}
@@ -1186,9 +1278,9 @@ function VibesContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons: Join Now & Connect with Host */}
+                  {/* Action Buttons: Join Now / Pending Review / Connect with Host */}
                   <div className="flex items-center gap-2.5 pt-1">
-                    {currentRsvp ? (
+                    {currentRsvp?.status === 'confirmed' ? (
                       <button
                         onClick={() => openPassModal(currentRsvp, vibe)}
                         className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
@@ -1196,13 +1288,39 @@ function VibesContent() {
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                         <span>You're in · View pass</span>
                       </button>
+                    ) : currentRsvp?.status === 'waitlisted' ? (
+                      <button
+                        onClick={() => openPassModal(currentRsvp, vibe)}
+                        className="flex-1 py-3 px-3.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-bold text-amber-300 transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
+                        title="Your spot request is awaiting host review"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Pending review · Tap status</span>
+                      </button>
+                    ) : isClosed ? (
+                      <button
+                        disabled
+                        className="flex-1 py-3 px-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/40 flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Registrations Full</span>
+                      </button>
                     ) : (
                       <button
                         onClick={() => openQuickJoin(vibe)}
                         className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span>Join now</span>
+                        {isCurated ? (
+                          <>
+                            <Shield className="w-3.5 h-3.5" />
+                            <span>Request to join</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                            <span>Join now</span>
+                          </>
+                        )}
                       </button>
                     )}
 
@@ -1241,10 +1359,16 @@ function VibesContent() {
                 )}
 
                 {/* Top Left Badge */}
-                <div className="absolute top-3 left-4 z-20">
+                <div className="absolute top-3 left-4 z-20 flex items-center gap-1.5">
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
                     {vibe.badge || 'Selling fast'}
                   </span>
+                  {isCurated && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/85 backdrop-blur-md text-black border border-amber-400 flex items-center gap-1 shadow-sm">
+                      <Shield className="w-2.5 h-2.5 fill-current" />
+                      <span>Curated</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Full Screen Visual */}
@@ -1357,9 +1481,9 @@ function VibesContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons: Join Now & Connect with Host */}
+                  {/* Action Buttons: Join Now / Pending Review / Connect with Host */}
                   <div className="flex items-center gap-2 pt-0.5">
-                    {currentRsvp ? (
+                    {currentRsvp?.status === 'confirmed' ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1370,6 +1494,26 @@ function VibesContent() {
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                         <span>You're in · View pass</span>
                       </button>
+                    ) : currentRsvp?.status === 'waitlisted' ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openPassModal(currentRsvp, vibe);
+                        }}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-bold text-amber-300 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
+                        title="Your spot request is awaiting host review"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Pending review · Tap status</span>
+                      </button>
+                    ) : isClosed ? (
+                      <button
+                        disabled
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/40 flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Full</span>
+                      </button>
                     ) : (
                       <button
                         onClick={(e) => {
@@ -1378,8 +1522,17 @@ function VibesContent() {
                         }}
                         className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer"
                       >
-                        <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span>Join now</span>
+                        {isCurated ? (
+                          <>
+                            <Shield className="w-3.5 h-3.5" />
+                            <span>Request to join</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                            <span>Join now</span>
+                          </>
+                        )}
                       </button>
                     )}
 

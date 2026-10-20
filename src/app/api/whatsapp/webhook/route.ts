@@ -903,8 +903,7 @@ export async function POST(req: NextRequest) {
         spotsInfoLine +
         mapsInfoLine +
         `\n✅ *Status:* Published live on Vibe Instant!\n\n` +
-        `📱 *VIBE INSTANT REEL LINK:*\n${liveReelUrl}\n\n` +
-        `🌐 *Standard Event Webpage:*\n${liveEventUrl}\n\n` +
+        `📱 *VIBE INSTANT LINK:*\n${liveReelUrl}\n\n` +
         `📲 _Forward your Vibe Instant link to WhatsApp groups or friends to invite them!_`;
     } else {
       const missingList = surety.missingAspects.length > 0
@@ -923,7 +922,6 @@ export async function POST(req: NextRequest) {
         mapsInfoLine +
         `\n🔍 *Details Needed to Go Live:* (${suretyScore}% Completeness)\n${missingList}\n\n` +
         `📱 *VIBE INSTANT PREVIEW LINK:*\n${liveReelUrl}\n\n` +
-        `🌐 *Standard Webpage Preview:*\n${liveEventUrl}\n\n` +
         `💡 _You can open the Vibe Instant link right now to preview how your event looks!_`;
     }
 
@@ -979,12 +977,12 @@ export async function POST(req: NextRequest) {
         : {
             slug: createdEventSlug,
             title: createdEventTitle,
-            url: liveEventUrl,
+            url: liveReelUrl,
           },
       eventDetails: {
         slug: createdEventSlug,
         title: createdEventTitle,
-        url: liveEventUrl,
+        url: liveReelUrl,
       },
     });
   } catch (err: any) {

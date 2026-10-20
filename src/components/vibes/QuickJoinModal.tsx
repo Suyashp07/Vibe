@@ -16,7 +16,8 @@ import {
   RotateCcw,
   Ticket,
   MessageCircle,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem, RSVPItem } from '@/types';
@@ -34,6 +35,11 @@ interface QuickJoinModalProps {
 
 export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAskHost }: QuickJoinModalProps) {
   const { profile } = useAuth();
+
+  // Check if event requires host curation / approval
+  const isApprovalRequired = Boolean(
+    (event as any).theme?.require_approval ?? (event as any).rsvp_form_config?.require_approval ?? false
+  );
 
   // Step flow: 'details' -> 'otp' -> 'confirmed'
   const [step, setStep] = useState<'details' | 'otp' | 'confirmed'>('details');
@@ -312,10 +318,17 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
           <div>
             {/* Header */}
             <div className="flex items-center gap-2 mb-3">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
-                <Sparkles className="w-3 h-3" />
-                <span>Instant Flash RSVP</span>
-              </span>
+              {isApprovalRequired ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-xs">
+                  <Shield className="w-3 h-3 text-amber-400" />
+                  <span>Curated Meetup · Host Review</span>
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Instant Flash RSVP</span>
+                </span>
+              )}
               <span className="text-xs text-white/50">
                 {event.spots_limit ? `${event.spots_limit - (event.spots_filled || 0)} spots left` : 'Spots open'}
               </span>
@@ -325,12 +338,21 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               {event.title}
             </h3>
 
-            <div className="flex items-center gap-4 text-xs text-white/60 mb-5">
+            <div className="flex items-center gap-4 text-xs text-white/60 mb-4">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-[#E8621A]" />
                 {event.location_name}
               </span>
             </div>
+
+            {isApprovalRequired && (
+              <div className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs flex items-start gap-2 leading-relaxed">
+                <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>
+                  The host curates attendees for this gathering. Once you submit, your spot request will be reviewed and your entry pass will be unlocked upon approval.
+                </span>
+              </div>
+            )}
 
             {error && (
               <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
@@ -427,7 +449,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <span>Sending verification code...</span>
                 ) : (
                   <>
-                    <span>Verify with Email OTP</span>
+                    <span>{isApprovalRequired ? 'Request Spot with Email OTP' : 'Verify & Lock Spot'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -459,7 +481,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
                 <KeyRound className="w-3 h-3" />
-                <span>Verification Code</span>
+                <span>{isApprovalRequired ? 'Submit Spot Request' : 'Confirm Spot'}</span>
               </span>
             </div>
 
@@ -516,10 +538,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>Verifying & confirming spot...</span>
+                  <span>{isApprovalRequired ? 'Submitting request...' : 'Verifying & confirming spot...'}</span>
                 ) : (
                   <>
-                    <span>Verify & Confirm Spot</span>
+                    <span>{isApprovalRequired ? 'Verify & Submit Request' : 'Verify & Confirm Spot'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
