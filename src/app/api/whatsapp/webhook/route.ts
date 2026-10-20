@@ -178,6 +178,7 @@ export async function POST(req: NextRequest) {
         `📸 *Send a Poster:* Send or forward any event flyer image.\n` +
         `🔗 *Send a Link:* Paste a Luma, BookMyShow, District, or Unstop URL.\n` +
         `💬 *Send a Text:* Forward any event details message or blurb.\n\n` +
+        `📋 *Host Management:* Type *"manage"* or *"guests"* anytime to get your private RSVP management link!\n\n` +
         `_Gemini AI will extract all details, create the event, and reply with your live link!_`;
       let replyDispatched = false;
       if (replyTarget) {
@@ -189,6 +190,75 @@ export async function POST(req: NextRequest) {
         replyText: replyDispatched ? undefined : welcome,
         replyDispatched,
       });
+    }
+
+    // Handle Host Management / Guest list command (/manage, /sheet, /guests, /rsvp, /link)
+    const isManageCommand =
+      lowerText === '/manage' ||
+      lowerText === 'manage' ||
+      lowerText === '/sheet' ||
+      lowerText === 'sheet' ||
+      lowerText === '/guests' ||
+      lowerText === 'guests' ||
+      lowerText === '/rsvp' ||
+      lowerText === 'rsvp' ||
+      lowerText === '/dashboard' ||
+      lowerText === 'dashboard' ||
+      lowerText === '/link' ||
+      lowerText === 'link';
+
+    if (isManageCommand && senderPhone) {
+      try {
+        const supabase = getSupabaseAdmin();
+        if (supabase) {
+          const { data: latestEvent } = await supabase
+          .from('events')
+          .select('id, slug, title, theme, capacity')
+          .filter('theme->>whatsapp_host_phone', 'eq', senderPhone)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestEvent) {
+          let hostToken = latestEvent.theme?.manage_token;
+          if (!hostToken) {
+            hostToken = `m_${nanoid(20)}`;
+            const updatedTheme = { ...(latestEvent.theme || {}), manage_token: hostToken };
+            await supabase.from('events').update({ theme: updatedTheme }).eq('id', latestEvent.id);
+          }
+
+          const manageUrl = `${getAppUrl(req)}/manage/${hostToken}`;
+          const { data: rsvps } = await supabase
+            .from('rsvps')
+            .select('status')
+            .eq('event_id', latestEvent.id);
+
+          const confirmed = rsvps?.filter((r) => r.status === 'confirmed').length || 0;
+          const waitlisted = rsvps?.filter((r) => r.status === 'waitlisted').length || 0;
+
+          const hostMsg =
+            `🔒 *Private Host Control Sheet*\n\n` +
+            `📌 *Event:* ${latestEvent.title}\n` +
+            `👉 *Access your Sheet:* ${manageUrl}\n\n` +
+            `📊 *Current Guest Status:*\n` +
+            `• Confirmed (In): ${confirmed}${latestEvent.capacity ? ` / ${latestEvent.capacity}` : ''}\n` +
+            `• Pending Review: ${waitlisted}\n\n` +
+            `✨ _Use your sheet to admit/decline guests, change approval settings, or check-in attendees at the door!_`;
+
+          let replyDispatched = false;
+          if (replyTarget) {
+            replyDispatched = await sendWhatsAppReply(replyTarget, hostMsg);
+          }
+          return NextResponse.json({
+            ok: true,
+            handledBy: 'manage_command',
+            replyDispatched,
+          });
+        }
+        }
+      } catch (mErr: any) {
+        console.warn('[WhatsApp Webhook] Manage command lookup error:', mErr?.message);
+      }
     }
 
     // Check flyer image presence
@@ -597,6 +667,8 @@ export async function POST(req: NextRequest) {
         source_platform: 'whatsapp',
         flash_activity: flashActivity,
         whatsapp_host_phone: senderPhone,
+        manage_token: `m_${nanoid(20)}`,
+        require_approval: false,
         vibe_cheers_count: 0,
         spots_limit: effectiveSpotsLimit || undefined,
         spots_filled: hasExplicitSpots ? (extracted.attendees_list?.length || 1) : undefined,
@@ -641,6 +713,7 @@ export async function POST(req: NextRequest) {
         ask_dietary: false,
         ask_tshirt: false,
         waitlist_enabled: true,
+        require_approval: false,
         is_flash: isFlashVibe,
         confirmation_message: `You're confirmed for ${extracted.title || 'this event'}! Coordinate directly with host on WhatsApp.`,
       },
@@ -868,6 +941,32 @@ export async function POST(req: NextRequest) {
     let replyDispatched = false;
     if (replyTarget) {
       replyDispatched = await sendWhatsAppReply(replyTarget, confirmationMsg);
+
+      // REQUIREMENT 1: The magic link MUST be sent in a SEPARATE second message.
+      // Message 1 (confirmationMsg) is clean & public, safe for the host to forward to groups.
+      // Message 2 (privateHostMsg) is strictly private for the host to manage attendees.
+      const manageToken = insertPayload.theme?.manage_token;
+      if (manageToken) {
+        const manageUrl = `${getAppUrl(req)}/manage/${manageToken}`;
+        const privateHostMsg =
+          `🔒 *PRIVATE HOST CONTROL SHEET* (Keep private — do not forward)\n\n` +
+          `Manage your guest list, approve/decline RSVPs, and scan door passes for *${createdEventTitle}*:\n` +
+          `${manageUrl}\n\n` +
+          `✨ *Host Controls on your Sheet:*\n` +
+          `• ⚡ Live Attendee Roster & Digital Passes\n` +
+          `• 🛡️ In & Out Control: Approve or Decline guest requests\n` +
+          `• 🚪 1-Tap Door Pass Check-In Scanner\n` +
+          `• 🔒 Toggle Approval Mode (Open RSVP vs Curated Review)\n` +
+          `• 📋 Export Attendee Contacts / Copy Phone Numbers`;
+
+        try {
+          // Delay briefly to guarantee sequential delivery in WhatsApp
+          await new Promise((r) => setTimeout(r, 700));
+          await sendWhatsAppReply(replyTarget, privateHostMsg);
+        } catch (mErr: any) {
+          console.warn('[WhatsApp Webhook] Private host link dispatch notice:', mErr?.message);
+        }
+      }
     }
 
     return NextResponse.json({

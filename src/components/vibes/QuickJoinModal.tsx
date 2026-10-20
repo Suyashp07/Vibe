@@ -15,7 +15,8 @@ import {
   KeyRound,
   RotateCcw,
   Ticket,
-  MessageCircle
+  MessageCircle,
+  Clock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem, RSVPItem } from '@/types';
@@ -123,35 +124,55 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
           : `+91${cleanPhone}`
         : '';
 
-      // Supabase is single source of truth: writes to DB first, caches confirmed record
+      // Check if event requires host curation / approval
+      const isApprovalRequired = Boolean(
+        (event as any).theme?.require_approval ?? (event as any).rsvp_form_config?.require_approval ?? false
+      );
+      const targetStatus: 'confirmed' | 'waitlisted' = isApprovalRequired ? 'waitlisted' : 'confirmed';
+
+      // Supabase is single source of truth: writes to DB first, caches record
       const rsvp = await addRSVP({
         event_id: event.id,
         event_slug: event.slug,
         name: name.trim(),
         phone: fullPhone || '+910000000000',
         email: cleanEmail,
-        status: 'confirmed',
+        status: targetStatus,
         custom_responses: {
           channel: 'vibe_reels_instant',
           flash_activity: event.flash_activity || 'casual',
+          requires_approval: isApprovalRequired,
         },
       });
 
-      // Update spot filled in memory
-      event.spots_filled = (event.spots_filled || 0) + 1;
+      // Update spot filled in memory if instantly confirmed
+      if (!isApprovalRequired) {
+        event.spots_filled = (event.spots_filled || 0) + 1;
+      }
 
-      // Send confirmation email with pass details
+      // Send guest confirmation / waitlisted email
       fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'rsvp_confirmed',
+          type: isApprovalRequired ? 'waitlisted' : 'rsvp_confirmed',
           to: cleanEmail,
           guestName: name.trim(),
           rsvp,
           event,
         }),
       }).catch((err) => console.warn('Email dispatch warning:', err));
+
+      // Alert host on WhatsApp in real time so host can approve / track on their Host Sheet
+      fetch('/api/whatsapp/notify-rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event.id,
+          rsvp,
+          event,
+        }),
+      }).catch((err) => console.warn('WhatsApp host notification warning:', err));
 
       // Trigger celebratory confetti burst
       try {
@@ -512,27 +533,49 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
         {/* ========================================================= */}
         {step === 'confirmed' && (
           <div className="text-center py-4 animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
-            </div>
+            {submittedRsvp?.status === 'waitlisted' ? (
+              <>
+                <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 stroke-[2.5]" />
+                </div>
 
-            <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block mb-2">
-              🎉 Spot Verified & Confirmed!
-            </span>
+                <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block mb-2">
+                  ⏳ Request Received · Awaiting Host Review
+                </span>
 
-            <h3 className="text-2xl font-black text-white mb-2">
-              You're in, {name.split(' ')[0]}!
-            </h3>
+                <h3 className="text-2xl font-black text-white mb-2">
+                  You're on the list, {name.split(' ')[0]}!
+                </h3>
 
-            <p className="text-xs text-white/70 max-w-xs mx-auto mb-3">
-              Your spot is verified and locked for <strong className="text-white">{event.title}</strong> at {event.location_name}.
-            </p>
+                <p className="text-xs text-white/70 max-w-xs mx-auto mb-4">
+                  The host for <strong className="text-white">{event.title}</strong> is curating attendees. Your spot request has been sent, and you'll receive your confirmed entry pass as soon as the host approves!
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
+                </div>
 
-            {passSerial && (
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-[#FF8C42] mb-4">
-                <Ticket className="w-3.5 h-3.5" />
-                <span>Pass: {passSerial}</span>
-              </div>
+                <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block mb-2">
+                  🎉 Spot Verified & Confirmed!
+                </span>
+
+                <h3 className="text-2xl font-black text-white mb-2">
+                  You're in, {name.split(' ')[0]}!
+                </h3>
+
+                <p className="text-xs text-white/70 max-w-xs mx-auto mb-3">
+                  Your spot is verified and locked for <strong className="text-white">{event.title}</strong> at {event.location_name}.
+                </p>
+
+                {passSerial && (
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-[#FF8C42] mb-4">
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>Pass: {passSerial}</span>
+                  </div>
+                )}
+              </>
             )}
 
             <p className="text-[10px] text-white/50 max-w-xs mx-auto mb-6">
