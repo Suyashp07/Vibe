@@ -330,10 +330,15 @@ export async function POST(req: NextRequest) {
     }
 
     let flashActivity: string = 'other';
-    if (/\b(cricket|box cricket|gully cricket|match|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
+    if (/\b(field hockey|ice hockey|hockey|puck)\b/i.test(textContent)) flashActivity = 'hockey';
+    else if (/\b(cricket|box cricket|gully cricket|batting|bowling)\b/i.test(textContent)) flashActivity = 'cricket';
+    else if (/\b(tennis|lawn tennis)\b/i.test(textContent)) flashActivity = 'tennis';
     else if (/\b(badminton|shuttle)\b/i.test(textContent)) flashActivity = 'badminton';
     else if (/\b(pickleball|paddle|pickle|picklebot|pickle bot|dink|dinking)\b/i.test(textContent)) flashActivity = 'pickleball';
     else if (/\b(football|futsal|soccer)\b/i.test(textContent)) flashActivity = 'football';
+    else if (/\b(basketball|hoop)\b/i.test(textContent)) flashActivity = 'basketball';
+    else if (/\b(volleyball)\b/i.test(textContent)) flashActivity = 'volleyball';
+    else if (/\b(swimming|swim)\b/i.test(textContent)) flashActivity = 'swimming';
     else if (/\b(chai|coffee|cafe|tea)\b/i.test(textContent)) flashActivity = 'coffee';
     else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
     else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
@@ -506,10 +511,14 @@ export async function POST(req: NextRequest) {
 
     // Determine cover fallback
     const FLASH_COVERS: Record<string, string> = {
+      hockey: 'https://images.unsplash.com/photo-1541983663620-7571a820610c?w=1200&auto=format&fit=crop&q=80',
       cricket: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
       football: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&auto=format&fit=crop&q=80',
+      tennis: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
       badminton: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
-      pickleball: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
+      pickleball: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=1200&auto=format&fit=crop&q=80',
+      basketball: 'https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=1200&auto=format&fit=crop&q=80',
+      swimming: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1200&auto=format&fit=crop&q=80',
       coffee: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80',
       games: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1200&auto=format&fit=crop&q=80',
       music: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80',

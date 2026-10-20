@@ -195,14 +195,12 @@ export const CATEGORY_COVERS: Record<string, string[]> = {
   fitness: [
     'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80',
   ],
   wellness: [
     'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&auto=format&fit=crop&q=80',
@@ -274,21 +272,50 @@ export const CATEGORY_COVERS: Record<string, string[]> = {
  * Granular sub-topics mapping for accurate visual matching when events are created via Telegram / WhatsApp
  */
 export const SUBTOPIC_COVERS: Record<string, string[]> = {
-  pickleball: [
+  hockey: [
+    'https://images.unsplash.com/photo-1734159319354-b9ead78dd441?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1541983663620-7571a820610c?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1774523195578-121a2d1da490?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1780509459604-8e335e213e5b?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1537751181166-be1708a8ec4f?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1580748141549-71748dbe0bdc?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1514511719-9f5849dc16d0?w=1200&auto=format&fit=crop&q=80',
+  ],
+  tennis: [
     'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1778273441231-bdb564373038?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1545151414-8a948e1ea54f?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1761286753703-570ed91dd90e?w=1200&auto=format&fit=crop&q=80',
+  ],
+  basketball: [
+    'https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1758544919481-341c9964a570?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1627627256672-027a4613d028?w=1200&auto=format&fit=crop&q=80',
+  ],
+  volleyball: [
+    'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1761767891805-e02480aab3a9?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1666901356149-93f2eb3ba5a2?w=1200&auto=format&fit=crop&q=80',
+  ],
+  swimming: [
+    'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1781185844992-a89d38f865e5?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1560090995-01632a28895b?w=1200&auto=format&fit=crop&q=80',
+  ],
+  tabletennis: [
+    'https://images.unsplash.com/photo-1676827613262-5fba25cee5fd?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1774755461355-5c576a2e6030?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?w=1200&auto=format&fit=crop&q=80',
+  ],
+  pickleball: [
     'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1617083934555-563d76bcf641?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1627993077759-994c979cf667?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1600679472829-3044539ce8ed?w=1200&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1200&auto=format&fit=crop&q=80',
   ],
   badminton: [
     'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
@@ -364,10 +391,16 @@ export const SUBTOPIC_COVERS: Record<string, string[]> = {
 
 export function detectSubtopicFromText(text: string): string | null {
   const lower = text.toLowerCase();
+  if (lower.match(/\b(field hockey|ice hockey|hockey|puck|stick and ball|turf hockey)\b/)) return 'hockey';
+  if (lower.match(/\b(tennis|lawn tennis|wimbledon|clay court|grand slam)\b/)) return 'tennis';
   if (lower.match(/\b(pickleball|pickle ball|pickle-ball|pickle|pickler|picklers|picklebot|pickle bot|paddle ball|paddle|dink|dinking|kitchen rally)\b/)) return 'pickleball';
   if (lower.match(/\b(badminton|shuttlecock)\b/)) return 'badminton';
   if (lower.match(/\b(cricket|gully cricket|box cricket)\b/)) return 'cricket';
   if (lower.match(/\b(football|soccer|futsal)\b/)) return 'football';
+  if (lower.match(/\b(basketball|hoop|nba|dribble|3v3)\b/)) return 'basketball';
+  if (lower.match(/\b(volleyball|beach volley)\b/)) return 'volleyball';
+  if (lower.match(/\b(swimming|swim|freestyle|backstroke|water polo)\b/)) return 'swimming';
+  if (lower.match(/\b(table tennis|ping pong|tt match)\b/)) return 'tabletennis';
   if (lower.match(/\b(marathon|5k|10k|running|run club)\b/)) return 'running';
   if (lower.match(/\b(chess|checkmate)\b/)) return 'chess';
   if (lower.match(/\b(board game|boardgame|catan|settlers)\b/)) return 'boardgames';
@@ -387,7 +420,7 @@ export function detectSubtopicFromText(text: string): string | null {
 
 export function detectCategoryFromText(text: string): EventCategory {
   const lower = text.toLowerCase();
-  if (lower.match(/\b(pickleball|pickle ball|pickle-ball|pickle|paddle ball|picklebot|pickle bot|dink|badminton|tennis|squash|football|cricket|turf|futsal|basketball|volleyball|fitness|workout|gym|marathon|run|running|cycl|5k|10k|sports?|tournament|match)\b/)) return 'fitness';
+  if (lower.match(/\b(hockey|field hockey|ice hockey|pickleball|pickle ball|pickle-ball|pickle|paddle ball|picklebot|pickle bot|dink|badminton|tennis|squash|basketball|volleyball|swimming|table tennis|ping pong|football|cricket|turf|futsal|fitness|workout|gym|marathon|run|running|cycl|5k|10k|sports?|tournament|match)\b/)) return 'fitness';
   if (lower.match(/\b(yoga|meditation|breathwork|healing|pranayama|mindfulness|pilates)\b/)) return 'wellness';
   if (lower.match(/\b(hackathon|code|coding|developer|\bai\b|genai|llm|pitch|founder|demo day|web3|crypto|software|startup|tech|technology)\b/)) return 'tech';
   if (lower.match(/\b(comedy|standup|stand-up|open mic|comic|laugh|roast)\b/)) return 'comedy';
