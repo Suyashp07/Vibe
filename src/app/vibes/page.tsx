@@ -22,8 +22,6 @@ import {
   Sparkles,
   CheckCircle2,
   Ticket,
-  Shield,
-  Lock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -215,53 +213,6 @@ function VibesContent() {
     return [];
   });
 
-  const [targetVibeEvent, setTargetVibeEvent] = useState<EventItem | null>(null);
-
-  // When a direct event link is opened (?event=<slug> or ?id=...), fetch the exact event directly
-  // so it renders immediately even on fresh devices, different cities, or before store sync finishes.
-  useEffect(() => {
-    if (!targetSlug) return;
-    let isCancelled = false;
-    const cleanTarget = targetSlug.trim().toLowerCase();
-
-    // Check if event already exists in storeEvents
-    const existing = storeEvents.find(
-      (e) => (e.slug && e.slug.toLowerCase() === cleanTarget) || e.id === targetSlug
-    );
-
-    if (existing) {
-      setTargetVibeEvent(existing);
-      if (existing.city) {
-        setActiveCity(existing.city);
-      }
-      setSelectedActivity('all');
-      return;
-    }
-
-    // Fetch directly from server by slug or id
-    fetch(`/api/events/by-slug?slug=${encodeURIComponent(targetSlug)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!isCancelled && data?.event) {
-          const ev = data.event;
-          setTargetVibeEvent(ev);
-          setStoreEvents((prev) => {
-            const alreadyIn = prev.some((p) => p.id === ev.id || p.slug === ev.slug);
-            return alreadyIn ? prev : [ev, ...prev];
-          });
-          if (ev.city) {
-            setActiveCity(ev.city);
-          }
-          setSelectedActivity('all');
-        }
-      })
-      .catch((err) => console.warn('Direct targeted vibe fetch warning:', err));
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [targetSlug]);
-
   const [allRsvps, setAllRsvps] = useState<RSVPItem[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -278,25 +229,24 @@ function VibesContent() {
   const [passModalEvent, setPassModalEvent] = useState<EventItem | null>(null);
   const [quickJoinOpen, setQuickJoinOpen] = useState(false);
 
-  // Check which vibes the current user has confirmed passes or pending requests for
-  const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
-  const userEmail = (
-    profile?.email || user?.email || localSession?.email || ''
-  ).trim().toLowerCase();
+  // Check which vibes the current user has confirmed passes for
+  const userEmail = (isLoggedIn && (profile?.email || user?.email) ? (profile?.email || user?.email || '') : '').trim().toLowerCase();
 
   const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
     const map: Record<string, RSVPItem> = {};
-    if (!userEmail) return map;
+    if (!isLoggedIn || !userEmail) return map;
 
     allRsvps.forEach((r) => {
-      const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
-      if (matchesUser) {
-        if (r.event_id) map[r.event_id] = r;
-        if (r.event_slug) map[r.event_slug] = r;
+      if (r.status === 'confirmed') {
+        const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
+        if (matchesUser) {
+          if (r.event_id) map[r.event_id] = r;
+          if (r.event_slug) map[r.event_slug] = r;
+        }
       }
     });
     return map;
-  }, [allRsvps, userEmail]);
+  }, [allRsvps, userEmail, isLoggedIn]);
 
   const openPassModal = useCallback((rsvp: RSVPItem, vibe: VibeInstantItem) => {
     const ev = vibe.originalEvent || ({
@@ -342,18 +292,9 @@ function VibesContent() {
     return () => unsub();
   }, []);
 
-  // Combine store events ensuring targeted vibe event is at index 0
-  const combinedStoreEvents = useMemo(() => {
-    if (!targetVibeEvent) return storeEvents;
-    const filtered = storeEvents.filter(
-      (e) => e.id !== targetVibeEvent.id && e.slug?.toLowerCase() !== targetVibeEvent.slug?.toLowerCase()
-    );
-    return [targetVibeEvent, ...filtered];
-  }, [storeEvents, targetVibeEvent]);
-
   // Map real store events into VibeInstantItem format
   const convertedStoreVibes = useMemo<VibeInstantItem[]>(() => {
-    return combinedStoreEvents.map((e, idx) => {
+    return storeEvents.map((e, idx) => {
       const confirmedRsvps = allRsvps.filter(
         (r) => (r.event_id === e.id || r.event_slug === e.slug) && r.status === 'confirmed'
       ).length;
@@ -533,15 +474,6 @@ function VibesContent() {
       // Prioritize events matching the user's active/detected city first, then by date / newest
       const targetCity = (activeCity || '').toLowerCase().trim();
       const sorted = [...convertedStoreVibes].sort((a, b) => {
-        // The targeted event ALWAYS stays at index 0 (top position)
-        if (targetSlug) {
-          const clean = targetSlug.toLowerCase().trim();
-          const aIsTarget = (a.slug && a.slug.toLowerCase() === clean) || a.id === targetSlug;
-          const bIsTarget = (b.slug && b.slug.toLowerCase() === clean) || b.id === targetSlug;
-          if (aIsTarget) return -1;
-          if (bIsTarget) return 1;
-        }
-
         const aCityMatch = Boolean(targetCity && targetCity !== 'all' && a.city.toLowerCase().includes(targetCity));
         const bCityMatch = Boolean(targetCity && targetCity !== 'all' && b.city.toLowerCase().includes(targetCity));
         if (aCityMatch && !bCityMatch) return -1;
@@ -555,7 +487,7 @@ function VibesContent() {
     }
 
     return DEFAULT_VIBES_LIST;
-  }, [convertedStoreVibes, activeCity, targetSlug]);
+  }, [convertedStoreVibes, activeCity]);
 
   // Filtered vibes
   const filteredVibes = useMemo(() => {
@@ -564,52 +496,23 @@ function VibesContent() {
     if (!filter || !filter.match) return allVibes;
 
     return allVibes.filter((v) => {
-      // Never filter out the directly targeted event
-      if (targetSlug) {
-        const clean = targetSlug.toLowerCase().trim();
-        if ((v.slug && v.slug.toLowerCase() === clean) || v.id === targetSlug) {
-          return true;
-        }
-      }
       const text = `${v.category} ${v.title} ${v.description}`.toLowerCase();
       return filter.match!.some((m) => text.includes(m));
     });
-  }, [allVibes, selectedActivity, targetSlug]);
+  }, [allVibes, selectedActivity]);
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
-  // Reels scroll container ref & programmatic scroll lock
-  const reelsContainerRef = useRef<HTMLDivElement>(null);
-  const isProgrammaticScroll = useRef(false);
-
-  // Smooth slide scroll helper (using native browser container scroll)
-  const scrollToSlide = useCallback((index: number, smooth: boolean = true) => {
-    if (!reelsContainerRef.current) return;
-    const container = reelsContainerRef.current;
-    const slideHeight = container.clientHeight;
-    if (!slideHeight) return;
-    isProgrammaticScroll.current = true;
-    container.scrollTo({
-      top: index * slideHeight,
-      behavior: smooth ? 'smooth' : 'instant',
-    });
-    setTimeout(() => {
-      isProgrammaticScroll.current = false;
-    }, 450);
-  }, []);
-
   // Jump to targeted vibe if query param is provided
   useEffect(() => {
-    if (!targetSlug || activeVibes.length === 0) return;
-    const cleanTarget = targetSlug.toLowerCase().trim();
+    if (!targetSlug) return;
     const idx = activeVibes.findIndex(
-      (v) => (v.slug && v.slug.toLowerCase() === cleanTarget) || v.id === targetSlug
+      (v) => v.slug.toLowerCase() === targetSlug.toLowerCase() || v.id === targetSlug
     );
     if (idx !== -1) {
       setCurrentIndex(idx);
-      scrollToSlide(idx, false);
     }
-  }, [targetSlug, activeVibes, scrollToSlide]);
+  }, [targetSlug, activeVibes]);
 
   // Current active vibe
   const currentVibe = activeVibes[currentIndex] || activeVibes[0] || DEFAULT_VIBES_LIST[0];
@@ -628,39 +531,135 @@ function VibesContent() {
 
   // Up/down navigation with directional tracking
   const handlePrev = useCallback(() => {
-    if (currentIndex > 0) {
-      setScrollDirection('prev');
-      scrollToSlide(currentIndex - 1);
-    } else {
-      triggerBoundaryBounce('top');
-    }
-  }, [currentIndex, scrollToSlide, triggerBoundaryBounce]);
+    setScrollDirection('prev');
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  }, []);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < activeVibes.length - 1) {
-      setScrollDirection('next');
-      scrollToSlide(currentIndex + 1);
-    } else {
-      triggerBoundaryBounce('bottom');
-    }
-  }, [currentIndex, activeVibes.length, scrollToSlide, triggerBoundaryBounce]);
+    setScrollDirection('next');
+    setCurrentIndex((prev) => Math.min(activeVibes.length - 1, prev + 1));
+  }, [activeVibes.length]);
 
-  // Keyboard navigation (ArrowUp / ArrowDown)
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        handlePrev();
+        if (currentIndex > 0) {
+          handlePrev();
+        } else {
+          triggerBoundaryBounce('top');
+        }
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        handleNext();
+        if (currentIndex < activeVibes.length - 1) {
+          handleNext();
+        } else {
+          triggerBoundaryBounce('bottom');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePrev, handleNext]);
+  }, [currentIndex, activeVibes.length, handlePrev, handleNext, triggerBoundaryBounce]);
+
+  // High-precision trackpad & mouse wheel momentum-absorbing navigation (strictly 1 event per scroll)
+  useEffect(() => {
+    let accumulatedDelta = 0;
+    let isTransitioning = false;
+    let unlockTimer: NodeJS.Timeout | null = null;
+    let silenceTimer: NodeJS.Timeout | null = null;
+    let lastWheelTimestamp = 0;
+
+    const onWheel = (e: WheelEvent) => {
+      // Don't intercept if scrolling inside a modal, dropdown, input, comments or details pane
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest(
+          '[role="dialog"], .comments-modal, input, textarea, select, .no-vibe-scroll'
+        )
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      const delta = e.deltaY;
+
+      // Always reset silence timer on every wheel event.
+      // A trackpad gesture is only considered finished when no wheel events occur for 180ms.
+      if (silenceTimer) clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        isTransitioning = false;
+        accumulatedDelta = 0;
+      }, 180);
+
+      // If we are currently transitioning from a previous scroll trigger,
+      // completely absorb all remaining momentum / inertia events from the same swipe.
+      if (isTransitioning) {
+        lastWheelTimestamp = now;
+        return;
+      }
+
+      // Reset accumulated movement if user paused (> 100ms) or reversed direction
+      if (
+        now - lastWheelTimestamp > 100 ||
+        (accumulatedDelta > 0 && delta < 0) ||
+        (accumulatedDelta < 0 && delta > 0)
+      ) {
+        accumulatedDelta = 0;
+      }
+      lastWheelTimestamp = now;
+      accumulatedDelta += delta;
+
+      // Threshold: 60px for trackpad, 40px for discrete mouse wheel notch
+      const isDiscreteMouse = e.deltaMode !== 0 || Math.abs(delta) >= 80;
+      const threshold = isDiscreteMouse ? 40 : 60;
+
+      if (Math.abs(accumulatedDelta) >= threshold) {
+        const isNext = accumulatedDelta > 0;
+        accumulatedDelta = 0;
+
+        // Immediately lock until the current swipe gesture fully dies out
+        isTransitioning = true;
+
+        // Minimum animation cooldown of 500ms
+        if (unlockTimer) clearTimeout(unlockTimer);
+        unlockTimer = setTimeout(() => {
+          if (Date.now() - lastWheelTimestamp >= 120) {
+            isTransitioning = false;
+          }
+        }, 500);
+
+        // Boundary checks
+        if (isNext && currentIndex >= activeVibes.length - 1) {
+          triggerBoundaryBounce('bottom');
+          return;
+        }
+
+        if (!isNext && currentIndex <= 0) {
+          triggerBoundaryBounce('top');
+          return;
+        }
+
+        // Trigger single vibe transition
+        if (isNext) {
+          handleNext();
+        } else {
+          handlePrev();
+        }
+      }
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      if (unlockTimer) clearTimeout(unlockTimer);
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (overscrollTimerRef.current) clearTimeout(overscrollTimerRef.current);
+    };
+  }, [currentIndex, activeVibes.length, handleNext, handlePrev, triggerBoundaryBounce]);
 
   // Lock document & body to prevent outer page rubber-banding / scrolling on mobile
   useEffect(() => {
@@ -688,15 +687,35 @@ function VibesContent() {
     };
   }, []);
 
-  // Handle scroll events inside the reels container (syncs currentIndex with visible slide)
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  // Mobile Feed Scroll Ref & programmatic tracking
+  const mobileFeedRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScroll = useRef(false);
+
+  // Sync mobile scroll position when currentIndex changes (keyboard, desktop chevrons, query param)
+  useEffect(() => {
+    if (!mobileFeedRef.current) return;
+    const container = mobileFeedRef.current;
+    const height = container.clientHeight;
+    if (!height) return;
+    const targetTop = currentIndex * height;
+    if (Math.abs(container.scrollTop - targetTop) > 10) {
+      isProgrammaticScroll.current = true;
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
+      const timer = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
+
+  // Handle scroll events inside the mobile vibes reel
+  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (isProgrammaticScroll.current) return;
     const container = e.currentTarget;
-    const slideHeight = container.clientHeight;
-    if (!slideHeight) return;
-    const newIndex = Math.round(container.scrollTop / slideHeight);
+    const height = container.clientHeight;
+    if (!height) return;
+    const newIndex = Math.round(container.scrollTop / height);
     if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndex) {
-      setScrollDirection(newIndex > currentIndex ? 'next' : 'prev');
       setCurrentIndex(newIndex);
     }
   };
@@ -1044,477 +1063,473 @@ function VibesContent() {
       </header>
 
       {/* ========================================================= */}
-      {/* SHORTS / REELS NATIVE CSS SCROLL SNAP CONTAINER           */}
+      {/* 2. DESKTOP VIEW (SPLIT-SCREEN CARD - SCREENSHOT 1)        */}
       {/* ========================================================= */}
-      <main
-        ref={reelsContainerRef}
-        onScroll={handleScroll}
-        className="reels-container flex-1 w-full min-h-0"
-      >
-        {activeVibes.map((vibe, index) => {
-          const { isLiked: desktopLiked, count: desktopLikesCount } = getVibeLikeData(vibe);
-          const { isLiked: mobileLiked, count: mobileLikesCount } = getVibeLikeData(vibe);
-          const isDoubleTapped = doubleTapVibeId === (vibe.id || vibe.slug);
-          const commentsCount = getVibeCommentsCount(vibe);
-          const currentRsvp = userPassMap[vibe.id] || userPassMap[vibe.slug];
-          const isCurated = Boolean(
-            (vibe.originalEvent as any)?.theme?.require_approval ??
-            (vibe.originalEvent as any)?.rsvp_form_config?.require_approval ??
-            false
-          );
-          const isClosed = Boolean(
-            (vibe.originalEvent as any)?.theme?.registrations_closed ||
-            (vibe.originalEvent as any)?.status === 'closed' ||
-            (vibe.capacity && vibe.going_count >= vibe.capacity)
-          );
-          const vibeKey = vibe.id || vibe.slug || `vibe-${index}`;
+      <main className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4 select-none">
+        <motion.div
+          animate={{ y: overscrollOffset }}
+          transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+          className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full"
+        >
+          {/* Left Card: Vertical Reel Frame with Mouse/Trackpad Drag Gesture */}
+          <motion.div
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.22}
+            onDragEnd={(_, info) => {
+              if (info.offset.y < -45 || info.velocity.y < -250) {
+                if (currentIndex < activeVibes.length - 1) {
+                  handleNext();
+                } else {
+                  triggerBoundaryBounce('bottom');
+                }
+              } else if (info.offset.y > 45 || info.velocity.y > 250) {
+                if (currentIndex > 0) {
+                  handlePrev();
+                } else {
+                  triggerBoundaryBounce('top');
+                }
+              }
+            }}
+            className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 cursor-grab active:cursor-grabbing group"
+          >
+            {/* Badge: Community pick */}
+            <div className="absolute top-4 left-4 z-20 pointer-events-none">
+              <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/50 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
+                {currentVibe.badge || 'Community pick'}
+              </span>
+            </div>
 
-          return (
-            <section
-              key={vibeKey}
-              data-index={index}
-              className="reel-slide"
-            >
-              {/* --------------------------------------------------------- */}
-              {/* DESKTOP VIEW (SPLIT-SCREEN CARD - SCREENSHOT 1)           */}
-              {/* --------------------------------------------------------- */}
-              <div className="hidden md:flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full px-4 select-none h-full py-2">
-                {/* Left Card: Vertical Reel Frame */}
-                <div className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[540px] lg:h-[600px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 group">
-                  {/* Badge: Community pick / Curated tag */}
-                  <div className="absolute top-4 left-4 z-20 pointer-events-none flex items-center gap-1.5">
-                    <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
-                      {vibe.badge || 'Community pick'}
-                    </span>
-                    {isCurated && (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/85 backdrop-blur-md text-black border border-amber-400 shadow-sm flex items-center gap-1">
-                        <Shield className="w-3 h-3 fill-current" />
-                        <span>Curated</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Cover Image */}
-                  <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                    <Image
-                      src={vibe.cover_image_url}
-                      alt={vibe.title}
-                      fill
-                      unoptimized
-                      priority={index === 0}
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-                  </div>
-
-                  {/* Floating Action Stack (Right Edge) */}
-                  <div className="absolute right-3.5 bottom-5 z-20 flex flex-col items-center gap-3.5 pointer-events-auto">
-                    {/* Flame */}
-                    <button
-                      type="button"
-                      onClick={() => handleLikeVibe(vibe)}
-                      className="flex flex-col items-center gap-1 cursor-pointer group/flame"
-                      aria-label="Like vibe"
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                          desktopLiked
-                            ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
-                            : 'bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70'
-                        }`}
-                      >
-                        <Flame className="w-5 h-5 fill-current" />
-                      </div>
-                      <span className="text-xs font-bold text-white shadow-sm">{desktopLikesCount}</span>
-                    </button>
-
-                    {/* Chat / Comments */}
-                    <button
-                      type="button"
-                      onClick={() => openComments(vibe)}
-                      className="flex flex-col items-center gap-1 cursor-pointer group/chat"
-                      title="View & post comments"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover/chat:text-white group-hover/chat:bg-[#FF5500]/20 group-hover/chat:border-[#FF5500]/40 flex items-center justify-center transition-all group-hover/chat:scale-105 active:scale-95 shadow-md">
-                        <MessageSquare className="w-4.5 h-4.5" />
-                      </div>
-                      <span className="text-xs font-bold text-white shadow-sm">{commentsCount}</span>
-                    </button>
-
-                    {/* Share */}
-                    <button
-                      type="button"
-                      onClick={() => handleShareVibe(vibe)}
-                      className="flex flex-col items-center gap-1 cursor-pointer group/share"
-                      title="Share vibe"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all group-hover/share:scale-105 active:scale-95">
-                        <Share2 className="w-4.5 h-4.5" />
-                      </div>
-                      <span className="text-[10px] font-semibold text-white/80 shadow-sm">Share</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Center Floating Navigation Chevrons & Pill Progress Indicator */}
-                <div className="flex flex-col items-center gap-3 z-20 shrink-0">
-                  <button
-                    onClick={() => scrollToSlide(index - 1)}
-                    disabled={index === 0}
-                    className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
-                      index === 0
-                        ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
-                        : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
-                    }`}
-                    title="Previous vibe (Up Arrow / Scroll Up)"
-                    aria-label="Previous vibe"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-
-                  {/* Vertical Pill Progress Indicator */}
-                  <div className="flex flex-col items-center gap-1.5 py-1">
-                    {activeVibes.slice(0, 8).map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => scrollToSlide(idx)}
-                        className={`rounded-full transition-all duration-300 ${
-                          idx === index
-                            ? 'w-1.5 h-5 bg-[#FF5500] shadow-[0_0_10px_rgba(255,85,0,0.8)]'
-                            : 'w-1.5 h-1.5 bg-white/25 hover:bg-white/60'
-                        }`}
-                        title={`Jump to vibe ${idx + 1}`}
-                        aria-label={`Jump to vibe ${idx + 1}`}
-                      />
-                    ))}
-                    {activeVibes.length > 8 && (
-                      <span className="text-[10px] font-mono font-bold text-white/40 pt-0.5">
-                        {index + 1}/{activeVibes.length}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => scrollToSlide(index + 1)}
-                    disabled={index >= activeVibes.length - 1}
-                    className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
-                      index >= activeVibes.length - 1
-                        ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
-                        : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
-                    }`}
-                    title="Next vibe (Down Arrow / Scroll Down)"
-                    aria-label="Next vibe"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Right Card: Details & Actions */}
-                <div className="w-[380px] lg:w-[420px] rounded-3xl bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-2xl flex flex-col justify-between shrink-0 space-y-4 overflow-hidden relative min-h-[540px] lg:min-h-[600px]">
-                  {/* Host Identity */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
-                      {vibe.host_initials}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{vibe.host_name}</h4>
-                      <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
-                        <span className="text-amber-400">★</span>
-                        <span>{vibe.host_rating} · {vibe.host_vibes_count} vibes hosted</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Category Tag & Headline */}
-                  <div>
-                    <span className="text-xs font-mono font-bold tracking-wider text-[#FF5500] uppercase">
-                      {vibe.category}
-                    </span>
-                    <h2 className="text-2xl lg:text-[26px] font-black tracking-tight text-white mt-1 leading-tight">
-                      {vibe.title}
-                    </h2>
-                  </div>
-
-                  {/* Specs */}
-                  <div className="space-y-2 text-xs font-medium text-neutral-300">
-                    <div className="flex items-center gap-2.5">
-                      <Calendar className="w-4 h-4 text-neutral-400 shrink-0" />
-                      <span>{vibe.formatted_date}</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
-                      <span>{vibe.formatted_time}</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-                      <span>{vibe.location_name}</span>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-                    {vibe.description}
-                  </p>
-
-                  {/* Spots Capacity Bar */}
-                  {vibe.has_spots_limit && (vibe.capacity || 0) > 0 && (
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-neutral-400" />
-                          <span>{vibe.going_count}/{vibe.capacity} going</span>
-                        </span>
-                        <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                          <Zap className="w-3 h-3 fill-[#FF5500]" />
-                          <span>{vibe.spots_left} spots left</span>
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons: Join Now / Pending Review / Connect with Host */}
-                  <div className="flex items-center gap-2.5 pt-1">
-                    {currentRsvp?.status === 'confirmed' ? (
-                      <button
-                        onClick={() => openPassModal(currentRsvp, vibe)}
-                        className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>You're in · View pass</span>
-                      </button>
-                    ) : currentRsvp?.status === 'waitlisted' ? (
-                      <button
-                        onClick={() => openPassModal(currentRsvp, vibe)}
-                        className="flex-1 py-3 px-3.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-bold text-amber-300 transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
-                        title="Your spot request is awaiting host review"
-                      >
-                        <Clock className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Pending review · Tap status</span>
-                      </button>
-                    ) : isClosed ? (
-                      <button
-                        disabled
-                        className="flex-1 py-3 px-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/40 flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Registrations Full</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openQuickJoin(vibe)}
-                        className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        {isCurated ? (
-                          <>
-                            <Shield className="w-3.5 h-3.5" />
-                            <span>Request to join</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-3.5 h-3.5 fill-current" />
-                            <span>Join now</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => openAskHost(vibe)}
-                      className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
-                      title="Connect with host"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
-                      <span>Connect with host</span>
-                    </button>
-                  </div>
-
-                  {/* Keyboard & Scroll Hint */}
-                  <p className="text-[11px] text-white/40 font-medium text-center">
-                    Scroll or use ↑ ↓ to browse vibes
-                  </p>
-                </div>
-              </div>
-
-              {/* --------------------------------------------------------- */}
-              {/* MOBILE VIEW (INSTAGRAM REELS / TIKTOK VIBE FEED)          */}
-              {/* --------------------------------------------------------- */}
-              <div
-                onClick={(e) => handleMobileCardTap(vibe, e)}
-                className="vibe-reel-card flex md:hidden relative w-full h-full flex-col justify-between overflow-hidden select-none touch-manipulation cursor-pointer"
-              >
-                {/* Double-tap animated Flame Pop */}
-                {isDoubleTapped && (
-                  <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center animate-in zoom-in-50 fade-in duration-200">
-                    <div className="w-20 h-20 rounded-full bg-[#FF5500]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,85,0,0.8)] animate-bounce">
-                      <Flame className="w-12 h-12 text-white fill-white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Top Left Badge */}
-                <div className="absolute top-3 left-4 z-20 flex items-center gap-1.5">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
-                    {vibe.badge || 'Selling fast'}
-                  </span>
-                  {isCurated && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/85 backdrop-blur-md text-black border border-amber-400 flex items-center gap-1 shadow-sm">
-                      <Shield className="w-2.5 h-2.5 fill-current" />
-                      <span>Curated</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Full Screen Visual */}
-                <div className="absolute inset-0 z-0">
+            {/* Visual Media with Buttery Spring Directional Motion */}
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={currentVibe.id || currentVibe.slug}
+                  initial={{ opacity: 0, y: scrollDirection === 'next' ? 65 : -65, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: scrollDirection === 'next' ? -65 : 65, scale: 0.98 }}
+                  transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 w-full h-full"
+                >
                   <Image
-                    src={vibe.cover_image_url}
-                    alt={vibe.title}
+                    src={currentVibe.cover_image_url}
+                    alt={currentVibe.title}
                     fill
                     unoptimized
-                    priority={index === 0}
+                    priority
                     className="object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
-                </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-                {/* Floating Action Stack (Right side) */}
-                <div className="absolute right-3.5 bottom-32 sm:bottom-28 z-40 flex flex-col items-center gap-3.5 pointer-events-auto select-none">
-                  {/* Flame */}
+            {/* Floating Action Stack (Right Edge) - stopPropagation prevents dragging when clicking actions */}
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute right-3.5 bottom-5 z-20 flex flex-col items-center gap-3.5"
+            >
+              {/* Flame */}
+              {(() => {
+                const { isLiked: desktopLiked, count: desktopLikesCount } = getVibeLikeData(currentVibe);
+                return (
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handleLikeVibe(vibe);
-                    }}
-                    className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                    onClick={handleLike}
+                    className="flex flex-col items-center gap-1 cursor-pointer group/flame"
                     aria-label="Like vibe"
                   >
                     <div
-                      className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                        mobileLiked
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                        desktopLiked
                           ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
-                          : 'bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80'
+                          : 'bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70'
                       }`}
                     >
                       <Flame className="w-5 h-5 fill-current" />
                     </div>
-                    <span className="text-[11px] font-bold text-white shadow-sm">{mobileLikesCount}</span>
+                    <span className="text-xs font-bold text-white shadow-sm">{desktopLikesCount}</span>
                   </button>
+                );
+              })()}
 
-                  {/* Comments */}
+              {/* Chat / Comments */}
+              <button
+                type="button"
+                onClick={() => openComments(currentVibe)}
+                className="flex flex-col items-center gap-1 cursor-pointer group/chat"
+                title="View & post comments"
+              >
+                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover/chat:text-white group-hover/chat:bg-[#FF5500]/20 group-hover/chat:border-[#FF5500]/40 flex items-center justify-center transition-all group-hover/chat:scale-105 active:scale-95 shadow-md">
+                  <MessageSquare className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-xs font-bold text-white shadow-sm">{getVibeCommentsCount(currentVibe)}</span>
+              </button>
+
+              {/* Share */}
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex flex-col items-center gap-1 cursor-pointer group/share"
+                title="Share vibe"
+              >
+                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all group-hover/share:scale-105 active:scale-95">
+                  <Share2 className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-semibold text-white/80 shadow-sm">Share</span>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Center Floating Navigation Chevrons & Pill Progress Indicator */}
+          <div className="flex flex-col items-center gap-3 z-20 shrink-0">
+            <button
+              onClick={handlePrev}
+              disabled={currentIndex === 0}
+              className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
+                currentIndex === 0
+                  ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
+                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
+              }`}
+              title="Previous vibe (Up Arrow / Scroll Up)"
+              aria-label="Previous vibe"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+
+            {/* Vertical Pill Progress Indicator */}
+            <div className="flex flex-col items-center gap-1.5 py-1">
+              {activeVibes.slice(0, 8).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setScrollDirection(idx > currentIndex ? 'next' : 'prev');
+                    setCurrentIndex(idx);
+                  }}
+                  className={`rounded-full transition-all duration-300 ${
+                    idx === currentIndex
+                      ? 'w-1.5 h-5 bg-[#FF5500] shadow-[0_0_10px_rgba(255,85,0,0.8)]'
+                      : 'w-1.5 h-1.5 bg-white/25 hover:bg-white/60'
+                  }`}
+                  title={`Jump to vibe ${idx + 1}`}
+                  aria-label={`Jump to vibe ${idx + 1}`}
+                />
+              ))}
+              {activeVibes.length > 8 && (
+                <span className="text-[10px] font-mono font-bold text-white/40 pt-0.5">
+                  {currentIndex + 1}/{activeVibes.length}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={handleNext}
+              disabled={currentIndex >= activeVibes.length - 1}
+              className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
+                currentIndex >= activeVibes.length - 1
+                  ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
+                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
+              }`}
+              title="Next vibe (Down Arrow / Scroll Down)"
+              aria-label="Next vibe"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Right Card: Details & Actions (Synchronized with Reel) */}
+          <div className="w-[380px] lg:w-[420px] rounded-3xl bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-2xl flex flex-col justify-between shrink-0 space-y-4 overflow-hidden relative min-h-[560px] lg:min-h-[620px]">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.div
+                key={currentVibe.id || currentVibe.slug}
+                initial={{ opacity: 0, y: scrollDirection === 'next' ? 40 : -40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: scrollDirection === 'next' ? -40 : 40 }}
+                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col justify-between h-full space-y-4 w-full"
+              >
+                {/* Host Identity */}
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
+                    {currentVibe.host_initials}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{currentVibe.host_name}</h4>
+                    <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
+                      <span className="text-amber-400">★</span>
+                      <span>{currentVibe.host_rating} · {currentVibe.host_vibes_count} vibes hosted</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Category Tag & Headline */}
+                <div>
+                  <span className="text-xs font-mono font-bold tracking-wider text-[#FF5500] uppercase">
+                    {currentVibe.category}
+                  </span>
+                  <h2 className="text-2xl lg:text-[26px] font-black tracking-tight text-white mt-1 leading-tight">
+                    {currentVibe.title}
+                  </h2>
+                </div>
+
+                {/* Specs */}
+                <div className="space-y-2 text-xs font-medium text-neutral-300">
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>{currentVibe.formatted_date}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>{currentVibe.formatted_time}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>{currentVibe.location_name}</span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
+                  {currentVibe.description}
+                </p>
+
+                {/* Spots Capacity Bar - ONLY shown when host explicitly asked for spots */}
+                {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
+                  <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
+                      </span>
+                      <span className="font-bold text-[#FF5500] flex items-center gap-1">
+                        <Zap className="w-3 h-3 fill-[#FF5500]" />
+                        <span>{currentVibe.spots_left} spots left</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, (currentVibe.going_count / (currentVibe.capacity || 1)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons: Join Now & Connect with Host */}
+                <div className="flex items-center gap-2.5 pt-1">
+                  {(() => {
+                    const currentRsvp = userPassMap[currentVibe.id] || userPassMap[currentVibe.slug];
+                    if (currentRsvp) {
+                      return (
+                        <button
+                          onClick={() => openPassModal(currentRsvp, currentVibe)}
+                          className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>You're in · View pass</span>
+                        </button>
+                      );
+                    }
+                    return (
+                      <button
+                        onClick={() => openQuickJoin(currentVibe)}
+                        className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Join now</span>
+                      </button>
+                    );
+                  })()}
+
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      openComments(vibe);
-                    }}
-                    className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
-                    title="Comments"
-                    aria-label="Open comments"
+                    onClick={() => openAskHost(currentVibe)}
+                    className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
+                    title="Connect with host"
                   >
-                    <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80">
-                      <MessageSquare className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-bold text-white shadow-sm">{commentsCount}</span>
-                  </button>
-
-                  {/* Share */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handleShareVibe(vibe);
-                    }}
-                    className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
-                    aria-label="Share vibe"
-                  >
-                    <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80">
-                      <Share2 className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-semibold text-white shadow-sm">Share</span>
+                    <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+                    <span>Connect with host</span>
                   </button>
                 </div>
 
-                {/* Bottom Overlay Card */}
-                <div className="relative z-20 px-4 pr-18 pb-4 pt-6 space-y-2.5 mt-auto w-full pointer-events-auto">
-                  <div>
-                    <p className="text-xs text-neutral-400 font-medium">
-                      Hosted by {vibe.host_name}
-                    </p>
-                    <h3 className="text-xl font-black text-white leading-snug mt-0.5">
-                      {vibe.title}
-                    </h3>
-                    <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mt-0.5">
-                      {vibe.formatted_date_time_venue}
-                    </p>
+                {/* Keyboard, Mouse & Trackpad Hint */}
+                <p className="text-[11px] text-white/40 font-medium text-center">
+                  Scroll or drag card · Use ↑ ↓ to browse vibes
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      </main>
+
+      {/* ========================================================= */}
+      {/* 3. MOBILE VIEW (INSTAGRAM REELS / TIKTOK VIBE FEED)       */}
+      {/* ========================================================= */}
+      <main
+        ref={mobileFeedRef}
+        onScroll={handleMobileScroll}
+        className="flex flex-col md:hidden flex-1 relative w-full h-[calc(100dvh-114px)] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          scrollSnapType: 'y mandatory',
+        }}
+      >
+        {activeVibes.map((vibe, index) => {
+          const { isLiked, count, key: vibeKey } = getVibeLikeData(vibe);
+          const isDoubleTapped = doubleTapVibeId === (vibe.id || vibe.slug);
+
+          return (
+            <section
+              key={vibeKey || index}
+              data-index={index}
+              onClick={(e) => handleMobileCardTap(vibe, e)}
+              className="vibe-reel-card relative w-full h-[calc(100dvh-114px)] min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation cursor-pointer"
+            >
+              {/* Double-tap animated Flame Pop */}
+              {isDoubleTapped && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center animate-in zoom-in-50 fade-in duration-200">
+                  <div className="w-20 h-20 rounded-full bg-[#FF5500]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,85,0,0.8)] animate-bounce">
+                    <Flame className="w-12 h-12 text-white fill-white" />
                   </div>
+                </div>
+              )}
 
-                  {/* Spots Bar */}
-                  {vibe.has_spots_limit && (vibe.capacity || 0) > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-neutral-300 flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5 text-neutral-400" />
-                          <span>{vibe.going_count}/{vibe.capacity} going</span>
-                        </span>
-                        <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                          <Zap className="w-3 h-3 fill-[#FF5500]" />
-                          <span>{vibe.spots_left} spots left</span>
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%` }}
-                        />
-                      </div>
+              {/* Top Left Badge */}
+              <div className="absolute top-3 left-4 z-20">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white border border-white/15">
+                  {vibe.badge || 'Selling fast'}
+                </span>
+              </div>
+
+              {/* Full Screen Visual */}
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src={vibe.cover_image_url}
+                  alt={vibe.title}
+                  fill
+                  unoptimized
+                  priority={index === 0}
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
+              </div>
+
+              {/* Floating Action Stack (Right side) - Elevated Z-index to z-40 and pointer-events-auto */}
+              <div className="absolute right-3.5 bottom-32 sm:bottom-28 z-40 flex flex-col items-center gap-3.5 pointer-events-auto select-none">
+                {/* Flame */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleLikeVibe(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                  aria-label="Like vibe"
+                >
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                      isLiked
+                        ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
+                        : 'bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80'
+                    }`}
+                  >
+                    <Flame className="w-5 h-5 fill-current" />
+                  </div>
+                  <span className="text-[11px] font-bold text-white shadow-sm">{count}</span>
+                </button>
+
+                {/* Comments */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    openComments(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                  title="Comments"
+                  aria-label="Open comments"
+                >
+                  <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <span className="text-[11px] font-bold text-white shadow-sm">{getVibeCommentsCount(vibe)}</span>
+                </button>
+
+                {/* Share */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleShareVibe(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                  aria-label="Share vibe"
+                >
+                  <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80">
+                    <Share2 className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-white shadow-sm">Share</span>
+                </button>
+              </div>
+
+              {/* Bottom Overlay Card - pr-18 ensures no overlap with right-side action stack */}
+              <div className="relative z-20 px-4 pr-18 pb-4 pt-6 space-y-2.5 mt-auto w-full pointer-events-auto">
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium">
+                    Hosted by {vibe.host_name}
+                  </p>
+                  <h3 className="text-xl font-black text-white leading-snug mt-0.5">
+                    {vibe.title}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mt-0.5">
+                    {vibe.formatted_date_time_venue}
+                  </p>
+                </div>
+
+                {/* Spots Bar - ONLY shown when host explicitly asked for spots */}
+                {vibe.has_spots_limit && (vibe.capacity || 0) > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-neutral-300 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>{vibe.going_count}/{vibe.capacity} going</span>
+                      </span>
+                      <span className="font-bold text-[#FF5500] flex items-center gap-1">
+                        <Zap className="w-3 h-3 fill-[#FF5500]" />
+                        <span>{vibe.spots_left} spots left</span>
+                      </span>
                     </div>
-                  )}
+                    <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
-                  {/* Action Buttons: Join Now / Pending Review / Connect with Host */}
-                  <div className="flex items-center gap-2 pt-0.5">
-                    {currentRsvp?.status === 'confirmed' ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openPassModal(currentRsvp, vibe);
-                        }}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>You're in · View pass</span>
-                      </button>
-                    ) : currentRsvp?.status === 'waitlisted' ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openPassModal(currentRsvp, vibe);
-                        }}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-bold text-amber-300 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
-                        title="Your spot request is awaiting host review"
-                      >
-                        <Clock className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Pending review · Tap status</span>
-                      </button>
-                    ) : isClosed ? (
-                      <button
-                        disabled
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/40 flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Full</span>
-                      </button>
-                    ) : (
+                {/* Action Buttons: Join Now & Connect with Host */}
+                <div className="flex items-center gap-2 pt-0.5">
+                  {(() => {
+                    const userRsvp = userPassMap[vibe.id] || userPassMap[vibe.slug];
+                    if (userRsvp) {
+                      return (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openPassModal(userRsvp, vibe);
+                          }}
+                          className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>You're in · View pass</span>
+                        </button>
+                      );
+                    }
+                    return (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1522,33 +1537,24 @@ function VibesContent() {
                         }}
                         className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer"
                       >
-                        {isCurated ? (
-                          <>
-                            <Shield className="w-3.5 h-3.5" />
-                            <span>Request to join</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-3.5 h-3.5 fill-current" />
-                            <span>Join now</span>
-                          </>
-                        )}
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Join now</span>
                       </button>
-                    )}
+                    );
+                  })()}
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openAskHost(vibe);
-                      }}
-                      className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer active:scale-[0.98] transition-all shrink-0"
-                      title="Connect with host"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
-                      <span>Connect with host</span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openAskHost(vibe);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer active:scale-[0.98] transition-all shrink-0"
+                    title="Connect with host"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+                    <span>Connect with host</span>
+                  </button>
                 </div>
               </div>
             </section>

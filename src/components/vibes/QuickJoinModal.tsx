@@ -15,9 +15,7 @@ import {
   KeyRound,
   RotateCcw,
   Ticket,
-  MessageCircle,
-  Clock,
-  Shield
+  MessageCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem, RSVPItem } from '@/types';
@@ -35,11 +33,6 @@ interface QuickJoinModalProps {
 
 export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAskHost }: QuickJoinModalProps) {
   const { profile } = useAuth();
-
-  // Check if event requires host curation / approval
-  const isApprovalRequired = Boolean(
-    (event as any).theme?.require_approval ?? (event as any).rsvp_form_config?.require_approval ?? false
-  );
 
   // Step flow: 'details' -> 'otp' -> 'confirmed'
   const [step, setStep] = useState<'details' | 'otp' | 'confirmed'>('details');
@@ -77,9 +70,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       } catch {}
 
       if (!restoredOtp) {
-        setName('');
-        setEmail('');
-        setPhone('');
+        const session = getLocalAuthSession();
+        if (session?.name && !name) setName(session.name);
+        if (session?.email && !email) setEmail(session.email);
+        if (session?.phone && !phone) setPhone(session.phone);
         setStep('details');
         setOtpToken('');
         setError('');
@@ -90,17 +84,9 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       setOtpToken('');
       setError('');
       setSubmittedRsvp(null);
-      setName('');
-      setEmail('');
-      setPhone('');
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, event.id]);
-
-  const sessionUser = profile || (typeof window !== 'undefined' ? getLocalAuthSession() : null);
-  const namePlaceholder = sessionUser?.name ? `e.g. ${sessionUser.name}` : 'Enter your name or nickname';
-  const emailPlaceholder = sessionUser?.email ? `e.g. ${sessionUser.email}` : 'you@example.com';
-  const phonePlaceholder = sessionUser?.phone ? `e.g. ${sessionUser.phone}` : 'e.g. 9820011223 (optional)';
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -130,55 +116,35 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
           : `+91${cleanPhone}`
         : '';
 
-      // Check if event requires host curation / approval
-      const isApprovalRequired = Boolean(
-        (event as any).theme?.require_approval ?? (event as any).rsvp_form_config?.require_approval ?? false
-      );
-      const targetStatus: 'confirmed' | 'waitlisted' = isApprovalRequired ? 'waitlisted' : 'confirmed';
-
-      // Supabase is single source of truth: writes to DB first, caches record
+      // Supabase is single source of truth: writes to DB first, caches confirmed record
       const rsvp = await addRSVP({
         event_id: event.id,
         event_slug: event.slug,
         name: name.trim(),
         phone: fullPhone || '+910000000000',
         email: cleanEmail,
-        status: targetStatus,
+        status: 'confirmed',
         custom_responses: {
           channel: 'vibe_reels_instant',
           flash_activity: event.flash_activity || 'casual',
-          requires_approval: isApprovalRequired,
         },
       });
 
-      // Update spot filled in memory if instantly confirmed
-      if (!isApprovalRequired) {
-        event.spots_filled = (event.spots_filled || 0) + 1;
-      }
+      // Update spot filled in memory
+      event.spots_filled = (event.spots_filled || 0) + 1;
 
-      // Send guest confirmation / waitlisted email
+      // Send confirmation email with pass details
       fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: isApprovalRequired ? 'waitlisted' : 'rsvp_confirmed',
+          type: 'rsvp_confirmed',
           to: cleanEmail,
           guestName: name.trim(),
           rsvp,
           event,
         }),
       }).catch((err) => console.warn('Email dispatch warning:', err));
-
-      // Alert host on WhatsApp in real time so host can approve / track on their Host Sheet
-      fetch('/api/whatsapp/notify-rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventId: event.id,
-          rsvp,
-          event,
-        }),
-      }).catch((err) => console.warn('WhatsApp host notification warning:', err));
 
       // Trigger celebratory confetti burst
       try {
@@ -254,8 +220,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = otpToken.trim();
-    if (!token || token.length < 6 || token.length > 8) {
-      setError('Please enter the verification code sent to your email (6 to 8 digits)');
+    if (!token || token.length < 6) {
+      setError('Please enter the 6-digit code sent to your email');
       return;
     }
 
@@ -318,17 +284,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
           <div>
             {/* Header */}
             <div className="flex items-center gap-2 mb-3">
-              {isApprovalRequired ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-xs">
-                  <Shield className="w-3 h-3 text-amber-400" />
-                  <span>Curated Meetup · Host Review</span>
-                </span>
-              ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Instant Flash RSVP</span>
-                </span>
-              )}
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
+                <Sparkles className="w-3 h-3" />
+                <span>Instant Flash RSVP</span>
+              </span>
               <span className="text-xs text-white/50">
                 {event.spots_limit ? `${event.spots_limit - (event.spots_filled || 0)} spots left` : 'Spots open'}
               </span>
@@ -338,44 +297,16 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               {event.title}
             </h3>
 
-            <div className="flex items-center gap-4 text-xs text-white/60 mb-4">
+            <div className="flex items-center gap-4 text-xs text-white/60 mb-5">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-[#E8621A]" />
                 {event.location_name}
               </span>
             </div>
 
-            {isApprovalRequired && (
-              <div className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs flex items-start gap-2 leading-relaxed">
-                <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>
-                  The host curates attendees for this gathering. Once you submit, your spot request will be reviewed and your entry pass will be unlocked upon approval.
-                </span>
-              </div>
-            )}
-
             {error && (
               <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
                 {error}
-              </div>
-            )}
-
-            {sessionUser && (sessionUser.name || sessionUser.email) && !name && !email && (
-              <div className="flex items-center justify-between text-xs text-white/70 bg-white/[0.04] border border-white/10 px-3.5 py-2 rounded-xl mb-4">
-                <span className="truncate">
-                  Signed in as <strong className="text-white">{sessionUser.name || sessionUser.email}</strong>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (sessionUser.name) setName(sessionUser.name);
-                    if (sessionUser.email) setEmail(sessionUser.email);
-                    if (sessionUser.phone) setPhone(sessionUser.phone);
-                  }}
-                  className="text-[#FF8542] hover:text-[#FFA066] font-bold text-xs shrink-0 cursor-pointer transition-colors ml-3 hover:underline"
-                >
-                  Use my details
-                </button>
               </div>
             )}
 
@@ -390,10 +321,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <input
                     type="text"
                     required
-                    placeholder={namePlaceholder}
+                    placeholder="Enter your name or nickname"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
               </div>
@@ -408,10 +339,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <input
                     type="email"
                     required
-                    placeholder={emailPlaceholder}
+                    placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
                 <p className="text-[10px] text-white/40 mt-1">
@@ -428,10 +359,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                   <input
                     type="tel"
-                    placeholder={phonePlaceholder}
+                    placeholder="e.g. 9820011223 (optional)"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
                 <p className="text-[10px] text-white/40 mt-1">
@@ -449,7 +380,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <span>Sending verification code...</span>
                 ) : (
                   <>
-                    <span>{isApprovalRequired ? 'Request Spot with Email OTP' : 'Verify & Lock Spot'}</span>
+                    <span>Verify with Email OTP</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -481,7 +412,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
                 <KeyRound className="w-3 h-3" />
-                <span>{isApprovalRequired ? 'Submit Spot Request' : 'Confirm Spot'}</span>
+                <span>Verification Code</span>
               </span>
             </div>
 
@@ -489,7 +420,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               Check your email
             </h3>
             <p className="text-xs text-white/60 mb-5 leading-relaxed">
-              We sent a verification code to{' '}
+              We sent a 6-digit confirmation code to{' '}
               <strong className="text-white font-semibold">{cleanEmail}</strong>.
             </p>
 
@@ -502,7 +433,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                  Verification Code
+                  6-Digit OTP Code
                 </label>
                 <div className="relative">
                   <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#E8621A]" />
@@ -511,7 +442,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                     required
                     maxLength={8}
                     autoFocus
-                    placeholder="••••••••"
+                    placeholder="123456"
                     value={otpToken}
                     onChange={(e) => setOtpToken(e.target.value.replace(/[^0-9]/g, ''))}
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-lg font-mono tracking-widest text-center focus:outline-none focus:border-[#E8621A] transition-colors"
@@ -538,10 +469,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>{isApprovalRequired ? 'Submitting request...' : 'Verifying & confirming spot...'}</span>
+                  <span>Verifying & confirming spot...</span>
                 ) : (
                   <>
-                    <span>{isApprovalRequired ? 'Verify & Submit Request' : 'Verify & Confirm Spot'}</span>
+                    <span>Verify & Confirm Spot</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -555,49 +486,27 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
         {/* ========================================================= */}
         {step === 'confirmed' && (
           <div className="text-center py-4 animate-in zoom-in-95 duration-200">
-            {submittedRsvp?.status === 'waitlisted' ? (
-              <>
-                <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
-                  <Clock className="w-8 h-8 stroke-[2.5]" />
-                </div>
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
+            </div>
 
-                <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block mb-2">
-                  ⏳ Request Received · Awaiting Host Review
-                </span>
+            <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block mb-2">
+              🎉 Spot Verified & Confirmed!
+            </span>
 
-                <h3 className="text-2xl font-black text-white mb-2">
-                  You're on the list, {name.split(' ')[0]}!
-                </h3>
+            <h3 className="text-2xl font-black text-white mb-2">
+              You're in, {name.split(' ')[0]}!
+            </h3>
 
-                <p className="text-xs text-white/70 max-w-xs mx-auto mb-4">
-                  The host for <strong className="text-white">{event.title}</strong> is curating attendees. Your spot request has been sent, and you'll receive your confirmed entry pass as soon as the host approves!
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
-                </div>
+            <p className="text-xs text-white/70 max-w-xs mx-auto mb-3">
+              Your spot is verified and locked for <strong className="text-white">{event.title}</strong> at {event.location_name}.
+            </p>
 
-                <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block mb-2">
-                  🎉 Spot Verified & Confirmed!
-                </span>
-
-                <h3 className="text-2xl font-black text-white mb-2">
-                  You're in, {name.split(' ')[0]}!
-                </h3>
-
-                <p className="text-xs text-white/70 max-w-xs mx-auto mb-3">
-                  Your spot is verified and locked for <strong className="text-white">{event.title}</strong> at {event.location_name}.
-                </p>
-
-                {passSerial && (
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-[#FF8C42] mb-4">
-                    <Ticket className="w-3.5 h-3.5" />
-                    <span>Pass: {passSerial}</span>
-                  </div>
-                )}
-              </>
+            {passSerial && (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-[#FF8C42] mb-4">
+                <Ticket className="w-3.5 h-3.5" />
+                <span>Pass: {passSerial}</span>
+              </div>
             )}
 
             <p className="text-[10px] text-white/50 max-w-xs mx-auto mb-6">
