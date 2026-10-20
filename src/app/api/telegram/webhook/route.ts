@@ -365,12 +365,14 @@ export async function POST(req: NextRequest) {
     let extracted: ExtractedEventData;
     let coverImageUrl = getCategoryCover('default');
 
+    // First reply immediately confirming AI is creating the event
+    await replyTelegram(
+      '🤖 <b>AI is making your event...</b> Please wait a moment while I set everything up! ⚡',
+      { parse_mode: 'HTML' }
+    );
+
     // CASE A: Flyer Image Provided (as Photo or Document file)
     if (isPhoto || isImageDoc) {
-      await replyTelegram('🔍 <i>Analyzing event poster with Gemini Vision...</i>', {
-        parse_mode: 'HTML',
-      });
-
       const fileId = isPhoto
         ? message.photo[message.photo.length - 1].file_id
         : message.document.file_id;
@@ -429,9 +431,6 @@ export async function POST(req: NextRequest) {
     }
     // CASE B: Text / Link Provided
     else if (message.text) {
-      await replyTelegram('🔍 <i>Extracting event details with AI...</i>', {
-        parse_mode: 'HTML',
-      });
       extracted = await extractEventFromText(message.text);
       // Pick suitable cover photo:
       // 1. Scraped OpenGraph image if user provided an event link
@@ -630,7 +629,8 @@ export async function POST(req: NextRequest) {
 
     if (isAutoApproved) {
       if (isFlashVibe) {
-        previewText = `⚡ <b>YOUR FLASH VIBE IS AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
+        previewText = `🎉 <b>Your event is ready!</b>\n\n` +
+          `⚡ <b>YOUR FLASH VIBE IS AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
           `🔥 <b>${extracted.title}</b>\n` +
           `📍 ${extracted.venue_name || detectedCity} (${detectedCity})\n` +
           `🕒 ${dateStr} IST\n\n` +
@@ -646,7 +646,8 @@ export async function POST(req: NextRequest) {
           [{ text: '❌ Discard', callback_data: `discard:${savedEvent.id}` }],
         ];
       } else {
-        previewText = `🎉 <b>EVENT AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
+        previewText = `🎉 <b>Your event is ready!</b>\n\n` +
+          `⚡ <b>EVENT AUTO-APPROVED & LIVE!</b> (${suretyPercent}% Surety)\n\n` +
           `📌 <b>Title:</b> ${extracted.title}\n` +
           `🏷️ <b>Category:</b> ${detectedCategory}\n` +
           `🗓️ <b>Date:</b> ${dateStr} IST\n` +
@@ -667,7 +668,8 @@ export async function POST(req: NextRequest) {
         ? surety.missingAspects.map(a => `• ${a}`).join('\n')
         : '• Specific venue place or start time not given';
 
-      previewText = `⏳ <b>EVENT CREATED — SAVED AS DRAFT</b>\n\n` +
+      previewText = `🎉 <b>Your event is ready!</b>\n\n` +
+        `⏳ <b>EVENT CREATED — SAVED AS DRAFT</b>\n\n` +
         `Your event has been recorded on Vibe!\n\n` +
         `📌 <b>Title:</b> ${extracted.title}\n` +
         `🗓️ <b>Schedule:</b> ${dateStr} IST\n` +

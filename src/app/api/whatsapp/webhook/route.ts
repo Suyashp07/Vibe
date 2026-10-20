@@ -350,7 +350,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Proceed directly to event extraction without preliminary noise
+    // Send immediate first reply telling the user that AI is making the event
+    if (replyTarget) {
+      sendWhatsAppReply(
+        replyTarget,
+        '🤖 *AI is making your event...* Please wait a moment while I set everything up! ⚡'
+      ).catch((notifyErr: any) => {
+        console.warn('[WhatsApp Webhook] First reply notification warning:', notifyErr?.message);
+      });
+    }
+
     let extracted: ExtractedEventData;
     let coverImageUrl: string | undefined = payload.imageUrl || undefined;
 
@@ -812,6 +821,7 @@ export async function POST(req: NextRequest) {
     let confirmationMsg = '';
     if (isAutoApproved) {
       confirmationMsg =
+        `🎉 *Your event is ready!*\n\n` +
         `⚡ *YOUR EVENT IS AUTO-APPROVED & LIVE ON VIBE INSTANT!* (${suretyScore}% Surety)\n\n` +
         `🔥 *${createdEventTitle}*\n` +
         `📍 ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
@@ -829,6 +839,7 @@ export async function POST(req: NextRequest) {
         : '• Place / venue details not fully specified';
 
       confirmationMsg =
+        `🎉 *Your event is ready!*\n\n` +
         `⏳ *EVENT DRAFT CREATED — AWAITING ADMIN APPROVAL*\n\n` +
         `Your event has been received, but requires admin review before going live.\n\n` +
         `📌 *Event:* ${createdEventTitle}\n` +

@@ -87,7 +87,7 @@ function LoginContent() {
         if (res.needsConfirmation) {
           setShowOtpFlow(true);
           setOtpSent(true);
-          setMessage('Your email is not verified yet. We have sent a 6-digit verification code to your email. Enter it below to sign in:');
+          setMessage('Your email is not verified yet. We have sent a verification code to your email. Enter it below to sign in:');
           return;
         }
         throw res.error;
@@ -139,14 +139,15 @@ function LoginContent() {
       setError(otpErr.message || 'Failed to send verification code. Please try password sign-in.');
     } else {
       setOtpSent(true);
-      setMessage(`6-digit verification code sent to ${cleanEmail}. Enter it below to sign in:`);
+      setMessage(`Verification code sent to ${cleanEmail}. Enter it below to sign in:`);
     }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpCode.trim() || otpCode.trim().length < 6) {
-      setError('Please enter the complete 6-digit verification code from your email.');
+    const cleanOtp = otpCode.trim();
+    if (!cleanOtp || cleanOtp.length < 6 || cleanOtp.length > 8) {
+      setError('Please enter the complete verification code from your email (6 to 8 digits).');
       return;
     }
 
@@ -368,7 +369,7 @@ function LoginContent() {
                   }}
                   className="text-[11px] font-medium text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  {showOtpFlow ? 'Use password instead' : 'Sign in with 6-digit code?'}
+                  {showOtpFlow ? 'Use password instead' : 'Sign in with verification code?'}
                 </button>
               </div>
               <div className="relative">
@@ -415,7 +416,7 @@ function LoginContent() {
               {!otpSent ? (
                 <div className="space-y-2">
                   <p className="text-[11px] text-slate-500 dark:text-white/60">
-                    Enter your email above to receive a secure 6-digit verification code. No magic link or password needed.
+                    Enter your email above to receive a secure verification code. No magic link or password needed.
                   </p>
                   <button
                     type="button"

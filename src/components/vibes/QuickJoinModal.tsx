@@ -70,10 +70,9 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       } catch {}
 
       if (!restoredOtp) {
-        const session = getLocalAuthSession();
-        if (session?.name && !name) setName(session.name);
-        if (session?.email && !email) setEmail(session.email);
-        if (session?.phone && !phone) setPhone(session.phone);
+        setName('');
+        setEmail('');
+        setPhone('');
         setStep('details');
         setOtpToken('');
         setError('');
@@ -84,9 +83,17 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       setOtpToken('');
       setError('');
       setSubmittedRsvp(null);
+      setName('');
+      setEmail('');
+      setPhone('');
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, event.id]);
+
+  const sessionUser = profile || (typeof window !== 'undefined' ? getLocalAuthSession() : null);
+  const namePlaceholder = sessionUser?.name ? `e.g. ${sessionUser.name}` : 'Enter your name or nickname';
+  const emailPlaceholder = sessionUser?.email ? `e.g. ${sessionUser.email}` : 'you@example.com';
+  const phonePlaceholder = sessionUser?.phone ? `e.g. ${sessionUser.phone}` : 'e.g. 9820011223 (optional)';
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -220,8 +227,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = otpToken.trim();
-    if (!token || token.length < 6) {
-      setError('Please enter the 6-digit code sent to your email');
+    if (!token || token.length < 6 || token.length > 8) {
+      setError('Please enter the verification code sent to your email (6 to 8 digits)');
       return;
     }
 
@@ -310,6 +317,25 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               </div>
             )}
 
+            {sessionUser && (sessionUser.name || sessionUser.email) && !name && !email && (
+              <div className="flex items-center justify-between text-xs text-white/70 bg-white/[0.04] border border-white/10 px-3.5 py-2 rounded-xl mb-4">
+                <span className="truncate">
+                  Signed in as <strong className="text-white">{sessionUser.name || sessionUser.email}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (sessionUser.name) setName(sessionUser.name);
+                    if (sessionUser.email) setEmail(sessionUser.email);
+                    if (sessionUser.phone) setPhone(sessionUser.phone);
+                  }}
+                  className="text-[#FF8542] hover:text-[#FFA066] font-bold text-xs shrink-0 cursor-pointer transition-colors ml-3 hover:underline"
+                >
+                  Use my details
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleDetailsSubmit} className="space-y-3.5">
               {/* Name */}
               <div>
@@ -321,10 +347,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <input
                     type="text"
                     required
-                    placeholder="Enter your name or nickname"
+                    placeholder={namePlaceholder}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
               </div>
@@ -339,10 +365,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <input
                     type="email"
                     required
-                    placeholder="you@example.com"
+                    placeholder={emailPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
                 <p className="text-[10px] text-white/40 mt-1">
@@ -359,10 +385,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                   <input
                     type="tel"
-                    placeholder="e.g. 9820011223 (optional)"
+                    placeholder={phonePlaceholder}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
                 <p className="text-[10px] text-white/40 mt-1">
@@ -420,7 +446,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               Check your email
             </h3>
             <p className="text-xs text-white/60 mb-5 leading-relaxed">
-              We sent a 6-digit confirmation code to{' '}
+              We sent a verification code to{' '}
               <strong className="text-white font-semibold">{cleanEmail}</strong>.
             </p>
 
@@ -433,7 +459,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                  6-Digit OTP Code
+                  Verification Code
                 </label>
                 <div className="relative">
                   <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#E8621A]" />
@@ -442,7 +468,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                     required
                     maxLength={8}
                     autoFocus
-                    placeholder="123456"
+                    placeholder="••••••••"
                     value={otpToken}
                     onChange={(e) => setOtpToken(e.target.value.replace(/[^0-9]/g, ''))}
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-lg font-mono tracking-widest text-center focus:outline-none focus:border-[#E8621A] transition-colors"

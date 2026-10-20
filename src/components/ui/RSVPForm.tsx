@@ -110,14 +110,10 @@ export default function RSVPForm({
   }
   const [showPassModal, setShowPassModal] = useState(false);
 
-  // Pre-fill user details and check for existing RSVP
+  // Check for existing RSVP
   useEffect(() => {
     const session = getLocalAuthSession();
-    if (session) {
-      if (session.name && !name) setName(session.name);
-      if (session.email && !email) setEmail(session.email);
-      if (session.phone && !phone) setPhone(session.phone);
-
+    if (session?.email) {
       const rsvps = getEventRSVPs(event.id);
       const existing = rsvps.find(r => r.email?.toLowerCase() === session.email?.toLowerCase());
       if (existing) {
@@ -128,6 +124,10 @@ export default function RSVPForm({
   }, [event.id]);
 
   const { profile, isLoggedIn } = useAuth();
+  const sessionUser = profile || (typeof window !== 'undefined' ? getLocalAuthSession() : null);
+  const namePlaceholder = sessionUser?.name ? `e.g. ${sessionUser.name}` : 'e.g. Priya Sharma';
+  const emailPlaceholder = sessionUser?.email ? `e.g. ${sessionUser.email}` : 'priya@example.com';
+  const phonePlaceholder = sessionUser?.phone ? sessionUser.phone.replace(/^\+91/, '') : '98200 12345';
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
@@ -546,6 +546,25 @@ export default function RSVPForm({
         </div>
       )}
 
+      {sessionUser && (sessionUser.name || sessionUser.email) && !name && !email && (
+        <div className="flex items-center justify-between text-xs text-white/70 bg-white/[0.04] border border-white/10 px-3.5 py-2 rounded-xl mb-4">
+          <span className="truncate">
+            Signed in as <strong className="text-white">{sessionUser.name || sessionUser.email}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              if (sessionUser.name) setName(sessionUser.name);
+              if (sessionUser.email) setEmail(sessionUser.email);
+              if (sessionUser.phone) setPhone(sessionUser.phone.replace(/^\+91/, ''));
+            }}
+            className="text-[#FF5500] hover:text-[#FF7733] font-bold text-xs shrink-0 cursor-pointer transition-colors ml-3 hover:underline"
+          >
+            Use my details
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleDetailsSubmit} className="space-y-4">
         {/* Full Name */}
         <div>
@@ -557,10 +576,10 @@ export default function RSVPForm({
             <input
               type="text"
               required
-              placeholder="e.g. Priya Sharma"
+              placeholder={namePlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
+              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/35"
             />
           </div>
         </div>
@@ -575,7 +594,7 @@ export default function RSVPForm({
             <input
               type="email"
               required
-              placeholder="priya@example.com"
+              placeholder={emailPlaceholder}
               value={email}
               onChange={(e) => {
                 const val = e.target.value;
@@ -592,7 +611,7 @@ export default function RSVPForm({
                   setEmailSuggestion(null);
                 }
               }}
-              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
+              className="w-full text-sm pl-10 pr-3.5 py-2.5 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/35"
             />
           </div>
           {emailSuggestion && (
@@ -627,10 +646,10 @@ export default function RSVPForm({
               type="tel"
               required={event.rsvp_form_config.ask_phone !== false}
               maxLength={10}
-              placeholder="98200 12345"
+              placeholder={phonePlaceholder}
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-              className="w-full text-sm px-3.5 py-2.5 rounded-r-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/30"
+              className="w-full text-sm px-3.5 py-2.5 rounded-r-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-colors placeholder:text-white/35"
             />
           </div>
           <p className="text-[11px] mt-1 text-white/50">

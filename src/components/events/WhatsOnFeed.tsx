@@ -79,6 +79,15 @@ export const CATEGORY_FILTERS = [
 ] as const;
 export type CategoryFilterType = (typeof CATEGORY_FILTERS)[number];
 
+// Important categories to show on the primary filter bar
+export const IMPORTANT_CATEGORY_FILTERS: CategoryFilterType[] = [
+  'All',
+  'Music',
+  'Sports',
+  'Comedy',
+  'Social',
+];
+
 export const CATEGORY_CONFIG: Record<
   CategoryFilterType,
   { label: string; icon: React.ComponentType<{ className?: string }> }
@@ -979,12 +988,16 @@ export default function WhatsOnFeed() {
             </div>
           </div>
 
-          {/* TIER 2: Category Pills (left) + Price Toggle & More Filters (right) */}
-          <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/5">
-            {/* Category Pills (Horizontal with scroll fade) */}
-            <div className="relative flex-1 min-w-0">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 pr-3">
-                {CATEGORY_FILTERS.map((cat) => {
+          {/* TIER 2: Important Filters (left) + Price Toggle & Filters Tab (right) */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-white/5">
+            {/* Important Category Pills (No horizontal scrolling) */}
+            <div className="flex flex-wrap items-center gap-2 py-0.5">
+              {(() => {
+                const secondLineCategories = IMPORTANT_CATEGORY_FILTERS.includes(categoryFilter)
+                  ? IMPORTANT_CATEGORY_FILTERS
+                  : [...IMPORTANT_CATEGORY_FILTERS, categoryFilter];
+
+                return secondLineCategories.map((cat) => {
                   const active = categoryFilter === cat;
                   const config = CATEGORY_CONFIG[cat];
                   const Icon = config.icon;
@@ -992,7 +1005,7 @@ export default function WhatsOnFeed() {
                     <button
                       key={cat}
                       onClick={() => setCategoryFilter(cat)}
-                      className={`px-3.5 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                         active
                           ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.35)] scale-[1.02]'
                           : 'bg-[#111114] text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
@@ -1002,8 +1015,8 @@ export default function WhatsOnFeed() {
                       <span>{config.label}</span>
                     </button>
                   );
-                })}
-              </div>
+                });
+              })()}
             </div>
 
             {/* Quick Actions: Price Toggle + More Filters */}
@@ -1030,14 +1043,14 @@ export default function WhatsOnFeed() {
                 type="button"
                 onClick={() => setShowFiltersDrawer(!showFiltersDrawer)}
                 className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                  showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off'
+                  showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off' || categoryFilter !== 'All'
                     ? 'bg-[#FF5500]/20 border border-[#FF5500]/50 text-[#FF5500]'
                     : 'bg-[#111114] text-white/80 border border-white/10 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span>Filters</span>
-                {(selectedMoods.length > 0 || distanceFilter !== 'Off') && (
+                {(selectedMoods.length > 0 || distanceFilter !== 'Off' || categoryFilter !== 'All') && (
                   <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
                 )}
               </button>
@@ -1135,8 +1148,47 @@ export default function WhatsOnFeed() {
                 transition={{ duration: 0.25 }}
                 className="bg-[#111114] rounded-2xl p-5 border border-white/10 space-y-4 overflow-hidden"
               >
+                {/* All Category Filter Tags */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">
+                      ALL CATEGORIES & VIBES:
+                    </span>
+                    {categoryFilter !== 'All' && (
+                      <button
+                        onClick={() => setCategoryFilter('All')}
+                        className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Reset category</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {CATEGORY_FILTERS.map((cat) => {
+                      const active = categoryFilter === cat;
+                      const config = CATEGORY_CONFIG[cat];
+                      const Icon = config.icon;
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => setCategoryFilter(cat)}
+                          className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                            active
+                              ? 'bg-[#FF5500] text-white shadow-[0_0_12px_rgba(255,85,0,0.35)] font-bold scale-[1.02]'
+                              : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{config.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Distance Row */}
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-white/10">
                   <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">RADIUS FROM YOU:</span>
                   <div className="flex items-center gap-2">
                     {DISTANCE_OPTIONS.map((dist) => (
@@ -1156,7 +1208,7 @@ export default function WhatsOnFeed() {
                 </div>
 
                 {/* Mood Tags */}
-                <div className="space-y-2 pt-2 border-t border-white/10">
+                <div className="space-y-2 pt-3 border-t border-white/10">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">MOOD & VIBE TAGS:</span>
                     <button
