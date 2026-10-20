@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 :root {
+  --background: #050505;
+  --primary: #FF5500;
+  --muted-foreground: #9CA3AF;
+  --secondary: rgba(255, 255, 255, 0.15);
+  --font-display: var(--font-inter), sans-serif;
   --brand: #FFFFFF;
   --brand-mid: #E5E5E5;
   --brand-deep: #050505;
@@ -915,3 +920,136 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
   border-color: rgba(255, 85, 0, 0.3) !important;
   color: #FF7733 !important;
 }
+
+/* ========================================================================= */
+/* VIBE SPLASH SCREEN                                                        */
+/* ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .splash,
+  .splash * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  background: var(--background, #050505);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.splash-glow {
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, oklch(.727 .189 43 / .15), transparent 65%);
+  animation: splash-glow 2s ease-in-out infinite;
+}
+
+.splash-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 2;
+}
+
+.splash-word {
+  font-family: var(--font-display, var(--font-inter, sans-serif));
+  font-weight: 700;
+  font-size: 76px;
+  line-height: 1;
+  letter-spacing: -1px;
+  animation: splash-rise .7s cubic-bezier(.22,1,.36,1) both;
+}
+
+.splash-word > span:first-child {
+  color: var(--primary, #FF5500);
+}
+
+.splash-word .logo-dot {
+  color: var(--primary, #FF5500);
+}
+
+.splash-by {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  color: var(--muted-foreground, #9CA3AF);
+  margin-top: 12px;
+  animation: splash-rise .7s .15s cubic-bezier(.22,1,.36,1) both;
+}
+
+.splash-tagline {
+  color: var(--muted-foreground, #9CA3AF);
+  font-size: 13px;
+  margin: 26px 0 0;
+  animation: splash-rise .7s .35s cubic-bezier(.22,1,.36,1) both;
+}
+
+.splash-bar {
+  width: 150px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--secondary, rgba(255, 255, 255, 0.15));
+  overflow: hidden;
+  margin-top: 22px;
+}
+
+.splash-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--primary, #FF5500);
+  transform-origin: left;
+  animation: splash-fill 1.5s .2s ease-in-out both;
+}
+
+.splash-skip {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: 0;
+  color: var(--muted-foreground, #9CA3AF);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  animation: splash-rise .7s .6s cubic-bezier(.22,1,.36,1) both;
+}
+
+.splash-exit {
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity .5s ease, transform .5s ease;
+  pointer-events: none;
+}
+
+@keyframes splash-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes splash-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes splash-glow {
+  0%, 100% { opacity: .6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@media (max-width: 480px) {
+  .splash-word { font-size: 56px; }
+  .splash-tagline { font-size: 12px; }
+}
+
