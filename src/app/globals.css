@@ -829,11 +829,52 @@ html.light input[placeholder*="Search for a vibe"]::placeholder {
   color: #94A3B8 !important;
 }
 
-/* Mobile Nav Bar */
-html.light nav.bg-\[\#0A0A0A\]\/95 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border-top-color: rgba(0, 0, 0, 0.08) !important;
+/* Mobile Bottom Nav Bar Bright Mode (Light Mode) Styling */
+html.light nav[aria-label="Mobile Web App Navigation"],
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
   color: #0F172A !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] a,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a {
+  color: #64748B !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] a:hover,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a:hover {
+  color: #0F172A !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] a.nav-active,
+html.light nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"],
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a.nav-active,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"] {
+  color: #FF5500 !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] .mobile-nav-label,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] .mobile-nav-label {
+  color: #64748B !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] a.nav-active .mobile-nav-label,
+html.light nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"] .mobile-nav-label,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a.nav-active .mobile-nav-label,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"] .mobile-nav-label {
+  color: #FF5500 !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] .center-host-label,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] .center-host-label {
+  color: #0F172A !important;
+}
+
+html.light nav[aria-label="Mobile Web App Navigation"] .center-host-ring,
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] .center-host-ring {
+  border-color: #FFFFFF !important;
 }
 
 /* Footer in Light Mode */

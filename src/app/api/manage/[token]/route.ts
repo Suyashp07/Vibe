@@ -32,6 +32,31 @@ function getAppUrl(req?: Request): string {
 async function resolveEventByToken(supabase: ReturnType<typeof getSupabaseAdmin>, token: string) {
   if (!token) return null;
 
+  // 0. Support preview mode for design inspection & demos
+  if (token === 'preview' || token === 'demo') {
+    return {
+      id: 'demo-chess-match',
+      slug: 'chess-match',
+      title: 'Chess Match',
+      tagline: 'Join an exciting chess match at Amity University.',
+      description: 'Join an exciting chess match at Amity University.',
+      location_name: 'Amity University',
+      city: 'Delhi NCR',
+      start_at: '2026-11-25T13:30:00+05:30',
+      status: 'open',
+      external_price_text: 'Free entry',
+      source_platform: 'whatsapp',
+      theme: {
+        manage_token: 'preview',
+        require_approval: false,
+        registrations_closed: false,
+      },
+      rsvp_form_config: {
+        require_approval: false,
+      },
+    };
+  }
+
   // 1. Look up by manage_token inside theme JSONB
   const { data: byToken, error: tokenErr } = await supabase
     .from('events')
@@ -67,6 +92,24 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found or invalid host token' }, { status: 404 });
+    }
+
+    if (token === 'preview' || token === 'demo') {
+      return NextResponse.json({
+        ok: true,
+        event,
+        rsvps: [],
+        stats: {
+          total: 0,
+          confirmed: 0,
+          waitlisted: 0,
+          cancelled: 0,
+          checkedIn: 0,
+          capacity: null,
+          requireApproval: false,
+          registrationsClosed: false,
+        },
+      });
     }
 
     // Fetch all RSVPs for this event
@@ -137,6 +180,14 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
 
     if (!event) {
       return NextResponse.json({ error: 'Unauthorized or invalid token' }, { status: 403 });
+    }
+
+    if (token === 'preview' || token === 'demo') {
+      return NextResponse.json({
+        ok: true,
+        preview: true,
+        message: 'Preview action simulated successfully',
+      });
     }
 
     const body = await req.json();

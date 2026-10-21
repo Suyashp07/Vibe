@@ -40,6 +40,7 @@ import { getUserCity, INDIAN_CITIES } from '@/lib/location';
 import BrandLogo from '@/components/common/BrandLogo';
 import Magnetic from '@/components/common/MagneticButton';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import { useTheme } from '@/components/common/ThemeContext';
 import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 import { useMobileGestures } from '@/hooks/useMobileGestures';
 
@@ -51,9 +52,11 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, isLoggedIn, isStaff, signOut } = useAuth();
+  const { theme } = useTheme();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const isLight = mounted && theme === 'light';
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
@@ -441,7 +444,11 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.92 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="md:hidden fixed bottom-18 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-4 py-1.5 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white text-xs font-bold shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center gap-2"
+            className={`md:hidden fixed bottom-18 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-4 py-1.5 rounded-full backdrop-blur-xl border text-xs font-bold flex items-center gap-2 ${
+              isLight
+                ? 'bg-white/95 border-black/15 text-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12)]'
+                : 'bg-black/90 border-white/20 text-white shadow-[0_10px_30px_rgba(0,0,0,0.8)]'
+            }`}
           >
             <span className="w-2 h-2 rounded-full bg-[#FF5500] animate-pulse" />
             <span className="tracking-tight">{gestureFeedback.message}</span>
@@ -449,21 +456,29 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
         )}
       </AnimatePresence>
 
-      {/* Mobile WebApp Fixed Bottom Navigation Bar (Dark Styled with Swipe Gestures) */}
+      {/* Mobile WebApp Fixed Bottom Navigation Bar (Theme Adaptive with Swipe Gestures) */}
       <nav
         ref={navRef}
         aria-label="Mobile Web App Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/10 px-3 py-1.5 flex items-center justify-around shadow-2xl pb-[max(env(safe-area-inset-bottom),0.5rem)] text-white select-none touch-manipulation"
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md px-3 py-1.5 flex items-center justify-around pb-[max(env(safe-area-inset-bottom),0.5rem)] select-none touch-manipulation transition-colors duration-200 ${
+          isLight
+            ? 'bg-white/95 border-t border-black/10 text-slate-800 shadow-[0_-4px_25px_rgba(0,0,0,0.06)]'
+            : 'bg-[#0A0A0A]/95 border-t border-white/10 text-white shadow-2xl'
+        }`}
       >
         {/* 1. Discover Tab */}
         <Link
           href="/"
           className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
-            pathname === '/' ? 'text-[#FF5500] font-black' : 'text-white/60 hover:text-white'
+            pathname === '/'
+              ? 'text-[#FF5500] font-black nav-active'
+              : isLight
+              ? 'text-slate-500 hover:text-slate-900'
+              : 'text-white/60 hover:text-white'
           }`}
         >
           <Compass className={`w-5 h-5 ${pathname === '/' ? 'stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] tracking-tight">Discover</span>
+          <span className="text-[10px] tracking-tight mobile-nav-label">Discover</span>
           {pathname === '/' && (
             <motion.span
               layoutId="mobile-nav-pill"
@@ -478,15 +493,17 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
           href="/vibes"
           className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-              ? 'text-[#FF5500] font-black'
+              ? 'text-[#FF5500] font-black nav-active'
+              : isLight
+              ? 'text-slate-500 hover:text-[#FF5500]'
               : 'text-white/60 hover:text-[#FF5500]'
           }`}
         >
           <div className="relative">
-            <Zap className={`w-5 h-5 ${pathname.startsWith('/vibes') ? 'fill-[#FF5500]' : ''}`} />
+            <Zap className={`w-5 h-5 ${pathname.startsWith('/vibes') || pathname.startsWith('/vibe') ? 'fill-[#FF5500]' : ''}`} />
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#FF5500] animate-ping" />
           </div>
-          <span className="text-[10px] font-bold tracking-tight">Instant</span>
+          <span className="text-[10px] font-bold tracking-tight mobile-nav-label">Instant</span>
           {(pathname.startsWith('/vibes') || pathname.startsWith('/vibe')) && (
             <motion.span
               layoutId="mobile-nav-pill"
@@ -502,12 +519,18 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
           className="relative flex flex-col items-center -mt-4 group"
           title="Host an event"
         >
-          <div className={`w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border-2 border-[#0A0A0A] ${
+          <div className={`w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border-2 center-host-ring ${
+            isLight
+              ? 'border-white shadow-[0_4px_16px_rgba(255,85,0,0.35)]'
+              : 'border-[#0A0A0A]'
+          } ${
             pathname.startsWith('/create') ? 'bg-gradient-to-tr from-[#FF5500] to-[#FF8C42] ring-2 ring-[#FF5500]/50' : 'bg-[#FF5500]'
           }`}>
-            <Plus className="w-5 h-5 stroke-[3]" />
+            <Plus className="w-5 h-5 stroke-[3] text-white" />
           </div>
-          <span className="text-[10px] font-bold text-white mt-0.5">+ Host</span>
+          <span className={`text-[10px] font-bold mt-0.5 center-host-label ${
+            isLight ? 'text-slate-800' : 'text-white'
+          }`}>+ Host</span>
           {pathname.startsWith('/create') && (
             <motion.span
               layoutId="mobile-nav-pill"
@@ -521,11 +544,15 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
         <Link
           href="/dashboard"
           className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
-            pathname.startsWith('/dashboard') ? 'text-[#FF5500] font-bold' : 'text-white/60 hover:text-white'
+            pathname.startsWith('/dashboard')
+              ? 'text-[#FF5500] font-bold nav-active'
+              : isLight
+              ? 'text-slate-500 hover:text-slate-900'
+              : 'text-white/60 hover:text-white'
           }`}
         >
           <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Dashboard</span>
+          <span className="text-[10px] tracking-tight mobile-nav-label">Dashboard</span>
           {pathname.startsWith('/dashboard') && (
             <motion.span
               layoutId="mobile-nav-pill"
@@ -540,19 +567,21 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
           href="/passes"
           className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/passes') || pathname.startsWith('/guest')
-              ? 'text-[#FF5500] font-black'
+              ? 'text-[#FF5500] font-black nav-active'
+              : isLight
+              ? 'text-slate-500 hover:text-slate-900'
               : 'text-white/60 hover:text-white'
           }`}
         >
           <div className="relative">
-            <Ticket className={`w-5 h-5 ${pathname.startsWith('/passes') ? 'text-[#FF5500]' : ''}`} />
+            <Ticket className={`w-5 h-5 ${pathname.startsWith('/passes') || pathname.startsWith('/guest') ? 'text-[#FF5500]' : ''}`} />
             {confirmedPassCount > 0 && (
-              <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-[#FF5500] text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-[#FF5500] text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
                 {confirmedPassCount}
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight">Passes</span>
+          <span className="text-[10px] tracking-tight mobile-nav-label">Passes</span>
           {(pathname.startsWith('/passes') || pathname.startsWith('/guest')) && (
             <motion.span
               layoutId="mobile-nav-pill"

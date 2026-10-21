@@ -551,6 +551,12 @@ function VibesContent() {
   const [overscrollOffset, setOverscrollOffset] = useState<number>(0);
   const overscrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Desktop Drag Gesture State (Mouse & Pointer Drag across entire card interface)
+  const [desktopDragOffset, setDesktopDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isDesktopDragging = useRef(false);
+  const desktopDragStart = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
+  const [desktopFlamePop, setDesktopFlamePop] = useState(false);
+
   const triggerBoundaryBounce = useCallback((direction: 'top' | 'bottom') => {
     if (overscrollTimerRef.current) clearTimeout(overscrollTimerRef.current);
     setOverscrollOffset(direction === 'top' ? 14 : -14);
@@ -570,19 +576,100 @@ function VibesContent() {
     setCurrentIndex((prev) => Math.min(activeVibes.length - 1, prev + 1));
   }, [activeVibes.length]);
 
+  // Pointer drag gestures for desktop website view
+  const handleDesktopPointerDown = useCallback((e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, select, textarea, [role="button"], .no-drag')) return;
+
+    isDesktopDragging.current = true;
+    desktopDragStart.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  }, []);
+
+  const handleDesktopPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDesktopDragging.current) return;
+    const dx = e.clientX - desktopDragStart.current.x;
+    const dy = e.clientY - desktopDragStart.current.y;
+    // Real-time elastic translation
+    setDesktopDragOffset({ x: dx * 0.35, y: dy * 0.4 });
+  }, []);
+
+  const handleDesktopPointerUp = useCallback((e: React.PointerEvent) => {
+    if (!isDesktopDragging.current) return;
+    isDesktopDragging.current = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const dx = e.clientX - desktopDragStart.current.x;
+    const dy = e.clientY - desktopDragStart.current.y;
+    const dt = Math.max(1, Date.now() - desktopDragStart.current.time);
+    setDesktopDragOffset({ x: 0, y: 0 });
+
+    const velocityY = Math.abs(dy) / dt;
+    const velocityX = Math.abs(dx) / dt;
+
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      // Vertical gesture: drag up -> next, drag down -> prev
+      const isUp = dy < 0;
+      const threshold = 38;
+      const isFlick = velocityY > 0.3 && Math.abs(dy) > 16;
+
+      if (Math.abs(dy) > threshold || isFlick) {
+        if (isUp) {
+          if (currentIndex < activeVibes.length - 1) {
+            handleNext();
+          } else {
+            triggerBoundaryBounce('bottom');
+          }
+        } else {
+          if (currentIndex > 0) {
+            handlePrev();
+          } else {
+            triggerBoundaryBounce('top');
+          }
+        }
+      }
+    } else {
+      // Horizontal gesture: swipe left -> next, swipe right -> prev
+      const isLeft = dx < 0;
+      const threshold = 45;
+      const isFlick = velocityX > 0.3 && Math.abs(dx) > 18;
+
+      if (Math.abs(dx) > threshold || isFlick) {
+        if (isLeft) {
+          if (currentIndex < activeVibes.length - 1) {
+            handleNext();
+          } else {
+            triggerBoundaryBounce('bottom');
+          }
+        } else {
+          if (currentIndex > 0) {
+            handlePrev();
+          } else {
+            triggerBoundaryBounce('top');
+          }
+        }
+      }
+    }
+  }, [currentIndex, activeVibes.length, handleNext, handlePrev, triggerBoundaryBounce]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (e.key === 'ArrowUp') {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
         e.preventDefault();
         if (currentIndex > 0) {
           handlePrev();
         } else {
           triggerBoundaryBounce('top');
         }
-      } else if (e.key === 'ArrowDown') {
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
         e.preventDefault();
         if (currentIndex < activeVibes.length - 1) {
           handleNext();
@@ -615,7 +702,8 @@ function VibesContent() {
       }
 
       const now = Date.now();
-      const delta = e.deltaY;
+      // Handle both vertical and horizontal trackpad gestures
+      const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
 
       // Always reset silence timer on every wheel event.
       // A trackpad gesture is only considered finished when no wheel events occur for 180ms.
@@ -885,6 +973,15 @@ function VibesContent() {
 
   const handleLike = () => handleLikeVibe(currentVibe);
 
+  const handleDesktopDoubleClick = useCallback(() => {
+    const { isLiked } = getVibeLikeData(currentVibe);
+    if (!isLiked) {
+      handleLikeVibe(currentVibe);
+    }
+    setDesktopFlamePop(true);
+    setTimeout(() => setDesktopFlamePop(false), 900);
+  }, [currentVibe, getVibeLikeData]);
+
   // Mobile double-tap to like gesture handler
   const [doubleTapVibeId, setDoubleTapVibeId] = useState<string | null>(null);
   const lastTapRef = useRef<{ [key: string]: number }>({});
@@ -1147,34 +1244,36 @@ function VibesContent() {
       {/* ========================================================= */}
       {/* 2. DESKTOP VIEW (SPLIT-SCREEN CARD - SCREENSHOT 1)        */}
       {/* ========================================================= */}
-      <main className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4 select-none">
+      <main
+        onPointerDown={handleDesktopPointerDown}
+        onPointerMove={handleDesktopPointerMove}
+        onPointerUp={handleDesktopPointerUp}
+        onPointerCancel={handleDesktopPointerUp}
+        className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4 select-none cursor-grab active:cursor-grabbing touch-none"
+      >
         <motion.div
-          animate={{ y: overscrollOffset }}
+          animate={{
+            y: overscrollOffset + desktopDragOffset.y,
+            x: desktopDragOffset.x * 0.45,
+            rotate: desktopDragOffset.x * 0.015,
+          }}
           transition={{ type: 'spring', stiffness: 450, damping: 28 }}
           className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full"
         >
-          {/* Left Card: Vertical Reel Frame with Mouse/Trackpad Drag Gesture */}
-          <motion.div
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.22}
-            onDragEnd={(_, info) => {
-              if (info.offset.y < -45 || info.velocity.y < -250) {
-                if (currentIndex < activeVibes.length - 1) {
-                  handleNext();
-                } else {
-                  triggerBoundaryBounce('bottom');
-                }
-              } else if (info.offset.y > 45 || info.velocity.y > 250) {
-                if (currentIndex > 0) {
-                  handlePrev();
-                } else {
-                  triggerBoundaryBounce('top');
-                }
-              }
-            }}
-            className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 cursor-grab active:cursor-grabbing group"
+          {/* Left Card: Vertical Reel Frame with Mouse/Trackpad Drag Gesture & Double-Click Like */}
+          <div
+            onDoubleClick={handleDesktopDoubleClick}
+            className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 group select-none cursor-grab active:cursor-grabbing"
           >
+            {/* Desktop Double-click animated Flame Pop */}
+            {desktopFlamePop && (
+              <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center animate-in zoom-in-50 fade-in duration-200">
+                <div className="w-20 h-20 rounded-full bg-[#FF5500]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,85,0,0.85)] animate-bounce">
+                  <Flame className="w-12 h-12 text-white fill-white" />
+                </div>
+              </div>
+            )}
+
             {/* Badge: Community pick */}
             <div className="absolute top-4 left-4 z-20 pointer-events-none">
               <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/50 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
@@ -1277,7 +1376,7 @@ function VibesContent() {
                 <span className="text-[10px] font-semibold text-white/80 shadow-sm">Share</span>
               </button>
             </div>
-          </motion.div>
+          </div>
 
           {/* Center Floating Navigation Chevrons & Pill Progress Indicator */}
           <div className="flex flex-col items-center gap-3 z-20 shrink-0">
@@ -1450,9 +1549,13 @@ function VibesContent() {
                   </button>
                 </div>
 
-                {/* Keyboard, Mouse & Trackpad Hint */}
-                <p className="text-[11px] text-white/40 font-medium text-center">
-                  Scroll or drag card · Use ↑ ↓ to browse vibes
+                {/* Keyboard, Mouse & Trackpad Gesture Hint */}
+                <p className="text-[11px] text-white/40 font-medium text-center flex items-center justify-center gap-1.5 select-none">
+                  <span>Drag or scroll to browse</span>
+                  <span>·</span>
+                  <span>Double-click to like</span>
+                  <span>·</span>
+                  <span>Use ↑ ↓</span>
                 </p>
               </motion.div>
             </AnimatePresence>
