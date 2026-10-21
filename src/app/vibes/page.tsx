@@ -22,6 +22,7 @@ import {
   Sparkles,
   CheckCircle2,
   Ticket,
+  Info,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +44,7 @@ import QuickJoinModal from '@/components/vibes/QuickJoinModal';
 import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
 import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
+import VibeDetailsModal from '@/components/vibes/VibeDetailsModal';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Navbar from '@/components/common/Navbar';
 
@@ -228,6 +230,8 @@ function VibesContent() {
   const [passModalRsvp, setPassModalRsvp] = useState<RSVPItem | null>(null);
   const [passModalEvent, setPassModalEvent] = useState<EventItem | null>(null);
   const [quickJoinOpen, setQuickJoinOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsModalVibe, setDetailsModalVibe] = useState<VibeInstantItem | null>(null);
 
   // Check which vibes the current user has confirmed passes for
   const userEmail = (isLoggedIn && (profile?.email || user?.email) ? (profile?.email || user?.email || '') : '').trim().toLowerCase();
@@ -514,6 +518,32 @@ function VibesContent() {
     }
   }, [targetSlug, activeVibes]);
 
+  // Auto-open QuickJoinModal when returning from Google OAuth or via autoJoin link
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const autoJoinParam = searchParams.get('autoJoin') === '1' || searchParams.get('join') === '1';
+    let pendingSlug: string | null = null;
+    try {
+      pendingSlug = sessionStorage.getItem('vibe_pending_join_slug');
+    } catch {}
+
+    const slugToJoin = (autoJoinParam && targetSlug) || pendingSlug;
+    if (!slugToJoin) return;
+
+    const foundVibe = activeVibes.find(
+      (v) => v.slug.toLowerCase() === slugToJoin.toLowerCase() || v.id === slugToJoin
+    );
+    if (foundVibe) {
+      const idx = activeVibes.indexOf(foundVibe);
+      if (idx !== -1) setCurrentIndex(idx);
+      setSelectedModalVibe(foundVibe);
+      setQuickJoinOpen(true);
+      try {
+        sessionStorage.removeItem('vibe_pending_join_slug');
+      } catch {}
+    }
+  }, [searchParams, targetSlug, activeVibes]);
+
   // Current active vibe
   const currentVibe = activeVibes[currentIndex] || activeVibes[0] || DEFAULT_VIBES_LIST[0];
 
@@ -690,10 +720,21 @@ function VibesContent() {
   // Mobile Feed Scroll Ref & programmatic tracking
   const mobileFeedRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
+  const userScrolledMobile = useRef(false);
+  const isUserTouching = useRef(false);
+  const scrollSettleTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync mobile scroll position when currentIndex changes (keyboard, desktop chevrons, query param)
+  // Sync mobile scroll position ONLY when currentIndex changes from external triggers
+  // (e.g. desktop next/prev buttons, keyboard arrows, or query params).
+  // If the user is touching or actively scrolling on mobile, NEVER fight their finger with scrollTo!
   useEffect(() => {
+    if (userScrolledMobile.current) {
+      userScrolledMobile.current = false;
+      return;
+    }
+    if (isUserTouching.current) return;
     if (!mobileFeedRef.current) return;
+
     const container = mobileFeedRef.current;
     const height = container.clientHeight;
     if (!height) return;
@@ -703,21 +744,63 @@ function VibesContent() {
       container.scrollTo({ top: targetTop, behavior: 'smooth' });
       const timer = setTimeout(() => {
         isProgrammaticScroll.current = false;
-      }, 400);
+      }, 350);
       return () => clearTimeout(timer);
     }
   }, [currentIndex]);
 
-  // Handle scroll events inside the mobile vibes reel
+  // Use IntersectionObserver on mobile cards for smooth, jitter-free active index tracking
+  useEffect(() => {
+    const container = mobileFeedRef.current;
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.vibe-reel-card');
+    if (!cards.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isProgrammaticScroll.current) return;
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const indexStr = entry.target.getAttribute('data-index');
+            if (indexStr !== null) {
+              const idx = parseInt(indexStr, 10);
+              if (!isNaN(idx) && idx !== currentIndex) {
+                userScrolledMobile.current = true;
+                setCurrentIndex(idx);
+              }
+            }
+          }
+        });
+      },
+      {
+        root: container,
+        threshold: 0.55,
+      }
+    );
+
+    cards.forEach((c) => observer.observe(c));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeVibes.length, currentIndex]);
+
+  // Fallback scroll handler that only syncs after scrolling settles (debounced to avoid fighting)
   const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (isProgrammaticScroll.current) return;
     const container = e.currentTarget;
-    const height = container.clientHeight;
-    if (!height) return;
-    const newIndex = Math.round(container.scrollTop / height);
-    if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndex) {
-      setCurrentIndex(newIndex);
-    }
+    if (scrollSettleTimeout.current) clearTimeout(scrollSettleTimeout.current);
+    scrollSettleTimeout.current = setTimeout(() => {
+      if (isProgrammaticScroll.current) return;
+      const height = container.clientHeight;
+      if (!height) return;
+      const newIndex = Math.round(container.scrollTop / height);
+      if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndex) {
+        userScrolledMobile.current = true;
+        setCurrentIndex(newIndex);
+      }
+    }, 60);
   };
 
   // Close filter dropdown on outside click
@@ -950,6 +1033,12 @@ function VibesContent() {
     setQuickJoinOpen(true);
   };
 
+  const openEventDetails = (vibe?: VibeInstantItem) => {
+    setSelectedModalVibe(vibe || currentVibe);
+    setDetailsModalVibe(vibe || currentVibe);
+    setDetailsModalOpen(true);
+  };
+
 
 
   // Build temporary EventItem for Modals if originalEvent is not set
@@ -1109,17 +1198,33 @@ function VibesContent() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: scrollDirection === 'next' ? -65 : 65, scale: 0.98 }}
                   transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-0 w-full h-full"
+                  className="absolute inset-0 w-full h-full bg-black overflow-hidden"
                 >
+                  {/* Ambient Blurred Backdrop (matches mood & colors of host poster) */}
                   <Image
                     src={currentVibe.cover_image_url}
-                    alt={currentVibe.title}
+                    alt=""
                     fill
                     unoptimized
                     priority
-                    className="object-cover"
+                    className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
+                    aria-hidden="true"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+
+                  {/* Full Uncropped Poster (Preserves 100% of flyer and text without cropping) */}
+                  <div className="absolute inset-0 flex items-center justify-center p-3">
+                    <div className="relative w-full h-full max-h-[90%] flex items-center justify-center">
+                      <Image
+                        src={currentVibe.cover_image_url}
+                        alt={currentVibe.title}
+                        fill
+                        unoptimized
+                        priority
+                        className="object-contain drop-shadow-[0_12px_36px_rgba(0,0,0,0.85)] rounded-2xl"
+                      />
+                    </div>
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -1368,7 +1473,16 @@ function VibesContent() {
       <main
         ref={mobileFeedRef}
         onScroll={handleMobileScroll}
-        className="flex flex-col md:hidden flex-1 relative w-full h-[calc(100dvh-114px)] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar"
+        onTouchStart={() => {
+          isUserTouching.current = true;
+        }}
+        onTouchEnd={() => {
+          setTimeout(() => {
+            isUserTouching.current = false;
+          }, 250);
+        }}
+        data-reel-feed="true"
+        className="flex flex-col md:hidden flex-1 relative w-full min-h-0 mb-[calc(58px+env(safe-area-inset-bottom,0px))] overflow-y-auto overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar select-none"
         style={{
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'y mandatory',
@@ -1383,7 +1497,14 @@ function VibesContent() {
               key={vibeKey || index}
               data-index={index}
               onClick={(e) => handleMobileCardTap(vibe, e)}
-              className="vibe-reel-card relative w-full h-[calc(100dvh-114px)] min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)] snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation cursor-pointer"
+              className="vibe-reel-card relative w-full h-full min-h-full max-h-full snap-start snap-always shrink-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation cursor-pointer"
+              style={{
+                height: '100%',
+                minHeight: '100%',
+                maxHeight: '100%',
+                scrollSnapAlign: 'start',
+                scrollSnapStop: 'always',
+              }}
             >
               {/* Double-tap animated Flame Pop */}
               {isDoubleTapped && (
@@ -1401,21 +1522,37 @@ function VibesContent() {
                 </span>
               </div>
 
-              {/* Full Screen Visual */}
-              <div className="absolute inset-0 z-0">
+              {/* Full Screen Visual: Ambient Blurred Canvas + Uncropped Fitted Poster */}
+              <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-black">
+                {/* Layer 1: Ambient Blurred Backdrop filling entire reel height */}
                 <Image
                   src={vibe.cover_image_url}
-                  alt={vibe.title}
+                  alt=""
                   fill
                   unoptimized
                   priority={index === 0}
-                  className="object-cover"
+                  className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
+                  aria-hidden="true"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-black/60" />
+
+                {/* Layer 2: True Uncropped Poster (Preserves 100% of host flyer without cropping) */}
+                <div className="absolute inset-0 flex items-center justify-center px-3 pt-12 pb-44 sm:pb-40">
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <Image
+                      src={vibe.cover_image_url}
+                      alt={vibe.title}
+                      fill
+                      unoptimized
+                      priority={index === 0}
+                      className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Floating Action Stack (Right side) - Elevated Z-index to z-40 and pointer-events-auto */}
-              <div className="absolute right-3.5 bottom-32 sm:bottom-28 z-40 flex flex-col items-center gap-3.5 pointer-events-auto select-none">
+              <div className="absolute right-3.5 bottom-28 sm:bottom-24 z-40 flex flex-col items-center gap-3 pointer-events-auto select-none">
                 {/* Flame */}
                 <button
                   type="button"
@@ -1457,6 +1594,24 @@ function VibesContent() {
                   <span className="text-[11px] font-bold text-white shadow-sm">{getVibeCommentsCount(vibe)}</span>
                 </button>
 
+                {/* Event Details "i" icon */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    openEventDetails(vibe);
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
+                  aria-label="Event details"
+                  title="Event details"
+                >
+                  <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80 hover:border-[#FF5500]/50 transition-colors">
+                    <Info className="w-5 h-5 text-white/90" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-white shadow-sm">Info</span>
+                </button>
+
                 {/* Share */}
                 <button
                   type="button"
@@ -1476,15 +1631,35 @@ function VibesContent() {
               </div>
 
               {/* Bottom Overlay Card - pr-18 ensures no overlap with right-side action stack */}
-              <div className="relative z-20 px-4 pr-18 pb-4 pt-6 space-y-2.5 mt-auto w-full pointer-events-auto">
+              <div className="relative z-20 px-4 pr-18 pb-3.5 pt-4 space-y-2 mt-auto w-full pointer-events-auto">
                 <div>
-                  <p className="text-xs text-neutral-400 font-medium">
-                    Hosted by {vibe.host_name}
-                  </p>
-                  <h3 className="text-xl font-black text-white leading-snug mt-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-neutral-400 font-medium">
+                      Hosted by {vibe.host_name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEventDetails(vibe);
+                      }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] font-bold text-white/80 hover:text-white transition-colors cursor-pointer"
+                      title="View full event details"
+                    >
+                      <Info className="w-3 h-3 text-[#FF8C42]" />
+                      <span>Details</span>
+                    </button>
+                  </div>
+                  <h3
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEventDetails(vibe);
+                    }}
+                    className="text-lg sm:text-xl font-black text-white leading-snug mt-0.5 line-clamp-2 cursor-pointer active:opacity-80 transition-opacity"
+                  >
                     {vibe.title}
                   </h3>
-                  <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mt-0.5">
+                  <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mt-0.5 truncate">
                     {vibe.formatted_date_time_venue}
                   </p>
                 </div>
@@ -1620,6 +1795,28 @@ function VibesContent() {
           const key = target.id || target.slug;
           setCommentCountsMap((prev) => ({ ...prev, [key]: newCount }));
         }}
+      />
+
+      {/* Vibe Details Modal */}
+      <VibeDetailsModal
+        vibe={detailsModalVibe || currentVibe}
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        onJoin={(vibe) => {
+          const userRsvp = userPassMap[vibe.id] || userPassMap[vibe.slug];
+          if (userRsvp) {
+            openPassModal(userRsvp, vibe);
+          } else {
+            openQuickJoin(vibe);
+          }
+        }}
+        onConnectHost={(vibe) => openAskHost(vibe)}
+        onShare={(vibe) => handleShareVibe(vibe)}
+        userRsvp={
+          detailsModalVibe
+            ? userPassMap[detailsModalVibe.id] || userPassMap[detailsModalVibe.slug]
+            : userPassMap[currentVibe.id] || userPassMap[currentVibe.slug]
+        }
       />
 
       {/* Mobile Bottom Navigation Bar & Swipe Gestures */}

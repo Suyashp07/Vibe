@@ -131,7 +131,8 @@ export function useMobileGestures({
       if (['input', 'textarea', 'select', 'button'].includes(tagName)) return true;
       if (el.isContentEditable) return true;
       if (el.closest('input, textarea, select, [contenteditable="true"], [role="slider"]')) return true;
-      if (el.closest('.no-swipe, [data-no-swipe], [role="dialog"], .modal-dialog')) return true;
+      if (el.closest('.no-swipe, [data-no-swipe], [role="dialog"], .modal-dialog, .vibe-reel-card, [data-reel-feed]')) return true;
+      if (pathname.startsWith('/vibes') || pathname.startsWith('/vibe')) return true;
 
       // Check if inside a horizontal scroll container
       let current: HTMLElement | null = el;

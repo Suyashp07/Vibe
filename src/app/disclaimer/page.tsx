@@ -46,7 +46,7 @@ export default function DisclaimerPage() {
               <span>1. Nature of the Platform & Intermediary Role</span>
             </h2>
             <p>
-              <strong>Vibe by Swaniki</strong> operates as a digital discovery, networking, and event management platform. We act as an intermediary under Section 79 of the Information Technology Act, 2000 and applicable intermediary guidelines. While we provide technology for community hosts to organize gatherings and for attendees to discover experiences, Vibe is not the direct creator, producer, or promoter of third-party events listed on the service unless explicitly stated otherwise.
+              <strong>Vibe by Swaniki</strong> (operated by <strong>Swaniki LLP</strong>) is a digital discovery, networking, and event management platform. Swaniki, Swaniki Technologies, and Swaniki Labs are operating brand names of Swaniki LLP. We act as an intermediary under Section 79 of the Information Technology Act, 2000 and applicable intermediary guidelines. While we provide technology for community hosts to organize gatherings and for attendees to discover experiences, Vibe is not the direct creator, producer, or promoter of third-party events listed on the service unless explicitly stated otherwise.
             </p>
           </section>
 
@@ -127,8 +127,10 @@ export default function DisclaimerPage() {
               If you identify an event listing that violates community guidelines, infringes intellectual property, or presents fraudulent details, please report it immediately to our trust & safety desk at:
             </p>
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-white/80 space-y-1">
-              <div>Trust & Safety: safety@swaniki.com</div>
-              <div>Legal & Grievances: legal@swaniki.com</div>
+              <div>Entity: Swaniki LLP</div>
+              <div>Brand Names: Swaniki, Swaniki Technologies, Swaniki Labs</div>
+              <div>Trust &amp; Safety: safety@swaniki.com</div>
+              <div>Legal &amp; Grievances: legal@swaniki.com</div>
               <div>Response Timeline: Within 24 hours pursuant to Indian Intermediary Guidelines</div>
             </div>
           </section>

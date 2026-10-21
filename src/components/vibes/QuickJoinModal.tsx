@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   X,
   Sparkles,
@@ -15,13 +16,47 @@ import {
   KeyRound,
   RotateCcw,
   Ticket,
-  MessageCircle
+  MessageCircle,
+  ShieldCheck,
+  Zap,
+  Loader2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventItem, RSVPItem } from '@/types';
-import { useAuth, sendEmailOtp, verifyEmailOtp, validateEmailInput, getLocalAuthSession } from '@/lib/auth';
+import {
+  useAuth,
+  sendEmailOtp,
+  verifyEmailOtp,
+  validateEmailInput,
+  getLocalAuthSession,
+  signInWithGoogle,
+  getInitials,
+} from '@/lib/auth';
 import { addRSVP } from '@/lib/store';
 import { getPassSerialNumber } from '@/lib/ticketSecurity';
+
+function GoogleIcon({ className = 'w-5 h-5 shrink-0' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  );
+}
 
 interface QuickJoinModalProps {
   event: EventItem;
@@ -32,7 +67,12 @@ interface QuickJoinModalProps {
 }
 
 export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAskHost }: QuickJoinModalProps) {
-  const { profile } = useAuth();
+  const { profile, isLoggedIn } = useAuth();
+  const session = getLocalAuthSession();
+
+  // Active verified user information if available
+  const verifiedUser = profile || session;
+  const isUserVerified = Boolean(isLoggedIn || verifiedUser?.email);
 
   // Step flow: 'details' -> 'otp' -> 'confirmed'
   const [step, setStep] = useState<'details' | 'otp' | 'confirmed'>('details');
@@ -44,14 +84,38 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
   const [error, setError] = useState('');
   const [submittedRsvp, setSubmittedRsvp] = useState<RSVPItem | null>(null);
 
-  const wasOpenRef = React.useRef(false);
+  const wasOpenRef = useRef(false);
+
+  // Auto-fill details from verified profile whenever available
+  useEffect(() => {
+    if (verifiedUser?.email) {
+      if (verifiedUser.name && !name) setName(verifiedUser.name);
+      setEmail(verifiedUser.email);
+      if (verifiedUser.phone && !phone) setPhone(verifiedUser.phone);
+    }
+  }, [verifiedUser, name, phone]);
 
   // Initialize and preserve form state across tab switches and refocuses
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
+      const activeSession = profile || getLocalAuthSession();
+      if (activeSession?.email) {
+        if (activeSession.name) setName(activeSession.name);
+        setEmail(activeSession.email);
+        if (activeSession.phone) setPhone(activeSession.phone);
+        setStep('details');
+        setOtpToken('');
+        setError('');
+        setSubmittedRsvp(null);
+        wasOpenRef.current = isOpen;
+        return;
+      }
+
       // Check if there is an active pending OTP session for this event in sessionStorage
       let restoredOtp = false;
       try {
@@ -70,10 +134,6 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       } catch {}
 
       if (!restoredOtp) {
-        const session = getLocalAuthSession();
-        if (session?.name && !name) setName(session.name);
-        if (session?.email && !email) setEmail(session.email);
-        if (session?.phone && !phone) setPhone(session.phone);
         setStep('details');
         setOtpToken('');
         setError('');
@@ -84,9 +144,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       setOtpToken('');
       setError('');
       setSubmittedRsvp(null);
+      setGoogleLoading(false);
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen, event.id]);
+  }, [isOpen, event.id, profile]);
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -99,10 +160,31 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
 
   if (!isOpen) return null;
 
-  const cleanEmail = email.trim().toLowerCase();
+  const effectiveEmail = (email || verifiedUser?.email || '').trim().toLowerCase();
+  const effectiveName = (name || verifiedUser?.name || 'Guest').trim();
   const cleanPhone = phone.replace(/[^0-9]/g, '');
 
-  // Finalize reservation and create RSVP
+  // 1-Click Google Sign In for Guests:
+  // Saves current event slug to restore state seamlessly, launches Google OAuth
+  const handleGoogleJoin = async () => {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('vibe_pending_join_slug', event.slug || event.id);
+      }
+      const nextUrl = `/vibes?event=${encodeURIComponent(event.slug || event.id)}&autoJoin=1`;
+      const { error: gErr } = await signInWithGoogle('guest', nextUrl);
+      if (gErr) {
+        throw new Error(gErr.message || 'Google sign-in could not be started');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Google sign-in could not be started. You can enter details manually.');
+      setGoogleLoading(false);
+    }
+  };
+
+  // Finalize reservation and create RSVP directly
   const finalizeRsvp = async () => {
     setSubmitting(true);
     setError('');
@@ -116,21 +198,21 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
           : `+91${cleanPhone}`
         : '';
 
-      // Supabase is single source of truth: writes to DB first, caches confirmed record
       const rsvp = await addRSVP({
         event_id: event.id,
         event_slug: event.slug,
-        name: name.trim(),
+        name: effectiveName,
         phone: fullPhone || '+910000000000',
-        email: cleanEmail,
+        email: effectiveEmail,
         status: 'confirmed',
         custom_responses: {
           channel: 'vibe_reels_instant',
           flash_activity: event.flash_activity || 'casual',
+          verified_by: isUserVerified ? 'google' : 'email_otp',
         },
       });
 
-      // Update spot filled in memory
+      // Update spots filled in memory
       event.spots_filled = (event.spots_filled || 0) + 1;
 
       // Send confirmation email with pass details
@@ -139,8 +221,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'rsvp_confirmed',
-          to: cleanEmail,
-          guestName: name.trim(),
+          to: effectiveEmail,
+          guestName: effectiveName,
           rsvp,
           event,
         }),
@@ -158,6 +240,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
 
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem(`vibe_pending_otp_${event.id}`);
+        sessionStorage.removeItem('vibe_pending_join_slug');
       }
       setSubmittedRsvp(rsvp);
       setStep('confirmed');
@@ -169,14 +252,32 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
     }
   };
 
-  // Step 1: Submit details -> Send Email OTP
-  const handleDetailsSubmit = async (e: React.FormEvent) => {
+  // Form submit for Verified Users (Direct 1-tap confirmation with NO OTP)
+  const handleVerifiedSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!effectiveName) {
+      setError('Please provide your name');
+      return;
+    }
+    if (!effectiveEmail) {
+      setError('Email address is missing from your account profile');
+      return;
+    }
+    if (cleanPhone && cleanPhone.length < 8) {
+      setError('Please enter a valid phone number or leave it blank');
+      return;
+    }
+    await finalizeRsvp();
+  };
+
+  // Step 1 Fallback: Submit manual details -> Send Email OTP (Only for users who choose manual email)
+  const handleManualDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setError('Please enter your name');
       return;
     }
-    const emailValidation = validateEmailInput(cleanEmail);
+    const emailValidation = validateEmailInput(effectiveEmail);
     if (!emailValidation.isValid) {
       setError(emailValidation.error || 'Please enter a valid email address');
       return;
@@ -186,12 +287,11 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       return;
     }
 
-    // Always require Email OTP verification as expected for spot booking
     setSubmitting(true);
     setError('');
 
     try {
-      const { error: otpErr } = await sendEmailOtp(cleanEmail, 'guest');
+      const { error: otpErr } = await sendEmailOtp(effectiveEmail, 'guest');
       if (otpErr) {
         throw new Error(otpErr.message || 'Failed to send verification code');
       }
@@ -201,7 +301,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
           JSON.stringify({
             eventId: event.id,
             name: name.trim(),
-            email: cleanEmail,
+            email: effectiveEmail,
             phone: cleanPhone,
             timestamp: Date.now(),
           })
@@ -210,13 +310,13 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
       setResendCooldown(30);
       setStep('otp');
     } catch (err: any) {
-      setError(err.message || 'Failed to send verification email. Please try again.');
+      setError(err.message || 'Failed to send verification email. Please try again or join with Google.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Step 2: Verify OTP and finalize reservation
+  // Step 2: Verify OTP and finalize reservation (manual fallback only)
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = otpToken.trim();
@@ -229,7 +329,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
     setError('');
 
     try {
-      const { error: verifyErr } = await verifyEmailOtp(cleanEmail, token, 'guest');
+      const { error: verifyErr } = await verifyEmailOtp(effectiveEmail, token, 'guest');
       if (verifyErr) {
         throw new Error(verifyErr.message || 'Invalid or expired verification code');
       }
@@ -247,7 +347,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
     setSubmitting(true);
     setError('');
     try {
-      const { error: otpErr } = await sendEmailOtp(cleanEmail, 'guest');
+      const { error: otpErr } = await sendEmailOtp(effectiveEmail, 'guest');
       if (otpErr) throw new Error(otpErr.message);
       setResendCooldown(30);
     } catch (err: any) {
@@ -258,11 +358,12 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
   };
 
   const passSerial = submittedRsvp ? getPassSerialNumber(submittedRsvp, event) : '';
+  const spotsLeft = event.spots_limit ? Math.max(0, event.spots_limit - (event.spots_filled || 0)) : null;
 
   return (
     <div className="dark-dialog fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div 
-        className="dark-dialog-content w-full sm:max-w-md bg-[#12141A] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden"
+      <div
+        className="dark-dialog-content w-full sm:max-w-md bg-[#12141A] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow accent */}
@@ -272,24 +373,24 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer z-10"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* ========================================================= */}
-        {/* STEP 1: ENTER DETAILS (NAME, EMAIL, PHONE)                */}
+        {/* STEP 1: DETAILS & CONFIRMATION                            */}
         {/* ========================================================= */}
         {step === 'details' && (
           <div>
-            {/* Header */}
-            <div className="flex items-center gap-2 mb-3">
+            {/* Header / Event info */}
+            <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
                 <Sparkles className="w-3 h-3" />
                 <span>Instant Flash RSVP</span>
               </span>
               <span className="text-xs text-white/50">
-                {event.spots_limit ? `${event.spots_limit - (event.spots_filled || 0)} spots left` : 'Spots open'}
+                {spotsLeft !== null ? `${spotsLeft} spots left` : 'Spots open'}
               </span>
             </div>
 
@@ -310,87 +411,278 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               </div>
             )}
 
-            <form onSubmit={handleDetailsSubmit} className="space-y-3.5">
-              {/* Name */}
-              <div>
-                <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                  Your Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter your name or nickname"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
-                  />
-                </div>
-              </div>
+            {/* ------------------------------------------------------------- */}
+            {/* VIEW A: USER IS LOGGED IN / GOOGLE VERIFIED                   */}
+            {/* NO OTP NEEDED! Pre-filled details + optional phone + 1-tap   */}
+            {/* ------------------------------------------------------------- */}
+            {isUserVerified && !showManualForm ? (
+              <form onSubmit={handleVerifiedSubmit} className="space-y-4">
+                {/* Google Verified Profile Card */}
+                <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-emerald-500/30 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-semibold text-emerald-400">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Google Verified Account</span>
+                    </div>
+                    <span className="text-[10px] text-white/40">No OTP required</span>
+                  </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
-                  />
-                </div>
-                <p className="text-[10px] text-white/40 mt-1">
-                  We'll send your digital gate pass and verification code here.
-                </p>
-              </div>
+                  <div className="flex items-center gap-3">
+                    {/* User Avatar */}
+                    {verifiedUser?.avatar_url ? (
+                      <div className="w-11 h-11 rounded-full overflow-hidden border border-white/20 shrink-0 relative">
+                        <Image
+                          src={verifiedUser.avatar_url}
+                          alt={effectiveName}
+                          width={44}
+                          height={44}
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#E8621A] to-[#FF8C42] text-white font-black flex items-center justify-center text-sm shadow-md shrink-0">
+                        {getInitials(effectiveName || 'G')}
+                      </div>
+                    )}
 
-              {/* WhatsApp / Phone */}
-              <div>
-                <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                  WhatsApp / Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="tel"
-                    placeholder="e.g. 9820011223 (optional)"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
-                  />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                        <span>{effectiveName}</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      </div>
+                      <div className="text-xs text-white/60 truncate font-mono">
+                        {effectiveEmail}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[10px] text-white/40 mt-1">
-                  Optional — used by the host on WhatsApp to coordinate meetup spot.
-                </p>
-              </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {submitting ? (
-                  <span>Sending verification code...</span>
-                ) : (
-                  <>
-                    <span>Verify with Email OTP</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                {/* Display Name adjustment (if needed) */}
+                <div>
+                  <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                    Your Name on Guest List
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* WhatsApp / Phone (OPTIONAL) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider">
+                      WhatsApp / Phone Number
+                    </label>
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      Optional
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input
+                      type="tel"
+                      placeholder="e.g. 9820011223 (optional)"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    Used by the host on WhatsApp to coordinate meetup details.
+                  </p>
+                </div>
+
+                {/* Direct 1-Tap Confirmation Button - NO OTP! */}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full mt-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-white font-bold text-sm shadow-xl shadow-[#FF5500]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Locking your spot...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 fill-white text-white" />
+                      <span>Confirm & Lock Spot</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualForm(true)}
+                    className="text-[11px] text-white/40 hover:text-white/70 transition-colors underline cursor-pointer"
+                  >
+                    Use a different email address
+                  </button>
+                </div>
+              </form>
+            ) : null}
+
+            {/* ------------------------------------------------------------- */}
+            {/* VIEW B: USER IS NOT LOGGED IN                                */}
+            {/* Prominent Google Join button + fallback manual email form     */}
+            {/* ------------------------------------------------------------- */}
+            {!isUserVerified || showManualForm ? (
+              <div className="space-y-4">
+                {/* Primary: 1-Tap Google Join */}
+                {!showManualForm && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleGoogleJoin}
+                      disabled={googleLoading}
+                      className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-sm shadow-xl shadow-white/10 flex items-center justify-center gap-3 transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99] disabled:opacity-75"
+                    >
+                      {googleLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin text-neutral-700" />
+                          <span>Connecting with Google...</span>
+                        </>
+                      ) : (
+                        <>
+                          <GoogleIcon className="w-5 h-5" />
+                          <span>Join with Google</span>
+                          <span className="ml-auto text-[10px] font-semibold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full">
+                            No OTP needed
+                          </span>
+                        </>
+                      )}
+                    </button>
+
+                    <p className="text-[11px] text-center text-white/50 mt-2">
+                      Instant 1-tap spot confirmation with your verified Google profile
+                    </p>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="h-px bg-white/10 flex-1" />
+                      <span className="text-[10px] text-white/40 uppercase font-semibold tracking-wider">
+                        or enter email manually
+                      </span>
+                      <div className="h-px bg-white/10 flex-1" />
+                    </div>
+                  </div>
                 )}
-              </button>
-            </form>
+
+                {/* Back to Google option if manual form was toggled by a verified user */}
+                {isUserVerified && showManualForm && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManualForm(false)}
+                    className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white mb-2 transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back to Google account</span>
+                  </button>
+                )}
+
+                {/* Manual Form (requires Email OTP verification) */}
+                <form onSubmit={handleManualDetailsSubmit} className="space-y-3.5">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                      Your Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter your name or nickname"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <input
+                        type="email"
+                        required
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                      />
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-1">
+                      We'll send a 6-digit verification code to confirm this email.
+                    </p>
+                  </div>
+
+                  {/* WhatsApp / Phone (Optional) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider">
+                        WhatsApp / Phone Number
+                      </label>
+                      <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                        Optional
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <input
+                        type="tel"
+                        placeholder="e.g. 9820011223 (optional)"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A] transition-colors"
+                      />
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-1">
+                      Optional — used by the host on WhatsApp to coordinate meetup details.
+                    </p>
+                  </div>
+
+                  {/* Submit Button for Manual OTP */}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full mt-3 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Sending verification code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Verify with Email OTP</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            ) : null}
           </div>
         )}
 
         {/* ========================================================= */}
-        {/* STEP 2: ENTER OTP CODE                                    */}
+        {/* STEP 2: ENTER OTP CODE (MANUAL EMAIL FLOW ONLY)           */}
         {/* ========================================================= */}
         {step === 'otp' && (
           <div>
@@ -421,7 +713,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             </h3>
             <p className="text-xs text-white/60 mb-5 leading-relaxed">
               We sent a 6-digit confirmation code to{' '}
-              <strong className="text-white font-semibold">{cleanEmail}</strong>.
+              <strong className="text-white font-semibold">{effectiveEmail}</strong>.
             </p>
 
             {error && (
@@ -469,7 +761,10 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>Verifying & confirming spot...</span>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Verifying & confirming spot...</span>
+                  </>
                 ) : (
                   <>
                     <span>Verify & Confirm Spot</span>
@@ -495,7 +790,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             </span>
 
             <h3 className="text-2xl font-black text-white mb-2">
-              You're in, {name.split(' ')[0]}!
+              You're in, {effectiveName.split(' ')[0]}!
             </h3>
 
             <p className="text-xs text-white/70 max-w-xs mx-auto mb-3">
@@ -528,7 +823,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 <MessageCircle className="w-4 h-4 fill-white" />
                 <span>Contact with host</span>
               </button>
-              
+
               <Link
                 href="/passes"
                 onClick={onClose}

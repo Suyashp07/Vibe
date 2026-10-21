@@ -6,7 +6,6 @@ import {
   Instagram,
   Linkedin,
   Youtube,
-  Facebook
 } from 'lucide-react';
 
 interface SocialLink {
@@ -17,23 +16,23 @@ interface SocialLink {
   ariaLabel: string;
 }
 
-// Official Swaniki Social Media Handles
+// Official Swaniki Social Media Handles (Cleaned up, removing unnecessary legacy tags)
 const SOCIAL_MEDIA_LINKS: SocialLink[] = [
   {
     name: 'LinkedIn',
-    href: 'https://www.linkedin.com/company/swanikitech',
+    href: 'https://www.linkedin.com/company/swaniki',
     icon: Linkedin,
     ariaLabel: 'Connect with Swaniki on LinkedIn',
   },
   {
     name: 'Instagram',
-    href: 'https://www.instagram.com/swanikitech/',
+    href: 'https://www.instagram.com/swaniki/',
     icon: Instagram,
     ariaLabel: 'Follow Swaniki on Instagram',
   },
   {
     name: 'X (Twitter)',
-    href: 'https://x.com/swanikitech',
+    href: 'https://x.com/swaniki',
     customIcon: (
       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -42,19 +41,8 @@ const SOCIAL_MEDIA_LINKS: SocialLink[] = [
     ariaLabel: 'Follow Swaniki on X',
   },
   {
-    name: 'Threads',
-    href: 'https://www.threads.com/@swanikitech',
-    customIcon: (
-      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12.004 0C5.373 0 0 5.373 0 12.004c0 6.63 5.373 12.004 12.004 12.004 4.672 0 8.73-2.67 10.73-6.554l-2.383-1.229c-1.574 3.056-4.767 5.155-8.347 5.155-5.183 0-9.376-4.193-9.376-9.376s4.193-9.376 9.376-9.376c5.183 0 9.376 4.193 9.376 9.376 0 .61-.06 1.205-.17 1.78l2.585.518c.14-.744.213-1.512.213-2.298C24.008 5.373 18.635 0 12.004 0z" />
-        <path d="M12.004 7.426a4.578 4.578 0 100 9.156 4.578 4.578 0 000-9.156zm0 6.528a1.95 1.95 0 110-3.9 1.95 1.95 0 010 3.9z" />
-      </svg>
-    ),
-    ariaLabel: 'Follow Swaniki on Threads',
-  },
-  {
     name: 'YouTube',
-    href: 'https://www.youtube.com/@swanikitech',
+    href: 'https://www.youtube.com/@swaniki',
     icon: Youtube,
     ariaLabel: 'Subscribe to Swaniki on YouTube',
   },
@@ -79,11 +67,14 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
             </a>
           </div>
 
-          <div className="text-center sm:text-left text-[11px] text-neutral-500 dark:text-white/40">
-            © {new Date().getFullYear()} Vibe by Swaniki. All rights reserved.
+          <div className="text-center sm:text-left text-[11px] text-neutral-500 dark:text-white/40 max-w-xl">
+            © 2026 Swaniki LLP — Swaniki, Swaniki Technologies and Swaniki Labs are operating brand names of Swaniki LLP. All rights reserved.
           </div>
 
           <div className="flex items-center gap-5 text-xs text-neutral-600 dark:text-white/60">
+            <Link href="/disclaimer" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
+              Disclaimer
+            </Link>
             <Link href="/terms" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
               Terms &amp; Conditions
             </Link>
@@ -101,7 +92,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main 4-Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 pb-12">
-          {/* Column 1: Brand Wordmark + Social Handles */}
+          {/* Column 1: Brand Wordmark + Platform Description + Social Handles */}
           <div className="space-y-4">
             <div className="space-y-0.5">
               <Link href="/" className="inline-block group">
@@ -119,8 +110,12 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
               </a>
             </div>
 
+            <p className="text-xs text-neutral-500 dark:text-white/50 leading-relaxed pr-2">
+              India&apos;s experiential event discovery and instant meetup platform. Connecting passionate communities, spontaneous flash vibes, sports, and cultural gatherings across cities.
+            </p>
+
             {/* Social Media Circular Buttons */}
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-1">
               {SOCIAL_MEDIA_LINKS.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -140,10 +135,10 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
             </div>
           </div>
 
-          {/* Column 2: Help */}
+          {/* Column 2: Help & Support */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase font-bold tracking-wider text-neutral-900 dark:text-white">
-              Help
+              Help &amp; Support
             </h4>
             <ul className="space-y-2.5 text-xs text-neutral-600 dark:text-white/60">
               <li>
@@ -183,7 +178,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
             <ul className="space-y-2.5 text-xs text-neutral-600 dark:text-white/60">
               <li>
                 <Link href="/create" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  List your events
+                  List an event
                 </Link>
               </li>
               <li>
@@ -192,8 +187,8 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                 </Link>
               </li>
               <li>
-                <Link href="/discover" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  Discover events
+                <Link href="/vibes" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
+                  Vibe Instant
                 </Link>
               </li>
               <li>
@@ -204,10 +199,10 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
             </ul>
           </div>
 
-          {/* Column 4: Useful Links */}
+          {/* Column 4: Platform & Legal */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase font-bold tracking-wider text-neutral-900 dark:text-white">
-              Useful Links
+              Platform &amp; Legal
             </h4>
             <ul className="space-y-2.5 text-xs text-neutral-600 dark:text-white/60">
               <li>
@@ -217,20 +212,14 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
                   rel="noopener noreferrer"
                   className="hover:text-neutral-900 dark:hover:text-white transition-colors flex items-center gap-1"
                 >
-                  <span>Swaniki</span>
+                  <span>About Swaniki</span>
                   <span className="text-[10px] text-neutral-400 dark:text-white/40">↗</span>
                 </a>
               </li>
               <li>
-                <a
-                  href="https://swaniki.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-neutral-900 dark:hover:text-white transition-colors flex items-center gap-1"
-                >
-                  <span>Swaniki Tech</span>
-                  <span className="text-[10px] text-neutral-400 dark:text-white/40">↗</span>
-                </a>
+                <Link href="/disclaimer" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
+                  Platform Disclaimer
+                </Link>
               </li>
               <li>
                 <Link href="/terms" className="hover:text-neutral-900 dark:hover:text-white transition-colors">
@@ -246,18 +235,24 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
           </div>
         </div>
 
-        {/* Bottom Bar: Legal Agreement & Direct Policy Links (Exact District UX) */}
+        {/* Bottom Bar: Legal Agreement & Direct Policy Links */}
         <div className="pt-8 border-t border-black/10 dark:border-white/[0.08] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
-          <div className="space-y-1 max-w-2xl text-neutral-500 dark:text-white/40">
-            <p className="text-xs text-neutral-600 dark:text-white/60 font-medium">
-              © {new Date().getFullYear()} Vibe by Swaniki. All rights reserved.
+          <div className="space-y-1.5 max-w-2xl text-neutral-500 dark:text-white/40">
+            <p className="text-xs text-neutral-700 dark:text-white/70 font-medium">
+              © 2026 Swaniki LLP — Swaniki, Swaniki Technologies and Swaniki Labs are operating brand names of Swaniki LLP. All rights reserved.
             </p>
             <p className="text-[11px] leading-relaxed">
-              By accessing this page, you confirm that you have read, understood, and agreed to our Terms of Service, Cookie Policy, Privacy Policy, and Content Guidelines.
+              Vibe by Swaniki is an India-first event discovery and community platform connecting hosts and attendees for live gatherings, sports, music, and social experiences.
             </p>
           </div>
 
           <div className="flex items-center gap-6 text-xs text-neutral-600 dark:text-white/60 shrink-0 self-start md:self-center">
+            <Link
+              href="/disclaimer"
+              className="hover:text-neutral-900 dark:hover:text-white transition-colors font-medium underline-offset-4 hover:underline"
+            >
+              Disclaimer
+            </Link>
             <Link
               href="/terms"
               className="hover:text-neutral-900 dark:hover:text-white transition-colors font-medium underline-offset-4 hover:underline"

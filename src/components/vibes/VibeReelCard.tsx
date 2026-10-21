@@ -269,14 +269,15 @@ export default function VibeReelCard({
       onClick={handleCardDoubleTap}
       className="vibe-reel-card relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-black cursor-pointer"
     >
-      {/* Background Image with Dark Reels Gradient Overlays */}
-      <div className="absolute inset-0 z-0">
+      {/* Background Image with Ambient Backdrop + Uncropped Fitted Poster */}
+      <div className="absolute inset-0 z-0 bg-black overflow-hidden pointer-events-none">
         <Image
           src={event.cover_image_url}
-          alt={event.title}
+          alt=""
           fill
           priority={index === 0}
-          className="object-cover object-center scale-105 transition-transform duration-700"
+          className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
+          aria-hidden="true"
         />
         {/* Dark film overlay for typography readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/60" />
@@ -287,6 +288,19 @@ export default function VibeReelCard({
           className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full blur-3xl opacity-25 pointer-events-none"
           style={{ backgroundColor: event.theme?.custom_accent || '#E8621A' }}
         />
+
+        {/* Full Uncropped Poster */}
+        <div className="absolute inset-0 flex items-center justify-center px-3 pt-12 pb-44 sm:pb-40">
+          <div className="relative w-full h-full flex items-center justify-center">
+            <Image
+              src={event.cover_image_url}
+              alt={event.title}
+              fill
+              priority={index === 0}
+              className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Floating Instagram-style Heart/Flame on Double Tap */}
