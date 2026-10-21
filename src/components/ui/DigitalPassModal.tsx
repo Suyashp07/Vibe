@@ -188,7 +188,11 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.body.style.overflow = originalOverflow;
+      if (originalOverflow && originalOverflow !== 'hidden') {
+        document.body.style.overflow = originalOverflow;
+      } else {
+        document.body.style.removeProperty('overflow');
+      }
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [onClose]);

@@ -44,6 +44,7 @@ import SmoothScroll from '@/components/common/SmoothScroll';
 import AmbientBackground from '@/components/common/AmbientBackground';
 import { ThemeProvider } from '@/components/common/ThemeContext';
 import SplashScreen from '@/components/common/SplashScreen';
+import ScrollResetManager from '@/components/common/ScrollResetManager';
 import PlatformTelemetry from '@/components/common/PlatformTelemetry';
 
 export const viewport: Viewport = {
@@ -219,6 +220,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white relative">
         <ThemeProvider>
+          <ScrollResetManager />
           <SplashScreen />
           <AmbientBackground />
           <SmoothScroll>

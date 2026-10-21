@@ -41,14 +41,25 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background-color: #050505;
   color: #F3F4F6;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Scoped state when inside full-screen Vibe Instant reel */
+html.vibe-screen-active,
+html.vibe-screen-active body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* Hardware accelerated backdrop blur layers to prevent WebKit foggy rasterization */

@@ -64,7 +64,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
   const navRef = useRef<HTMLElement | null>(null);
   const { gestureFeedback } = useMobileGestures({
     navRef,
-    enableGlobalSwipe: true,
+    enableGlobalSwipe: false, // Never intercept vertical content scrolling on page
   });
 
   useEffect(() => {

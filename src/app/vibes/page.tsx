@@ -693,27 +693,20 @@ function VibesContent() {
 
   // Lock document & body to prevent outer page rubber-banding / scrolling on mobile
   useEffect(() => {
-    const origHtmlOverflow = document.documentElement.style.overflow;
-    const origHtmlHeight = document.documentElement.style.height;
-    const origBodyOverflow = document.body.style.overflow;
-    const origBodyHeight = document.body.style.height;
-    const origBodyPaddingBottom = document.body.style.paddingBottom;
-    const origBodyOverscroll = document.body.style.overscrollBehavior;
-
-    document.documentElement.style.overflow = 'hidden';
-    document.documentElement.style.height = '100%';
+    // Prevent document background scrolling only while inside vibes reel view
+    document.documentElement.classList.add('vibe-screen-active');
     document.body.style.overflow = 'hidden';
-    document.body.style.height = '100%';
-    document.body.style.paddingBottom = '0px';
-    document.body.style.overscrollBehavior = 'none';
 
     return () => {
-      document.documentElement.style.overflow = origHtmlOverflow;
-      document.documentElement.style.height = origHtmlHeight;
-      document.body.style.overflow = origBodyOverflow;
-      document.body.style.height = origBodyHeight;
-      document.body.style.paddingBottom = origBodyPaddingBottom;
-      document.body.style.overscrollBehavior = origBodyOverscroll;
+      document.documentElement.classList.remove('vibe-screen-active');
+      document.documentElement.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('height');
+      document.documentElement.style.removeProperty('position');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('height');
+      document.body.style.removeProperty('position');
+      document.body.style.removeProperty('padding-bottom');
+      document.body.style.removeProperty('overscroll-behavior');
     };
   }, []);
 

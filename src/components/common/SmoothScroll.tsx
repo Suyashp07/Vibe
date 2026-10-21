@@ -32,6 +32,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
+        document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped');
       }
       return;
     }
@@ -63,8 +64,11 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     return () => {
       cancelAnimationFrame(rafId);
-      lenis.destroy();
-      lenisRef.current = null;
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+      document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped');
     };
   }, [pathname]);
 
