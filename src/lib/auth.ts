@@ -1102,30 +1102,48 @@ export const signInWithGoogle = async (
 
   const redirectDestination = nextUrl || '/dashboard';
 
+  const isPWA = typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
+
   if (typeof window !== 'undefined') {
     try {
       sessionStorage.setItem('vibe_oauth_role', role);
       sessionStorage.setItem('vibe_oauth_next', redirectDestination);
+      if (isPWA) {
+        sessionStorage.setItem('vibe_is_pwa', '1');
+        document.cookie = `vibe_is_pwa=1; path=/; max-age=3600; SameSite=Lax`;
+      }
       document.cookie = `vibe_oauth_role=${encodeURIComponent(role)}; path=/; max-age=3600; SameSite=Lax`;
       document.cookie = `vibe_oauth_next=${encodeURIComponent(redirectDestination)}; path=/; max-age=3600; SameSite=Lax`;
     } catch {}
   }
 
-  // Clean callback URL matching Supabase URL configuration without query string mismatch
+  // Clean callback URL matching Supabase URL configuration
   const redirectTo = typeof window !== 'undefined'
-    ? `${window.location.origin}/auth/callback`
+    ? `${window.location.origin}/auth/callback${isPWA ? '?from_pwa=1' : ''}`
     : undefined;
 
   const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo,
+      skipBrowserRedirect: isPWA,
       queryParams: {
         access_type: 'offline',
         prompt: 'select_account',
       },
     },
   });
+
+  if (isPWA && data?.url && typeof window !== 'undefined') {
+    // In standalone PWA, try in-app popup/sheet first so user doesn't leave the app
+    const popup = window.open(data.url, '_blank', 'width=500,height=650');
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      window.location.href = data.url;
+    }
+  }
 
   return { data, error };
 };
@@ -1169,6 +1187,27 @@ export const useAuth = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const client = getSupabaseClient();
+
+      // 0. Check if arriving with PWA auth tokens in URL hash (e.g. from PWA external browser callback)
+      if (typeof window !== 'undefined' && client && (window.location.hash.includes('access_token=') || window.location.hash.includes('pwa_token='))) {
+        const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token') || params.get('pwa_token');
+        const refreshToken = params.get('refresh_token') || params.get('pwa_refresh');
+        if (accessToken && refreshToken) {
+          try {
+            await client.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          } catch (err) {
+            console.warn('[PWA Auth] setSession from hash failed:', err);
+          }
+        }
+      }
+
       // 1. Check local session first
       const local = getLocalAuthSession();
       if (local) {
@@ -1177,7 +1216,6 @@ export const useAuth = () => {
       }
 
       // 2. Check Supabase session
-      const client = getSupabaseClient();
       if (client) {
         try {
           const { data } = await client.auth.getSession();
@@ -1369,9 +1407,45 @@ export const useAuth = () => {
     };
     window.addEventListener('vibe_auth_changed', onLocalChange);
 
+    // Auto-sync when PWA or page resumes from background / gains focus
+    const onResume = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        checkAuth();
+      }
+    };
+    document.addEventListener('visibilitychange', onResume);
+    window.addEventListener('focus', onResume);
+
+    // BroadcastChannel listener for PWA OAuth popup completion
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('vibe_auth_channel');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'vibe_auth_success') {
+          if (event.data.profile) {
+            setProfile(event.data.profile);
+            setLocalAuthSession(event.data.profile);
+          }
+          checkAuth();
+        }
+      };
+    } catch {}
+
+    // Storage event for cross-partition syncing
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LOCAL_STORAGE_AUTH_KEY) {
+        checkAuth();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
     return () => {
       if (authListener) authListener.unsubscribe();
       window.removeEventListener('vibe_auth_changed', onLocalChange);
+      document.removeEventListener('visibilitychange', onResume);
+      window.removeEventListener('focus', onResume);
+      window.removeEventListener('storage', onStorage);
+      if (channel) channel.close();
     };
   }, []);
 

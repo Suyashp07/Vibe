@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
 import { setLocalAuthSession, AuthProfile, ADMIN_EMAILS, resolveAvatarUrl } from '@/lib/auth';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export function CallbackHandler({
   customTitle,
@@ -18,6 +18,7 @@ export function CallbackHandler({
   const [status, setStatus] = useState('Verifying your session...');
   const [showManualFallback, setShowManualFallback] = useState(false);
   const [nextUrl, setNextUrl] = useState('/dashboard');
+  const [pwaReturnInfo, setPwaReturnInfo] = useState<{ url: string; name: string } | null>(null);
 
   useEffect(() => {
     // Fail-safe: if network hangs or Supabase takes longer than 4s, show manual recovery buttons
@@ -53,12 +54,14 @@ export function CallbackHandler({
 
       if (client) {
         let user: any = null;
+        let authSession: any = null;
         if (code) {
           try {
             setStatus('Exchanging authentication token...');
             const { data, error } = await client.auth.exchangeCodeForSession(code);
             if (!error && data?.user) {
               user = data.user;
+              authSession = data.session;
             }
           } catch (e) {
             console.warn('Code exchange error:', e);
@@ -74,10 +77,11 @@ export function CallbackHandler({
           } catch {}
         }
 
-        if (!user) {
+        if (!user || !authSession) {
           const { data } = await client.auth.getSession();
           if (data?.session?.user) {
             user = data.session.user;
+            authSession = data.session;
           }
         }
 
@@ -152,6 +156,64 @@ export function CallbackHandler({
             window.history.replaceState({}, document.title, window.location.pathname);
           }
 
+          const isFromPwa =
+            searchParams.get('from_pwa') === '1' ||
+            (typeof window !== 'undefined' && (
+              document.cookie.includes('vibe_is_pwa=1') ||
+              sessionStorage.getItem('vibe_is_pwa') === '1'
+            ));
+
+          // 1. Broadcast to any open windows / PWA in background via BroadcastChannel
+          try {
+            const channel = new BroadcastChannel('vibe_auth_channel');
+            channel.postMessage({
+              type: 'vibe_auth_success',
+              profile,
+              session: authSession,
+            });
+          } catch {}
+
+          // 2. If opened via window.open (in-app sheet or popup), notify opener and close
+          if (typeof window !== 'undefined' && window.opener && !window.opener.closed) {
+            try {
+              window.opener.postMessage(
+                {
+                  type: 'vibe_auth_success',
+                  profile,
+                  session: authSession,
+                },
+                window.location.origin
+              );
+              setStatus('Authenticated! Closing popup...');
+              setTimeout(() => {
+                window.close();
+              }, 400);
+              return;
+            } catch {}
+          }
+
+          // 3. If user initiated auth from an installed PWA and got opened in external browser:
+          if (isFromPwa && authSession?.access_token) {
+            const tokenParams = new URLSearchParams();
+            tokenParams.set('access_token', authSession.access_token);
+            tokenParams.set('refresh_token', authSession.refresh_token || '');
+            tokenParams.set('pwa_auth', '1');
+            const targetUrl = `${window.location.origin}${next}#${tokenParams.toString()}`;
+
+            setPwaReturnInfo({
+              url: targetUrl,
+              name: profile.name,
+            });
+
+            // Automatically attempt navigating to open the PWA app
+            setTimeout(() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = targetUrl;
+              }
+            }, 800);
+            return;
+          }
+
           setStatus('Redirecting you straight to your dashboard...');
           router.replace(next);
           return;
@@ -173,6 +235,41 @@ export function CallbackHandler({
       isCancelled = true;
     };
   }, [router, searchParams]);
+
+  if (pwaReturnInfo) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#08080A] text-white p-6 space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#FF5500] to-[#E8621A] text-white flex items-center justify-center shadow-xl shadow-[#FF5500]/30 animate-bounce">
+          <Sparkles className="w-8 h-8" />
+        </div>
+
+        <div className="text-center space-y-2 max-w-sm">
+          <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block mb-1">
+            ✓ Signed In Successfully
+          </span>
+          <h2 className="font-sans font-black text-2xl text-white">
+            Welcome, {pwaReturnInfo.name.split(' ')[0]}!
+          </h2>
+          <p className="text-xs text-white/60">
+            Returning you to your installed Vibe App...
+          </p>
+        </div>
+
+        <div className="w-full max-w-xs space-y-3 pt-2">
+          <a
+            href={pwaReturnInfo.url}
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-black text-sm shadow-xl shadow-[#FF5500]/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:brightness-110 active:scale-[0.98]"
+          >
+            <span>Tap to Open Vibe App</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+          <p className="text-[11px] text-center text-white/40">
+            If your app doesn't open automatically, tap the button above or switch back to the Vibe app from your home screen.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const displayTitle = customTitle || 'Signing you in with Google...';
   const displaySubtitle = customSubtitle || status;
