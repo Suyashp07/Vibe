@@ -238,17 +238,32 @@ function VibesContent() {
 
   const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
     const map: Record<string, RSVPItem> = {};
-    if (!isLoggedIn || !userEmail) return map;
 
-    allRsvps.forEach((r) => {
-      if (r.status === 'confirmed') {
-        const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
-        if (matchesUser) {
-          if (r.event_id) map[r.event_id] = r;
-          if (r.event_slug) map[r.event_slug] = r;
+    // 1. Check locally cached passes (for instant guest joins)
+    if (typeof window !== 'undefined') {
+      try {
+        const localRsvps = getRSVPs();
+        localRsvps.forEach((r) => {
+          if (r.status === 'confirmed') {
+            if (r.event_id) map[r.event_id] = r;
+            if (r.event_slug) map[r.event_slug] = r;
+          }
+        });
+      } catch {}
+    }
+
+    // 2. Check authenticated user's confirmed passes across devices
+    if (isLoggedIn && userEmail) {
+      allRsvps.forEach((r) => {
+        if (r.status === 'confirmed') {
+          const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
+          if (matchesUser) {
+            if (r.event_id) map[r.event_id] = r;
+            if (r.event_slug) map[r.event_slug] = r;
+          }
         }
-      }
-    });
+      });
+    }
     return map;
   }, [allRsvps, userEmail, isLoggedIn]);
 
@@ -1797,11 +1812,12 @@ function VibesContent() {
                     }
                     return (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openQuickJoin(vibe);
                         }}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer"
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer touch-manipulation select-none"
                       >
                         <Zap className="w-3.5 h-3.5 fill-current" />
                         <span>Join now</span>
