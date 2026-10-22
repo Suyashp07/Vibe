@@ -1029,8 +1029,8 @@ export default function WhatsOnFeed() {
                     onClick={() => setPriceFilter(opt.id)}
                     className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                       priceFilter === opt.id
-                        ? 'bg-white/20 text-white font-bold'
-                        : 'text-white/60 hover:text-white'
+                        ? 'bg-white text-black font-bold shadow-sm'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     {opt.id === 'all' ? 'All' : opt.id === 'free' ? 'Free' : 'Paid'}
