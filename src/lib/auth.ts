@@ -1129,7 +1129,7 @@ export const signInWithGoogle = async (
     provider: 'google',
     options: {
       redirectTo,
-      skipBrowserRedirect: isPWA,
+      skipBrowserRedirect: false,
       queryParams: {
         access_type: 'offline',
         prompt: 'select_account',
@@ -1137,12 +1137,8 @@ export const signInWithGoogle = async (
     },
   });
 
-  if (isPWA && data?.url && typeof window !== 'undefined') {
-    // In standalone PWA, try in-app popup/sheet first so user doesn't leave the app
-    const popup = window.open(data.url, '_blank', 'width=500,height=650');
-    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-      window.location.href = data.url;
-    }
+  if (data?.url && typeof window !== 'undefined') {
+    window.location.assign(data.url);
   }
 
   return { data, error };

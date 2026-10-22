@@ -192,8 +192,13 @@ export function CallbackHandler({
             } catch {}
           }
 
+          const isCurrentWindowStandalone = typeof window !== 'undefined' && (
+            window.matchMedia('(display-mode: standalone)').matches ||
+            (window.navigator as any).standalone === true
+          );
+
           // 3. If user initiated auth from an installed PWA and got opened in external browser:
-          if (isFromPwa && authSession?.access_token) {
+          if (!isCurrentWindowStandalone && isFromPwa && authSession?.access_token) {
             const tokenParams = new URLSearchParams();
             tokenParams.set('access_token', authSession.access_token);
             tokenParams.set('refresh_token', authSession.refresh_token || '');

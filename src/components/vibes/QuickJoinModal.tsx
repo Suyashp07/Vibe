@@ -153,6 +153,53 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
+  // Safety timeout: Never keep googleLoading stuck spinning forever
+  useEffect(() => {
+    if (!googleLoading) return;
+    const timer = setTimeout(() => {
+      setGoogleLoading(false);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [googleLoading]);
+
+  // Sync session and clear loading when returning to app or foregrounded
+  useEffect(() => {
+    const handleForeground = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        const active = profile || getLocalAuthSession();
+        if (active?.email) {
+          if (active.name) setName(active.name);
+          setEmail(active.email);
+          if (active.phone) setPhone(active.phone);
+        }
+        setGoogleLoading(false);
+      }
+    };
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('vibe_auth_channel');
+      channel.onmessage = (evt) => {
+        if (evt.data?.type === 'vibe_auth_success' && evt.data?.profile) {
+          const p = evt.data.profile;
+          if (p.name) setName(p.name);
+          if (p.email) setEmail(p.email);
+          if (p.phone) setPhone(p.phone);
+          setGoogleLoading(false);
+        }
+      };
+    } catch {}
+
+    window.addEventListener('focus', handleForeground);
+    document.addEventListener('visibilitychange', handleForeground);
+
+    return () => {
+      window.removeEventListener('focus', handleForeground);
+      document.removeEventListener('visibilitychange', handleForeground);
+      try { channel?.close(); } catch {}
+    };
+  }, [profile]);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -633,25 +680,33 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
 
                 {/* Optional secondary Google link (without prominent hijacking button) */}
                 {!isUserVerified && (
-                  <div className="pt-2 text-center">
-                    <button
-                      type="button"
-                      onClick={handleGoogleJoin}
-                      disabled={googleLoading}
-                      className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/75 transition-colors cursor-pointer"
-                    >
-                      {googleLoading ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Connecting Google...</span>
-                        </>
-                      ) : (
-                        <>
-                          <GoogleIcon className="w-3.5 h-3.5" />
-                          <span>Or connect with Google account</span>
-                        </>
-                      )}
-                    </button>
+                  <div className="pt-2 text-center flex items-center justify-center">
+                    {googleLoading ? (
+                      <div className="inline-flex items-center gap-2 text-xs py-1 px-3 rounded-full bg-white/5 border border-white/10">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FF5500]" />
+                        <span className="text-white/70">Connecting Google...</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setGoogleLoading(false);
+                          }}
+                          className="ml-1 text-[11px] font-bold text-white/50 hover:text-white underline cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleGoogleJoin}
+                        className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/75 transition-colors cursor-pointer"
+                      >
+                        <GoogleIcon className="w-3.5 h-3.5" />
+                        <span>Or connect with Google account</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </form>
