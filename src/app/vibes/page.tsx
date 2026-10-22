@@ -371,12 +371,7 @@ function VibesContent() {
       }
 
       // Dynamic badges
-      let badge = spotsLeft <= 3 ? 'Selling fast' : 'Community pick';
-      if (e.source_platform === 'whatsapp') {
-        badge = 'WhatsApp Instant Vibe';
-      } else if (e.source_platform === 'telegram') {
-        badge = 'Telegram Instant Vibe';
-      }
+      const badge = spotsLeft <= 3 ? 'Selling fast' : 'Community pick';
 
       const hostName =
         e.organizer_name ||
@@ -805,6 +800,14 @@ function VibesContent() {
   const isUserTouching = useRef(false);
   const scrollSettleTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Maintain body scroll lock and reset touch state whenever any modal toggles
+  useEffect(() => {
+    if (!quickJoinOpen && !passModalRsvp && !detailsModalOpen && !connectHostOpen) {
+      document.body.style.overflow = 'hidden';
+      isUserTouching.current = false;
+    }
+  }, [quickJoinOpen, passModalRsvp, detailsModalOpen, connectHostOpen]);
+
   // Sync mobile scroll position ONLY when currentIndex changes from external triggers
   // (e.g. desktop next/prev buttons, keyboard arrows, or query params).
   // If the user is touching or actively scrolling on mobile, NEVER fight their finger with scrollTo!
@@ -1114,16 +1117,19 @@ function VibesContent() {
   }, [currentVibe?.id, currentVibe?.slug]);
 
   const openAskHost = (vibe?: VibeInstantItem) => {
+    isUserTouching.current = false;
     setSelectedModalVibe(vibe || currentVibe);
     setConnectHostOpen(true);
   };
 
   const openQuickJoin = (vibe?: VibeInstantItem) => {
+    isUserTouching.current = false;
     setSelectedModalVibe(vibe || currentVibe);
     setQuickJoinOpen(true);
   };
 
   const openEventDetails = (vibe?: VibeInstantItem) => {
+    isUserTouching.current = false;
     setSelectedModalVibe(vibe || currentVibe);
     setDetailsModalVibe(vibe || currentVibe);
     setDetailsModalOpen(true);
@@ -1575,7 +1581,10 @@ function VibesContent() {
         onTouchEnd={() => {
           setTimeout(() => {
             isUserTouching.current = false;
-          }, 250);
+          }, 100);
+        }}
+        onTouchCancel={() => {
+          isUserTouching.current = false;
         }}
         data-reel-feed="true"
         className="flex flex-col md:hidden flex-1 relative w-full min-h-0 mb-[calc(58px+env(safe-area-inset-bottom,0px))] overflow-y-auto overflow-x-hidden snap-y snap-mandatory overscroll-contain no-scrollbar select-none"
@@ -1729,23 +1738,9 @@ function VibesContent() {
               {/* Bottom Overlay Card - pr-18 ensures no overlap with right-side action stack */}
               <div className="relative z-20 px-4 pr-18 pb-3.5 pt-4 space-y-2 mt-auto w-full pointer-events-auto">
                 <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-neutral-400 font-medium">
-                      Hosted by {vibe.host_name}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEventDetails(vibe);
-                      }}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] font-bold text-white/80 hover:text-white transition-colors cursor-pointer"
-                      title="View full event details"
-                    >
-                      <Info className="w-3 h-3 text-[#FF8C42]" />
-                      <span>Details</span>
-                    </button>
-                  </div>
+                  <p className="text-xs text-neutral-400 font-medium">
+                    Hosted by {vibe.host_name}
+                  </p>
                   <h3
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1837,7 +1832,10 @@ function VibesContent() {
       <QuickJoinModal
         event={modalEvent}
         isOpen={quickJoinOpen}
-        onClose={() => setQuickJoinOpen(false)}
+        onClose={() => {
+          setQuickJoinOpen(false);
+          isUserTouching.current = false;
+        }}
         onAskHost={() => {
           setQuickJoinOpen(false);
           setConnectHostOpen(true);

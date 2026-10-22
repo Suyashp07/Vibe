@@ -10,10 +10,8 @@ import {
   Users,
   Zap,
   Share2,
-  MessageCircle,
   CheckCircle2,
   ExternalLink,
-  ShieldCheck,
   Sparkles,
   Info,
 } from 'lucide-react';
@@ -146,40 +144,6 @@ export default function VibeDetailsModal({
             </div>
           </div>
 
-          {/* Host Card */}
-          <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#E8621A] to-[#FF8C42] text-white font-black flex items-center justify-center text-sm shadow-md shrink-0 border border-white/20">
-                {vibe.host_initials}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-white flex items-center gap-1.5 truncate">
-                  <span>{vibe.host_name}</span>
-                  <span title="Verified Host" className="inline-flex shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  </span>
-                </div>
-                <div className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
-                  <span className="text-amber-400">★</span>
-                  <span>{vibe.host_rating} rating</span>
-                  <span>•</span>
-                  <span>{vibe.host_vibes_count} vibes hosted</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onConnectHost(vibe);
-              }}
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
-            >
-              <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
-              <span>Message</span>
-            </button>
-          </div>
 
           {/* Time & Venue Information */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

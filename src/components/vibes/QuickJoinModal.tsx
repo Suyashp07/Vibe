@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -158,7 +159,12 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const effectiveEmail = (email || verifiedUser?.email || '').trim().toLowerCase();
   const effectiveName = (name || verifiedUser?.name || 'Guest').trim();
@@ -360,50 +366,66 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
   const passSerial = submittedRsvp ? getPassSerialNumber(submittedRsvp, event) : '';
   const spotsLeft = event.spots_limit ? Math.max(0, event.spots_limit - (event.spots_filled || 0)) : null;
 
-  return (
-    <div className="dark-dialog fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      className="dark-dialog fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+    >
       <div
-        className="dark-dialog-content w-full sm:max-w-md bg-[#12141A] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden max-h-[92vh] overflow-y-auto"
+        className="dark-dialog-content w-full sm:max-w-md bg-[#12141A] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl text-white relative max-h-[90dvh] sm:max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow accent */}
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-br from-[#E8621A]/30 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer z-10"
+        {/* Mobile drag handle & top bar with Close Button */}
+        <div className="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 relative z-20">
+          <div className="w-10 h-1 rounded-full bg-white/20 mx-auto sm:hidden absolute top-2 left-1/2 -translate-x-1/2" />
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
+              <Sparkles className="w-3 h-3" />
+              <span>Instant Flash RSVP</span>
+            </span>
+            <span className="text-xs text-white/50">
+              {spotsLeft !== null ? `${spotsLeft} spots left` : 'Spots open'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Inner Scrollable Body */}
+        <div
+          className="overflow-y-auto overscroll-contain flex-1 px-6 pb-6 pt-2 no-vibe-scroll"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+          }}
         >
-          <X className="w-4 h-4" />
-        </button>
+          {/* ========================================================= */}
+          {/* STEP 1: DETAILS & CONFIRMATION                            */}
+          {/* ========================================================= */}
+          {step === 'details' && (
+            <div>
+              <h3 className="text-xl font-black text-white leading-snug mb-1">
+                {event.title}
+              </h3>
 
-        {/* ========================================================= */}
-        {/* STEP 1: DETAILS & CONFIRMATION                            */}
-        {/* ========================================================= */}
-        {step === 'details' && (
-          <div>
-            {/* Header / Event info */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
-                <Sparkles className="w-3 h-3" />
-                <span>Instant Flash RSVP</span>
-              </span>
-              <span className="text-xs text-white/50">
-                {spotsLeft !== null ? `${spotsLeft} spots left` : 'Spots open'}
-              </span>
-            </div>
-
-            <h3 className="text-xl font-black text-white leading-snug mb-1">
-              {event.title}
-            </h3>
-
-            <div className="flex items-center gap-4 text-xs text-white/60 mb-5">
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#E8621A]" />
-                {event.location_name}
-              </span>
-            </div>
+              <div className="flex items-center gap-4 text-xs text-white/60 mb-5">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#E8621A]" />
+                  {event.location_name}
+                </span>
+              </div>
 
             {error && (
               <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
@@ -843,7 +865,9 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
