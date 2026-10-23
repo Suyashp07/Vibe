@@ -23,6 +23,7 @@ import { isFlashVibeLiked, toggleFlashVibeLike } from '@/lib/store';
 import ConnectHostModal from '@/components/communication/ConnectHostModal';
 import QuickJoinModal from '@/components/vibes/QuickJoinModal';
 import { useAuth } from '@/lib/auth';
+import { isUserUploadedPoster } from '@/lib/posterUtils';
 
 interface VibeReelCardProps {
   event: EventItem;
@@ -269,38 +270,56 @@ export default function VibeReelCard({
       onClick={handleCardDoubleTap}
       className="vibe-reel-card relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-black cursor-pointer"
     >
-      {/* Background Image with Ambient Backdrop + Uncropped Fitted Poster */}
+      {/* Background Image: Full Screen for AI / Uncropped Fitted for User Poster */}
       <div className="absolute inset-0 z-0 bg-black overflow-hidden pointer-events-none">
-        <Image
-          src={event.cover_image_url}
-          alt=""
-          fill
-          priority={index === 0}
-          className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
-          aria-hidden="true"
-        />
-        {/* Dark film overlay for typography readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/60" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30" />
+        {isUserUploadedPoster(event.cover_image_url, event) ? (
+          <>
+            <Image
+              src={event.cover_image_url}
+              alt=""
+              fill
+              priority={index === 0}
+              className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
+              aria-hidden="true"
+            />
+            {/* Dark film overlay for typography readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30" />
 
-        {/* Dynamic ambient color glow from event accent */}
-        <div
-          className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full blur-3xl opacity-25 pointer-events-none"
-          style={{ backgroundColor: event.theme?.custom_accent || '#E8621A' }}
-        />
+            {/* Dynamic ambient color glow from event accent */}
+            <div
+              className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full blur-3xl opacity-25 pointer-events-none"
+              style={{ backgroundColor: event.theme?.custom_accent || '#E8621A' }}
+            />
 
-        {/* Full Uncropped Poster */}
-        <div className="absolute inset-0 flex items-center justify-center px-3 pt-12 pb-44 sm:pb-40">
-          <div className="relative w-full h-full flex items-center justify-center">
+            {/* True Uncropped Poster naturally fitted to screen dimensions */}
+            <div className="absolute inset-0 flex items-center justify-center px-3 pt-12 pb-44 sm:pb-40">
+              <div className="relative w-full h-full flex items-center justify-center">
+                <Image
+                  src={event.cover_image_url}
+                  alt={event.title}
+                  fill
+                  priority={index === 0}
+                  className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* AI-Generated / Ambient Cover: Fits Full Screen Seamlessly */}
             <Image
               src={event.cover_image_url}
               alt={event.title}
               fill
               priority={index === 0}
-              className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+              className="object-cover w-full h-full scale-[1.02]"
             />
-          </div>
-        </div>
+            {/* Dark film overlay for typography readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20" />
+          </>
+        )}
       </div>
 
       {/* Floating Instagram-style Heart/Flame on Double Tap */}

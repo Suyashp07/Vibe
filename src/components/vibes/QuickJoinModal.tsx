@@ -65,9 +65,10 @@ interface QuickJoinModalProps {
   onClose: () => void;
   onSuccess?: (rsvp: RSVPItem) => void;
   onAskHost?: () => void;
+  onViewPass?: (rsvp: RSVPItem) => void;
 }
 
-export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAskHost }: QuickJoinModalProps) {
+export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAskHost, onViewPass }: QuickJoinModalProps) {
   const { profile, isLoggedIn } = useAuth();
   const session = getLocalAuthSession();
 
@@ -846,32 +847,37 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 type="button"
                 onClick={() => {
                   onClose();
+                  if (submittedRsvp && onViewPass) {
+                    onViewPass(submittedRsvp);
+                  }
+                }}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-white font-black text-sm transition-all cursor-pointer shadow-xl shadow-[#FF5500]/30 flex items-center justify-center gap-2"
+              >
+                <Ticket className="w-4 h-4 fill-white" />
+                <span>View My Digital Pass</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
                   if (onAskHost) {
                     onAskHost();
                   }
                 }}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-white font-black text-sm transition-all cursor-pointer shadow-lg shadow-[#FF5500]/30 flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                 title="Contact with host"
               >
-                <MessageCircle className="w-4 h-4 fill-white" />
+                <MessageCircle className="w-4 h-4 text-[#FF8C42]" />
                 <span>Contact with host</span>
               </button>
-
-              <Link
-                href="/passes"
-                onClick={onClose}
-                className="w-full py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Ticket className="w-3.5 h-3.5 text-[#E8621A]" />
-                <span>View My Passes</span>
-              </Link>
 
               <button
                 type="button"
                 onClick={onClose}
                 className="w-full py-2 px-4 rounded-xl text-white/40 hover:text-white/70 text-xs font-medium transition-colors cursor-pointer"
               >
-                Done
+                Back to Feed
               </button>
             </div>
           </div>

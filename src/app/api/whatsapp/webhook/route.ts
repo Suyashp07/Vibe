@@ -676,6 +676,7 @@ export async function POST(req: NextRequest) {
         source_platform: 'whatsapp',
         flash_activity: flashActivity,
         whatsapp_host_phone: senderPhone,
+        has_custom_poster: hasImage,
         manage_token: `m_${nanoid(20)}`,
         require_approval: false,
         vibe_cheers_count: 0,
@@ -730,14 +731,34 @@ export async function POST(req: NextRequest) {
 
     let createdEventSlug = finalSlug;
     let createdEventTitle = insertPayload.title;
+    let wasDraftUpdated = false;
 
     if (supabase) {
-      // 1. Guard against duplicate event creation from the same host phone within a 60-second window
+      const VALID_EVENT_COLUMNS = new Set([
+        'id', 'organizer_id', 'slug', 'title', 'tagline', 'description',
+        'cover_image_url', 'template', 'theme', 'sections', 'event_type',
+        'location_name', 'location_address', 'city', 'location_lat',
+        'location_lng', 'online_link', 'start_at', 'end_at', 'timezone',
+        'capacity', 'is_public', 'status', 'ai_generated', 'faq',
+        'speakers', 'agenda', 'gallery', 'rsvp_form_config', 'whatsapp_caption',
+        'instagram_caption', 'created_at', 'updated_at', 'source_type',
+        'source_platform', 'external_ticket_url', 'external_price_text',
+        'confidence_score'
+      ]);
+
+      const sanitizedPayload: Record<string, any> = {};
+      for (const [k, v] of Object.entries(insertPayload)) {
+        if (VALID_EVENT_COLUMNS.has(k)) {
+          sanitizedPayload[k] = v;
+        }
+      }
+
+      // 1. Guard against duplicate event creation or allow updating recent draft if missing details are now provided
       if (senderPhone) {
         try {
           const { data: recentDuplicate } = await supabase
             .from('events')
-            .select('id, slug, title, created_at')
+            .select('id, slug, title, status, confidence_score, theme, created_at')
             .filter('theme->>whatsapp_host_phone', 'eq', senderPhone)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -748,8 +769,25 @@ export async function POST(req: NextRequest) {
             const existingTitle = (recentDuplicate.title || '').toLowerCase();
             const newTitle = (insertPayload.title || '').toLowerCase();
 
-            // If created within the last 60 seconds and matches title
+            // If the host previously created a draft that was missing details (<90%) and texts again with missing details, update it!
             if (
+              timeSinceLastEventMs < 600000 && // 10 minutes window
+              recentDuplicate.status === 'draft' &&
+              (isAutoApproved || suretyScore > (((recentDuplicate.theme as any)?.surety_score) || 0))
+            ) {
+              console.log('[WhatsApp Webhook] Updating existing draft event with newly supplied details:', recentDuplicate.slug);
+              await supabase
+                .from('events')
+                .update({
+                  ...sanitizedPayload,
+                  slug: recentDuplicate.slug,
+                })
+                .eq('id', recentDuplicate.id);
+
+              createdEventSlug = recentDuplicate.slug;
+              createdEventTitle = insertPayload.title || recentDuplicate.title;
+              wasDraftUpdated = true;
+            } else if (
               timeSinceLastEventMs < 60000 &&
               (existingTitle === newTitle ||
                existingTitle.includes(newTitle) ||
@@ -779,31 +817,13 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      try {
-        const VALID_EVENT_COLUMNS = new Set([
-          'id', 'organizer_id', 'slug', 'title', 'tagline', 'description',
-          'cover_image_url', 'template', 'theme', 'sections', 'event_type',
-          'location_name', 'location_address', 'city', 'location_lat',
-          'location_lng', 'online_link', 'start_at', 'end_at', 'timezone',
-          'capacity', 'is_public', 'status', 'ai_generated', 'faq',
-          'speakers', 'agenda', 'gallery', 'rsvp_form_config', 'whatsapp_caption',
-          'instagram_caption', 'created_at', 'updated_at', 'source_type',
-          'source_platform', 'external_ticket_url', 'external_price_text',
-          'confidence_score'
-        ]);
-
-        const sanitizedPayload: Record<string, any> = {};
-        for (const [k, v] of Object.entries(insertPayload)) {
-          if (VALID_EVENT_COLUMNS.has(k)) {
-            sanitizedPayload[k] = v;
-          }
-        }
-
-        const { data: savedEvent, error: insertError } = await supabase
-          .from('events')
-          .insert(sanitizedPayload)
-          .select('id, slug, title')
-          .single();
+      if (!wasDraftUpdated) {
+        try {
+          const { data: savedEvent, error: insertError } = await supabase
+            .from('events')
+            .insert(sanitizedPayload)
+            .select('id, slug, title')
+            .single();
 
         if (savedEvent) {
           createdEventSlug = savedEvent.slug;
@@ -850,8 +870,9 @@ export async function POST(req: NextRequest) {
             console.error('[WhatsApp Webhook] Critical: Supabase insert retry failed:', retryErr);
           }
         }
-      } catch (dbErr: any) {
-        console.error('[WhatsApp Webhook] Supabase insert failed:', dbErr.message);
+        } catch (dbErr: any) {
+          console.error('[WhatsApp Webhook] Supabase insert failed:', dbErr.message);
+        }
       }
     }
 
@@ -899,6 +920,8 @@ export async function POST(req: NextRequest) {
       ? `🗺️ *Maps:* ${extracted.maps_url}\n`
       : '';
 
+    const poweredBySwaniki = `⚡ *Powered by [SWANIKI](https://swaniki.com/)* (https://swaniki.com/)`;
+
     // Send confirmation message to the organizer's WhatsApp
     let confirmationMsg = '';
     if (isAutoApproved) {
@@ -913,25 +936,36 @@ export async function POST(req: NextRequest) {
         mapsInfoLine +
         `\n✅ *Status:* Published live on Vibe Instant!\n\n` +
         `📱 *VIBE INSTANT LINK:*\n${liveReelUrl}\n\n` +
-        `📲 _Forward your Vibe Instant link to WhatsApp groups or friends to invite them!_`;
+        `📲 _Forward your Vibe Instant link to WhatsApp groups or friends to invite them!_\n\n` +
+        poweredBySwaniki;
     } else {
-      const missingList = surety.missingAspects.length > 0
-        ? surety.missingAspects.map(a => `• ${a}`).join('\n')
-        : '• Place / venue details not fully specified';
+      const missingListFormatted = surety.missingAspects.length > 0
+        ? surety.missingAspects.map(a => `🔴 *MISSING:* ${a}`).join('\n')
+        : '🔴 *MISSING:* Specific venue / landmark or start time not given';
 
       confirmationMsg =
-        `🎉 *Your event is ready!*\n\n` +
-        `⏳ *EVENT DRAFT CREATED — AWAITING ADMIN APPROVAL*\n\n` +
-        `Your event has been received, but requires admin review before going live.\n\n` +
+        `🎉 *Your event draft has been created!*\n\n` +
+        `⏳ *EVENT SAVED AS DRAFT — REQUIRES DETAILS TO GO LIVE*\n\n` +
         `📌 *Event:* ${createdEventTitle}\n` +
         `📍 *Location:* ${insertPayload.location_name}, ${insertPayload.city}${venueNote}\n` +
         `🕒 *Schedule:* ${dateStr} IST${timeNote}\n` +
         paymentInfoLine +
         spotsInfoLine +
         mapsInfoLine +
-        `\n🔍 *Details Needed to Go Live:* (${suretyScore}% Completeness)\n${missingList}\n\n` +
+        `\n🚨 *CRITICAL DETAILS MISSING TO GO LIVE* 🔴\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `⚠️ *Current Surety: ${suretyScore}%* (Requires *90%+* for instant listing)\n\n` +
+        `${missingListFormatted}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📖 *USER GUIDE — HOW TO GO LIVE INSTANTLY:*\n` +
+        `👉 *Text this bot again with the missing details above!*\n\n` +
+        `💬 *Example text to send:* \n` +
+        `_"/vibe ${createdEventTitle} at [Exact Venue], [Time], [Date]"_\n` +
+        `_or simply reply: "Venue is [Your Location], starts at [Time]"_\n\n` +
+        `✨ As soon as you text the missing details, your event will reach 90%+ surety and publish live immediately on Vibe Instant!\n\n` +
         `📱 *VIBE INSTANT PREVIEW LINK:*\n${liveReelUrl}\n\n` +
-        `💡 _You can open the Vibe Instant link right now to preview how your event looks!_`;
+        `💡 _You can open the preview link anytime to see how your event looks!_\n\n` +
+        poweredBySwaniki;
     }
 
     // Defensive check: Ensure no accidental newlines split the URL domain and path
@@ -964,7 +998,8 @@ export async function POST(req: NextRequest) {
           `• 🛡️ In & Out Control: Approve or Decline guest requests\n` +
           `• 🚪 1-Tap Door Pass Check-In Scanner\n` +
           `• 🔒 Toggle Approval Mode (Open RSVP vs Curated Review)\n` +
-          `• 📋 Export Attendee Contacts / Copy Phone Numbers`;
+          `• 📋 Export Attendee Contacts / Copy Phone Numbers\n\n` +
+          poweredBySwaniki;
 
         try {
           // Delay briefly to guarantee sequential delivery in WhatsApp

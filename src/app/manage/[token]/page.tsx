@@ -468,7 +468,7 @@ export default function MagicLinkHostSheet() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0C10] dark:bg-[#0A0C10] light:bg-white text-gray-900 dark:text-white flex flex-col justify-between">
+      <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0C10] text-gray-900 dark:text-white flex flex-col justify-between">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="w-12 h-12 rounded-full border-3 border-[#FF5500]/20 border-t-[#FF5500] animate-spin mb-4" />
@@ -482,7 +482,7 @@ export default function MagicLinkHostSheet() {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-[#0A0C10] dark:bg-[#0A0C10] light:bg-white text-gray-900 dark:text-white flex flex-col justify-between">
+      <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0C10] text-gray-900 dark:text-white flex flex-col justify-between">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
           <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
@@ -505,7 +505,7 @@ export default function MagicLinkHostSheet() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0C10] dark:bg-[#0A0C10] light:bg-white text-gray-900 dark:text-white font-sans selection:bg-[#FF5500]/30 selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0C10] text-gray-900 dark:text-white font-sans selection:bg-[#FF5500]/30 selection:text-white flex flex-col justify-between">
       {/* Platform Navigation */}
       <Navbar />
 
@@ -582,7 +582,7 @@ export default function MagicLinkHostSheet() {
           <div className="flex items-center gap-2.5 shrink-0 self-start">
             <button
               onClick={copyPublicInvite}
-              className="px-4 py-2 rounded-lg bg-[#18181B] hover:bg-black dark:bg-[#18181B] dark:hover:bg-[#27272A] border border-gray-300 dark:border-white/10 text-xs font-semibold text-white flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-white hover:bg-gray-100 text-gray-900 dark:bg-[#18181B] dark:hover:bg-[#27272A] dark:text-white border border-gray-200 dark:border-white/10 text-xs font-semibold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>Share invite</span>
@@ -802,7 +802,7 @@ export default function MagicLinkHostSheet() {
 
               <button
                 onClick={handleExportCSV}
-                className="px-3.5 py-1.5 rounded-lg bg-[#18181B] hover:bg-black dark:bg-[#18181B] dark:hover:bg-[#27272A] border border-gray-200 dark:border-white/10 text-xs font-medium text-white flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-900 dark:bg-[#18181B] dark:hover:bg-[#27272A] dark:text-white border border-gray-200 dark:border-white/10 text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export CSV</span>
@@ -848,7 +848,7 @@ export default function MagicLinkHostSheet() {
                 placeholder="Search name, phone or email"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-transparent border border-gray-200 dark:border-white/10 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:border-[#FF5500]"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-[#12151D] border border-gray-200 dark:border-white/10 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:border-[#FF5500] shadow-2xs"
               />
               {searchQuery && (
                 <button
@@ -889,7 +889,7 @@ export default function MagicLinkHostSheet() {
 
               <button
                 onClick={copyPublicInvite}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#18181B] hover:bg-black dark:bg-[#18181B] dark:hover:bg-[#27272A] border border-gray-200 dark:border-white/10 text-xs font-semibold text-white shadow-sm transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-gray-100 text-gray-900 dark:bg-[#18181B] dark:hover:bg-[#27272A] dark:text-white border border-gray-200 dark:border-white/10 text-xs font-semibold shadow-xs transition-all cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>Share invite ↗</span>
@@ -925,12 +925,12 @@ export default function MagicLinkHostSheet() {
                     key={rsvp.id}
                     className={`p-4 rounded-2xl border transition-all ${
                       isWaitlisted
-                        ? 'bg-amber-500/5 border-amber-500/20'
+                        ? 'bg-amber-500/10 dark:bg-amber-500/5 border-amber-500/30 dark:border-amber-500/20 shadow-xs'
                         : isCancelled
-                        ? 'bg-rose-500/5 border-rose-500/10 opacity-70'
+                        ? 'bg-rose-500/10 dark:bg-rose-500/5 border-rose-500/20 dark:border-rose-500/10 opacity-70'
                         : isAttended
-                        ? 'bg-cyan-500/5 border-cyan-500/30'
-                        : 'bg-[#12151D] border-white/10'
+                        ? 'bg-cyan-500/10 dark:bg-cyan-500/5 border-cyan-500/30 shadow-xs'
+                        : 'bg-white dark:bg-[#12151D] border-gray-200 dark:border-white/10 shadow-xs'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -940,10 +940,10 @@ export default function MagicLinkHostSheet() {
                         <div
                           className={`w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 ${
                             isConfirmed
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                               : isWaitlisted
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                              : 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                           }`}
                         >
                           {rsvp.name
@@ -957,32 +957,32 @@ export default function MagicLinkHostSheet() {
                         {/* Details */}
                         <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-white truncate">{rsvp.name}</span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white truncate">{rsvp.name}</span>
 
                             {/* Status Pill */}
                             {isConfirmed && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                                 IN · Confirmed
                               </span>
                             )}
                             {isWaitlisted && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                                 Pending Review
                               </span>
                             )}
                             {isCancelled && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
                                 OUT · Declined
                               </span>
                             )}
                             {isAttended && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
                                 Door Checked In
                               </span>
                             )}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-white/50">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-white/50">
                             {rsvp.phone && <span>{rsvp.phone}</span>}
                             {rsvp.email && <span>{rsvp.email}</span>}
                             <span>
@@ -1005,7 +1005,7 @@ export default function MagicLinkHostSheet() {
                             href={waLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-xl bg-white/5 hover:bg-[#25D366]/20 border border-white/10 hover:border-[#25D366]/40 text-white/70 hover:text-[#25D366] transition-all cursor-pointer"
+                            className="p-2 rounded-xl bg-gray-100 hover:bg-[#25D366]/20 border border-gray-200 hover:border-[#25D366]/40 dark:bg-white/5 dark:hover:bg-[#25D366]/20 dark:border-white/10 text-gray-600 dark:text-white/70 hover:text-[#25D366] transition-all cursor-pointer"
                             title={`Chat with ${rsvp.name} on WhatsApp`}
                           >
                             <MessageCircle className="w-4 h-4" />
@@ -1027,7 +1027,7 @@ export default function MagicLinkHostSheet() {
                             <button
                               onClick={() => handleDeclineGuest(rsvp)}
                               disabled={isActing}
-                              className="py-1.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-bold text-rose-300 flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50"
+                              className="py-1.5 px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50"
                             >
                               <X className="w-3.5 h-3.5" />
                               <span>Decline</span>
@@ -1043,8 +1043,8 @@ export default function MagicLinkHostSheet() {
                               disabled={isActing}
                               className={`py-1.5 px-3 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                                 isAttended
-                                  ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40'
-                                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
+                                  ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-600 dark:text-cyan-300 border border-cyan-500/40'
+                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white dark:border-white/15'
                               }`}
                               title={isAttended ? 'Click to uncheck' : 'Click to check-in at door'}
                             >
@@ -1055,7 +1055,7 @@ export default function MagicLinkHostSheet() {
                             <button
                               onClick={() => handleWaitlistGuest(rsvp)}
                               disabled={isActing}
-                              className="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-amber-500/20 text-white/50 hover:text-amber-300 text-xs font-medium transition-all cursor-pointer"
+                              className="py-1.5 px-2.5 rounded-xl bg-gray-100 hover:bg-amber-100 text-gray-600 hover:text-amber-700 dark:bg-white/5 dark:hover:bg-amber-500/20 dark:text-white/50 dark:hover:text-amber-300 text-xs font-medium transition-all cursor-pointer"
                               title="Move back to waitlist"
                             >
                               Waitlist
@@ -1064,7 +1064,7 @@ export default function MagicLinkHostSheet() {
                             <button
                               onClick={() => handleDeclineGuest(rsvp)}
                               disabled={isActing}
-                              className="p-1.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition-all cursor-pointer"
+                              className="p-1.5 rounded-xl bg-gray-100 hover:bg-rose-100 text-gray-500 hover:text-rose-600 dark:bg-white/5 dark:hover:bg-rose-500/20 dark:text-white/40 dark:hover:text-rose-400 transition-all cursor-pointer"
                               title="Remove guest (Move OUT)"
                             >
                               <UserX className="w-4 h-4" />
@@ -1077,7 +1077,7 @@ export default function MagicLinkHostSheet() {
                           <button
                             onClick={() => handleApproveGuest(rsvp)}
                             disabled={isActing}
-                            className="py-1.5 px-3 rounded-xl bg-white/10 hover:bg-emerald-500/20 border border-white/15 hover:border-emerald-500/40 text-xs font-bold text-white hover:text-emerald-300 flex items-center gap-1 transition-all cursor-pointer"
+                            className="py-1.5 px-3 rounded-xl bg-gray-100 hover:bg-emerald-100 border border-gray-200 hover:border-emerald-500/40 dark:bg-white/10 dark:hover:bg-emerald-500/20 dark:border-white/15 text-xs font-bold text-gray-900 hover:text-emerald-700 dark:text-white dark:hover:text-emerald-300 flex items-center gap-1 transition-all cursor-pointer"
                           >
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>Re-Admit (In)</span>

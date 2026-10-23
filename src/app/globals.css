@@ -385,6 +385,19 @@ html.light .bg-\[\#0a0a0c\] {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
+html.light .bg-\[\#0A0C10\],
+html.light .bg-\[\#0a0c10\] {
+  background-color: #F8F9FA !important;
+  color: #0F172A !important;
+}
+
+html.light .bg-\[\#12151D\],
+html.light .bg-\[\#12151d\] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #0F172A !important;
+}
+
 /* Badges overlaying dark images/posters must ALWAYS keep crisp white text and contrast */
 html.light [data-preserve-contrast="true"],
 html.light [data-preserve-contrast="true"] *,

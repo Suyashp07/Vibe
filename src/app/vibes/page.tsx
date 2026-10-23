@@ -47,6 +47,7 @@ import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
 import VibeDetailsModal from '@/components/vibes/VibeDetailsModal';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Navbar from '@/components/common/Navbar';
+import { isUserUploadedPoster } from '@/lib/posterUtils';
 
 interface VibeInstantItem {
   id: string;
@@ -234,38 +235,55 @@ function VibesContent() {
   const [detailsModalVibe, setDetailsModalVibe] = useState<VibeInstantItem | null>(null);
 
   // Check which vibes the current user has confirmed passes for
-  const userEmail = (isLoggedIn && (profile?.email || user?.email) ? (profile?.email || user?.email || '') : '').trim().toLowerCase();
+  const activeUserEmail = useMemo(() => {
+    if (isLoggedIn && (profile?.email || user?.email)) {
+      return (profile?.email || user?.email || '').trim().toLowerCase();
+    }
+    // Only if user joined as an active guest in this specific browser session
+    if (typeof window !== 'undefined') {
+      try {
+        const guestInfo = localStorage.getItem('vibe_guest_info');
+        if (guestInfo) {
+          const parsed = JSON.parse(guestInfo);
+          if (parsed?.email) return String(parsed.email).trim().toLowerCase();
+        }
+      } catch {}
+    }
+    return '';
+  }, [isLoggedIn, profile?.email, user?.email]);
 
   const userPassMap = useMemo<Record<string, RSVPItem>>(() => {
     const map: Record<string, RSVPItem> = {};
+    if (!activeUserEmail) {
+      // User is completely logged out with no active identity - NEVER show other people's passes!
+      return map;
+    }
 
-    // 1. Check locally cached passes (for instant guest joins)
+    // Merge both local and remote RSVPs, matching STRICTLY against activeUserEmail
+    const combined = [...allRsvps];
     if (typeof window !== 'undefined') {
       try {
         const localRsvps = getRSVPs();
         localRsvps.forEach((r) => {
-          if (r.status === 'confirmed') {
-            if (r.event_id) map[r.event_id] = r;
-            if (r.event_slug) map[r.event_slug] = r;
+          if (!combined.some((c) => c.id === r.id)) {
+            combined.push(r);
           }
         });
       } catch {}
     }
 
-    // 2. Check authenticated user's confirmed passes across devices
-    if (isLoggedIn && userEmail) {
-      allRsvps.forEach((r) => {
-        if (r.status === 'confirmed') {
-          const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === userEmail);
-          if (matchesUser) {
-            if (r.event_id) map[r.event_id] = r;
-            if (r.event_slug) map[r.event_slug] = r;
-          }
+    combined.forEach((r) => {
+      if (r.status === 'confirmed') {
+        const matchesUser = Boolean(r.email && r.email.trim().toLowerCase() === activeUserEmail);
+        if (matchesUser) {
+          if (r.event_id) map[r.event_id] = r;
+          if (r.event_slug) map[r.event_slug] = r;
         }
-      });
-    }
+      }
+    });
+
     return map;
-  }, [allRsvps, userEmail, isLoggedIn]);
+  }, [allRsvps, activeUserEmail]);
 
   const openPassModal = useCallback((rsvp: RSVPItem, vibe: VibeInstantItem) => {
     const ev = vibe.originalEvent || ({
@@ -517,6 +535,22 @@ function VibesContent() {
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
+  // Ensure the feed starts at the very top (1st reel) on initial mount or fresh navigation
+  const hasInitialScrolledRef = useRef(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    const autoJoinParam = searchParams.get('autoJoin') === '1' || searchParams.get('join') === '1';
+    if (!targetSlug && !autoJoinParam && !hasInitialScrolledRef.current) {
+      hasInitialScrolledRef.current = true;
+      setCurrentIndex(0);
+      if (mobileFeedRef.current) {
+        mobileFeedRef.current.scrollTop = 0;
+      }
+    }
+  }, [targetSlug, searchParams]);
+
   // Jump to targeted vibe if query param is provided
   useEffect(() => {
     if (!targetSlug) return;
@@ -537,8 +571,17 @@ function VibesContent() {
       pendingSlug = sessionStorage.getItem('vibe_pending_join_slug');
     } catch {}
 
-    const slugToJoin = (autoJoinParam && targetSlug) || pendingSlug;
-    if (!slugToJoin) return;
+    // ONLY consume pendingSlug if autoJoinParam is explicitly true (returning from OAuth)
+    // If opening /vibes normally, DO NOT jump to a stale pendingSlug from a previous session!
+    const slugToJoin = autoJoinParam ? (targetSlug || pendingSlug) : (targetSlug || null);
+    if (!slugToJoin) {
+      if (!autoJoinParam) {
+        try {
+          sessionStorage.removeItem('vibe_pending_join_slug');
+        } catch {}
+      }
+      return;
+    }
 
     const foundVibe = activeVibes.find(
       (v) => v.slug.toLowerCase() === slugToJoin.toLowerCase() || v.id === slugToJoin
@@ -809,7 +852,7 @@ function VibesContent() {
   }, []);
 
   // Mobile Feed Scroll Ref & programmatic tracking
-  const mobileFeedRef = useRef<HTMLDivElement>(null);
+  const mobileFeedRef = useRef<HTMLElement | null>(null);
   const isProgrammaticScroll = useRef(false);
   const userScrolledMobile = useRef(false);
   const isUserTouching = useRef(false);
@@ -886,7 +929,7 @@ function VibesContent() {
   }, [activeVibes.length, currentIndex]);
 
   // Fallback scroll handler that only syncs after scrolling settles (debounced to avoid fighting)
-  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const handleMobileScroll = (e: React.UIEvent<HTMLElement>) => {
     if (isProgrammaticScroll.current) return;
     const container = e.currentTarget;
     if (scrollSettleTimeout.current) clearTimeout(scrollSettleTimeout.current);
@@ -1313,31 +1356,50 @@ function VibesContent() {
                   transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute inset-0 w-full h-full bg-black overflow-hidden"
                 >
-                  {/* Ambient Blurred Backdrop (matches mood & colors of host poster) */}
-                  <Image
-                    src={currentVibe.cover_image_url}
-                    alt=""
-                    fill
-                    unoptimized
-                    priority
-                    className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
-                    aria-hidden="true"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+                  {isUserUploadedPoster(currentVibe.cover_image_url, currentVibe) ? (
+                    <>
+                      {/* User-Uploaded Flyer: Ambient Blurred Canvas + Uncropped Fitted Poster */}
+                      <Image
+                        src={currentVibe.cover_image_url}
+                        alt=""
+                        fill
+                        unoptimized
+                        priority
+                        className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
+                        aria-hidden="true"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
 
-                  {/* Full Uncropped Poster (Preserves 100% of flyer and text without cropping) */}
-                  <div className="absolute inset-0 flex items-center justify-center p-3">
-                    <div className="relative w-full h-full max-h-[90%] flex items-center justify-center">
+                      {/* True Uncropped Poster naturally fitted to screen dimensions */}
+                      <div className="absolute inset-0 flex items-center justify-center p-3">
+                        <div className="relative w-full h-full max-h-[90%] flex items-center justify-center">
+                          <Image
+                            src={currentVibe.cover_image_url}
+                            alt={currentVibe.title}
+                            fill
+                            unoptimized
+                            priority
+                            className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* AI-Generated / Ambient Cover: Fits Full Screen Seamlessly */}
                       <Image
                         src={currentVibe.cover_image_url}
                         alt={currentVibe.title}
                         fill
                         unoptimized
                         priority
-                        className="object-contain drop-shadow-[0_12px_36px_rgba(0,0,0,0.85)] rounded-2xl"
+                        className="object-cover w-full h-full scale-[1.02]"
                       />
-                    </div>
-                  </div>
+                      {/* Scrim overlay for typography contrast */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/50" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20" />
+                    </>
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -1588,7 +1650,13 @@ function VibesContent() {
       {/* 3. MOBILE VIEW (INSTAGRAM REELS / TIKTOK VIBE FEED)       */}
       {/* ========================================================= */}
       <main
-        ref={mobileFeedRef}
+        ref={(el) => {
+          mobileFeedRef.current = el;
+          if (el && !hasInitialScrolledRef.current && !targetSlug && !searchParams.get('autoJoin')) {
+            el.scrollTop = 0;
+            hasInitialScrolledRef.current = true;
+          }
+        }}
         onScroll={handleMobileScroll}
         onTouchStart={() => {
           isUserTouching.current = true;
@@ -1642,33 +1710,52 @@ function VibesContent() {
                 </span>
               </div>
 
-              {/* Full Screen Visual: Ambient Blurred Canvas + Uncropped Fitted Poster */}
+              {/* Full Screen Visual: Full-screen for AI / Uncropped Fitted for User Poster */}
               <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-black">
-                {/* Layer 1: Ambient Blurred Backdrop filling entire reel height */}
-                <Image
-                  src={vibe.cover_image_url}
-                  alt=""
-                  fill
-                  unoptimized
-                  priority={index === 0}
-                  className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
-                  aria-hidden="true"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-black/60" />
+                {isUserUploadedPoster(vibe.cover_image_url, vibe) ? (
+                  <>
+                    {/* Layer 1: Ambient Blurred Backdrop filling entire reel height */}
+                    <Image
+                      src={vibe.cover_image_url}
+                      alt=""
+                      fill
+                      unoptimized
+                      priority={index === 0}
+                      className="object-cover scale-110 blur-2xl opacity-45 brightness-50"
+                      aria-hidden="true"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-black/60" />
 
-                {/* Layer 2: True Uncropped Poster (Preserves 100% of host flyer without cropping) */}
-                <div className="absolute inset-0 flex items-center justify-center px-3 pt-12 pb-44 sm:pb-40">
-                  <div className="relative w-full h-full flex items-center justify-center">
+                    {/* Layer 2: True Uncropped Poster (Preserves 100% of host flyer without cropping) */}
+                    <div className="absolute inset-0 flex items-center justify-center px-3 pt-12 pb-44 sm:pb-40">
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <Image
+                          src={vibe.cover_image_url}
+                          alt={vibe.title}
+                          fill
+                          unoptimized
+                          priority={index === 0}
+                          className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* AI-Generated / Ambient Cover: Fits Full Screen Seamlessly */}
                     <Image
                       src={vibe.cover_image_url}
                       alt={vibe.title}
                       fill
                       unoptimized
                       priority={index === 0}
-                      className="object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-2xl"
+                      className="object-cover w-full h-full scale-[1.02]"
                     />
-                  </div>
-                </div>
+                    {/* Scrim Gradients for text & button legibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/50" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20" />
+                  </>
+                )}
               </div>
 
               {/* Floating Action Stack (Right side) - Elevated Z-index to z-40 and pointer-events-auto */}
@@ -1861,6 +1948,10 @@ function VibesContent() {
           if (confirmedRsvp) {
             setAllRsvps((prev) => [confirmedRsvp, ...prev.filter((r) => r.id !== confirmedRsvp.id)]);
           }
+        }}
+        onViewPass={(rsvp) => {
+          setQuickJoinOpen(false);
+          openPassModal(rsvp, activeTargetVibe);
         }}
       />
 

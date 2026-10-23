@@ -557,6 +557,7 @@ export async function POST(req: NextRequest) {
         created_via: 'bot',
         source_platform: 'telegram',
         flash_activity: flashActivity,
+        has_custom_poster: Boolean(isPhoto || isImageDoc),
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -627,6 +628,8 @@ export async function POST(req: NextRequest) {
     let previewText: string;
     let inlineKeyboard: any[];
 
+    const tgPoweredBySwaniki = `⚡ <b>Powered by <a href="https://swaniki.com/">SWANIKI</a></b>`;
+
     if (isAutoApproved) {
       if (isFlashVibe) {
         previewText = `🎉 <b>Your event is ready!</b>\n\n` +
@@ -638,7 +641,8 @@ export async function POST(req: NextRequest) {
           `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
           `📱 <b>Vibe Instant Reel:</b>\n<a href="${instantLink}">${instantLink}</a>\n\n` +
           `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>\n\n` +
-          `📲 <i>Forward this link to your squad to invite friends!</i>`;
+          `📲 <i>Forward this link to your squad to invite friends!</i>\n\n` +
+          tgPoweredBySwaniki;
 
         inlineKeyboard = [
           [{ text: '🌐 Open Event Link ↗', url: liveLink }],
@@ -655,7 +659,8 @@ export async function POST(req: NextRequest) {
           `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n` +
           `✅ <i>Auto-Approved: High completeness surety score.</i>\n\n` +
           `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
-          `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>`;
+          `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>\n\n` +
+          tgPoweredBySwaniki;
 
         inlineKeyboard = [
           [{ text: '🌐 Open Event Link ↗', url: liveLink }],
@@ -664,21 +669,27 @@ export async function POST(req: NextRequest) {
         ];
       }
     } else {
-      const missingList = surety.missingAspects.length > 0
-        ? surety.missingAspects.map(a => `• ${a}`).join('\n')
-        : '• Specific venue place or start time not given';
+      const missingListFormatted = surety.missingAspects.length > 0
+        ? surety.missingAspects.map(a => `🔴 <b>MISSING:</b> ${a}`).join('\n')
+        : '🔴 <b>MISSING:</b> Specific venue place or start time not given';
 
-      previewText = `🎉 <b>Your event is ready!</b>\n\n` +
-        `⏳ <b>EVENT CREATED — SAVED AS DRAFT</b>\n\n` +
-        `Your event has been recorded on Vibe!\n\n` +
+      previewText = `🎉 <b>Your event draft is created!</b>\n\n` +
+        `⏳ <b>EVENT SAVED AS DRAFT — REQUIRES DETAILS TO GO LIVE</b>\n\n` +
         `📌 <b>Title:</b> ${extracted.title}\n` +
         `🗓️ <b>Schedule:</b> ${dateStr} IST\n` +
         `📍 <b>Venue:</b> ${extracted.venue_name || 'Not given'} (${detectedCity})\n` +
         `💰 <b>Price:</b> ${extracted.price_text || (hasExternalUrl ? 'See booking page' : 'Free Entry')}\n\n` +
+        `🚨 <b>CRITICAL DETAILS MISSING TO GO LIVE</b> 🔴\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `⚠️ <b>Current Surety: ${suretyPercent}%</b> (Requires <b>90%+</b> for instant listing)\n\n` +
+        `${missingListFormatted}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📖 <b>USER GUIDE — HOW TO GO LIVE INSTANTLY:</b>\n` +
+        `👉 <b>Text this bot again with the missing details above!</b>\n` +
+        `<i>Example: /vibe ${extracted.title} at [Exact Venue], [Time], [Date]</i>\n\n` +
         `🔗 <b>ACTUAL EVENT LINK:</b>\n<a href="${liveLink}">${liveLink}</a>\n\n` +
         `📋 <b>Tap to copy link:</b>\n<code>${liveLink}</code>\n\n` +
-        `🔍 <b>Details Needed for Public Discovery:</b> (${suretyPercent}% Completeness)\n${missingList}\n\n` +
-        `<i>Your link is active! You can review your page or tap Instant Publish below.</i>`;
+        tgPoweredBySwaniki;
 
       inlineKeyboard = [
         [{ text: '🌐 Open Event Link ↗', url: liveLink }],

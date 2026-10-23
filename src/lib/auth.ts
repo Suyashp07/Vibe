@@ -1158,6 +1158,12 @@ export const signOut = async () => {
   }
   setLocalAuthSession(null);
   if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('vibe_guest_info');
+      localStorage.removeItem('vibe_guest_email');
+      localStorage.removeItem('vibe_user_email');
+      sessionStorage.clear();
+    } catch {}
     window.dispatchEvent(new Event('vibe_auth_changed'));
     window.location.href = '/';
   }
