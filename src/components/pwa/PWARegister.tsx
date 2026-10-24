@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Download, X, Share2, PlusSquare, Smartphone } from 'lucide-react';
 
 export default function PWARegister() {
+  const pathname = usePathname();
+  const isDiscoverPage = pathname === '/' || pathname === '/discover';
+
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showIOSModal, setShowIOSModal] = useState(false);
@@ -65,18 +69,18 @@ export default function PWARegister() {
       e.preventDefault();
       setDeferredPrompt(e);
       const dismissed = sessionStorage.getItem('vibe_pwa_dismissed');
-      if (!dismissed) {
+      if (!dismissed && isDiscoverPage) {
         setShowInstallBanner(true);
       }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // 3. Fallback timer for mobile browsers (iOS Safari or Chromium where event already fired)
+    // 3. Fallback timer for mobile browsers ONLY on the Discover page
     const timer = setTimeout(() => {
       const dismissed = sessionStorage.getItem('vibe_pwa_dismissed');
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-      if (!dismissed && !isStandalone && isMobile) {
+      if (!dismissed && !isStandalone && isMobile && isDiscoverPage) {
         setShowInstallBanner(true);
       }
     }, 2200);
@@ -85,7 +89,15 @@ export default function PWARegister() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       clearTimeout(timer);
     };
-  }, []);
+  }, [isDiscoverPage]);
+
+  // When navigating away from Discover page, hide banner immediately
+  useEffect(() => {
+    if (!isDiscoverPage) {
+      setShowInstallBanner(false);
+      setShowIOSModal(false);
+    }
+  }, [isDiscoverPage]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -108,6 +120,10 @@ export default function PWARegister() {
     setShowInstallBanner(false);
     sessionStorage.setItem('vibe_pwa_dismissed', 'true');
   };
+
+  if (!isDiscoverPage) {
+    return null;
+  }
 
   return (
     <>
