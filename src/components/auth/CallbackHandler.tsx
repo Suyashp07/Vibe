@@ -38,11 +38,16 @@ export function CallbackHandler({
 
       if (typeof window !== 'undefined') {
         const storedRole = sessionStorage.getItem('vibe_oauth_role') as 'organizer' | 'guest' | null;
-        const storedNext = sessionStorage.getItem('vibe_oauth_next');
+        let storedNext = sessionStorage.getItem('vibe_oauth_next');
+        if (!storedNext) {
+          const match = document.cookie.match(/(?:^|;\s*)vibe_oauth_next=([^;]+)/);
+          if (match) storedNext = decodeURIComponent(match[1]);
+        }
         if (storedRole) role = storedRole;
         if (!next && storedNext) next = storedNext;
         sessionStorage.removeItem('vibe_oauth_role');
         sessionStorage.removeItem('vibe_oauth_next');
+        document.cookie = 'vibe_oauth_next=; path=/; max-age=0; SameSite=Lax';
       }
 
       if (!next) {

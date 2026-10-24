@@ -598,6 +598,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultMode={authModalMode}
+        redirectUrl={typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : pathname}
       />
     </>
   );

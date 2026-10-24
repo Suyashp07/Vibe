@@ -78,8 +78,18 @@ export default function AuthModal({
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpSuccess, setOtpSuccess] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const currentPath =
+    typeof window !== 'undefined'
+      ? window.location.pathname + window.location.search
+      : '';
+  const isAuthPage =
+    currentPath.startsWith('/login') ||
+    currentPath.startsWith('/signup') ||
+    currentPath.startsWith('/auth');
 
-  const destination = redirectUrl || '/dashboard';
+  const destination =
+    redirectUrl ||
+    (!isAuthPage && currentPath ? currentPath : '/dashboard');
 
   // Synchronize defaultMode on prop change
   useEffect(() => {
@@ -119,7 +129,12 @@ export default function AuthModal({
         setGoogleLoading(false);
         onClose();
         if (onAuthenticated) onAuthenticated();
-        router.push(destination);
+        if (typeof window !== 'undefined') {
+          const current = window.location.pathname + window.location.search;
+          if (destination && destination !== current && destination !== '/dashboard') {
+            router.push(destination);
+          }
+        }
       }
     });
 
@@ -206,7 +221,12 @@ export default function AuthModal({
 
         if (onAuthenticated) onAuthenticated();
         onClose();
-        router.push(destination);
+        if (typeof window !== 'undefined') {
+          const current = window.location.pathname + window.location.search;
+          if (destination && destination !== current && destination !== '/dashboard') {
+            router.push(destination);
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
@@ -234,7 +254,12 @@ export default function AuthModal({
       setTimeout(() => {
         if (onAuthenticated) onAuthenticated();
         onClose();
-        router.push(destination);
+        if (typeof window !== 'undefined') {
+          const current = window.location.pathname + window.location.search;
+          if (destination && destination !== current && destination !== '/dashboard') {
+            router.push(destination);
+          }
+        }
       }, 1000);
     } catch (err: any) {
       setError(err.message || 'Verification failed. Please check the code and try again.');

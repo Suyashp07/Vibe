@@ -417,6 +417,7 @@ export default function VibeCommentsModal({
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultMode="signin"
+        redirectUrl={typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : undefined}
         onAuthenticated={() => {
           setAuthModalOpen(false);
         }}

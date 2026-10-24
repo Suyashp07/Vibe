@@ -1100,7 +1100,18 @@ export const signInWithGoogle = async (
     return { data: null, error: { message: 'Supabase client is not configured.' } };
   }
 
-  const redirectDestination = nextUrl || '/dashboard';
+  const currentPath =
+    typeof window !== 'undefined'
+      ? window.location.pathname + window.location.search
+      : '';
+  const isAuthPage =
+    currentPath.startsWith('/login') ||
+    currentPath.startsWith('/signup') ||
+    currentPath.startsWith('/auth');
+
+  const redirectDestination =
+    nextUrl ||
+    (!isAuthPage && currentPath ? currentPath : '/dashboard');
 
   const isPWA = typeof window !== 'undefined' && (
     window.matchMedia('(display-mode: standalone)').matches ||

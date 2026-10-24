@@ -1312,7 +1312,7 @@ function VibesContent() {
             </Link>
           ) : (
             <Link
-              href="/signup"
+              href={typeof window !== 'undefined' ? `/signup?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}` : '/signup?redirect=%2Fvibes'}
               className="px-2.5 sm:px-3 py-1.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-[11px] sm:text-xs font-bold transition-all shadow-[0_0_12px_rgba(255,85,0,0.4)] shrink-0 flex items-center gap-1 cursor-pointer active:scale-95"
               title="Sign Up or Sign In"
             >
