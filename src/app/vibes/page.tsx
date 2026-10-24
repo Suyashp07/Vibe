@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   Ticket,
   Info,
+  User,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1295,6 +1296,30 @@ function VibesContent() {
 
           {/* Theme Toggle Button */}
           <ThemeToggle />
+
+          {/* Sign Up / Sign In / Profile Button (Mobile & Desktop) */}
+          {isLoggedIn ? (
+            <Link
+              href="/profile"
+              className="w-8 h-8 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-[#FF5500] transition-all cursor-pointer"
+              title="My Profile"
+            >
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-bold text-white">{(profile?.name || 'U').charAt(0).toUpperCase()}</span>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/signup"
+              className="px-2.5 sm:px-3 py-1.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-[11px] sm:text-xs font-bold transition-all shadow-[0_0_12px_rgba(255,85,0,0.4)] shrink-0 flex items-center gap-1 cursor-pointer active:scale-95"
+              title="Sign Up or Sign In"
+            >
+              <User className="w-3 h-3" />
+              <span>Sign Up</span>
+            </Link>
+          )}
         </div>
       </header>
 
