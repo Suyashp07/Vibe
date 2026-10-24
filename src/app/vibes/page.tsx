@@ -562,26 +562,19 @@ function VibesContent() {
     }
   }, [targetSlug, activeVibes]);
 
-  // Auto-open QuickJoinModal when returning from Google OAuth or via autoJoin link
+  // Auto-open QuickJoinModal ONLY when explicitly requested via autoJoin param (e.g. returning from OAuth with ?autoJoin=1 or ?join=1)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const autoJoinParam = searchParams.get('autoJoin') === '1' || searchParams.get('join') === '1';
+    if (!autoJoinParam) return;
+
     let pendingSlug: string | null = null;
     try {
       pendingSlug = sessionStorage.getItem('vibe_pending_join_slug');
     } catch {}
 
-    // ONLY consume pendingSlug if autoJoinParam is explicitly true (returning from OAuth)
-    // If opening /vibes normally, DO NOT jump to a stale pendingSlug from a previous session!
-    const slugToJoin = autoJoinParam ? (targetSlug || pendingSlug) : (targetSlug || null);
-    if (!slugToJoin) {
-      if (!autoJoinParam) {
-        try {
-          sessionStorage.removeItem('vibe_pending_join_slug');
-        } catch {}
-      }
-      return;
-    }
+    const slugToJoin = targetSlug || pendingSlug;
+    if (!slugToJoin) return;
 
     const foundVibe = activeVibes.find(
       (v) => v.slug.toLowerCase() === slugToJoin.toLowerCase() || v.id === slugToJoin
