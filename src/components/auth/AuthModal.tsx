@@ -279,15 +279,15 @@ export default function AuthModal({
     'w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#FF5500] dark:focus:border-[#FF5500] transition-colors placeholder:text-gray-400 dark:placeholder:text-white/30 text-gray-900 dark:text-white';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-in fade-in"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md animate-in fade-in"
         onClick={onClose}
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-sm bg-white dark:bg-[#0D0D10] text-gray-900 dark:text-white rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 p-6 z-10 animate-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-sm max-h-[90dvh] overflow-y-auto bg-white dark:bg-[#0D0D10] text-gray-900 dark:text-white rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 p-5 sm:p-6 z-10 animate-in zoom-in-95 duration-150 my-auto">
         <button
           onClick={onClose}
           className="absolute right-3.5 top-3.5 p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors cursor-pointer"

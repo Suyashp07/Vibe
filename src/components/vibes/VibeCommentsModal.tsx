@@ -270,7 +270,7 @@ export default function VibeCommentsModal({
   return (
     <>
       <div
-        className="dark-dialog fixed inset-0 z-50 flex flex-col justify-end"
+        className="dark-dialog fixed inset-0 z-[70] flex flex-col justify-end"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -283,7 +283,7 @@ export default function VibeCommentsModal({
 
         {/* Drawer */}
         <div
-          className="relative z-10 w-full max-w-lg mx-auto bg-[#0D0F14] border-t border-white/10 rounded-t-3xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-300 shadow-2xl"
+          className="relative z-10 w-full max-w-lg mx-auto bg-[#0D0F14] border-t border-white/10 rounded-t-3xl max-h-[85dvh] flex flex-col animate-in slide-in-from-bottom duration-300 shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Handle */}
@@ -347,27 +347,27 @@ export default function VibeCommentsModal({
 
           {/* Auth Gate: User must be signed in to comment */}
           {!isAuthenticated ? (
-            <div className="px-5 py-4 border-t border-white/10 bg-[#0D0F14] flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 shrink-0">
-                  <User className="w-4.5 h-4.5 text-[#FF5500]" />
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-white/10 bg-[#0D0F14] flex items-center justify-between gap-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 shrink-0">
+                  <User className="w-4 h-4 text-[#FF5500]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">Join the conversation</p>
-                  <p className="text-[11px] text-white/40 truncate">Sign in or create an account to comment</p>
+                  <p className="text-xs font-bold text-white truncate">Join conversation</p>
+                  <p className="text-[10px] text-white/40 truncate">Sign in or create account</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#FF8C42] hover:opacity-90 text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#FF8C42] hover:opacity-90 text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In / Sign Up</span>
               </button>
             </div>
           ) : (
-            <div className="px-4 py-3 border-t border-white/10 bg-[#0D0F14]">
+            <div className="px-4 py-3 border-t border-white/10 bg-[#0D0F14] pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0">
               {/* Authenticated Member Tag */}
               <div className="flex items-center gap-1.5 mb-2 px-1">
                 <div className="w-4 h-4 rounded-full bg-[#FF5500]/20 flex items-center justify-center text-[9px] font-bold text-[#FF5500]">
