@@ -336,7 +336,7 @@ async function startWhatsAppBridge() {
             const quotedStanzaId = contextInfo?.stanzaId;
             let senderPhone = '';
             if (isSelfChat || msg.key.fromMe || remoteJid.endsWith('@lid')) {
-                senderPhone = connectedPhone || process.env.WHATSAPP_HOST_PHONE || '917019996099';
+                senderPhone = connectedPhone || process.env.WHATSAPP_HOST_PHONE || '919183123093';
             }
             else if (remoteJid.includes('@s.whatsapp.net')) {
                 senderPhone = remoteJid.replace('@s.whatsapp.net', '');
@@ -455,7 +455,12 @@ async function startWhatsAppBridge() {
                         const resData = await res.json().catch(() => ({}));
                         console.log(`[WhatsApp Bridge] Webhook forwarded successfully to ${targetUrl}:`, resData);
                         // Directly send confirmation / reply back to the WhatsApp user IF not already dispatched
-                        const replyToSend = resData.replyText;
+                        let replyToSend = resData.replyText;
+                        if (replyToSend && typeof replyToSend === 'string') {
+                            replyToSend = replyToSend
+                                .replace(/(https?:\/\/[^\s\r\n]+)[\r\n]+(\/[^\s\r\n]+)/g, '$1$2')
+                                .trim();
+                        }
                         if (replyToSend && sock) {
                             const targetJid = remoteJid || (senderPhone ? `${senderPhone}@s.whatsapp.net` : '');
                             const cleanPhone = (targetJid.split('@')[0] || '').replace(/[^0-9]/g, '');
@@ -527,16 +532,53 @@ const server = http_1.default.createServer(async (req, res) => {
         }));
         return;
     }
+    // 1b. Logout / Reset endpoint: GET or POST /logout or /reset
+    if (url.pathname === '/logout' || url.pathname === '/reset') {
+        console.log('[WhatsApp Bridge] 🔄 Disconnecting current WhatsApp session...');
+        try {
+            if (sock) {
+                await sock.logout();
+            }
+        }
+        catch (e) {
+            console.warn('[WhatsApp Bridge] sock.logout notice:', e.message);
+        }
+        fs_1.default.rmSync(AUTH_DIR, { recursive: true, force: true });
+        const supabase = getBridgeSupabase();
+        if (supabase) {
+            await supabase.storage.from('whatsapp-session').remove(['session_bundle.json']).catch(() => { });
+        }
+        connectionState = 'disconnected';
+        connectedPhone = null;
+        currentQrCode = null;
+        res.writeHead(302, { Location: '/qr' });
+        res.end();
+        setTimeout(startWhatsAppBridge, 1000);
+        return;
+    }
     // 2. Visual QR Code Page: GET /qr
     if (req.method === 'GET' && url.pathname === '/qr') {
         if (connectionState === 'connected') {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             res.end(`
+        <!DOCTYPE html>
         <html>
-          <body style="font-family:system-ui;text-align:center;padding:50px;background:#0d0d0d;color:#fff;">
-            <h1 style="color:#22c55e;">✅ WhatsApp is Connected!</h1>
-            <p>Connected phone: <b>+${connectedPhone}</b></p>
-            <p style="color:#888;">Bridge is actively routing Host ↔ Guest messages.</p>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>WhatsApp Bridge — Vibe</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 60px 20px; background: #050505; color: #fff;">
+            <div style="max-width: 480px; margin: 0 auto; background: #111114; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+              <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+              <h1 style="color: #10B981; font-size: 24px; margin: 0 0 8px 0; font-weight: 700;">WhatsApp is Connected!</h1>
+              <p style="color: #9CA3AF; margin: 0 0 24px 0; font-size: 14px;">Connected phone: <b style="color: #fff; font-size: 16px;">+${connectedPhone}</b></p>
+              <p style="color: #6B7280; font-size: 13px; line-height: 1.5; margin: 0 0 32px 0;">Bridge is actively routing Host ↔ Guest messages.</p>
+              
+              <a href="/logout" onclick="return confirm('Are you sure you want to log out and link a new number?')" style="display: inline-block; background: #FF5500; color: #fff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 12px 24px; border-radius: 12px; transition: background 0.2s;">
+                🔄 Disconnect & Link New Number
+              </a>
+            </div>
           </body>
         </html>
       `);
