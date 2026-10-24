@@ -920,7 +920,7 @@ export async function POST(req: NextRequest) {
       ? `🗺️ *Maps:* ${extracted.maps_url}\n`
       : '';
 
-    const poweredBySwaniki = `⚡ *Powered by [SWANIKI](https://swaniki.com/)* (https://swaniki.com/)`;
+    const poweredBySwaniki = `⚡ *Powered by SWANIKI* • https://swaniki.com`;
 
     // Send confirmation message to the organizer's WhatsApp
     let confirmationMsg = '';
