@@ -146,6 +146,9 @@ export const metadata: Metadata = {
     'geo.position': '18.5204;73.8567',
     ICBM: '18.5204, 73.8567',
   },
+  verification: {
+    google: 'efYPXRqMmfejlgLLbg_N7wtuUEmZNCUViZ1AHlSN7Lk',
+  },
 };
 
 const jsonLdWebsite = {
