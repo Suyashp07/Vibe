@@ -536,21 +536,31 @@ function VibesContent() {
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
-  // Ensure the feed starts at the very top (1st reel) on initial mount or fresh navigation
-  const hasInitialScrolledRef = useRef(false);
+  // Ensure the feed starts strictly at the 1st reel (index 0) on initial mount or fresh navigation
+  const isInitialMountRef = useRef(true);
   useEffect(() => {
     if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
-    const autoJoinParam = searchParams.get('autoJoin') === '1' || searchParams.get('join') === '1';
-    if (!targetSlug && !autoJoinParam && !hasInitialScrolledRef.current) {
-      hasInitialScrolledRef.current = true;
+
+    if (!targetSlug) {
       setCurrentIndex(0);
-      if (mobileFeedRef.current) {
-        mobileFeedRef.current.scrollTop = 0;
-      }
+      const resetScroll = () => {
+        if (mobileFeedRef.current) {
+          mobileFeedRef.current.scrollTop = 0;
+        }
+      };
+      resetScroll();
+      requestAnimationFrame(resetScroll);
+      const timer = setTimeout(() => {
+        resetScroll();
+        isInitialMountRef.current = false;
+      }, 400);
+      return () => clearTimeout(timer);
+    } else {
+      isInitialMountRef.current = false;
     }
-  }, [targetSlug, searchParams]);
+  }, [targetSlug]);
 
   // Jump to targeted vibe if query param is provided
   useEffect(() => {
@@ -896,22 +906,24 @@ function VibesContent() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (isProgrammaticScroll.current) return;
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const indexStr = entry.target.getAttribute('data-index');
-            if (indexStr !== null) {
-              const idx = parseInt(indexStr, 10);
-              if (!isNaN(idx) && idx !== currentIndex) {
-                userScrolledMobile.current = true;
-                setCurrentIndex(idx);
-              }
-            }
+        if (isInitialMountRef.current && !targetSlug) return;
+        const visibleEntries = entries.filter((e) => e.isIntersecting);
+        if (!visibleEntries.length) return;
+        const best = visibleEntries.reduce((max, curr) =>
+          curr.intersectionRatio > max.intersectionRatio ? curr : max
+        );
+        const indexStr = best.target.getAttribute('data-index');
+        if (indexStr !== null) {
+          const idx = parseInt(indexStr, 10);
+          if (!isNaN(idx) && idx !== currentIndex) {
+            userScrolledMobile.current = true;
+            setCurrentIndex(idx);
           }
-        });
+        }
       },
       {
         root: container,
-        threshold: 0.55,
+        threshold: [0.3, 0.6, 0.85],
       }
     );
 
@@ -920,7 +932,7 @@ function VibesContent() {
     return () => {
       observer.disconnect();
     };
-  }, [activeVibes.length, currentIndex]);
+  }, [activeVibes.length, currentIndex, targetSlug]);
 
   // Fallback scroll handler that only syncs after scrolling settles (debounced to avoid fighting)
   const handleMobileScroll = (e: React.UIEvent<HTMLElement>) => {
@@ -1670,9 +1682,8 @@ function VibesContent() {
       <main
         ref={(el) => {
           mobileFeedRef.current = el;
-          if (el && !hasInitialScrolledRef.current && !targetSlug && !searchParams.get('autoJoin')) {
+          if (el && !targetSlug) {
             el.scrollTop = 0;
-            hasInitialScrolledRef.current = true;
           }
         }}
         onScroll={handleMobileScroll}
