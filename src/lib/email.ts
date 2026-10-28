@@ -14,12 +14,22 @@ export interface EmailSendResult {
  * Base email layout wrapper with organizer white-label branding
  */
 function wrapWhiteLabelTemplate(
-  organizer: { name: string; brand_color?: string; logo_url?: string; handle?: string },
+  organizer: { name?: string; brand_color?: string; logo_url?: string; handle?: string },
   contentHtml: string,
-  preheader: string = ''
+  preheader: string = '',
+  baseUrl?: string
 ): string {
-  const brandColor = organizer.brand_color || '#E8621A';
-  const logo = organizer.logo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80';
+  const isGenericOrg = !organizer?.name || /^(organizer|event host|host|admin)$/i.test(organizer.name.trim());
+  const orgName = isGenericOrg ? 'Vibe by Swaniki' : organizer.name;
+  const isGenericHandle = !organizer?.handle || /^(organizer|host|admin)$/i.test(organizer.handle.trim());
+  const orgHandle = isGenericHandle ? 'vibe' : organizer.handle;
+  const brandColor = organizer?.brand_color || '#E8621A';
+
+  const defaultAppUrl = (baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/+$/, '');
+  const defaultLogo = `${defaultAppUrl}/icons/icon-192.png`;
+  const logo = (organizer?.logo_url && !organizer.logo_url.includes('unsplash'))
+    ? organizer.logo_url
+    : defaultLogo;
 
   return `
 <!DOCTYPE html>
@@ -27,7 +37,7 @@ function wrapWhiteLabelTemplate(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${organizer.name}</title>
+  <title>${orgName}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F6F2; margin: 0; padding: 24px 12px; color: #111827; }
     .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 18px; overflow: hidden; border: 1px solid #E5E1D8; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
@@ -53,10 +63,10 @@ function wrapWhiteLabelTemplate(
   <div class="container">
     <div class="brand-accent-strip"></div>
     <div class="header">
-      <img src="${logo}" alt="${organizer.name}" class="logo" />
+      <img src="${logo}" alt="${orgName}" class="logo" />
       <div>
-        <h2 class="org-title">${organizer.name}</h2>
-        <p class="org-handle">@${organizer.handle || 'host'}</p>
+        <h2 class="org-title">${orgName}</h2>
+        <p class="org-handle">@${orgHandle}</p>
       </div>
     </div>
     <div class="content">
@@ -314,22 +324,44 @@ export async function sendRsvpConfirmedEmail({
   organizer: { name: string; brand_color?: string; logo_url?: string; handle?: string };
   appUrl?: string;
 }) {
-  const baseUrl = appUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com';
+  let rawBaseUrl = appUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe-seven-pied.vercel.app';
+  if (!rawBaseUrl || rawBaseUrl.includes('localhost')) {
+    rawBaseUrl = 'https://vibe-seven-pied.vercel.app';
+  }
+  const baseUrl = rawBaseUrl.replace(/\/+$/, '');
   const calUrl = generateGoogleCalendarUrl(event);
   const formattedTime = formatIST(event.start_at);
+
+  const isGenericOrg = !organizer?.name || /^(organizer|event host|host|admin)$/i.test(organizer.name.trim());
+  const organizerName = isGenericOrg ? 'Vibe by Swaniki' : organizer.name;
+  const isGenericHandle = !organizer?.handle || /^(organizer|host|admin)$/i.test(organizer.handle.trim());
+  const organizerHandle = isGenericHandle ? 'vibe' : organizer.handle;
   const brandColor = organizer?.brand_color || event.organizer_brand_color || '#E8621A';
+
+  const defaultLogo = `${baseUrl}/icons/icon-192.png`;
+  const logoUrl = (organizer?.logo_url && !organizer.logo_url.includes('unsplash'))
+    ? organizer.logo_url
+    : defaultLogo;
+
+  const normalizedOrganizer = {
+    ...organizer,
+    name: organizerName,
+    handle: organizerHandle,
+    brand_color: brandColor,
+    logo_url: logoUrl
+  };
 
   // Compute structured sequential serial matching DigitalPassModal.tsx
   const rsvpId = rsvp?.id || `r-${Date.now()}`;
   const ticketSerial = getPassSerialNumber(rsvp, event);
   const digitalPassUrl = `${baseUrl}/${event.slug}?ticket=${encodeURIComponent(ticketSerial)}&guest=${encodeURIComponent(rsvpId)}`;
   
-  // High-reliability QR Code image URL (works natively across Gmail, Outlook, Apple Mail)
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&format=png&data=${encodeURIComponent(digitalPassUrl)}`;
+  // First-party reliable QR code endpoint generated directly on Vibe backend
+  const qrImageUrl = `${baseUrl}/api/qr?data=${encodeURIComponent(digitalPassUrl)}`;
   const mapsUrl = event.maps_url || (event.location_name ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.location_name}, ${event.location_address || event.city}`)}` : undefined);
 
   const html = wrapWhiteLabelTemplate(
-    organizer,
+    normalizedOrganizer,
     `
       <div style="margin-bottom: 20px;">
         <span style="display: inline-block; background: #ECFDF5; color: #059669; font-weight: 800; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; border-radius: 9999px; border: 1px solid #A7F3D0;">
@@ -355,7 +387,7 @@ export async function sendRsvpConfirmedEmail({
             ${event.title}
           </div>
           <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">
-            Hosted by <strong>${organizer.name}</strong>
+            Hosted by <strong>${organizerName}</strong>
           </div>
         </div>
 
@@ -405,12 +437,19 @@ export async function sendRsvpConfirmedEmail({
             <p style="margin: 0 0 10px 0; font-size: 11px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 1.5px;">
               ✦ Present for Gate Check-In ✦
             </p>
-            <div style="display: inline-block; padding: 8px; background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0;">
-              <img src="${qrImageUrl}" alt="Pass QR Code" width="180" height="180" style="display: block; width: 180px; height: 180px;" />
-            </div>
+            <a href="${digitalPassUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+              <div style="display: inline-block; padding: 10px; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0;">
+                <img src="${qrImageUrl}" alt="Ticket Pass QR Code" width="180" height="180" style="display: block; width: 180px; height: 180px; border-radius: 6px;" />
+              </div>
+            </a>
             <p style="margin: 10px 0 0 0; font-size: 11px; color: #64748B;">
               Fast door entry • Scannable by event staff
             </p>
+            <div style="margin-top: 8px;">
+              <a href="${digitalPassUrl}" target="_blank" style="font-size: 12px; color: ${brandColor}; font-weight: 700; text-decoration: underline;">
+                👉 Tap here to view live digital pass
+              </a>
+            </div>
           </div>
 
           <!-- Date & Venue Info inside Pass -->

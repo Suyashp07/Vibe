@@ -226,7 +226,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
             rsvp: updatedRsvp,
             event,
             organizer: {
-              name: event.organizer_name || 'Event Host',
+              name: (!event.organizer_name || /^(organizer|event host|host|admin)$/i.test(event.organizer_name)) ? 'Vibe by Swaniki' : event.organizer_name,
               brand_color: event.theme?.palette || '#FF5500',
               logo_url: event.cover_image_url,
               handle: event.slug,
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
             rsvp: { ...guest, status: 'confirmed' },
             event,
             organizer: {
-              name: event.organizer_name || 'Event Host',
+              name: (!event.organizer_name || /^(organizer|event host|host|admin)$/i.test(event.organizer_name)) ? 'Vibe by Swaniki' : event.organizer_name,
               brand_color: event.theme?.palette || '#FF5500',
               logo_url: event.cover_image_url,
               handle: event.slug,

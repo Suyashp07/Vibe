@@ -34,7 +34,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine current base application URL
-    const appUrl = req.nextUrl?.origin || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com';
+    let appUrl = req.nextUrl?.origin || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe-seven-pied.vercel.app';
+    if (!appUrl || appUrl.includes('localhost')) {
+      appUrl = 'https://vibe-seven-pied.vercel.app';
+    }
+
+    const resolveOrganizer = (orgInput?: any, eventInput?: any) => {
+      const rawName = orgInput?.name || eventInput?.organizer_name;
+      const isGeneric = !rawName || /^(organizer|event host|host|admin)$/i.test(String(rawName).trim());
+      const name = isGeneric ? 'Vibe by Swaniki' : rawName;
+      const rawHandle = orgInput?.handle || eventInput?.organizer_handle;
+      const handle = (!rawHandle || /^(organizer|host|admin)$/i.test(String(rawHandle).trim())) ? 'vibe' : rawHandle;
+      return {
+        name,
+        brand_color: orgInput?.brand_color || eventInput?.organizer_brand_color || '#E8621A',
+        logo_url: (orgInput?.logo_url && !orgInput.logo_url.includes('unsplash'))
+          ? orgInput.logo_url
+          : `${appUrl.replace(/\/+$/, '')}/icons/icon-192.png`,
+        handle
+      };
+    };
+
+    const activeOrganizer = resolveOrganizer(organizer, event);
 
     // 1. Organizer Event Creation Confirmation
     if (type === 'event_created') {
@@ -44,14 +65,9 @@ export async function POST(req: NextRequest) {
 
       const result = await sendEventCreatedEmail({
         to,
-        organizerName: organizerName || event.organizer_name || 'Event Host',
+        organizerName: activeOrganizer.name,
         event,
-        organizer: organizer || {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        },
+        organizer: activeOrganizer,
         appUrl
       });
 
@@ -69,12 +85,7 @@ export async function POST(req: NextRequest) {
         guestName: guestName || rsvp?.name || 'Valued Guest',
         rsvp,
         event,
-        organizer: organizer || {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        },
+        organizer: activeOrganizer,
         appUrl
       });
 
@@ -92,12 +103,7 @@ export async function POST(req: NextRequest) {
         guestName: guestName || rsvp?.name || 'Valued Guest',
         position: position || 1,
         event,
-        organizer: organizer || {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        },
+        organizer: activeOrganizer,
         appUrl
       });
 
@@ -111,12 +117,7 @@ export async function POST(req: NextRequest) {
         guestName: guestName || 'Valued Guest',
         timing: timing || '24h',
         event,
-        organizer: organizer || {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        }
+        organizer: activeOrganizer
       });
       return NextResponse.json(result);
     }
@@ -128,12 +129,7 @@ export async function POST(req: NextRequest) {
         guestName: guestName || 'Valued Guest',
         changes: changes || 'Details have been updated by the organizer.',
         event,
-        organizer: organizer || {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        }
+        organizer: activeOrganizer
       });
       return NextResponse.json(result);
     }
@@ -145,12 +141,7 @@ export async function POST(req: NextRequest) {
         guestName: guestName || 'Valued Guest',
         reason,
         event,
-        organizer: organizer || {
-          name: event.organizer_name,
-          brand_color: event.organizer_brand_color,
-          logo_url: event.organizer_logo,
-          handle: event.organizer_handle
-        }
+        organizer: activeOrganizer
       });
       return NextResponse.json(result);
     }
