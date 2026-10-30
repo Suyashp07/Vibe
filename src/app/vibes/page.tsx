@@ -297,7 +297,8 @@ function VibesContent() {
       title: vibe.title,
       description: vibe.description,
       organizer_id: 'org-1',
-      organizer_name: vibe.host_name,
+      organizer_name: (!vibe.host_name || /^(organizer|host|admin)$/i.test(vibe.host_name.trim())) ? 'Vibe Pass' : vibe.host_name,
+      organizer_handle: 'vibepass',
       cover_image_url: vibe.cover_image_url,
       city: vibe.city,
       location_name: vibe.location_name,
@@ -411,18 +412,22 @@ function VibesContent() {
       // Dynamic badges
       const badge = spotsLeft <= 3 ? 'Selling fast' : 'Community pick';
 
-      const hostName =
+      const rawHostName =
         e.organizer_name ||
         (e as any).profiles?.name ||
-        (e.source_platform ? `${e.source_platform.toUpperCase()} Host` : 'Vibe Host');
+        (e.source_platform ? `${e.source_platform.toUpperCase()} Host` : 'Vibe Pass');
 
-      const initials =
-        hostName
+      const isGenericHost = !rawHostName || /^(organizer|host|event host|admin|default organizer)$/i.test(rawHostName.trim());
+      const hostName = isGenericHost ? 'Vibe Pass' : rawHostName;
+
+      const initials = isGenericHost
+        ? 'VP'
+        : hostName
           .split(' ')
           .map((p: string) => p[0])
           .join('')
           .slice(0, 2)
-          .toUpperCase() || 'VH';
+          .toUpperCase() || 'VP';
 
       const venue = (e.location_name || '').trim();
       const city = (e.city || '').trim();
@@ -1285,7 +1290,8 @@ function VibesContent() {
       title: activeTargetVibe.title,
       description: activeTargetVibe.description,
       organizer_id: 'org-1',
-      organizer_name: activeTargetVibe.host_name,
+      organizer_name: (!activeTargetVibe.host_name || /^(organizer|host|admin)$/i.test(activeTargetVibe.host_name.trim())) ? 'Vibe Pass' : activeTargetVibe.host_name,
+      organizer_handle: 'vibepass',
       cover_image_url: activeTargetVibe.cover_image_url,
       city: activeTargetVibe.city,
       location_name: activeTargetVibe.location_name,

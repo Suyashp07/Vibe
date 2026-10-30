@@ -19,10 +19,10 @@ function wrapWhiteLabelTemplate(
   preheader: string = '',
   baseUrl?: string
 ): string {
-  const isGenericOrg = !organizer?.name || /^(organizer|event host|host|admin)$/i.test(organizer.name.trim());
-  const orgName = isGenericOrg ? 'Vibe by Swaniki' : organizer.name;
+  const isGenericOrg = !organizer?.name || /^(organizer|event host|host|admin|community organizer|default organizer)$/i.test(organizer.name.trim());
+  const orgName = isGenericOrg ? 'Vibe Pass' : organizer.name;
   const isGenericHandle = !organizer?.handle || /^(organizer|host|admin)$/i.test(organizer.handle.trim());
-  const orgHandle = isGenericHandle ? 'vibe' : organizer.handle;
+  const orgHandle = isGenericHandle ? 'vibepass' : organizer.handle;
   const brandColor = organizer?.brand_color || '#E8621A';
 
   const defaultAppUrl = (baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/+$/, '');
@@ -128,8 +128,8 @@ export async function sendEmail({
 
   // 2. Resend API Engine
   const apiKey = process.env.RESEND_API_KEY;
-  // Default to onboarding@resend.dev (supported on all Resend accounts without custom domain verification)
-  const defaultFrom = process.env.EMAIL_FROM || 'Vibe by Swaniki <onboarding@resend.dev>';
+  // Default to verified domain vibe.swaniki.com
+  const defaultFrom = process.env.EMAIL_FROM || 'Vibe by Swaniki <events@vibe.swaniki.com>';
   const sender = from || defaultFrom;
 
   if (!apiKey || apiKey.includes('your-resend-api-key') || apiKey === 're_placeholder') {
@@ -332,10 +332,10 @@ export async function sendRsvpConfirmedEmail({
   const calUrl = generateGoogleCalendarUrl(event);
   const formattedTime = formatIST(event.start_at);
 
-  const isGenericOrg = !organizer?.name || /^(organizer|event host|host|admin)$/i.test(organizer.name.trim());
-  const organizerName = isGenericOrg ? 'Vibe by Swaniki' : organizer.name;
+  const isGenericOrg = !organizer?.name || /^(organizer|event host|host|admin|community organizer|default organizer)$/i.test(organizer.name.trim());
+  const organizerName = isGenericOrg ? 'Vibe Pass' : organizer.name;
   const isGenericHandle = !organizer?.handle || /^(organizer|host|admin)$/i.test(organizer.handle.trim());
-  const organizerHandle = isGenericHandle ? 'vibe' : organizer.handle;
+  const organizerHandle = isGenericHandle ? 'vibepass' : organizer.handle;
   const brandColor = organizer?.brand_color || event.organizer_brand_color || '#E8621A';
 
   const defaultLogo = `${baseUrl}/icons/icon-192.png`;
@@ -387,7 +387,7 @@ export async function sendRsvpConfirmedEmail({
             ${event.title}
           </div>
           <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">
-            Hosted by <strong>${organizerName}</strong>
+            ${isGenericOrg ? 'Issued by <strong>Vibe Pass</strong>' : `Hosted by <strong>${organizerName}</strong>`}
           </div>
         </div>
 

@@ -889,6 +889,80 @@ export const signUpWithPassword = async (
     return { data: { user: { id: profile.id, email: cleanEmail } }, error: null, needsOtp: false };
   }
 
+  // 1. Primary path: Use server-side /api/auth/signup with Admin API & email_confirm: true
+  // This avoids Supabase's rate-limited (3/hr) built-in SMTP and eliminates "Error sending confirmation email"
+  try {
+    const apiRes = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: cleanEmail,
+        password,
+        name: cleanName,
+        role,
+        handle: cleanHandle,
+      }),
+    });
+
+    const result = await apiRes.json();
+
+    if (!apiRes.ok || result.error) {
+      if (
+        result.error?.code === 'USER_EXISTS' ||
+        result.error?.message?.toLowerCase().includes('already exists') ||
+        result.error?.message?.toLowerCase().includes('already registered')
+      ) {
+        return {
+          data: null,
+          error: {
+            message: 'An account with this email already exists. Please sign in instead.',
+            code: 'USER_EXISTS',
+          },
+        };
+      }
+      return { data: null, error: result.error || { message: 'Failed to create account.' } };
+    }
+
+    // 2. Client logs in with the registered credentials immediately
+    const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
+      email: cleanEmail,
+      password,
+    });
+
+    if (signInError) {
+      console.warn('Auto sign-in warning after signup:', signInError);
+    }
+
+    const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+    const profile: AuthProfile = {
+      id: signInData?.user?.id || result.data?.user?.id || `usr-${Date.now()}`,
+      email: cleanEmail,
+      name: cleanName,
+      role: isSuper ? 'super_admin' : role,
+      handle: cleanHandle,
+      brand_color: '#0A0A0A',
+      brand_font: 'Inter',
+      onboarded: role === 'guest',
+      isDemo: false,
+    };
+
+    setLocalAuthSession(profile);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('vibe_pending_signup');
+      window.dispatchEvent(new Event('vibe_auth_changed'));
+    }
+
+    return {
+      data: signInData || result.data,
+      error: null,
+      needsOtp: false,
+      email: cleanEmail,
+    };
+  } catch (apiErr: any) {
+    console.warn('API signup route error, attempting fallback client signup:', apiErr);
+  }
+
+  // 3. Fallback to client.auth.signUp if API route was unreachable
   const { data, error } = await client.auth.signUp({
     email: cleanEmail,
     password,

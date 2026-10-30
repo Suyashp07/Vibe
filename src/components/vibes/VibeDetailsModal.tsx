@@ -116,7 +116,9 @@ export default function VibeDetailsModal({
               {vibe.host_initials || 'H'}
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">{vibe.host_name || 'Organizer'}</h4>
+              <h4 className="text-sm font-bold text-white">
+                {(!vibe.host_name || /^(organizer|host|admin)$/i.test(vibe.host_name.trim())) ? 'Vibe Pass' : vibe.host_name}
+              </h4>
               <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
                 <span className="text-amber-400">★</span>
                 <span>{vibe.host_rating || '4.9'} · {vibe.host_vibes_count || 5} vibes hosted</span>

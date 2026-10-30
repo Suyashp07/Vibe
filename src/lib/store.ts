@@ -1394,9 +1394,9 @@ export const syncEventsWithSupabase = async (options?: { organizerId?: string; i
       return {
         id: row.id,
         organizer_id: row.organizer_id || orgProfile.id || 'org-1',
-        organizer_name: orgProfile.name || row.organizer_name || 'Organizer',
-        organizer_handle: orgProfile.handle || row.organizer_handle || 'organizer',
-        organizer_logo: orgProfile.logo_url || row.organizer_logo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        organizer_name: orgProfile.name || (row.organizer_name && !/^(organizer|host|admin)$/i.test(row.organizer_name) ? row.organizer_name : 'Vibe Pass'),
+        organizer_handle: orgProfile.handle || (row.organizer_handle && !/^(organizer|host|admin)$/i.test(row.organizer_handle) ? row.organizer_handle : 'vibepass'),
+        organizer_logo: orgProfile.logo_url || (row.organizer_logo && !row.organizer_logo.includes('unsplash') ? row.organizer_logo : '/icons/icon-192.png'),
         organizer_brand_color: orgProfile.brand_color || row.organizer_brand_color || '#E8621A',
         slug: row.slug,
         title: row.title,

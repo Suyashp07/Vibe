@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
 
     const resolveOrganizer = (orgInput?: any, eventInput?: any) => {
       const rawName = orgInput?.name || eventInput?.organizer_name;
-      const isGeneric = !rawName || /^(organizer|event host|host|admin)$/i.test(String(rawName).trim());
-      const name = isGeneric ? 'Vibe by Swaniki' : rawName;
+      const isGeneric = !rawName || /^(organizer|event host|host|admin|community organizer|default organizer)$/i.test(String(rawName).trim());
+      const name = isGeneric ? 'Vibe Pass' : rawName;
       const rawHandle = orgInput?.handle || eventInput?.organizer_handle;
-      const handle = (!rawHandle || /^(organizer|host|admin)$/i.test(String(rawHandle).trim())) ? 'vibe' : rawHandle;
+      const handle = (!rawHandle || /^(organizer|host|admin)$/i.test(String(rawHandle).trim())) ? 'vibepass' : rawHandle;
       return {
         name,
         brand_color: orgInput?.brand_color || eventInput?.organizer_brand_color || '#E8621A',

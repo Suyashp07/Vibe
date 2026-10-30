@@ -111,9 +111,36 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
     return idx >= 0 ? idx + 1 : 1;
   }, [isWaitlisted, event.id, currentRsvp.id]);
 
+  // Normalize generic organizer text ("Organizer", "host") to "Vibe Pass"
+  const isGenericOrg = useMemo(() => {
+    const n = (event.organizer_name || '').trim().toLowerCase();
+    const h = (event.organizer_handle || '').trim().toLowerCase();
+    return (
+      !n ||
+      n === 'organizer' ||
+      n === 'host' ||
+      n === 'event host' ||
+      n === 'admin' ||
+      n === 'default organizer' ||
+      n === 'community organizer' ||
+      n === 'vibe host' ||
+      h === 'organizer' ||
+      h === 'host'
+    );
+  }, [event.organizer_name, event.organizer_handle]);
+
+  const displayOrganizerName = isGenericOrg ? 'Vibe Pass' : event.organizer_name;
+  const displayOrganizerHandle = isGenericOrg ? 'vibepass' : (event.organizer_handle || 'vibepass');
+  const displayBadgeText = isGenericOrg ? 'Official' : 'Host';
+
   // 1. Resolve live organizer profile image dynamically
   useEffect(() => {
-    if (event.organizer_logo && event.organizer_logo.trim().length > 0) {
+    if (isGenericOrg) {
+      setOrganizerAvatar('/icons/icon-192.png');
+      return;
+    }
+
+    if (event.organizer_logo && event.organizer_logo.trim().length > 0 && !event.organizer_logo.includes('unsplash')) {
       setOrganizerAvatar(event.organizer_logo);
       return;
     }
@@ -139,9 +166,9 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
     }
 
     const brandColorHex = (event.organizer_brand_color || '#E8621A').replace('#', '');
-    const fallback = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(event.organizer_name || 'Host')}&backgroundColor=${brandColorHex}&textColor=ffffff`;
+    const fallback = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(event.organizer_name || 'Vibe')}&backgroundColor=${brandColorHex}&textColor=ffffff`;
     setOrganizerAvatar(fallback);
-  }, [event]);
+  }, [event, isGenericOrg]);
 
   // 2. Formulate stable, structured ticket serial & verified digital pass payload
   const { ticketSerial, passHash, verificationUrl } = useMemo(() => {
@@ -309,10 +336,18 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
               {/* Host Profile Info */}
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
-                  {organizerAvatar && !avatarError ? (
+                  {isGenericOrg ? (
+                    <div className="w-11 h-11 rounded-2xl bg-black border-2 border-[#FF5500]/60 flex items-center justify-center shadow-xs overflow-hidden">
+                      <img
+                        src="/icons/icon-192.png"
+                        alt="Vibe Pass"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : organizerAvatar && !avatarError ? (
                     <img
                       src={organizerAvatar}
-                      alt={event.organizer_name}
+                      alt={displayOrganizerName}
                       className="w-11 h-11 rounded-2xl object-cover border-2 shadow-xs"
                       style={{ borderColor: event.organizer_brand_color || '#E8621A' }}
                       onError={() => setAvatarError(true)}
@@ -322,13 +357,13 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                       className="w-11 h-11 rounded-2xl text-white font-display font-black text-base flex items-center justify-center shadow-xs"
                       style={{ backgroundColor: event.organizer_brand_color || '#E8621A' }}
                     >
-                      {event.organizer_name?.[0]?.toUpperCase() || 'O'}
+                      {displayOrganizerName?.[0]?.toUpperCase() || 'V'}
                     </div>
                   )}
                   {/* Verified Check Badge */}
                   <div 
                     className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-xs border border-emerald-200"
-                    title="Verified Host"
+                    title={isGenericOrg ? 'Verified Vibe Pass' : 'Verified Host'}
                   >
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
@@ -336,13 +371,17 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
 
                 <div>
                   <div className="text-xs font-bold text-ink leading-tight flex items-center gap-1.5">
-                    <span>{event.organizer_name}</span>
-                    <span className="text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-surface-2 border border-border text-ink-muted">
-                      Host
+                    <span>{displayOrganizerName}</span>
+                    <span className={`text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded border ${
+                      isGenericOrg
+                        ? 'bg-[#FF5500]/10 border-[#FF5500]/30 text-[#FF5500]'
+                        : 'bg-surface-2 border-border text-ink-muted'
+                    }`}>
+                      {displayBadgeText}
                     </span>
                   </div>
                   <div className="text-[11px] font-mono text-ink-muted">
-                    @{event.organizer_handle}
+                    @{displayOrganizerHandle}
                   </div>
                 </div>
               </div>

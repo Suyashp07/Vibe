@@ -480,7 +480,7 @@ function SignupContent() {
                       <span>Creating account...</span>
                     </>
                   ) : (
-                    <span>Create Account & Send Verification Code</span>
+                    <span>Create Account &amp; Continue</span>
                   )}
                 </button>
               </form>
