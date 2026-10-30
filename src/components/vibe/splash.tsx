@@ -43,7 +43,8 @@ export function Splash() {
       <span className="splash-glow" aria-hidden="true" />
       <div className="splash-inner">
         <div className="splash-word">
-          v<span>i</span>be<span className="logo-dot">.</span>
+          <span>vibe</span>
+          <span className="splash-dot" aria-hidden="true" />
         </div>
         <span className="splash-by">BY SWANIKI</span>
         <p className="splash-tagline">Good people. Real connections.</p>

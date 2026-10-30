@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Download, X, Share2, PlusSquare, Smartphone, Monitor, Info } from 'lucide-react';
+import { X, Share2, PlusSquare, Smartphone, CheckCircle2 } from 'lucide-react';
 
 export function triggerPWAInstall() {
   if (typeof window !== 'undefined') {
@@ -12,12 +12,12 @@ export function triggerPWAInstall() {
 export default function PWARegister() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
-  const [showDesktopGuideModal, setShowDesktopGuideModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Register Service Worker (Disable and auto-clean on localhost to avoid stale cache)
+    // 1. Service Worker cleanup on localhost, registration in production
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const isLocal =
         window.location.hostname === 'localhost' ||
@@ -64,40 +64,92 @@ export default function PWARegister() {
       !(window as any).MSStream;
     setIsIOS(isAppleDevice);
 
-    // Listen for Chrome / Android beforeinstallprompt
+    // Grab early captured prompt if available from layout.tsx inline script
+    if (typeof window !== 'undefined' && (window as any).__vibe_deferred_prompt) {
+      setDeferredPrompt((window as any).__vibe_deferred_prompt);
+    }
+
+    // Listen for beforeinstallprompt
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
+      if (typeof window !== 'undefined') {
+        (window as any).__vibe_deferred_prompt = e;
+      }
       setDeferredPrompt(e);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    const handlePromptReady = () => {
+      if (typeof window !== 'undefined' && (window as any).__vibe_deferred_prompt) {
+        setDeferredPrompt((window as any).__vibe_deferred_prompt);
+      }
+    };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      if (typeof window !== 'undefined') {
+        (window as any).__vibe_deferred_prompt = null;
+      }
     };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('vibe:deferred_prompt_ready', handlePromptReady);
     window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('vibe:app_installed', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('vibe:deferred_prompt_ready', handlePromptReady);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('vibe:app_installed', handleAppInstalled);
     };
   }, []);
 
   const handleInstallClick = useCallback(async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      if (choiceResult.outcome === 'accepted') {
-        console.log('[PWA] User accepted the install prompt');
+    // 1. Native installation prompt (same as the original popup message)
+    const prompt =
+      (typeof window !== 'undefined' && (window as any).__vibe_deferred_prompt) ||
+      deferredPrompt;
+
+    if (prompt) {
+      try {
+        await prompt.prompt();
+        const choiceResult = await prompt.userChoice;
+        if (choiceResult && choiceResult.outcome === 'accepted') {
+          console.log('[PWA] User accepted the install prompt');
+        }
+      } catch (err) {
+        console.warn('[PWA] Install prompt error:', err);
       }
       setDeferredPrompt(null);
-    } else if (isIOS) {
-      setShowIOSModal(true);
-    } else {
-      setShowDesktopGuideModal(true);
+      if (typeof window !== 'undefined') {
+        (window as any).__vibe_deferred_prompt = null;
+      }
+      return;
     }
-  }, [deferredPrompt, isIOS]);
+
+    // 2. If app is already installed and running standalone
+    const isStandalone =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        isInstalled);
+
+    if (isStandalone) {
+      setToastMessage('Vibe is already installed on your device!');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
+    // 3. iOS Safari instructions (Safari does not support beforeinstallprompt)
+    if (isIOS) {
+      setShowIOSModal(true);
+      return;
+    }
+
+    // 4. Fallback for browsers when beforeinstallprompt has not fired or already triggered
+    alert("To install Vibe: Tap your browser's menu (⋮) in the top-right corner and select 'Install app' or 'Add to Home screen'.");
+  }, [deferredPrompt, isIOS, isInstalled]);
 
   // Listen for global trigger event dispatched from Navbar install button
   useEffect(() => {
@@ -112,7 +164,19 @@ export default function PWARegister() {
 
   return (
     <>
-      {/* 1. iOS Installation Modal Guide */}
+      {/* Toast Notification when already installed */}
+      {toastMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-[#0F172A] border border-white/20 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* iOS Installation Modal Guide (Only for Safari iOS where beforeinstallprompt is unsupported) */}
       {showIOSModal && (
         <div
           role="dialog"
@@ -175,68 +239,6 @@ export default function PWARegister() {
             <button
               type="button"
               onClick={() => setShowIOSModal(false)}
-              className="w-full py-2.5 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-semibold transition cursor-pointer"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Desktop & Browser Installation Guide Modal */}
-      {showDesktopGuideModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setShowDesktopGuideModal(false)}
-        >
-          <div
-            className="w-full max-w-sm bg-[#0F172A] border border-white/15 rounded-3xl p-6 text-white shadow-2xl space-y-5 animate-in slide-in-from-bottom-6 duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF5500] to-[#C2410C] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#FF5500]/30">
-                  v.
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-white">Install Vibe App</h3>
-                  <p className="text-[11px] text-slate-400">Web &amp; Mobile experience</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDesktopGuideModal(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs text-slate-300">
-              <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
-                <div className="w-7 h-7 rounded-lg bg-[#FF5500]/20 text-[#FF5500] flex items-center justify-center shrink-0">
-                  <Monitor className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-semibold text-white">On Desktop:</span> Look for the <span className="text-white font-medium">Install App icon (⊕ or ⭳)</span> on the right side of your browser address bar.
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-semibold text-white">On Mobile:</span> Tap browser menu <span className="text-white font-medium">(⋮)</span> and choose <span className="text-white font-medium">&quot;Install app&quot;</span> or <span className="text-white font-medium">&quot;Add to Home screen&quot;</span>.
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowDesktopGuideModal(false)}
               className="w-full py-2.5 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-semibold transition cursor-pointer"
             >
               Got it

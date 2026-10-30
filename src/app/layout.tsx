@@ -220,6 +220,29 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Synchronous early capture of beforeinstallprompt so deferredPrompt is never missed */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                window.__vibe_deferred_prompt = null;
+                window.addEventListener('beforeinstallprompt', function(e) {
+                  e.preventDefault();
+                  window.__vibe_deferred_prompt = e;
+                  try {
+                    window.dispatchEvent(new CustomEvent('vibe:deferred_prompt_ready'));
+                  } catch (_) {}
+                });
+                window.addEventListener('appinstalled', function() {
+                  window.__vibe_deferred_prompt = null;
+                  try {
+                    window.dispatchEvent(new CustomEvent('vibe:app_installed'));
+                  } catch (_) {}
+                });
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white relative">
         <ThemeProvider>

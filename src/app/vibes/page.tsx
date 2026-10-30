@@ -577,26 +577,15 @@ function VibesContent() {
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
-  // Ensure the feed starts strictly at index 0 on initial mount or fresh navigation
-  const isInitialMountRef = useRef(true);
+  // Ensure the feed starts strictly at index 0 on initial mount
   useEffect(() => {
     if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
 
-    setCurrentIndex(0);
-    const resetScroll = () => {
-      if (mobileFeedRef.current) {
-        mobileFeedRef.current.scrollTop = 0;
-      }
-    };
-    resetScroll();
-    requestAnimationFrame(resetScroll);
-    const timer = setTimeout(() => {
-      resetScroll();
-      isInitialMountRef.current = false;
-    }, 300);
-    return () => clearTimeout(timer);
+    if (!targetSlug && mobileFeedRef.current) {
+      mobileFeedRef.current.scrollTop = 0;
+    }
   }, [targetSlug]);
 
   // Auto-open QuickJoinModal ONLY when explicitly requested via autoJoin param (e.g. returning from OAuth with ?autoJoin=1 or ?join=1)
@@ -989,22 +978,31 @@ function VibesContent() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (isProgrammaticScroll.current) return;
+        let maxRatio = 0;
+        let bestIndex = -1;
+
         for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+          if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
+            maxRatio = entry.intersectionRatio;
             const indexStr = entry.target.getAttribute('data-index');
             if (indexStr !== null) {
               const idx = parseInt(indexStr, 10);
-              if (!isNaN(idx) && idx !== currentIndexRef.current) {
-                userScrolledMobile.current = true;
-                setCurrentIndex(idx);
+              if (!isNaN(idx)) {
+                bestIndex = idx;
               }
             }
           }
         }
+
+        if (bestIndex !== -1 && maxRatio >= 0.5 && bestIndex !== currentIndexRef.current) {
+          userScrolledMobile.current = true;
+          currentIndexRef.current = bestIndex;
+          setCurrentIndex(bestIndex);
+        }
       },
       {
         root: container,
-        threshold: 0.55,
+        threshold: [0.3, 0.55, 0.8],
       }
     );
 
@@ -1027,9 +1025,10 @@ function VibesContent() {
       const newIndex = Math.round(container.scrollTop / height);
       if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndexRef.current) {
         userScrolledMobile.current = true;
+        currentIndexRef.current = newIndex;
         setCurrentIndex(newIndex);
       }
-    }, 80);
+    }, 60);
   };
 
   // Close filter dropdown on outside click
@@ -1756,12 +1755,7 @@ function VibesContent() {
       {/* 3. MOBILE VIEW (INSTAGRAM REELS / TIKTOK VIBE FEED)       */}
       {/* ========================================================= */}
       <main
-        ref={(el) => {
-          mobileFeedRef.current = el;
-          if (el && !targetSlug) {
-            el.scrollTop = 0;
-          }
-        }}
+        ref={mobileFeedRef}
         onScroll={handleMobileScroll}
         onTouchStart={() => {
           isUserTouching.current = true;

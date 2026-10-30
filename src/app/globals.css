@@ -1038,28 +1038,37 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
 }
 
 .splash-word {
-  font-family: var(--font-display, var(--font-inter, sans-serif));
-  font-weight: 700;
+  font-family: var(--font-inter, system-ui, -apple-system, sans-serif);
+  font-weight: 900;
   font-size: 76px;
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
   animation: splash-rise .7s cubic-bezier(.22,1,.36,1) both;
 }
 
-.splash-word > span:first-child {
-  color: var(--primary, #FF5500);
-}
-
-.splash-word .logo-dot {
-  color: var(--primary, #FF5500);
+.splash-dot {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background-color: #FF5500;
+  box-shadow: 0 0 22px rgba(255, 85, 0, 0.95);
+  transform: translateY(-2px);
 }
 
 .splash-by {
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 4px;
-  color: var(--muted-foreground, #9CA3AF);
-  margin-top: 12px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  margin-top: 14px;
   animation: splash-rise .7s .15s cubic-bezier(.22,1,.36,1) both;
 }
 
@@ -1125,6 +1134,8 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
 
 @media (max-width: 480px) {
   .splash-word { font-size: 56px; }
+  .splash-dot { width: 11px; height: 11px; margin-left: 4px; }
+  .splash-by { font-size: 9px; }
   .splash-tagline { font-size: 12px; }
 }
 

@@ -31,7 +31,8 @@ import {
   X,
   Download,
   MessageCircle,
-  Send
+  Send,
+  ArrowUpRight
 } from 'lucide-react';
 import { triggerPWAInstall } from '@/components/pwa/PWARegister';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -329,101 +330,124 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                         onError={() => setImageError(true)}
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#FF5500] text-white flex items-center justify-center text-xs font-bold tracking-tight">
+                      <div className="w-full h-full bg-[#FF5500] text-black font-extrabold flex items-center justify-center text-xs tracking-tight">
                         {getInitials(profile.name, profile.email)}
                       </div>
                     )}
                   </button>
 
-                  {/* Dropdown Menu (Dark theme) */}
+                  {/* Dropdown Menu matching target UI */}
                   {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#111114] border border-white/15 shadow-2xl py-2 z-50 text-white animate-in fade-in zoom-in-95 backdrop-blur-md">
-                      <div className="px-4 py-2.5 border-b border-white/10">
-                        <p className="text-xs font-bold text-white truncate">{profile.name}</p>
-                        <p className="text-[11px] text-white/50 truncate">{profile.email}</p>
+                    <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-[#111113] border border-white/10 shadow-2xl p-3.5 z-50 text-white animate-in fade-in zoom-in-95 backdrop-blur-xl">
+                      {/* Top Header: Avatar + Name + @handle */}
+                      <div className="flex items-center gap-3 px-1 py-1 mb-2">
+                        <div className="w-11 h-11 rounded-full bg-[#FF5500] text-black font-extrabold flex items-center justify-center text-sm shrink-0 overflow-hidden shadow-sm">
+                          {profile.avatar_url && !imageError && !isSyntheticAvatar(profile.avatar_url) ? (
+                            <Image
+                              src={profile.avatar_url}
+                              alt={profile.name || 'User Profile'}
+                              width={44}
+                              height={44}
+                              className="object-cover w-full h-full"
+                              onError={() => setImageError(true)}
+                            />
+                          ) : (
+                            getInitials(profile.name, profile.email)
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-white truncate leading-tight">
+                            {profile.name}
+                          </p>
+                          <p className="text-xs text-neutral-400 truncate leading-tight mt-0.5">
+                            {profile.handle
+                              ? (profile.handle.startsWith('@') ? profile.handle : `@${profile.handle}`)
+                              : (profile.email
+                                  ? `@${profile.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_')}`
+                                  : `@${(profile.name || 'user').toLowerCase().replace(/\s+/g, '_')}`)}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="py-1">
+                      {/* Main Navigation Items */}
+                      <div className="space-y-0.5 py-1">
                         <Link
                           href="/profile"
                           onClick={() => setDropdownOpen(false)}
-                          className={`flex items-center gap-2.5 px-4 py-2 text-xs transition-colors font-medium ${
-                            pathname === '/profile'
-                              ? 'bg-[#FF5500]/15 text-[#FF5500] font-bold'
-                              : 'text-white/90 hover:bg-white/10'
-                          }`}
+                          className="flex items-center gap-3 px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
                         >
-                          <User className="w-4 h-4 text-[#FF5500]" />
-                          <span>My Profile & Brand</span>
+                          <User className="w-4 h-4 text-neutral-300 stroke-[1.8]" />
+                          <span>My profile &amp; brand</span>
                         </Link>
 
                         <Link
                           href="/passes"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-white/90 hover:bg-white/10 transition-colors font-medium"
+                          className="flex items-center justify-between px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
                         >
-                          <Ticket className="w-4 h-4 text-[#FF5500]" />
-                          <div className="flex items-center justify-between w-full">
-                            <span>My Passes & Bookings</span>
-                            {confirmedPassCount > 0 && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FF5500]/20 text-[#FF5500] border border-[#FF5500]/30">
-                                {confirmedPassCount}
-                              </span>
-                            )}
+                          <div className="flex items-center gap-3">
+                            <Ticket className="w-4 h-4 text-neutral-300 stroke-[1.8]" />
+                            <span>Passes &amp; bookings</span>
                           </div>
+                          {confirmedPassCount > 0 && (
+                            <span className="w-5 h-5 rounded-full bg-[#FF5500] text-black font-bold text-[11px] flex items-center justify-center shrink-0">
+                              {confirmedPassCount}
+                            </span>
+                          )}
                         </Link>
 
                         <Link
                           href="/dashboard"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-white/90 hover:bg-white/10 transition-colors font-medium"
+                          className="flex items-center gap-3 px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
                         >
-                          <LayoutDashboard className="w-4 h-4 text-white/60" />
-                          <span>Host Dashboard</span>
+                          <LayoutDashboard className="w-4 h-4 text-neutral-300 stroke-[1.8]" />
+                          <span>Host dashboard</span>
                         </Link>
 
                         <Link
                           href="/create"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-white/90 hover:bg-white/10 transition-colors font-medium"
+                          className="flex items-center gap-3 px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
                         >
-                          <Plus className="w-4 h-4 text-[#FF5500]" />
-                          <span>Create New Event</span>
+                          <Plus className="w-4 h-4 text-neutral-300 stroke-[2]" />
+                          <span>Create new event</span>
                         </Link>
 
                         {isStaff && (
                           <Link
                             href={ADMIN_BASE_PATH}
                             onClick={() => setDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#FF5500] hover:bg-white/10 transition-colors font-bold border-t border-white/10"
+                            className="flex items-center gap-3 px-2 py-2 rounded-xl text-[#FF5500] hover:bg-white/[0.06] transition-colors text-sm font-normal"
                           >
-                            <ShieldCheck className="w-4 h-4 text-[#FF5500]" />
-                            <span>Admin Workstation</span>
+                            <ShieldCheck className="w-4 h-4 text-[#FF5500] stroke-[1.8]" />
+                            <span>Admin workstation</span>
                           </Link>
                         )}
                       </div>
 
-                      {/* AI Bot Assistants Section (WhatsApp & Telegram redirect with message Vibe/Events) */}
-                      <div className="py-1 border-t border-white/10">
-                        <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
-                          AI Bot Assistants
-                        </div>
+                      {/* FIND EVENTS IN CHAT Section */}
+                      <div className="pt-3 pb-2 px-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-400">
+                          FIND EVENTS IN CHAT
+                        </p>
+                      </div>
 
+                      {/* Side-by-side WhatsApp & Telegram buttons */}
+                      <div className="grid grid-cols-2 gap-2 px-0.5 pb-2">
                         <a
                           href={`https://wa.me/919183123093?text=${encodeURIComponent('Vibe/Events')}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center justify-between px-4 py-1.5 text-xs text-white/90 hover:bg-[#25D366]/15 hover:text-white transition-colors font-medium group cursor-pointer"
-                          title="Open WhatsApp Bot with Vibe/Events message"
+                          className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium text-white group cursor-pointer"
+                          title="Open WhatsApp Bot"
                         >
                           <div className="flex items-center gap-2">
-                            <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                            <span>WhatsApp Bot</span>
+                            <MessageCircle className="w-4 h-4 text-[#FF5500]" />
+                            <span>WhatsApp</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#25D366] bg-[#25D366]/10 px-1.5 py-0.5 rounded-full border border-[#25D366]/20">
-                            Vibe/Events ↗
-                          </span>
+                          <ArrowUpRight className="w-3.5 h-3.5 text-[#FF5500] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </a>
 
                         <a
@@ -431,30 +455,29 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center justify-between px-4 py-1.5 text-xs text-white/90 hover:bg-[#229ED9]/15 hover:text-white transition-colors font-medium group cursor-pointer"
-                          title="Open Telegram Bot with Vibe/Events message"
+                          className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium text-white group cursor-pointer"
+                          title="Open Telegram Bot"
                         >
                           <div className="flex items-center gap-2">
-                            <Send className="w-4 h-4 text-[#229ED9]" />
-                            <span>Telegram Bot</span>
+                            <Send className="w-4 h-4 text-[#FF5500]" />
+                            <span>Telegram</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#229ED9] bg-[#229ED9]/10 px-1.5 py-0.5 rounded-full border border-[#229ED9]/20">
-                            Vibe/Events ↗
-                          </span>
+                          <ArrowUpRight className="w-3.5 h-3.5 text-[#FF5500] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </a>
                       </div>
 
-                      <div className="pt-1 border-t border-white/10">
+                      {/* Sign out */}
+                      <div className="pt-2 border-t border-white/[0.08] px-0.5">
                         <button
                           type="button"
                           onClick={() => {
                             setDropdownOpen(false);
                             signOut();
                           }}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-red-400 hover:bg-red-500/10 w-full transition-colors font-medium cursor-pointer"
+                          className="flex items-center gap-3 px-2 py-2 text-sm text-neutral-300 hover:text-white hover:bg-white/[0.06] rounded-xl w-full transition-colors font-normal cursor-pointer"
                         >
-                          <LogOut className="w-4 h-4" />
-                          <span>Sign Out</span>
+                          <LogOut className="w-4 h-4 text-neutral-400 stroke-[1.8]" />
+                          <span>Sign out</span>
                         </button>
                       </div>
                     </div>
