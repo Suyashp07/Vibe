@@ -10,6 +10,7 @@ import {
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
 import { calculateEventSurety } from '@/lib/eventSurety';
+import { checkDuplicateEventInDb } from '@/lib/aggregation/dedup';
 
 export const dynamic = 'force-dynamic';
 
@@ -270,6 +271,28 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+
+    // Duplicate check
+    if (supabase) {
+      const { isDuplicate, existingEvent } = await checkDuplicateEventInDb(supabase, {
+        title: insertPayload.title,
+        venue_name: insertPayload.location_name,
+        city: insertPayload.city,
+        start_at: insertPayload.start_at,
+        ticket_url: insertPayload.external_ticket_url,
+        slug: insertPayload.slug,
+      });
+
+      if (isDuplicate && existingEvent) {
+        return NextResponse.json({
+          ok: true,
+          duplicate: true,
+          slug: existingEvent.slug,
+          event: existingEvent,
+          message: 'Duplicate event detected. Showing existing listing.',
+        });
+      }
+    }
 
     let createdEventRecord: any = null;
     if (supabase) {

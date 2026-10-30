@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import {
   X,
   Calendar,
@@ -12,10 +11,11 @@ import {
   Share2,
   CheckCircle2,
   ExternalLink,
-  Sparkles,
+  MessageCircle,
   Info,
 } from 'lucide-react';
 import { EventItem, RSVPItem } from '@/types';
+import StructuredDescription from '@/components/vibes/StructuredDescription';
 
 export interface VibeDetailsItem {
   id: string;
@@ -75,19 +75,19 @@ export default function VibeDetailsModal({
       onClick={onClose}
     >
       <div
-        className="dark-dialog-content w-full sm:max-w-lg bg-[#12141A] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl text-white relative overflow-hidden max-h-[88vh] flex flex-col"
+        className="dark-dialog-content w-full sm:max-w-lg bg-[#141416] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl text-white relative overflow-hidden max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Subtle accent glow */}
-        <div className="absolute -top-24 -right-24 w-56 h-56 bg-gradient-to-br from-[#E8621A]/25 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        {/* Ambient Top Glow */}
+        <div className="absolute -top-24 -right-24 w-56 h-56 bg-gradient-to-br from-[#FF5500]/25 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Mobile Pull Bar */}
-        <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mt-3 mb-1 sm:hidden" />
+        <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mt-3 mb-1 sm:hidden shrink-0" />
 
         {/* Header Bar */}
         <div className="px-5 pt-3 pb-3 flex items-center justify-between border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FF5500] text-white flex items-center gap-1 shadow-xs">
               <Info className="w-3 h-3" />
               <span>Event Details</span>
             </span>
@@ -108,142 +108,96 @@ export default function VibeDetailsModal({
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div className="p-5 overflow-y-auto space-y-5 flex-1 overscroll-contain">
-          {/* Cover & Title Banner with Ambient Backdrop & Contained Poster */}
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 aspect-[16/9] w-full shrink-0 shadow-lg bg-black">
-            {/* Ambient Blurred Backdrop */}
-            <Image
-              src={vibe.cover_image_url}
-              alt=""
-              fill
-              unoptimized
-              className="object-cover scale-110 blur-xl opacity-40 brightness-50"
-              aria-hidden="true"
-            />
-            {/* Contained uncropped poster */}
-            <div className="absolute inset-0 flex items-center justify-center p-2">
-              <div className="relative w-full h-full">
-                <Image
-                  src={vibe.cover_image_url}
-                  alt={vibe.title}
-                  fill
-                  unoptimized
-                  className="object-contain drop-shadow-md rounded-lg"
-                />
-              </div>
+        {/* Scrollable Body - Exact same structure as Desktop Details Panel */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 overscroll-contain">
+          {/* 1. Host Identity Card (Identical to Right-side tab) */}
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
+              {vibe.host_initials || 'H'}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute bottom-3 left-3 right-3 pointer-events-none">
-              <span className="text-[10px] font-black tracking-widest uppercase text-[#FF8C42] block mb-0.5">
-                {vibe.category}
-              </span>
-              <h2 className="text-lg sm:text-xl font-black text-white leading-snug drop-shadow-md">
-                {vibe.title}
-              </h2>
+            <div>
+              <h4 className="text-sm font-bold text-white">{vibe.host_name || 'Organizer'}</h4>
+              <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
+                <span className="text-amber-400">★</span>
+                <span>{vibe.host_rating || '4.9'} · {vibe.host_vibes_count || 5} vibes hosted</span>
+              </p>
             </div>
           </div>
 
+          {/* 2. Category Tag & Headline (Identical to Right-side tab) */}
+          <div>
+            <span className="text-xs font-mono font-bold tracking-wider text-[#FF5500] uppercase">
+              {vibe.category}
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-1 leading-tight">
+              {vibe.title}
+            </h2>
+          </div>
 
-          {/* Time & Venue Information */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Date & Time */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#E8621A]/20 text-[#E8621A] flex items-center justify-center shrink-0 mt-0.5">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-0.5">
-                  When
-                </p>
-                <p className="text-xs font-bold text-white leading-tight">
-                  {vibe.formatted_date}
-                </p>
-                <p className="text-xs text-white/70 flex items-center gap-1 mt-0.5">
-                  <Clock className="w-3 h-3 text-white/50" />
-                  <span>{vibe.formatted_time}</span>
-                </p>
-              </div>
+          {/* 3. Specs List (Identical to Right-side tab) */}
+          <div className="space-y-2 text-xs font-medium text-neutral-300 p-3 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="flex items-center gap-2.5">
+              <Calendar className="w-4 h-4 text-neutral-400 shrink-0" />
+              <span>{vibe.formatted_date}</span>
             </div>
-
-            {/* Venue & Location */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                <MapPin className="w-4 h-4" />
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
+              <span>{vibe.formatted_time}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
+                <span className="truncate">{vibe.location_name}</span>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-0.5">
-                  Where
-                </p>
-                <p className="text-xs font-bold text-white leading-tight truncate">
-                  {vibe.location_name}
-                </p>
-                <p className="text-xs text-white/70 truncate">
-                  {vibe.city}
-                </p>
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] text-[#FF8C42] hover:underline font-bold mt-1"
-                >
-                  <span>Open in Maps</span>
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </a>
-              </div>
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-[#FF8542] hover:underline font-bold shrink-0 flex items-center gap-1"
+              >
+                <span>Maps</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           </div>
 
-          {/* Spots & Community Status */}
-          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-neutral-400" />
-                <span>
-                  {vibe.has_spots_limit && vibe.capacity
-                    ? `${vibe.going_count} / ${vibe.capacity} going`
-                    : `${vibe.going_count} going`}
+          {/* 4. Structured Description (In separate lines) */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-white/50">
+              About this Vibe
+            </h4>
+            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+              <StructuredDescription description={vibe.description} />
+            </div>
+          </div>
+
+          {/* 5. Spots Capacity Bar (Identical to Right-side tab) */}
+          {vibe.has_spots_limit && (vibe.capacity || 0) > 0 && (
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>{vibe.going_count}/{vibe.capacity} going</span>
                 </span>
-              </span>
-              {vibe.has_spots_limit && vibe.capacity ? (
                 <span className="font-bold text-[#FF5500] flex items-center gap-1">
                   <Zap className="w-3 h-3 fill-[#FF5500]" />
                   <span>{vibe.spots_left} spots left</span>
                 </span>
-              ) : (
-                <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Open Community Gathering</span>
-                </span>
-              )}
-            </div>
-
-            {vibe.has_spots_limit && (vibe.capacity || 0) > 0 && (
-              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+              </div>
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#FF5500] to-[#E8621A] rounded-full transition-all duration-300"
+                  className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%`,
                   }}
                 />
               </div>
-            )}
-          </div>
-
-          {/* Description Section */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-              <span>About this Vibe</span>
-            </h4>
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-white/80 leading-relaxed whitespace-pre-line">
-              {vibe.description ||
-                'A small, easy-going gathering. Come solo or bring friends — connect with the host for real-time meetup coordinates.'}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Bottom Action Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#12141A] flex items-center gap-2.5 shrink-0">
+        {/* 6. Action Buttons Footer (Identical to Right-side tab) */}
+        <div className="p-4 border-t border-white/10 bg-[#141416] flex items-center gap-2.5 shrink-0">
           {/* Join / View Pass Button */}
           {isGoing ? (
             <button
@@ -252,10 +206,10 @@ export default function VibeDetailsModal({
                 onClose();
                 onJoin(vibe);
               }}
-              className="flex-1 py-3 px-4 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 shadow-lg active:scale-98 cursor-pointer transition-all"
+              className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
             >
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>You're in · View pass</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>You&apos;re in · View pass</span>
             </button>
           ) : (
             <button
@@ -264,18 +218,32 @@ export default function VibeDetailsModal({
                 onClose();
                 onJoin(vibe);
               }}
-              className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/30 cursor-pointer transition-all"
+              className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Zap className="w-4 h-4 fill-white" />
+              <Zap className="w-3.5 h-3.5 fill-current" />
               <span>Join now</span>
             </button>
           )}
+
+          {/* Connect with Host Button */}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onConnectHost(vibe);
+            }}
+            className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
+            title="Connect with host"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+            <span>Connect with host</span>
+          </button>
 
           {/* Share Button */}
           <button
             type="button"
             onClick={() => onShare(vibe)}
-            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/80 hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
+            className="p-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/80 hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
             title="Share vibe"
             aria-label="Share vibe"
           >

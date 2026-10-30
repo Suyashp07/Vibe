@@ -28,8 +28,12 @@ import {
   Users,
   Utensils,
   Zap,
-  X
+  X,
+  Download,
+  MessageCircle,
+  Send
 } from 'lucide-react';
+import { triggerPWAInstall } from '@/components/pwa/PWARegister';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth, setLocalAuthSession, AuthProfile, getInitials, isSyntheticAvatar } from '@/lib/auth';
 import { syncEventsWithSupabase, getRSVPs, getUserConfirmedPasses } from '@/lib/store';
@@ -279,19 +283,17 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
             {/* Right: Passes Icon + Primary CTA "+ Host an event" + Search & Profile */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Passes shortcut icon */}
-              <Link
-                href="/passes"
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white relative"
-                title="My Passes & Bookings"
+              {/* Install App Button (Download site as Web & Mobile App in both versions) */}
+              <button
+                type="button"
+                onClick={() => triggerPWAInstall()}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-[#FF5500] hover:border-[#FF5500]/40 relative group"
+                title="Install Vibe App (Web & Mobile)"
+                aria-label="Install Vibe App"
               >
-                <Ticket className="w-4 h-4" />
-                {confirmedPassCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF5500] text-white text-[10px] font-black flex items-center justify-center shadow-xs">
-                    {confirmedPassCount}
-                  </span>
-                )}
-              </Link>
+                <Download className="w-4 h-4 text-[#FF5500] group-hover:scale-110 transition-transform" />
+                <span className="sr-only">Install App</span>
+              </button>
 
               {/* Dark and Light Mode Theme Toggle */}
               <ThemeToggle />
@@ -399,6 +401,47 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                             <span>Admin Workstation</span>
                           </Link>
                         )}
+                      </div>
+
+                      {/* AI Bot Assistants Section (WhatsApp & Telegram redirect with message Vibe/Events) */}
+                      <div className="py-1 border-t border-white/10">
+                        <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
+                          AI Bot Assistants
+                        </div>
+
+                        <a
+                          href={`https://wa.me/919183123093?text=${encodeURIComponent('Vibe/Events')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center justify-between px-4 py-1.5 text-xs text-white/90 hover:bg-[#25D366]/15 hover:text-white transition-colors font-medium group cursor-pointer"
+                          title="Open WhatsApp Bot with Vibe/Events message"
+                        >
+                          <div className="flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                            <span>WhatsApp Bot</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#25D366] bg-[#25D366]/10 px-1.5 py-0.5 rounded-full border border-[#25D366]/20">
+                            Vibe/Events ↗
+                          </span>
+                        </a>
+
+                        <a
+                          href="https://t.me/VibeCurator_bot?start=Vibe_Events"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center justify-between px-4 py-1.5 text-xs text-white/90 hover:bg-[#229ED9]/15 hover:text-white transition-colors font-medium group cursor-pointer"
+                          title="Open Telegram Bot with Vibe/Events message"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Send className="w-4 h-4 text-[#229ED9]" />
+                            <span>Telegram Bot</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#229ED9] bg-[#229ED9]/10 px-1.5 py-0.5 rounded-full border border-[#229ED9]/20">
+                            Vibe/Events ↗
+                          </span>
+                        </a>
                       </div>
 
                       <div className="pt-1 border-t border-white/10">

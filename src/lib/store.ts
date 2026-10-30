@@ -1085,9 +1085,28 @@ export const getFlashVibeEvents = (): EventItem[] => {
     return timeB - timeA;
   });
 
-  // If real live events exist from WhatsApp, Telegram, or Supabase, return ONLY real events!
-  if (flashFromStore.length > 0) {
-    return flashFromStore;
+  // Strict deduplication to ensure Vibe Instant never displays duplicate events (Requirement 4)
+  const seenEvents = new Set<string>();
+  const deduplicatedFlash: EventItem[] = [];
+
+  for (const ev of flashFromStore) {
+    const normTitle = (ev.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const dateKey = ev.start_at ? new Date(ev.start_at).toISOString().split('T')[0] : 'no-date';
+    const cityKey = (ev.city || 'all').toLowerCase().trim();
+    const dedupKey = `${normTitle}_${cityKey}_${dateKey}`;
+    const slugKey = ev.slug?.toLowerCase().trim();
+
+    if (slugKey && seenEvents.has(`slug:${slugKey}`)) continue;
+    if (dedupKey && seenEvents.has(dedupKey)) continue;
+
+    if (slugKey) seenEvents.add(`slug:${slugKey}`);
+    if (dedupKey) seenEvents.add(dedupKey);
+    deduplicatedFlash.push(ev);
+  }
+
+  // If real live events exist from WhatsApp, Telegram, or Supabase, return ONLY real deduplicated events!
+  if (deduplicatedFlash.length > 0) {
+    return deduplicatedFlash;
   }
 
   // Only fallback to sample flash vibes if zero real events exist in store

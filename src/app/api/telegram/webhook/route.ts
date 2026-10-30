@@ -17,6 +17,7 @@ import {
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
 import { calculateEventSurety } from '@/lib/eventSurety';
+import { checkDuplicateEventInDb } from '@/lib/aggregation/dedup';
 import { nanoid } from 'nanoid';
 import { telegramAdapter } from '@/lib/communication/adapters/telegramAdapter';
 import { conversationService } from '@/lib/communication/conversationService';
@@ -296,7 +297,26 @@ export async function POST(req: NextRequest) {
     const lowerText = textContent.toLowerCase();
     const cleanLowerText = lowerText.trim();
     const isBareCommand =
-      /^(?:\/newevent|\/new|\/create|\/add|\/event|\/vibe|\/flash|new event|create event|add event|make event|create an event|make an event|host an event|host event|post event|post an event|event|new meetup|create meetup|vibe|flash|test|testing)$/i.test(cleanLowerText);
+      /^(?:\/newevent|\/new|\/create|\/add|\/event|\/vibe|\/flash|new event|create event|add event|make event|create an event|make an event|host an event|host event|post event|post an event|event|new meetup|create meetup|vibe|flash|test|testing|vibe\/events|vibes\/events|vibe events|events)$/i.test(cleanLowerText);
+
+    if (
+      lowerText.startsWith('/start') ||
+      lowerText.startsWith('/help') ||
+      lowerText === 'hi' ||
+      lowerText.includes('vibe_events') ||
+      cleanLowerText === 'vibe/events'
+    ) {
+      const welcome =
+        `👋 <b>Welcome to Vibe Assistant (@VibeCurator_bot)!</b>\n\n` +
+        `Ready to post your <b>Vibe or Event</b>? Here's how:\n\n` +
+        `⚡ <b>Post a Vibe Instant:</b> Send details (e.g. <i>"Box cricket at Bandra Turf tonight 8 PM. Need 4 players"</i>) to post immediately live to the <b>Vibe Instant</b> stream!\n` +
+        `📸 <b>Host an Event:</b> Forward or send any event flyer photo or poster.\n` +
+        `🔗 <b>Import from Link:</b> Send any link from BookMyShow, Luma, District, or Unstop.\n` +
+        `💬 <b>Custom Details:</b> Send event name, date, time, and venue!\n\n` +
+        `<i>Just send your details or flyer photo right here to get started! 🚀</i>`;
+      await replyTelegram(welcome, { parse_mode: 'HTML' });
+      return NextResponse.json({ ok: true });
+    }
 
     if (isBareCommand) {
       const guidance =
@@ -313,21 +333,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Check for Flash Vibe / Vibe Instant intent
+    // Check for Flyer Image or Flash Vibe intent
     const isPhoto = Boolean(message.photo && message.photo.length > 0);
     const isImageDoc = Boolean(message.document && message.document.mime_type?.startsWith('image/'));
     const hasExternalLink = Boolean(textContent.match(/https?:\/\/[^\s]+/i));
-
-    const hasEventKeywords =
-      /\b(cricket|match|play|badminton|pickleball|football|turf|chai|coffee|cafe|tea|meetup|midnight chai|casual meetup|pickup game|anyone up for|looking for \d+ players|quick meetup|to play|to meetup|hangout|jam|jamming|acoustic|board games?|chess|poker|potluck|pub crawl|walk|sprint|coworking|cycling|running|jogging|tournament|rsvp|tickets?|registration|venue|timing|entry free|entry fee|curated by|hosted by|doors open|lineup|line-up|hackathon|workshop|standup|comedy|concert|gig|party|gathering|tomorrow|tonight|pm|am)\b/i.test(textContent);
-
-    if (!isPhoto && !isImageDoc && !hasExternalLink && !hasEventKeywords && textContent.trim().length < 30) {
-      const guidance =
-        `💡 <b>To create an event, please provide more details!</b>\n\n` +
-        `Send the event name, date, time, and venue (e.g. <i>"Box cricket at Bandra Turf tonight 8 PM"</i>), or send a poster photo!`;
-      await replyTelegram(guidance, { parse_mode: 'HTML' });
-      return NextResponse.json({ ok: true });
-    }
 
     const isFlashVibe =
       (lowerText.startsWith('/vibe') ||
@@ -348,18 +357,6 @@ export async function POST(req: NextRequest) {
     else if (/\b(board games?|catan|chess|poker)\b/i.test(textContent)) flashActivity = 'games';
     else if (/\b(jam|acoustic|guitar|music|singing)\b/i.test(textContent)) flashActivity = 'music';
     else if (/\b(sprint|code|hack|hackathon|laptop|work|coworking)\b/i.test(textContent)) flashActivity = 'sprint';
-
-    if (lowerText.startsWith('/start') || lowerText.startsWith('/help') || lowerText === 'hi') {
-      const welcome = `👋 <b>Welcome to Vibe Host Console (@VibeConsoleBot)!</b>\n\n` +
-        `You can submit events or post spontaneous meetups straight to Vibe:\n\n` +
-        `⚡ <b>Post to Vibe Instant:</b> Send details (e.g. <i>"Box cricket at Bandra Turf tonight 8 PM. Need 4 players"</i>) to post immediately live to the <b>Vibe Instant</b> stream!\n` +
-        `📸 <b>Send a Poster Image:</b> Forward any event flyer or Instagram screenshot.\n` +
-        `🔗 <b>Send a Link:</b> Paste any Unstop, District, BookMyShow, or Luma URL.\n` +
-        `💬 <b>Send a Text:</b> Forward any event details blurb.\n\n` +
-        `<i>All meetups posted through Vibe Host Console go straight to full-screen Vibe Instant reels!</i>`;
-      await replyTelegram(welcome, { parse_mode: 'HTML' });
-      return NextResponse.json({ ok: true });
-    }
 
     const supabase = getSupabaseAdmin();
     let extracted: ExtractedEventData;
@@ -586,6 +583,50 @@ export async function POST(req: NextRequest) {
         confirmation_message: `You're confirmed for ${extracted.title || 'this flash meetup'}! Coordinate directly with other guests on Vibe.`,
       },
     };
+
+    // 3.1 Duplicate Event Detection Guard (Requirement 4)
+    const { isDuplicate, existingEvent } = await checkDuplicateEventInDb(supabase, {
+      title: insertPayload.title,
+      venue_name: insertPayload.location_name,
+      city: insertPayload.city,
+      start_at: insertPayload.start_at,
+      ticket_url: insertPayload.external_ticket_url,
+      slug: insertPayload.slug,
+    });
+
+    if (isDuplicate && existingEvent) {
+      console.warn('[Telegram Webhook] 🛑 Duplicate event detected:', existingEvent.slug);
+      const appUrl = getAppUrl(req);
+      const existingLiveLink = `${appUrl}/${existingEvent.slug}`;
+      const existingInstantLink = `${appUrl}/vibes?event=${encodeURIComponent(existingEvent.slug)}`;
+
+      const duplicateWarning =
+        `⚠️ <b>Duplicate Event Detected!</b>\n\n` +
+        `An event matching <b>"${existingEvent.title}"</b> already exists on Vibe. We've restricted creating duplicate listings to keep the platform clean.\n\n` +
+        `🔗 <b>Existing Event Link:</b>\n<a href="${existingLiveLink}">${existingLiveLink}</a>\n\n` +
+        `⚡ <b>View in Vibe Instant:</b>\n<a href="${existingInstantLink}">${existingInstantLink}</a>\n\n` +
+        `📋 <b>Tap to copy link:</b>\n<code>${existingLiveLink}</code>`;
+
+      await replyTelegram(duplicateWarning, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🌐 View Existing Event ↗', url: existingLiveLink }],
+            [{ text: '⚡ View in Vibe Instant ↗', url: existingInstantLink }],
+          ],
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        handledBy: 'duplicate_restricted',
+        duplicate: true,
+        existingEvent: {
+          slug: existingEvent.slug,
+          title: existingEvent.title,
+        },
+      });
+    }
 
     const { data: savedEvent, error: insertError } = await supabase
       .from('events')

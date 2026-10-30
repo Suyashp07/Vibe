@@ -24,7 +24,9 @@ import {
   Save,
   AlertTriangle,
   Info,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -491,6 +493,43 @@ export default function ProfilePage() {
           </button>
         </div>
 
+        {/* Mobile AI Bot Shortcuts */}
+        <div className="lg:hidden mb-8 p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-white">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
+              AI Bot Assistants
+            </span>
+            <span className="text-[10px] text-white/40">Direct redirect</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href={`https://wa.me/919183123093?text=${encodeURIComponent('Vibe/Events')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-white text-xs font-semibold"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <MessageSquare className="w-3.5 h-3.5 text-[#25D366] shrink-0" />
+                WhatsApp
+              </span>
+              <span className="text-[9px] text-[#25D366] font-bold">Vibe/Events ↗</span>
+            </a>
+            <a
+              href="https://t.me/VibeCurator_bot?start=Vibe_Events"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-2 rounded-xl bg-[#229ED9]/10 border border-[#229ED9]/30 text-white text-xs font-semibold"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <Send className="w-3.5 h-3.5 text-[#229ED9] shrink-0" />
+                Telegram
+              </span>
+              <span className="text-[9px] text-[#229ED9] font-bold">Vibe/Events ↗</span>
+            </a>
+          </div>
+        </div>
+
         {/* Layout: Sidebar Navigation + Main Form */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Sidebar (Desktop Sticky Navigation) */}
@@ -548,6 +587,46 @@ export default function ProfilePage() {
                 <span>Privacy</span>
               </button>
             </nav>
+
+            {/* AI Bot Assistants Card (WhatsApp & Telegram redirect with message Vibe/Events) */}
+            <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] space-y-3">
+              <div className="flex items-center gap-2 text-white">
+                <Sparkles className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-white/80">AI Bot Assistants</span>
+              </div>
+              <p className="text-[11px] text-white/50 leading-relaxed">
+                Connect directly with our official bots to post Vibe Instant meetups or submit event flyers:
+              </p>
+              <div className="space-y-2">
+                <a
+                  href={`https://wa.me/919183123093?text=${encodeURIComponent('Vibe/Events')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-white text-xs font-semibold transition-all group"
+                  title="Redirect to WhatsApp Bot with Vibe/Events message"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                    <span>WhatsApp Bot</span>
+                  </div>
+                  <span className="text-[10px] text-[#25D366] font-bold">Vibe/Events ↗</span>
+                </a>
+
+                <a
+                  href="https://t.me/VibeCurator_bot?start=Vibe_Events"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#229ED9]/10 hover:bg-[#229ED9]/20 border border-[#229ED9]/30 text-white text-xs font-semibold transition-all group"
+                  title="Redirect to Telegram Bot with Vibe/Events message"
+                >
+                  <div className="flex items-center gap-2">
+                    <Send className="w-3.5 h-3.5 text-[#229ED9]" />
+                    <span>Telegram Bot</span>
+                  </div>
+                  <span className="text-[10px] text-[#229ED9] font-bold">Vibe/Events ↗</span>
+                </a>
+              </div>
+            </div>
 
             <div className="pt-6 border-t border-white/[0.08] space-y-2">
               <Shield className="w-4 h-4 text-[#FF5500]" />

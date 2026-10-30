@@ -12,6 +12,7 @@ import {
   ExtractedEventData,
 } from '@/lib/ai/eventExtractor';
 import { calculateEventSurety } from '@/lib/eventSurety';
+import { checkDuplicateEventInDb } from '@/lib/aggregation/dedup';
 
 export const dynamic = 'force-dynamic';
 
@@ -312,11 +313,24 @@ export async function POST(req: NextRequest) {
     const isImplicitEvent = (textContent.length >= 25 && hasEventKeywords) || (hasAnyLink && textContent.length >= 20);
 
     if (!isExplicitEvent && !isImplicitEvent) {
-      const hint =
-        `💡 *Want to create an event on Vibe?*\n\n` +
-        `• Send */vibe <details>* (e.g. \`/vibe Turf cricket tonight 8 PM at Bandra\`)\n` +
-        `• Or send/forward any *event flyer poster*\n` +
-        `• Or paste an event link from Luma, BookMyShow, or District!`;
+      const isVibeEventsGreeting =
+        lowerText.includes('vibe/events') ||
+        lowerText.includes('vibe events') ||
+        lowerText === 'events' ||
+        lowerText === 'hi' ||
+        lowerText === 'hello';
+
+      const hint = isVibeEventsGreeting
+        ? `👋 *Welcome to Vibe Assistant!*\n\n` +
+          `Ready to host or discover on *Vibe*? Here's what you can do right here:\n\n` +
+          `⚡ *Post a Vibe Instant:* Send \`/vibe <details>\` (e.g. \`/vibe Box cricket at Bandra Turf tonight 8 PM\`)\n` +
+          `📸 *Host an Event:* Send or forward any event flyer / poster image\n` +
+          `🔗 *Import Event:* Paste any event link from BookMyShow, Luma, District, or Unstop!\n\n` +
+          `_Just reply with your details or flyer photo and I'll create your live page instantly!_ 🚀`
+        : `💡 *Want to create an event on Vibe?*\n\n` +
+          `• Send */vibe <details>* (e.g. \`/vibe Turf cricket tonight 8 PM at Bandra\`)\n` +
+          `• Or send/forward any *event flyer poster*\n` +
+          `• Or paste an event link from Luma, BookMyShow, or District!`;
       let replyDispatched = false;
       if (replyTarget && textContent.length > 0) {
         replyDispatched = await sendWhatsAppReply(replyTarget, hint);
@@ -756,7 +770,7 @@ export async function POST(req: NextRequest) {
       // 1. Guard against duplicate event creation or allow updating recent draft if missing details are now provided
       if (senderPhone) {
         try {
-          const { data: recentDuplicate } = await supabase
+          const { data: recentDraft } = await supabase
             .from('events')
             .select('id, slug, title, status, confidence_score, theme, created_at')
             .filter('theme->>whatsapp_host_phone', 'eq', senderPhone)
@@ -764,56 +778,74 @@ export async function POST(req: NextRequest) {
             .limit(1)
             .maybeSingle();
 
-          if (recentDuplicate && recentDuplicate.created_at) {
-            const timeSinceLastEventMs = Date.now() - new Date(recentDuplicate.created_at).getTime();
-            const existingTitle = (recentDuplicate.title || '').toLowerCase();
-            const newTitle = (insertPayload.title || '').toLowerCase();
+          if (recentDraft && recentDraft.created_at) {
+            const timeSinceLastEventMs = Date.now() - new Date(recentDraft.created_at).getTime();
 
             // If the host previously created a draft that was missing details (<90%) and texts again with missing details, update it!
             if (
               timeSinceLastEventMs < 600000 && // 10 minutes window
-              recentDuplicate.status === 'draft' &&
-              (isAutoApproved || suretyScore > (((recentDuplicate.theme as any)?.surety_score) || 0))
+              recentDraft.status === 'draft' &&
+              (isAutoApproved || suretyScore > (((recentDraft.theme as any)?.surety_score) || 0))
             ) {
-              console.log('[WhatsApp Webhook] Updating existing draft event with newly supplied details:', recentDuplicate.slug);
+              console.log('[WhatsApp Webhook] Updating existing draft event with newly supplied details:', recentDraft.slug);
               await supabase
                 .from('events')
                 .update({
                   ...sanitizedPayload,
-                  slug: recentDuplicate.slug,
+                  slug: recentDraft.slug,
                 })
-                .eq('id', recentDuplicate.id);
+                .eq('id', recentDraft.id);
 
-              createdEventSlug = recentDuplicate.slug;
-              createdEventTitle = insertPayload.title || recentDuplicate.title;
+              createdEventSlug = recentDraft.slug;
+              createdEventTitle = insertPayload.title || recentDraft.title;
               wasDraftUpdated = true;
-            } else if (
-              timeSinceLastEventMs < 60000 &&
-              (existingTitle === newTitle ||
-               existingTitle.includes(newTitle) ||
-               newTitle.includes(existingTitle))
-            ) {
-              console.warn('[WhatsApp Webhook] 🛑 Suppressed duplicate event creation within 60s window:', {
-                existingSlug: recentDuplicate.slug,
-                newTitle: insertPayload.title,
-                timeSinceLastEventMs,
-              });
-
-              return NextResponse.json({
-                ok: true,
-                handledBy: 'duplicate_suppressed',
-                duplicate: true,
-                replyDispatched: true, // Signals bridge not to send any reply
-                existingEvent: {
-                  slug: recentDuplicate.slug,
-                  title: recentDuplicate.title,
-                  url: `${getAppUrl(req)}/vibes?event=${encodeURIComponent(recentDuplicate.slug)}`,
-                },
-              });
             }
           }
-        } catch (dedupErr: any) {
-          console.warn('[WhatsApp Webhook] Duplicate check warning:', dedupErr.message);
+        } catch (draftErr: any) {
+          console.warn('[WhatsApp Webhook] Draft update check warning:', draftErr.message);
+        }
+      }
+
+      // 1.1 Comprehensive Duplicate Event Detection (Requirement 4)
+      if (!wasDraftUpdated) {
+        const { isDuplicate, existingEvent } = await checkDuplicateEventInDb(supabase, {
+          title: insertPayload.title,
+          venue_name: insertPayload.location_name,
+          city: insertPayload.city,
+          start_at: insertPayload.start_at,
+          ticket_url: insertPayload.external_ticket_url,
+          slug: insertPayload.slug,
+        });
+
+        if (isDuplicate && existingEvent) {
+          console.warn('[WhatsApp Webhook] 🛑 Duplicate event detected:', existingEvent.slug);
+          const appUrl = getAppUrl(req);
+          const existingLiveUrl = `${appUrl}/${existingEvent.slug}`;
+          const existingInstantUrl = `${appUrl}/vibes?event=${encodeURIComponent(existingEvent.slug)}`;
+
+          const duplicateMsg =
+            `⚠️ *Duplicate Event Detected!*\n\n` +
+            `An event matching "*${existingEvent.title}*" already exists on Vibe. We've restricted creating duplicate listings to keep the platform clean.\n\n` +
+            `🔗 *View Existing Event:*\n${existingLiveUrl}\n\n` +
+            `⚡ *View in Vibe Instant Reel:*\n${existingInstantUrl}`;
+
+          let replyDispatched = false;
+          if (replyTarget) {
+            replyDispatched = await sendWhatsAppReply(replyTarget, duplicateMsg);
+          }
+
+          return NextResponse.json({
+            ok: true,
+            handledBy: 'duplicate_restricted',
+            duplicate: true,
+            replyText: replyDispatched ? undefined : duplicateMsg,
+            replyDispatched,
+            existingEvent: {
+              slug: existingEvent.slug,
+              title: existingEvent.title,
+              url: existingInstantUrl,
+            },
+          });
         }
       }
 

@@ -46,6 +46,7 @@ import DigitalPassModal from '@/components/ui/DigitalPassModal';
 import CreateVibeModal from '@/components/vibes/CreateVibeModal';
 import VibeCommentsModal from '@/components/vibes/VibeCommentsModal';
 import VibeDetailsModal from '@/components/vibes/VibeDetailsModal';
+import StructuredDescription from '@/components/vibes/StructuredDescription';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Navbar from '@/components/common/Navbar';
 import { isUserUploadedPoster } from '@/lib/posterUtils';
@@ -234,6 +235,9 @@ function VibesContent() {
   const [quickJoinOpen, setQuickJoinOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsModalVibe, setDetailsModalVibe] = useState<VibeInstantItem | null>(null);
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  const [selectedCommentsVibe, setSelectedCommentsVibe] = useState<VibeInstantItem | null>(null);
+  const [commentCountsMap, setCommentCountsMap] = useState<Record<string, number>>({});
 
   // Check which vibes the current user has confirmed passes for
   const activeUserEmail = useMemo(() => {
@@ -503,10 +507,11 @@ function VibesContent() {
   // Combine vibes: Strictly prioritize REAL vibes from Supabase/bots!
   // Only fall back to DEFAULT_VIBES_LIST if zero real vibes exist.
   const allVibes = useMemo<VibeInstantItem[]>(() => {
+    let list: VibeInstantItem[] = [];
     if (convertedStoreVibes.length > 0) {
       // Prioritize events matching the user's active/detected city first, then by date / newest
       const targetCity = (activeCity || '').toLowerCase().trim();
-      const sorted = [...convertedStoreVibes].sort((a, b) => {
+      list = [...convertedStoreVibes].sort((a, b) => {
         const aCityMatch = Boolean(targetCity && targetCity !== 'all' && a.city.toLowerCase().includes(targetCity));
         const bCityMatch = Boolean(targetCity && targetCity !== 'all' && b.city.toLowerCase().includes(targetCity));
         if (aCityMatch && !bCityMatch) return -1;
@@ -516,11 +521,47 @@ function VibesContent() {
         const timeB = b.originalEvent?.start_at ? new Date(b.originalEvent.start_at).getTime() : 0;
         return timeA - timeB;
       });
-      return sorted;
+    } else {
+      list = [...DEFAULT_VIBES_LIST];
     }
 
-    return DEFAULT_VIBES_LIST;
-  }, [convertedStoreVibes, activeCity]);
+    // Direct Redirect for Bot links (Requirement 5):
+    // If targetSlug is provided in URL, prioritize the targeted vibe immediately at index 0.
+    // This allows users opening bot links to see that exact vibe directly with ZERO scroll animation!
+    if (targetSlug) {
+      const targetLower = targetSlug.toLowerCase().trim();
+      const targetIdx = list.findIndex(
+        (v) => v.slug.toLowerCase().trim() === targetLower || v.id.toLowerCase().trim() === targetLower
+      );
+      if (targetIdx > 0) {
+        const [targetVibe] = list.splice(targetIdx, 1);
+        list.unshift(targetVibe);
+      }
+    }
+
+    return list;
+  }, [convertedStoreVibes, activeCity, targetSlug]);
+
+  // If targeted via bot link but not yet in storeEvents, fetch it directly
+  useEffect(() => {
+    if (!targetSlug) return;
+    const exists = storeEvents.some(
+      (e) => e.slug.toLowerCase() === targetSlug.toLowerCase() || e.id === targetSlug
+    );
+    if (!exists) {
+      fetch(`/api/events/by-slug?slug=${encodeURIComponent(targetSlug)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.event) {
+            setStoreEvents((prev) => {
+              if (prev.some((e) => e.slug.toLowerCase() === targetSlug.toLowerCase())) return prev;
+              return [data.event, ...prev];
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [targetSlug, storeEvents]);
 
   // Filtered vibes
   const filteredVibes = useMemo(() => {
@@ -536,42 +577,27 @@ function VibesContent() {
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
-  // Ensure the feed starts strictly at the 1st reel (index 0) on initial mount or fresh navigation
+  // Ensure the feed starts strictly at index 0 on initial mount or fresh navigation
   const isInitialMountRef = useRef(true);
   useEffect(() => {
     if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
 
-    if (!targetSlug) {
-      setCurrentIndex(0);
-      const resetScroll = () => {
-        if (mobileFeedRef.current) {
-          mobileFeedRef.current.scrollTop = 0;
-        }
-      };
+    setCurrentIndex(0);
+    const resetScroll = () => {
+      if (mobileFeedRef.current) {
+        mobileFeedRef.current.scrollTop = 0;
+      }
+    };
+    resetScroll();
+    requestAnimationFrame(resetScroll);
+    const timer = setTimeout(() => {
       resetScroll();
-      requestAnimationFrame(resetScroll);
-      const timer = setTimeout(() => {
-        resetScroll();
-        isInitialMountRef.current = false;
-      }, 400);
-      return () => clearTimeout(timer);
-    } else {
       isInitialMountRef.current = false;
-    }
+    }, 300);
+    return () => clearTimeout(timer);
   }, [targetSlug]);
-
-  // Jump to targeted vibe if query param is provided
-  useEffect(() => {
-    if (!targetSlug) return;
-    const idx = activeVibes.findIndex(
-      (v) => v.slug.toLowerCase() === targetSlug.toLowerCase() || v.id === targetSlug
-    );
-    if (idx !== -1) {
-      setCurrentIndex(idx);
-    }
-  }, [targetSlug, activeVibes]);
 
   // Auto-open QuickJoinModal ONLY when explicitly requested via autoJoin param (e.g. returning from OAuth with ?autoJoin=1 or ?join=1)
   useEffect(() => {
@@ -622,16 +648,51 @@ function VibesContent() {
     }, 220);
   }, []);
 
+  // Mobile Feed Scroll Ref & programmatic tracking
+  const mobileFeedRef = useRef<HTMLElement | null>(null);
+  const isProgrammaticScroll = useRef(false);
+  const userScrolledMobile = useRef(false);
+  const isUserTouching = useRef(false);
+  const scrollSettleTimeout = useRef<NodeJS.Timeout | null>(null);
+  const currentIndexRef = useRef(currentIndex);
+
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  const programmaticScrollTo = useCallback((index: number) => {
+    if (!mobileFeedRef.current) return;
+    const container = mobileFeedRef.current;
+    const height = container.clientHeight;
+    if (!height) return;
+    const targetTop = index * height;
+    if (Math.abs(container.scrollTop - targetTop) > 5) {
+      isProgrammaticScroll.current = true;
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
+      setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 350);
+    }
+  }, []);
+
   // Up/down navigation with directional tracking
   const handlePrev = useCallback(() => {
     setScrollDirection('prev');
-    setCurrentIndex((prev) => Math.max(0, prev - 1));
-  }, []);
+    setCurrentIndex((prev) => {
+      const nextIdx = Math.max(0, prev - 1);
+      programmaticScrollTo(nextIdx);
+      return nextIdx;
+    });
+  }, [programmaticScrollTo]);
 
   const handleNext = useCallback(() => {
     setScrollDirection('next');
-    setCurrentIndex((prev) => Math.min(activeVibes.length - 1, prev + 1));
-  }, [activeVibes.length]);
+    setCurrentIndex((prev) => {
+      const nextIdx = Math.min(activeVibes.length - 1, prev + 1);
+      programmaticScrollTo(nextIdx);
+      return nextIdx;
+    });
+  }, [activeVibes.length, programmaticScrollTo]);
 
   // Pointer drag gestures for desktop website view
   const handleDesktopPointerDown = useCallback((e: React.PointerEvent) => {
@@ -712,7 +773,19 @@ function VibesContent() {
         }
       }
     }
-  }, [currentIndex, activeVibes.length, handleNext, handlePrev, triggerBoundaryBounce]);
+  }, [
+    currentIndex,
+    activeVibes.length,
+    handleNext,
+    handlePrev,
+    triggerBoundaryBounce,
+    commentsModalOpen,
+    quickJoinOpen,
+    passModalRsvp,
+    detailsModalOpen,
+    connectHostOpen,
+    createModalOpen,
+  ]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -748,6 +821,22 @@ function VibesContent() {
     let lastWheelTimestamp = 0;
 
     const onWheel = (e: WheelEvent) => {
+      // Don't intercept on mobile devices (touch-driven) or when any modal is open
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        return;
+      }
+
+      if (
+        commentsModalOpen ||
+        quickJoinOpen ||
+        Boolean(passModalRsvp) ||
+        detailsModalOpen ||
+        connectHostOpen ||
+        createModalOpen
+      ) {
+        return;
+      }
+
       // Don't intercept if scrolling inside a modal, dropdown, input, comments or details pane
       const target = e.target as HTMLElement | null;
       if (
@@ -834,7 +923,19 @@ function VibesContent() {
       if (silenceTimer) clearTimeout(silenceTimer);
       if (overscrollTimerRef.current) clearTimeout(overscrollTimerRef.current);
     };
-  }, [currentIndex, activeVibes.length, handleNext, handlePrev, triggerBoundaryBounce]);
+  }, [
+    currentIndex,
+    activeVibes.length,
+    handleNext,
+    handlePrev,
+    triggerBoundaryBounce,
+    commentsModalOpen,
+    quickJoinOpen,
+    passModalRsvp,
+    detailsModalOpen,
+    connectHostOpen,
+    createModalOpen,
+  ]);
 
   // Lock document & body to prevent outer page rubber-banding / scrolling on mobile
   useEffect(() => {
@@ -855,47 +956,29 @@ function VibesContent() {
     };
   }, []);
 
-  // Mobile Feed Scroll Ref & programmatic tracking
-  const mobileFeedRef = useRef<HTMLElement | null>(null);
-  const isProgrammaticScroll = useRef(false);
-  const userScrolledMobile = useRef(false);
-  const isUserTouching = useRef(false);
-  const scrollSettleTimeout = useRef<NodeJS.Timeout | null>(null);
-
   // Maintain body scroll lock and reset touch state whenever any modal toggles
   useEffect(() => {
-    if (!quickJoinOpen && !passModalRsvp && !detailsModalOpen && !connectHostOpen) {
+    if (
+      !quickJoinOpen &&
+      !passModalRsvp &&
+      !detailsModalOpen &&
+      !connectHostOpen &&
+      !commentsModalOpen &&
+      !createModalOpen
+    ) {
       document.body.style.overflow = 'hidden';
       isUserTouching.current = false;
     }
-  }, [quickJoinOpen, passModalRsvp, detailsModalOpen, connectHostOpen]);
+  }, [
+    quickJoinOpen,
+    passModalRsvp,
+    detailsModalOpen,
+    connectHostOpen,
+    commentsModalOpen,
+    createModalOpen,
+  ]);
 
-  // Sync mobile scroll position ONLY when currentIndex changes from external triggers
-  // (e.g. desktop next/prev buttons, keyboard arrows, or query params).
-  // If the user is touching or actively scrolling on mobile, NEVER fight their finger with scrollTo!
-  useEffect(() => {
-    if (userScrolledMobile.current) {
-      userScrolledMobile.current = false;
-      return;
-    }
-    if (isUserTouching.current) return;
-    if (!mobileFeedRef.current) return;
-
-    const container = mobileFeedRef.current;
-    const height = container.clientHeight;
-    if (!height) return;
-    const targetTop = currentIndex * height;
-    if (Math.abs(container.scrollTop - targetTop) > 10) {
-      isProgrammaticScroll.current = true;
-      container.scrollTo({ top: targetTop, behavior: 'smooth' });
-      const timer = setTimeout(() => {
-        isProgrammaticScroll.current = false;
-      }, 350);
-      return () => clearTimeout(timer);
-    }
-  }, [currentIndex]);
-
-  // Use IntersectionObserver on mobile cards for smooth, jitter-free active index tracking
+  // Use IntersectionObserver on mobile cards for smooth, jitter-free active index tracking (120fps CSS snap friendly)
   useEffect(() => {
     const container = mobileFeedRef.current;
     if (!container) return;
@@ -906,24 +989,22 @@ function VibesContent() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (isProgrammaticScroll.current) return;
-        if (isInitialMountRef.current && !targetSlug) return;
-        const visibleEntries = entries.filter((e) => e.isIntersecting);
-        if (!visibleEntries.length) return;
-        const best = visibleEntries.reduce((max, curr) =>
-          curr.intersectionRatio > max.intersectionRatio ? curr : max
-        );
-        const indexStr = best.target.getAttribute('data-index');
-        if (indexStr !== null) {
-          const idx = parseInt(indexStr, 10);
-          if (!isNaN(idx) && idx !== currentIndex) {
-            userScrolledMobile.current = true;
-            setCurrentIndex(idx);
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+            const indexStr = entry.target.getAttribute('data-index');
+            if (indexStr !== null) {
+              const idx = parseInt(indexStr, 10);
+              if (!isNaN(idx) && idx !== currentIndexRef.current) {
+                userScrolledMobile.current = true;
+                setCurrentIndex(idx);
+              }
+            }
           }
         }
       },
       {
         root: container,
-        threshold: [0.3, 0.6, 0.85],
+        threshold: 0.55,
       }
     );
 
@@ -932,9 +1013,9 @@ function VibesContent() {
     return () => {
       observer.disconnect();
     };
-  }, [activeVibes.length, currentIndex, targetSlug]);
+  }, [activeVibes]);
 
-  // Fallback scroll handler that only syncs after scrolling settles (debounced to avoid fighting)
+  // Fallback scroll handler that only syncs after scrolling settles (debounced to avoid fighting CSS snap)
   const handleMobileScroll = (e: React.UIEvent<HTMLElement>) => {
     if (isProgrammaticScroll.current) return;
     const container = e.currentTarget;
@@ -944,11 +1025,11 @@ function VibesContent() {
       const height = container.clientHeight;
       if (!height) return;
       const newIndex = Math.round(container.scrollTop / height);
-      if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndex) {
+      if (newIndex >= 0 && newIndex < activeVibes.length && newIndex !== currentIndexRef.current) {
         userScrolledMobile.current = true;
         setCurrentIndex(newIndex);
       }
-    }, 60);
+    }, 80);
   };
 
   // Close filter dropdown on outside click
@@ -1107,11 +1188,6 @@ function VibesContent() {
   };
 
   const handleShare = () => handleShareVibe(currentVibe);
-
-  // Comments Modal state
-  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
-  const [selectedCommentsVibe, setSelectedCommentsVibe] = useState<VibeInstantItem | null>(null);
-  const [commentCountsMap, setCommentCountsMap] = useState<Record<string, number>>({});
 
   const openComments = (vibe?: VibeInstantItem) => {
     setSelectedCommentsVibe(vibe || currentVibe);
@@ -1598,10 +1674,10 @@ function VibesContent() {
                   </div>
                 </div>
 
-                {/* Description */}
-                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-                  {currentVibe.description}
-                </p>
+                {/* Description - Structured in separate lines */}
+                <div className="max-h-52 overflow-y-auto pr-1 no-scrollbar overscroll-contain">
+                  <StructuredDescription description={currentVibe.description} />
+                </div>
 
                 {/* Spots Capacity Bar - ONLY shown when host explicitly asked for spots */}
                 {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
