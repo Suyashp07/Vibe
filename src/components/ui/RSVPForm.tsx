@@ -357,9 +357,6 @@ export default function RSVPForm({
               <span className="text-xs font-bold text-white block">
                 Follow {event.organizer_name}
               </span>
-              <span className="text-[11px] text-white/50 block">
-                @{event.organizer_handle}
-              </span>
             </div>
             <FollowButton
               organizerId={event.organizer_id}

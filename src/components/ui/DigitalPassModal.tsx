@@ -380,9 +380,6 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                       {displayBadgeText}
                     </span>
                   </div>
-                  <div className="text-[11px] font-mono text-ink-muted">
-                    @{displayOrganizerHandle}
-                  </div>
                 </div>
               </div>
 

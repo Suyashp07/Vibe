@@ -66,7 +66,6 @@ function wrapWhiteLabelTemplate(
       <img src="${logo}" alt="${orgName}" class="logo" />
       <div>
         <h2 class="org-title">${orgName}</h2>
-        <p class="org-handle">@${orgHandle}</p>
       </div>
     </div>
     <div class="content">

@@ -359,13 +359,11 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                           <p className="text-sm font-bold text-white truncate leading-tight">
                             {profile.name}
                           </p>
-                          <p className="text-xs text-neutral-400 truncate leading-tight mt-0.5">
-                            {profile.handle
-                              ? (profile.handle.startsWith('@') ? profile.handle : `@${profile.handle}`)
-                              : (profile.email
-                                  ? `@${profile.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_')}`
-                                  : `@${(profile.name || 'user').toLowerCase().replace(/\s+/g, '_')}`)}
-                          </p>
+                          {profile.email && (
+                            <p className="text-xs text-neutral-400 truncate leading-tight mt-0.5">
+                              {profile.email}
+                            </p>
+                          )}
                         </div>
                       </div>
 

@@ -282,9 +282,6 @@ export default function AdminUsersPage() {
                             <Mail className="w-3 h-3 text-zinc-500 shrink-0" />
                             <span>{user.email}</span>
                           </div>
-                          {user.handle && (
-                            <div className="text-[10px] text-zinc-500 font-mono">@{user.handle}</div>
-                          )}
                         </div>
                       </div>
                     </td>

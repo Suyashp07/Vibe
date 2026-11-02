@@ -136,9 +136,6 @@ export default function OrganizerCard({ event }: OrganizerCardProps) {
             <span className="font-display font-bold text-base text-ink">
               {event.organizer_name}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-surface-3 text-ink-secondary font-mono font-medium">
-              @{event.organizer_handle}
-            </span>
           </div>
           <p className="text-xs text-ink-muted mt-0.5">
             Verified Host · <strong className="text-ink font-semibold">{followerCount}</strong> community followers on Vibe
@@ -194,7 +191,7 @@ export default function OrganizerCard({ event }: OrganizerCardProps) {
 
             <div className="text-center space-y-1">
               <h4 className="font-display font-bold text-lg text-ink">
-                Follow @{event.organizer_name}
+                Follow {event.organizer_name}
               </h4>
               <p className="text-xs text-ink-muted">
                 Receive early access and notifications on new events from this host.

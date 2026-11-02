@@ -855,13 +855,6 @@ export default function EventTemplateView({ event }: { event: EventItem }) {
                     )}
                     <div>
                       <h4 className="font-bold text-sm">{event.organizer_name}</h4>
-                      <Link
-                        href={`/${event.organizer_handle}`}
-                        className="text-xs font-mono opacity-80 hover:underline"
-                        style={{ color: templateConfig.accentColor }}
-                      >
-                        @{event.organizer_handle}
-                      </Link>
                     </div>
                   </div>
 

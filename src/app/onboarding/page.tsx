@@ -90,12 +90,12 @@ export default function OrganizerOnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !handle.trim()) return;
+    if (!name.trim()) return;
 
     setSaving(true);
     setErrorMessage(null);
 
-    const cleanHandle = handle.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const cleanHandle = handle.trim() ? handle.toLowerCase().replace(/[^a-z0-9_]/g, '') : (name.toLowerCase().replace(/[^a-z0-9_]/g, '') || 'vibe_host');
 
     const resolvedAvatar = (logoUrl && !isSyntheticAvatar(logoUrl))
       ? logoUrl

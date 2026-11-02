@@ -211,8 +211,8 @@ export default function FollowButton({
             <>
               <UserCheck className="w-4 h-4 text-emerald-600 group-hover:hidden" />
               <X className="w-4 h-4 text-red-600 hidden group-hover:inline-block" />
-              <span className="group-hover:hidden">Following @{organizerHandle || organizerName}</span>
-              <span className="hidden group-hover:inline-block">Unfollow @{organizerHandle || organizerName}</span>
+              <span className="group-hover:hidden">Following {organizerName}</span>
+              <span className="hidden group-hover:inline-block">Unfollow {organizerName}</span>
             </>
           ) : (
             <>
@@ -284,9 +284,6 @@ export default function FollowButton({
               <h4 className="font-display font-bold text-base text-ink">
                 Follow {organizerName}
               </h4>
-              <p className="text-xs text-ink-muted">
-                @{organizerHandle || 'organizer'}
-              </p>
             </div>
           </div>
 

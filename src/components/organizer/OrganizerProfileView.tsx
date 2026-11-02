@@ -305,9 +305,6 @@ export default function OrganizerProfileView({ organizer, events }: OrganizerPro
               <h1 className="font-display font-black text-3xl text-ink">
                 {organizer.name}
               </h1>
-              <span className="text-sm font-mono text-accent font-semibold">
-                @{organizer.handle}
-              </span>
             </div>
 
             {organizer.bio && (
@@ -460,7 +457,7 @@ export default function OrganizerProfileView({ organizer, events }: OrganizerPro
               No published events right now
             </p>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">
-              Follow @{organizer.handle} to be the first to know when tickets and secret invitations drop.
+              Follow {organizer.name} to be the first to know when tickets and secret invitations drop.
             </p>
             {!isOwner && (
               <button
@@ -499,10 +496,10 @@ export default function OrganizerProfileView({ organizer, events }: OrganizerPro
                 <Heart className="w-6 h-6 fill-current" />
               </div>
               <h3 className="font-display font-black text-2xl text-ink">
-                Follow @{organizer.name}
+                Follow {organizer.name}
               </h3>
               <p className="text-xs text-ink-secondary leading-relaxed max-w-xs mx-auto">
-                Get notified on WhatsApp and email whenever @{organizer.handle} drops secret gatherings, early-bird passes, and curated community mixers.
+                Get notified on WhatsApp and email whenever {organizer.name} drops secret gatherings, early-bird passes, and curated community mixers.
               </p>
             </div>
 
@@ -559,7 +556,7 @@ export default function OrganizerProfileView({ organizer, events }: OrganizerPro
                     Community Members
                   </h3>
                   <p className="text-xs text-ink-muted">
-                    {followersList.length} followers supporting @{organizer.handle}
+                    {followersList.length} followers supporting {organizer.name}
                   </p>
                 </div>
               </div>
