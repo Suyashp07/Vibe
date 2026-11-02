@@ -184,6 +184,24 @@ export const sendEmailOtp = async (email: string, role: 'organizer' | 'guest' = 
     return { data: null, error: { message: validation.error || 'Please enter a valid email address.' } };
   }
 
+  // 1. Primary path: Use first-party API route backed by Resend (guaranteed instant inbox delivery)
+  try {
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail, type: 'magiclink' }),
+    });
+    const result = await res.json();
+    if (res.ok && !result.error) {
+      return { data: { success: true } as any, error: null };
+    }
+    if (result.error?.message) {
+      console.warn('[sendEmailOtp] API route warning, attempting fallback:', result.error.message);
+    }
+  } catch (apiErr) {
+    console.warn('[sendEmailOtp] API fetch error:', apiErr);
+  }
+
   const client = getSupabaseClient();
   if (!client) {
     return { data: null, error: { message: 'Supabase client is not configured. Check your environment variables.' } };
@@ -203,24 +221,6 @@ export const sendEmailOtp = async (email: string, role: 'organizer' | 'guest' = 
       },
     },
   });
-
-  if (error) {
-    console.warn('[sendEmailOtp] Supabase signInWithOtp error:', error.message);
-    if (typeof window !== 'undefined') {
-      const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
-      sessionStorage.setItem(
-        `vibe_fallback_otp_${cleanEmail}`,
-        JSON.stringify({ code: fallbackCode, expires: Date.now() + 15 * 60 * 1000 })
-      );
-      fetch('/api/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'otp', to: cleanEmail, otpCode: fallbackCode }),
-      }).catch(console.warn);
-
-      return { data: { user: null, session: null } as any, error: null };
-    }
-  }
 
   return { data, error };
 };
@@ -923,7 +923,28 @@ export const signUpWithPassword = async (
       return { data: null, error: result.error || { message: 'Failed to create account.' } };
     }
 
-    // 2. Client logs in with the registered credentials immediately
+    if (result.needsOtp) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(
+          'vibe_pending_signup',
+          JSON.stringify({
+            email: cleanEmail,
+            name: cleanName,
+            role,
+            handle: cleanHandle,
+            password,
+          })
+        );
+      }
+      return {
+        data: null,
+        error: null,
+        needsOtp: true,
+        email: cleanEmail,
+      };
+    }
+
+    // 2. Client logs in with the registered credentials immediately (if auto-confirmed)
     const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
       email: cleanEmail,
       password,
@@ -1108,6 +1129,17 @@ export const verifySignupOtp = async (
       window.dispatchEvent(new Event('vibe_auth_changed'));
     }
 
+    if (pendingSignup?.password) {
+      try {
+        await client.auth.signInWithPassword({
+          email: cleanEmail,
+          password: pendingSignup.password,
+        });
+      } catch (pErr) {
+        console.warn('Post-verification password sign-in warning:', pErr);
+      }
+    }
+
     try {
       await client.from('profiles').upsert({
         id: profile.id,
@@ -1144,8 +1176,25 @@ export const resendSignupOtp = async (email: string) => {
     };
   }
 
-  const client = getSupabaseClient();
+  // 1. Primary path: Use first-party API route backed by Resend
+  try {
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail, type: 'signup' }),
+    });
+    const result = await res.json();
+    if (res.ok && !result.error) {
+      return { data: { success: true } as any, error: null };
+    }
+    if (result.error?.message) {
+      console.warn('[resendSignupOtp] API route warning, attempting fallback:', result.error.message);
+    }
+  } catch (apiErr) {
+    console.warn('[resendSignupOtp] API fetch error:', apiErr);
+  }
 
+  const client = getSupabaseClient();
   if (!client) {
     return { data: null, error: { message: 'Supabase client is not configured.' } };
   }

@@ -178,7 +178,7 @@ export default function OrganizerOnboardingPage() {
           <button
             type="button"
             onClick={() => {
-              if (name && handle) setStep(2);
+              if (name.trim()) setStep(2);
             }}
             className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
               step === 2 ? 'bg-brand text-white' : 'bg-surface text-ink-muted border border-border'
@@ -222,38 +222,14 @@ export default function OrganizerOnboardingPage() {
                     required
                     value={name}
                     onChange={(e) => {
-                      setName(e.target.value);
-                      if (!handle) {
-                        setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24));
-                      }
+                      const val = e.target.value;
+                      setName(val);
+                      setHandle(val.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24));
                     }}
                     placeholder="e.g. Koramangala Tech Club, Swaniki Studio"
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-input border border-border bg-surface focus:outline-none focus:border-accent"
                   />
                 </div>
-              </div>
-
-              {/* Handle */}
-              <div>
-                <label className="block text-xs font-semibold text-ink-secondary mb-1">
-                  Public Profile Handle *
-                </label>
-                <div className="relative flex items-center">
-                  <span className="pl-3 pr-1 text-xs text-ink-muted font-mono select-none">
-                    vibe-by-swaniki.app/
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    placeholder="yourhandle"
-                    className="w-full pr-3 py-2 text-xs rounded-input border border-border bg-surface font-mono font-bold text-accent focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <p className="text-[11px] text-ink-muted mt-1">
-                  This creates your personal event directory: <span className="font-mono text-ink font-semibold">/{handle || 'yourhandle'}</span>
-                </p>
               </div>
 
               {/* Bio */}
@@ -273,7 +249,7 @@ export default function OrganizerOnboardingPage() {
               <div className="pt-2 flex justify-end">
                 <button
                   type="button"
-                  disabled={!name.trim() || !handle.trim()}
+                  disabled={!name.trim()}
                   onClick={() => setStep(2)}
                   className="inline-flex items-center gap-2 py-2.5 px-6 rounded-btn bg-brand hover:bg-brand-mid text-white font-bold text-xs shadow-sm hover-lift transition-all disabled:opacity-50"
                 >
@@ -472,8 +448,8 @@ export default function OrganizerOnboardingPage() {
                       <h4 className="font-black text-sm text-ink leading-tight">
                         {name || 'Your Brand'}
                       </h4>
-                      <p className="text-[10px] font-mono text-accent font-semibold">
-                        vibe-by-swaniki.app/{handle || 'handle'}
+                      <p className="text-[10px] text-ink-muted font-medium">
+                        Verified Host Profile
                       </p>
                     </div>
                   </div>
@@ -499,7 +475,7 @@ export default function OrganizerOnboardingPage() {
 
                 <button
                   type="submit"
-                  disabled={saving || !name.trim() || !handle.trim()}
+                  disabled={saving || !name.trim()}
                   className="inline-flex items-center gap-2 py-3 px-8 rounded-btn bg-accent hover:bg-accent-dark text-white font-bold text-xs shadow-sm hover-lift transition-all disabled:opacity-50"
                 >
                   {saving ? (

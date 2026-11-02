@@ -102,23 +102,24 @@ export async function POST(req: NextRequest) {
       console.warn('Pre-signup check error:', checkErr);
     }
 
-    // 3. Create user via Supabase Admin API with email_confirm: true
-    // This directly creates and confirms the user in auth.users, eliminating Supabase's failing/rate-limited built-in SMTP!
-    const { data: userData, error: createError } = await supabase.auth.admin.createUser({
+    // 3. Generate Link with 6-Digit OTP via Supabase Admin API
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'signup',
       email,
       password,
-      email_confirm: true,
-      user_metadata: {
-        name,
-        role,
-        handle,
+      options: {
+        data: {
+          name,
+          role,
+          handle,
+        },
       },
     });
 
-    if (createError) {
+    if (linkError) {
       if (
-        createError.message?.toLowerCase().includes('already registered') ||
-        createError.message?.toLowerCase().includes('already exists')
+        linkError.message?.toLowerCase().includes('already registered') ||
+        linkError.message?.toLowerCase().includes('already exists')
       ) {
         return NextResponse.json(
           {
@@ -132,82 +133,65 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json(
         {
-          error: { message: createError.message || 'Failed to create user account.' },
+          error: { message: linkError.message || 'Failed to initialize account registration.' },
         },
         { status: 500 }
       );
     }
 
-    const newUser = userData?.user;
-    if (!newUser) {
+    const otpCode = linkData?.properties?.email_otp;
+    if (!otpCode) {
       return NextResponse.json(
         {
-          error: { message: 'User could not be created.' },
+          error: { message: 'Could not generate verification code. Please try again.' },
         },
         { status: 500 }
       );
     }
 
-    // 4. Ensure profile row exists in public.profiles
-    const isSuper = ADMIN_EMAILS.includes(email);
-
-    try {
-      await supabase.from('profiles').upsert({
-        id: newUser.id,
-        email,
-        name,
-        role: isSuper ? 'super_admin' : role,
-        handle,
-        brand_color: '#0A0A0A',
-        brand_font: 'Inter',
-        onboarded: role === 'guest',
-      });
-    } catch (upsertErr) {
-      console.warn('Profile upsert warning:', upsertErr);
-    }
-
-    // 5. Dispatch welcome email in the background via Resend / SMTP (identical to pass delivery)
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/+$/, '');
-    sendEmail({
+    // 4. Send the 6-Digit OTP Verification Email directly via Resend (verified events@vibe.swaniki.com)
+    await sendEmail({
       to: email,
-      subject: `Welcome to Vibe, ${name}! 🎉`,
+      subject: `Your Vibe Verification Code: ${otpCode} 🎟️`,
       html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0A0A0A; color: #FFFFFF; margin: 0; padding: 24px; }
-    .card { max-width: 540px; margin: 0 auto; background: #121214; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 36px 32px; }
-    .brand { font-size: 26px; font-weight: 900; color: #FFFFFF; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0A0A0A; color: #FFFFFF; margin: 0; padding: 24px 12px; }
+    .card { max-width: 500px; margin: 0 auto; background: #121214; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 36px 28px; text-align: center; }
+    .brand { font-size: 26px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; }
     .dot { color: #FF5500; }
-    .btn { display: inline-block; background-color: #FF5500; color: #FFFFFF !important; padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; margin-top: 20px; }
+    .subhead { color: #94A3B8; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; margin-bottom: 24px; }
+    .title { font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 0 0 10px 0; }
+    .desc { color: #CBD5E1; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; }
+    .otp-box { background: rgba(255, 85, 0, 0.08); border: 2px dashed rgba(255, 85, 0, 0.4); border-radius: 14px; padding: 18px 24px; margin: 24px 0; display: inline-block; }
+    .otp-code { font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FF5500; }
+    .footer { font-size: 12px; color: #64748B; margin-top: 24px; line-height: 1.5; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="brand">vibe<span class="dot">.</span></div>
-    <p style="color: #94A3B8; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px;">BY SWANIKI</p>
-    <h2 style="color: #FFFFFF; margin-top: 24px;">Welcome, ${name}!</h2>
-    <p style="color: #CBD5E1; line-height: 1.6; font-size: 14px;">Your Vibe account is ready. You can now host gatherings, collect RSVPs, and discover exclusive boutique events across India.</p>
-    <a href="${appUrl}/dashboard" class="btn">Go to Host Dashboard</a>
+    <div class="subhead">BY SWANIKI</div>
+    <h1 class="title">Verification Code</h1>
+    <p class="desc">Hi ${name}, welcome to Vibe! Enter the 6-digit verification code below to complete your registration:</p>
+    <div class="otp-box">
+      <div class="otp-code">${otpCode}</div>
+    </div>
+    <p class="desc" style="font-size: 13px; color: #94A3B8;">This code is valid for 15 minutes.</p>
+    <p class="footer">If you did not request this verification, you can safely ignore this email.</p>
   </div>
 </body>
 </html>
       `,
-    }).catch((emailErr) => console.warn('[Signup Resend Email Warning]:', emailErr));
+    });
 
     return NextResponse.json({
       success: true,
-      data: {
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          name,
-          role: isSuper ? 'super_admin' : role,
-          handle,
-        },
-      },
+      needsOtp: true,
+      email,
     });
   } catch (err: any) {
     console.error('Signup API error:', err);

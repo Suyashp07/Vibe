@@ -114,34 +114,19 @@ export default function UserEditModal({
             </div>
           </div>
 
-          {/* Role & Handle */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Account Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
-              >
-                <option value="organizer">Organizer (Event Host)</option>
-                <option value="guest">Guest (Attendee)</option>
-                <option value="curator">Curator (Telegram Ingestor)</option>
-                <option value="super_admin">Super Admin (Full Access)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Public Handle (slug)</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs">@</span>
-                <input
-                  type="text"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  placeholder="username"
-                  className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
-                />
-              </div>
-            </div>
+          {/* Role */}
+          <div>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1">Account Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+            >
+              <option value="organizer">Organizer (Event Host)</option>
+              <option value="guest">Guest (Attendee)</option>
+              <option value="curator">Curator (Telegram Ingestor)</option>
+              <option value="super_admin">Super Admin (Full Access)</option>
+            </select>
           </div>
 
           {/* Bio & Phone */}
