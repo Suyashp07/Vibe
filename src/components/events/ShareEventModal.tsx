@@ -32,7 +32,7 @@ export default function ShareEventModal({
 
   const eventUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/${event.slug}`
-    : `${process.env.NEXT_PUBLIC_APP_URL || 'https://vive.swaniki.com'}/${event.slug}`;
+    : `${process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com'}/${event.slug}`;
 
   const isPrivate =
     event.is_private === true ||

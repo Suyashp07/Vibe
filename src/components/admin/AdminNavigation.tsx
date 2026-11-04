@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 interface AdminNavigationProps {
   activeSection?: 'queue' | 'analytics' | 'users' | 'rsvps' | 'audit' | 'ingestion';
@@ -79,7 +80,7 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0B0F19]/95 backdrop-blur-md border-b border-zinc-800">
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="h-16 flex items-center justify-between gap-4">
           {/* Logo & Main Nav */}
@@ -93,10 +94,10 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
                 V
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-sm text-white tracking-wider font-display leading-tight flex items-center gap-1.5">
-                  VIBE <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#FF5500]/20 text-[#FF5500] font-mono border border-[#FF5500]/30">ADMIN</span>
+                <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider font-display leading-tight flex items-center gap-1.5">
+                  VIBE <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#FF5500]/15 dark:bg-[#FF5500]/20 text-[#FF5500] font-mono border border-[#FF5500]/30 font-bold">ADMIN</span>
                 </span>
-                <span className="text-[10px] text-zinc-400 font-mono">Control Center</span>
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">Control Center</span>
               </div>
             </Link>
 
@@ -110,14 +111,14 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
                     href={item.href}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                       item.isActive
-                        ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700/80'
-                        : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+                        ? 'bg-slate-100 text-slate-900 shadow-xs border border-slate-300/80 dark:bg-zinc-800 dark:text-white dark:border-zinc-700/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900/60'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${item.isActive ? 'text-[#FF5500]' : 'text-zinc-500'}`} />
+                    <Icon className={`w-3.5 h-3.5 ${item.isActive ? 'text-[#FF5500]' : 'text-slate-400 dark:text-zinc-500'}`} />
                     <span>{item.label}</span>
                     {item.badge && (
-                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full border ${item.badgeColor || 'bg-zinc-800 text-zinc-300'}`}>
+                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full border ${item.badgeColor || 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'}`}>
                         {item.badge}
                       </span>
                     )}
@@ -130,32 +131,35 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
           {/* Right Action Stack */}
           <div className="flex items-center gap-2.5">
             {/* Live Indicator */}
-            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               <span>Realtime Connected</span>
             </div>
+
+            {/* Dark & Light Mode Theme Toggle */}
+            <ThemeToggle className="w-8 h-8 sm:w-9 sm:h-9" />
 
             {/* Live Site Preview */}
             <Link
               href="/"
               target="_blank"
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-700 hover:text-slate-900 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:border-zinc-800 dark:text-zinc-300 dark:hover:text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
               title="Open Public Website"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+              <ExternalLink className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
               <span className="hidden sm:inline">Live Site</span>
             </Link>
 
             {/* User Capsule */}
-            <div className="hidden md:flex items-center gap-2 pl-2 border-l border-zinc-800">
-              <div className="w-7 h-7 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-xs">
+            <div className="hidden md:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-zinc-800">
+              <div className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5500] border border-[#FF5500]/20 dark:bg-[#3D251A] dark:text-[#FF8542] dark:border-white/10 flex items-center justify-center font-bold text-xs">
                 {email.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col text-left">
-                <span className="text-xs font-semibold text-white max-w-[130px] truncate" title={email}>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white max-w-[130px] truncate" title={email}>
                   {email.split('@')[0]}
                 </span>
-                <span className="text-[10px] text-amber-400 font-mono">
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-medium">
                   {email === 'pandeysuyash100@gmail.com'
                     ? 'Developer Admin'
                     : email === 'mail.jaiswal@gmail.com'
@@ -171,7 +175,7 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
             <button
               onClick={() => signOut()}
               title="Sign Out"
-              className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition cursor-pointer"
+              className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 dark:text-red-400 text-xs transition cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -179,7 +183,7 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
         </div>
 
         {/* Mobile Navigation Horizontal Bar */}
-        <div className="lg:hidden flex items-center gap-1 overflow-x-auto py-2 border-t border-zinc-800/80 no-scrollbar">
+        <div className="lg:hidden flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-200/80 dark:border-zinc-800/80 no-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -188,11 +192,11 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
                 href={item.href}
                 className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   item.isActive
-                    ? 'bg-zinc-800 text-white font-semibold'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-slate-100 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-white dark:border-transparent font-semibold'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white'
                 }`}
               >
-                <Icon className={`w-3 h-3 ${item.isActive ? 'text-[#FF5500]' : 'text-zinc-500'}`} />
+                <Icon className={`w-3 h-3 ${item.isActive ? 'text-[#FF5500]' : 'text-slate-400 dark:text-zinc-500'}`} />
                 <span>{item.label}</span>
               </Link>
             );

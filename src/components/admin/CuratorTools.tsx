@@ -60,13 +60,17 @@ export function CuratorFilterBar({
                 key={tab.id}
                 onClick={() => onStatusChange(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                  active ? 'bg-[#0A0A0A] text-white' : 'text-[#64748B] hover:text-[#0A0A0A] hover:bg-[#F8FAFC]'
+                  active
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                    active ? 'bg-white/20 text-white' : 'bg-[#F1F5F9] text-[#475569]'
+                    active
+                      ? 'bg-white/20 text-white dark:bg-slate-900/10 dark:text-slate-900'
+                      : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
                   }`}
                 >
                   {tab.count}
@@ -79,18 +83,18 @@ export function CuratorFilterBar({
         {/* Search & Refresh */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-zinc-500" />
             <input
               type="text"
               placeholder="Search events, venues..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-full focus:outline-none focus:border-[#0A0A0A] transition-colors placeholder:text-[#94A3B8]"
+              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-zinc-800 rounded-full focus:outline-none focus:border-[#FF5500] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500"
             />
             {searchQuery && (
               <button
                 onClick={() => onSearchChange('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0A0A0A] cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -100,7 +104,7 @@ export function CuratorFilterBar({
             onClick={onRefresh}
             disabled={loading}
             title="Refresh queue"
-            className="p-2 border border-[#E2E8F0] rounded-full text-[#64748B] hover:text-[#0A0A0A] hover:border-[#0A0A0A] transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-2 border border-slate-200 dark:border-zinc-800 rounded-full text-slate-600 hover:text-slate-900 hover:border-slate-400 dark:text-zinc-400 dark:hover:text-white dark:hover:border-zinc-600 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Loader2 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : 'hidden'}`} />
             {!loading && <span className="text-xs">↻</span>}
@@ -109,23 +113,23 @@ export function CuratorFilterBar({
       </div>
 
       {/* Event Source Filter: All Events, Vibe Specific Events, Ingested Events */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[#F1F5F9]">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
             Event Type:
           </span>
-          <div className="inline-flex p-0.5 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] text-xs">
+          <div className="inline-flex p-0.5 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs">
             <button
               type="button"
               onClick={() => onSourceChange('ALL')}
               className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
                 sourceFilter === 'ALL'
-                  ? 'bg-white text-[#0A0A0A] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0A0A0A]'
+                  ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span>All Events</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'ALL' ? 'bg-[#0A0A0A] text-white' : 'bg-white/80 text-[#64748B]'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'ALL' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'}`}>
                 {counts.total}
               </span>
             </button>
@@ -134,12 +138,12 @@ export function CuratorFilterBar({
               onClick={() => onSourceChange('VIBE')}
               className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                 sourceFilter === 'VIBE'
-                  ? 'bg-white text-[#E8621A] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0A0A0A]'
+                  ? 'bg-white dark:bg-zinc-800 text-[#E8621A] dark:text-[#FF8442] shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span>⚡ Vibe Specific</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'VIBE' ? 'bg-[#E8621A] text-white' : 'bg-white/80 text-[#64748B]'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'VIBE' ? 'bg-[#E8621A] text-white' : 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'}`}>
                 {counts.vibe}
               </span>
             </button>
@@ -148,21 +152,21 @@ export function CuratorFilterBar({
               onClick={() => onSourceChange('INGESTED')}
               className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                 sourceFilter === 'INGESTED'
-                  ? 'bg-white text-blue-700 shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0A0A0A]'
+                  ? 'bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span>📥 Ingested Events</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'INGESTED' ? 'bg-blue-600 text-white' : 'bg-white/80 text-[#64748B]'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'INGESTED' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'}`}>
                 {counts.ingested}
               </span>
             </button>
           </div>
         </div>
 
-        <div className="text-[11px] text-[#64748B] flex items-center gap-2">
+        <div className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-2">
           <span>
-            Showing <strong className="text-[#0A0A0A]">{filteredCount}</strong> {sourceFilter === 'VIBE' ? 'Vibe specific' : sourceFilter === 'INGESTED' ? 'ingested' : ''} events
+            Showing <strong className="text-slate-900 dark:text-white">{filteredCount}</strong> {sourceFilter === 'VIBE' ? 'Vibe specific' : sourceFilter === 'INGESTED' ? 'ingested' : ''} events
           </span>
           {sourceFilter !== 'ALL' && (
             <button

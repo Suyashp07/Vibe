@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateEmailInput, normalizeEmail } from '@/lib/emailValidation';
-import { sendEmail } from '@/lib/email';
+import { issueOtp } from '@/lib/otpService';
 
 export const dynamic = 'force-dynamic';
-
-const ADMIN_EMAILS = [
-  'suyashpandey@gmail.com',
-  'pandeysuyash100@gmail.com',
-  'swanikitechnologiesllm@gmail.com',
-  'admin@swaniki.com',
-  'admin@vibe.swaniki.com',
-];
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -102,105 +94,52 @@ export async function POST(req: NextRequest) {
       console.warn('Pre-signup check error:', checkErr);
     }
 
-    // 3. Generate Link with 6-Digit OTP via Supabase Admin API
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'signup',
+    // 3. Issue 4-Digit Verification Code directly via Resend (events@vibe.swaniki.com)
+    const otpRes = await issueOtp({
       email,
-      password,
-      options: {
-        data: {
-          name,
-          role,
-          handle,
-        },
+      purpose: 'signup',
+      name,
+      payload: {
+        password,
+        name,
+        role,
+        handle,
       },
     });
 
-    if (linkError) {
-      if (
-        linkError.message?.toLowerCase().includes('already registered') ||
-        linkError.message?.toLowerCase().includes('already exists')
-      ) {
-        return NextResponse.json(
-          {
-            error: {
-              message: 'An account with this email already exists. Please sign in instead.',
-              code: 'USER_EXISTS',
-            },
-          },
-          { status: 409 }
-        );
-      }
+    if (!otpRes.success) {
       return NextResponse.json(
         {
-          error: { message: linkError.message || 'Failed to initialize account registration.' },
+          error: { message: otpRes.error || 'Failed to dispatch verification email. Please check your email and try again.' },
         },
         { status: 500 }
       );
     }
 
-    const otpCode = linkData?.properties?.email_otp;
-    if (!otpCode) {
-      return NextResponse.json(
-        {
-          error: { message: 'Could not generate verification code. Please try again.' },
-        },
-        { status: 500 }
-      );
-    }
-
-    // 4. Send the 6-Digit OTP Verification Email directly via Resend (verified events@vibe.swaniki.com)
-    await sendEmail({
-      to: email,
-      subject: `Your Vibe Verification Code: ${otpCode} 🎟️`,
-      html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0A0A0A; color: #FFFFFF; margin: 0; padding: 24px 12px; }
-    .card { max-width: 500px; margin: 0 auto; background: #121214; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 36px 28px; text-align: center; }
-    .brand { font-size: 26px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; }
-    .dot { color: #FF5500; }
-    .subhead { color: #94A3B8; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; margin-bottom: 24px; }
-    .title { font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 0 0 10px 0; }
-    .desc { color: #CBD5E1; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; }
-    .otp-box { background: rgba(255, 85, 0, 0.08); border: 2px dashed rgba(255, 85, 0, 0.4); border-radius: 14px; padding: 18px 24px; margin: 24px 0; display: inline-block; }
-    .otp-code { font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FF5500; }
-    .footer { font-size: 12px; color: #64748B; margin-top: 24px; line-height: 1.5; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="brand">vibe<span class="dot">.</span></div>
-    <div class="subhead">BY SWANIKI</div>
-    <h1 class="title">Verification Code</h1>
-    <p class="desc">Hi ${name}, welcome to Vibe! Enter the 6-digit verification code below to complete your registration:</p>
-    <div class="otp-box">
-      <div class="otp-code">${otpCode}</div>
-    </div>
-    <p class="desc" style="font-size: 13px; color: #94A3B8;">This code is valid for 15 minutes.</p>
-    <p class="footer">If you did not request this verification, you can safely ignore this email.</p>
-  </div>
-</body>
-</html>
-      `,
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       needsOtp: true,
       email,
+      message: `4-digit verification code sent to ${email}`,
     });
+
+    // Store signed token in HTTP-only cookie for verification fallback
+    response.cookies.set('vibe_otp_token', otpRes.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60, // 15 mins
+      path: '/',
+    });
+
+    return response;
   } catch (err: any) {
     console.error('Signup API error:', err);
     return NextResponse.json(
       {
-        error: { message: err.message || 'Internal server error during registration.' },
+        error: { message: err.message || 'Internal server error while processing signup.' },
       },
       { status: 500 }
     );
   }
 }
-

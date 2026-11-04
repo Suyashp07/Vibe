@@ -144,8 +144,8 @@ export default function EventApprovalQueue({
               onClick={() => onSelectEvent(isSelected ? null : event)}
               className={`group relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                 isSelected
-                  ? 'border-[#0A0A0A] bg-[#F8FAFC] shadow-sm ring-1 ring-[#0A0A0A]'
-                  : 'border-[#E2E8F0] bg-white hover:border-[#0A0A0A] hover:shadow-xs'
+                  ? 'border-[#FF5500] bg-slate-100 dark:bg-zinc-800/80 shadow-xs ring-1 ring-[#FF5500]'
+                  : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0B0F19] hover:border-slate-400 dark:hover:border-zinc-600 hover:shadow-xs'
               }`}
             >
               {/* Multi-select Checkbox */}
@@ -157,23 +157,23 @@ export default function EventApprovalQueue({
                   onToggleSelect(event.id);
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="accent-[#0A0A0A] w-4 h-4 shrink-0 rounded cursor-pointer"
+                className="accent-[#FF5500] w-4 h-4 shrink-0 rounded cursor-pointer"
               />
 
               {/* Poster Thumbnail */}
-              <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-[#F1F5F9] relative border border-[#E2E8F0]">
+              <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-zinc-800 relative border border-slate-200 dark:border-zinc-700">
                 <EventThumbnail url={coverImg} title={event.title} />
               </div>
 
               {/* Card Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-bold text-xs truncate leading-tight text-[#0A0A0A]">
+                  <h3 className="font-bold text-xs truncate leading-tight text-slate-900 dark:text-white">
                     {event.title || event.name || 'Untitled Event'}
                   </h3>
                 </div>
 
-                <p className="text-[11px] text-[#64748B] truncate mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">
                   {event.date || 'TBA'} {event.time ? `· ${event.time}` : ''}
                   {event.venue_name || event.city ? ` · ${event.venue_name || event.city}` : ''}
                 </p>
@@ -190,16 +190,16 @@ export default function EventApprovalQueue({
                   </span>
 
                   {isIngestedEvent(event) ? (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30">
                       📥 {event.source_platform || 'Ingested'}
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#E8621A]/10 text-[#E8621A] border border-[#E8621A]/20">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#E8621A]/10 text-[#E8621A] border border-[#E8621A]/20 dark:bg-[#E8621A]/20 dark:text-[#FF8442] dark:border-[#E8621A]/30">
                       ⚡ Vibe Specific
                     </span>
                   )}
                   {event.category && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[#F1F5F9] text-[#64748B]">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
                       {event.category}
                     </span>
                   )}

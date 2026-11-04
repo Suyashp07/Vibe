@@ -357,7 +357,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-[#0A0A0A] flex flex-col font-sans selection:bg-[#0A0A0A] selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-[#F3F4F6] flex flex-col font-sans transition-colors">
       {/* Top Header */}
       <AdminHeader
         email={profile?.email}
@@ -420,7 +420,7 @@ export default function AdminDashboardPage() {
           {selectedEvent && (
             <div
               data-lenis-prevent
-              className="fixed inset-0 z-40 bg-white overflow-y-auto p-4 sm:p-5 md:static md:z-auto md:flex-1 md:min-w-0 md:border md:border-[#E2E8F0] md:rounded-2xl md:p-6 md:shadow-xs md:max-h-[calc(100vh-140px)] md:overflow-y-auto overscroll-contain"
+              className="fixed inset-0 z-40 bg-white dark:bg-[#0B0F19] overflow-y-auto p-4 sm:p-5 md:static md:z-auto md:flex-1 md:min-w-0 md:border md:border-slate-200 md:dark:border-zinc-800 md:rounded-2xl md:p-6 md:shadow-xs md:max-h-[calc(100vh-140px)] md:overflow-y-auto overscroll-contain text-slate-900 dark:text-white transition-colors"
             >
               <DetailInspector
                 event={selectedEvent}

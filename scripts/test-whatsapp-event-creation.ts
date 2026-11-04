@@ -25,7 +25,7 @@ if (fs.existsSync(envPath)) {
 process.env.WHATSAPP_BRIDGE_URL = 'http://127.0.0.1:3098';
 process.env.WHATSAPP_BRIDGE_SECRET = 'vibe_wa_sec_test_token_123';
 process.env.WHATSAPP_WEBHOOK_SECRET = 'vibe_wa_sec_test_token_123';
-process.env.NEXT_PUBLIC_APP_URL = 'https://vibe-seven-pied.vercel.app';
+process.env.NEXT_PUBLIC_APP_URL = 'https://vibe.swaniki.com';
 
 console.log('===============================================================');
 console.log('🚀 TESTING WHATSAPP EVENT CREATION PIPELINE');

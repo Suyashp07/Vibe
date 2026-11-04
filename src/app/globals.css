@@ -374,9 +374,11 @@ html.light .bg-\[\#0D0D10\] {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04) !important;
 }
 
-html.light .bg-\[\#111114\] {
-  background-color: #F1F3F5 !important;
+html.light .bg-\[\#111114\],
+html.light .bg-\[\#111113\] {
+  background-color: #FFFFFF !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.06) !important;
 }
 
 html.light .bg-\[\#0A0A0C\],
@@ -396,6 +398,87 @@ html.light .bg-\[\#12151d\] {
   background-color: #FFFFFF !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   color: #0F172A !important;
+}
+
+/* Admin Panel Light Mode Support */
+html.light .bg-\[\#0B0F19\],
+html.light .bg-\[\#0F131E\] {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light header.bg-\[\#0B0F19\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: #E2E8F0 !important;
+  color: #0F172A !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light .border-zinc-800,
+html.light .border-zinc-800\/80,
+html.light .border-zinc-800\/60,
+html.light .border-zinc-700,
+html.light .border-zinc-700\/80 {
+  border-color: #E2E8F0 !important;
+}
+
+html.light .bg-zinc-900:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]) {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+html.light .bg-zinc-800:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]) {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+html.light .hover\:bg-zinc-800:hover {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+html.light .hover\:bg-zinc-900\/60:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+html.light .text-zinc-400,
+html.light .text-zinc-500 {
+  color: #64748B !important;
+}
+
+html.light .text-zinc-300 {
+  color: #334155 !important;
+}
+
+html.light .text-zinc-200 {
+  color: #1E293B !important;
+}
+
+html.light .divide-zinc-800 > :not([hidden]) ~ :not([hidden]),
+html.light .divide-zinc-800\/60 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #E2E8F0 !important;
+}
+
+html.light tr[class*="hover:bg-zinc-800"]:hover,
+html.light .hover\:bg-zinc-800\/30:hover {
+  background-color: #F8FAFC !important;
+}
+
+html.light input.bg-zinc-900,
+html.light select.bg-zinc-900,
+html.light textarea.bg-zinc-900 {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+html.light input.bg-zinc-900::placeholder {
+  color: #94A3B8 !important;
 }
 
 /* Badges overlaying dark images/posters must ALWAYS keep crisp white text and contrast */

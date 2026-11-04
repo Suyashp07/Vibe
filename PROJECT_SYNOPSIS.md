@@ -8,7 +8,7 @@
 * **Subtitle:** An AI-Powered Hyperlocal Event Lifecycle, Spontaneous Social Discovery, and Multi-Channel Communication Platform
 * **Academic/Engineering Domain:** Full-Stack Software Engineering, Applied Artificial Intelligence (Multimodal Vision & NLP), Real-Time Distributed Messaging, Geolocation Systems
 * **Target Platforms:** Progressive Web Application (Desktop & Mobile Responsive), Telegram Bot Interface, WhatsApp Bridge Integration
-* **Production Deployment:** [vibe-seven-pied.vercel.app](https://vibe-seven-pied.vercel.app)
+* **Production Deployment:** [vibe.swaniki.com](https://vibe.swaniki.com)
 * **Author / Developer:** Suyash Pandey (Swaniki)
 
 ---

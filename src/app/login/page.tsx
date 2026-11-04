@@ -146,8 +146,8 @@ function LoginContent() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanOtp = otpCode.trim();
-    if (!cleanOtp || cleanOtp.length < 6 || cleanOtp.length > 8) {
-      setError('Please enter the complete verification code from your email (6 to 8 digits).');
+    if (!cleanOtp || (cleanOtp.length !== 4 && (cleanOtp.length < 6 || cleanOtp.length > 8))) {
+      setError('Please enter the 4-digit verification code from your email.');
       return;
     }
 
@@ -438,25 +438,25 @@ function LoginContent() {
                 <form onSubmit={handleVerifyOtp} className="space-y-3">
                   <div>
                     <label className="text-xs font-bold text-slate-700 dark:text-white block mb-1">
-                      Enter Verification Code
+                      Enter 4-Digit Verification Code
                     </label>
                     <input
                       type="text"
                       inputMode="numeric"
                       autoComplete="one-time-code"
-                      maxLength={8}
+                      maxLength={4}
                       required
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="••••••••"
+                      placeholder="••••"
                       autoFocus
-                      className="w-full text-center tracking-[6px] sm:tracking-[8px] font-mono text-xl py-2.5 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
+                      className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] font-mono text-2xl font-black py-2.5 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    disabled={otpLoading || otpCode.length < 6}
+                    disabled={otpLoading || otpCode.trim().length !== 4}
                     className="w-full py-2.5 bg-[#FF5500] hover:bg-[#FF661A] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
                   >
                     {otpLoading ? (

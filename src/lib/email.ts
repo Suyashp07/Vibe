@@ -323,9 +323,9 @@ export async function sendRsvpConfirmedEmail({
   organizer: { name: string; brand_color?: string; logo_url?: string; handle?: string };
   appUrl?: string;
 }) {
-  let rawBaseUrl = appUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe-seven-pied.vercel.app';
+  let rawBaseUrl = appUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com';
   if (!rawBaseUrl || rawBaseUrl.includes('localhost')) {
-    rawBaseUrl = 'https://vibe-seven-pied.vercel.app';
+    rawBaseUrl = 'https://vibe.swaniki.com';
   }
   const baseUrl = rawBaseUrl.replace(/\/+$/, '');
   const calUrl = generateGoogleCalendarUrl(event);

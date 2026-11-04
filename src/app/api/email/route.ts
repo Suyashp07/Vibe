@@ -34,9 +34,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine current base application URL
-    let appUrl = req.nextUrl?.origin || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe-seven-pied.vercel.app';
+    let appUrl = req.nextUrl?.origin || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com';
     if (!appUrl || appUrl.includes('localhost')) {
-      appUrl = 'https://vibe-seven-pied.vercel.app';
+      appUrl = 'https://vibe.swaniki.com';
     }
 
     const resolveOrganizer = (orgInput?: any, eventInput?: any) => {

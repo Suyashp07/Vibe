@@ -8,7 +8,7 @@
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E)
 ![Gemini](https://img.shields.io/badge/AI-Gemini_3.5-blue)
 
-**Live:** [vibe-seven-pied.vercel.app](https://vibe-seven-pied.vercel.app)
+**Live:** [vibe.swaniki.com](https://vibe.swaniki.com)
 
 ---
 

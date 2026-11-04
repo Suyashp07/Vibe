@@ -317,7 +317,11 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                   <button
                     type="button"
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer flex items-center justify-center overflow-hidden"
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-colors cursor-pointer flex items-center justify-center overflow-hidden ${
+                      isLight
+                        ? 'border border-black/10 bg-black/5 hover:bg-black/10'
+                        : 'border border-white/20 bg-white/10 hover:bg-white/20'
+                    }`}
                     title={profile.name}
                   >
                     {profile.avatar_url && !imageError && !isSyntheticAvatar(profile.avatar_url) ? (
@@ -338,8 +342,12 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
                   {/* Dropdown Menu matching target UI */}
                   {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-[#111113] border border-white/10 shadow-2xl p-3.5 z-50 text-white animate-in fade-in zoom-in-95 backdrop-blur-xl">
-                      {/* Top Header: Avatar + Name + @handle */}
+                    <div className={`absolute right-0 mt-2 w-72 rounded-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 backdrop-blur-xl transition-colors ${
+                      isLight
+                        ? 'bg-white border border-slate-200/90 shadow-[0_20px_50px_rgba(0,0,0,0.12)] text-slate-900'
+                        : 'bg-[#111113] border border-white/10 shadow-2xl text-white'
+                    }`}>
+                      {/* Top Header: Avatar + Name + Email */}
                       <div className="flex items-center gap-3 px-1 py-1 mb-2">
                         <div className="w-11 h-11 rounded-full bg-[#FF5500] text-black font-extrabold flex items-center justify-center text-sm shrink-0 overflow-hidden shadow-sm">
                           {profile.avatar_url && !imageError && !isSyntheticAvatar(profile.avatar_url) ? (
@@ -356,11 +364,11 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-white truncate leading-tight">
+                          <p className={`text-sm font-bold truncate leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                             {profile.name}
                           </p>
                           {profile.email && (
-                            <p className="text-xs text-neutral-400 truncate leading-tight mt-0.5">
+                            <p className={`text-xs truncate leading-tight mt-0.5 ${isLight ? 'text-slate-500' : 'text-neutral-400'}`}>
                               {profile.email}
                             </p>
                           )}
@@ -372,23 +380,31 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                         <Link
                           href="/profile"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
+                          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
                         >
-                          <User className="w-4 h-4 text-neutral-300 stroke-[1.8]" />
+                          <User className={`w-4 h-4 stroke-[1.8] ${isLight ? 'text-slate-500' : 'text-neutral-300'}`} />
                           <span>My profile &amp; brand</span>
                         </Link>
 
                         <Link
                           href="/passes"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center justify-between px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
+                          className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
                         >
                           <div className="flex items-center gap-3">
-                            <Ticket className="w-4 h-4 text-neutral-300 stroke-[1.8]" />
+                            <Ticket className={`w-4 h-4 stroke-[1.8] ${isLight ? 'text-slate-500' : 'text-neutral-300'}`} />
                             <span>Passes &amp; bookings</span>
                           </div>
                           {confirmedPassCount > 0 && (
-                            <span className="w-5 h-5 rounded-full bg-[#FF5500] text-black font-bold text-[11px] flex items-center justify-center shrink-0">
+                            <span className="w-5 h-5 rounded-full bg-[#FF5500] text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
                               {confirmedPassCount}
                             </span>
                           )}
@@ -397,18 +413,26 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                         <Link
                           href="/dashboard"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
+                          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
                         >
-                          <LayoutDashboard className="w-4 h-4 text-neutral-300 stroke-[1.8]" />
+                          <LayoutDashboard className={`w-4 h-4 stroke-[1.8] ${isLight ? 'text-slate-500' : 'text-neutral-300'}`} />
                           <span>Host dashboard</span>
                         </Link>
 
                         <Link
                           href="/create"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-2 py-2 rounded-xl text-neutral-200 hover:text-white hover:bg-white/[0.06] transition-colors text-sm font-normal"
+                          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
                         >
-                          <Plus className="w-4 h-4 text-neutral-300 stroke-[2]" />
+                          <Plus className={`w-4 h-4 stroke-[2] ${isLight ? 'text-slate-500' : 'text-neutral-300'}`} />
                           <span>Create new event</span>
                         </Link>
 
@@ -416,7 +440,9 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                           <Link
                             href={ADMIN_BASE_PATH}
                             onClick={() => setDropdownOpen(false)}
-                            className="flex items-center gap-3 px-2 py-2 rounded-xl text-[#FF5500] hover:bg-white/[0.06] transition-colors text-sm font-normal"
+                            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-[#FF5500] transition-colors text-sm font-medium cursor-pointer ${
+                              isLight ? 'hover:bg-orange-50' : 'hover:bg-white/[0.06]'
+                            }`}
                           >
                             <ShieldCheck className="w-4 h-4 text-[#FF5500] stroke-[1.8]" />
                             <span>Admin workstation</span>
@@ -426,7 +452,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
                       {/* FIND EVENTS IN CHAT Section */}
                       <div className="pt-3 pb-2 px-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-400">
+                        <p className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isLight ? 'text-slate-400' : 'text-neutral-400'}`}>
                           FIND EVENTS IN CHAT
                         </p>
                       </div>
@@ -438,14 +464,20 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium text-white group cursor-pointer"
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-xs font-semibold group cursor-pointer ${
+                            isLight
+                              ? 'border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-950 shadow-xs'
+                              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white'
+                          }`}
                           title="Open WhatsApp Bot"
                         >
                           <div className="flex items-center gap-2">
-                            <MessageCircle className="w-4 h-4 text-[#FF5500]" />
-                            <span>WhatsApp</span>
+                            <MessageCircle className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#FF5500]'} group-hover:scale-110 transition-transform`} />
+                            <span className={isLight ? 'text-emerald-950 font-bold' : 'text-white'}>
+                              WhatsApp
+                            </span>
                           </div>
-                          <ArrowUpRight className="w-3.5 h-3.5 text-[#FF5500] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                          <ArrowUpRight className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#FF5500]'} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform`} />
                         </a>
 
                         <a
@@ -453,28 +485,38 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium text-white group cursor-pointer"
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-xs font-semibold group cursor-pointer ${
+                            isLight
+                              ? 'border-sky-200 bg-sky-50/80 hover:bg-sky-100 hover:border-sky-300 text-sky-950 shadow-xs'
+                              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white'
+                          }`}
                           title="Open Telegram Bot"
                         >
                           <div className="flex items-center gap-2">
-                            <Send className="w-4 h-4 text-[#FF5500]" />
-                            <span>Telegram</span>
+                            <Send className={`w-4 h-4 ${isLight ? 'text-sky-600' : 'text-[#FF5500]'} group-hover:scale-110 transition-transform`} />
+                            <span className={isLight ? 'text-sky-950 font-bold' : 'text-white'}>
+                              Telegram
+                            </span>
                           </div>
-                          <ArrowUpRight className="w-3.5 h-3.5 text-[#FF5500] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                          <ArrowUpRight className={`w-3.5 h-3.5 ${isLight ? 'text-sky-600' : 'text-[#FF5500]'} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform`} />
                         </a>
                       </div>
 
                       {/* Sign out */}
-                      <div className="pt-2 border-t border-white/[0.08] px-0.5">
+                      <div className={`pt-2 border-t px-0.5 ${isLight ? 'border-slate-100' : 'border-white/[0.08]'}`}>
                         <button
                           type="button"
                           onClick={() => {
                             setDropdownOpen(false);
                             signOut();
                           }}
-                          className="flex items-center gap-3 px-2 py-2 text-sm text-neutral-300 hover:text-white hover:bg-white/[0.06] rounded-xl w-full transition-colors font-normal cursor-pointer"
+                          className={`flex items-center gap-3 px-2.5 py-2 text-sm rounded-xl w-full transition-colors font-medium cursor-pointer ${
+                            isLight
+                              ? 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'
+                              : 'text-neutral-300 hover:text-white hover:bg-white/[0.06]'
+                          }`}
                         >
-                          <LogOut className="w-4 h-4 text-neutral-400 stroke-[1.8]" />
+                          <LogOut className={`w-4 h-4 stroke-[1.8] ${isLight ? 'text-slate-400 group-hover:text-rose-500' : 'text-neutral-400'}`} />
                           <span>Sign out</span>
                         </button>
                       </div>
@@ -488,7 +530,11 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
                     setAuthModalMode('signin');
                     setAuthModalOpen(true);
                   }}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
+                    isLight
+                      ? 'border-black/10 bg-black/5 hover:bg-black/10 text-slate-800 hover:text-[#FF5500]'
+                      : 'border-white/15 bg-white/5 hover:bg-white/15 text-white'
+                  }`}
                   title="Sign In"
                 >
                   <User className="w-4 h-4" />

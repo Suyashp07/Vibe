@@ -249,11 +249,11 @@ export default function RSVPForm({
     }
   };
 
-  // 2. OTP Verification & RSVP Confirmation (Supports 6 to 8 digit codes)
+  // 2. OTP Verification & RSVP Confirmation (Supports 4-digit codes)
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanToken = otpToken.trim();
-    if (!cleanToken || cleanToken.length < 6 || cleanToken.length > 8) return;
+    if (!cleanToken || (cleanToken.length !== 4 && (cleanToken.length < 6 || cleanToken.length > 8))) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -446,7 +446,7 @@ export default function RSVPForm({
         <form onSubmit={handleOtpSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-white/70">
-              Verification Code *
+              4-Digit Verification Code *
             </label>
             <input
               type="text"
@@ -454,11 +454,11 @@ export default function RSVPForm({
               autoComplete="one-time-code"
               required
               autoFocus
-              maxLength={8}
+              maxLength={4}
               value={otpToken}
               onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
-              placeholder="••••••••"
-              className="w-full text-center text-xl sm:text-2xl font-mono font-bold tracking-[0.25em] sm:tracking-[0.35em] py-3.5 px-4 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-all placeholder:text-white/30"
+              placeholder="••••"
+              className="w-full text-center text-2xl font-mono font-black tracking-[0.5em] sm:tracking-[0.6em] py-3.5 px-4 rounded-xl border border-white/15 bg-[#111114] text-white focus:border-[#FF5500] focus:outline-none transition-all placeholder:text-white/30"
             />
 
             <div className="flex items-center justify-between mt-2.5 text-xs text-white/60">
@@ -494,7 +494,7 @@ export default function RSVPForm({
 
             <button
               type="submit"
-              disabled={isSubmitting || otpToken.length < 6}
+              disabled={isSubmitting || (otpToken.trim().length !== 4 && otpToken.trim().length < 6)}
               className="flex-1 py-3.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (

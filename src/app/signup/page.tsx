@@ -124,8 +124,8 @@ function SignupContent() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = otpCode.trim();
-    if (!cleanCode || cleanCode.length < 6) {
-      setError('Please enter the complete 6-digit verification code sent to your email.');
+    if (!cleanCode || cleanCode.length !== 4) {
+      setError('Please enter the complete 4-digit verification code sent to your email.');
       return;
     }
 
@@ -199,7 +199,7 @@ function SignupContent() {
                 </div>
                 <h1 className="font-black text-2xl tracking-tight text-slate-900 dark:text-white">Verify your email</h1>
                 <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
-                  We sent a verification code to <span className="font-bold text-slate-900 dark:text-white">{email}</span>. Enter the code below to complete your registration.
+                  We sent a 4-digit verification code to <span className="font-bold text-slate-900 dark:text-white">{email}</span>. Enter the code below to complete your registration.
                 </p>
               </>
             ) : (
@@ -245,20 +245,20 @@ function SignupContent() {
             <form onSubmit={handleVerifyOtp} className="space-y-5 animate-in fade-in">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-white/80 mb-1.5">
-                  Verification Code
+                  4-Digit Verification Code
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    maxLength={8}
+                    maxLength={4}
                     autoFocus
                     required
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="••••••••"
-                    className="w-full text-center tracking-[0.3em] sm:tracking-[0.35em] text-lg font-mono font-bold py-3 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
+                    placeholder="••••"
+                    className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-3 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-white/50 mt-1.5 text-center">
@@ -268,7 +268,7 @@ function SignupContent() {
 
               <button
                 type="submit"
-                disabled={otpLoading || otpSuccess || otpCode.trim().length < 6}
+                disabled={otpLoading || otpSuccess || otpCode.trim().length !== 4}
                 className="w-full py-3 bg-[#FF5500] hover:bg-[#FF661A] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
               >
                 {otpLoading ? (

@@ -238,8 +238,8 @@ export default function AuthModal({
   async function handleVerifyOtp(e: FormEvent) {
     e.preventDefault();
     const cleanCode = otpCode.trim();
-    if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
-      setError('Please enter the 6 to 8 digit verification code.');
+    if (!cleanCode || (cleanCode.length !== 4 && (cleanCode.length < 6 || cleanCode.length > 8))) {
+      setError('Please enter the 4-digit verification code.');
       return;
     }
 
@@ -363,19 +363,19 @@ export default function AuthModal({
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={8}
+                  maxLength={4}
                   autoFocus
                   required
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                  placeholder="••••••••"
-                  className="w-full text-center tracking-[0.3em] sm:tracking-[0.4em] text-lg font-mono font-bold py-2.5 bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-[#FF5500] dark:focus:border-[#FF5500]"
+                  placeholder="••••"
+                  className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-2.5 bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-[#FF5500] dark:focus:border-[#FF5500]"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={otpLoading || otpSuccess || otpCode.trim().length < 6}
+                disabled={otpLoading || otpSuccess || otpCode.trim().length !== 4}
                 className="w-full py-2.5 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 cursor-pointer"
               >
                 {otpLoading ? (

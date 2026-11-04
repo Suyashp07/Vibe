@@ -40,7 +40,7 @@ function getWebhookUrl(): string {
   if (process.env.VIBE_WEBHOOK_URL) {
     return process.env.VIBE_WEBHOOK_URL;
   }
-  const base = 'https://vibe-seven-pied.vercel.app';
+  const base = 'https://vibe.swaniki.com';
   return `${base.replace(/\/$/, '')}/api/whatsapp/webhook`;
 }
 const VIBE_WEBHOOK_URL = getWebhookUrl();
@@ -451,7 +451,7 @@ async function startWhatsAppBridge() {
         'http://127.0.0.1:3000/api/whatsapp/webhook',
         'http://localhost:3000/api/whatsapp/webhook',
         VIBE_WEBHOOK_URL,
-        'https://vibe-seven-pied.vercel.app/api/whatsapp/webhook',
+        'https://vibe.swaniki.com/api/whatsapp/webhook',
       ].filter((u, i, arr) => arr.indexOf(u) === i);
 
       let forwarded = false;

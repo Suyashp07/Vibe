@@ -349,8 +349,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = otpToken.trim();
-    if (!token || token.length < 6) {
-      setError('Please enter the 6-digit code sent to your email');
+    if (!token || (token.length !== 4 && (token.length < 6 || token.length > 8))) {
+      setError('Please enter the 4-digit code sent to your email');
       return;
     }
 
@@ -759,19 +759,19 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                  6-Digit OTP Code
+                  4-Digit Verification Code
                 </label>
                 <div className="relative">
                   <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#E8621A]" />
                   <input
                     type="text"
                     required
-                    maxLength={8}
+                    maxLength={4}
                     autoFocus
-                    placeholder="123456"
+                    placeholder="••••"
                     value={otpToken}
                     onChange={(e) => setOtpToken(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-lg font-mono tracking-widest text-center focus:outline-none focus:border-[#E8621A] transition-colors"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-2xl font-mono font-black tracking-[0.5em] sm:tracking-[0.6em] text-center focus:outline-none focus:border-[#E8621A] transition-colors"
                   />
                 </div>
               </div>
@@ -791,7 +791,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
 
               <button
                 type="submit"
-                disabled={submitting || otpToken.length < 6}
+                disabled={submitting || (otpToken.trim().length !== 4 && otpToken.trim().length < 6)}
                 className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (

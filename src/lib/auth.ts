@@ -250,8 +250,49 @@ export const verifyEmailOtp = async (
     return { data: null, error: { message: 'Supabase client is not configured.' } };
   }
 
-  if (!trimmedToken || trimmedToken.length < 6 || trimmedToken.length > 8) {
-    return { data: null, error: { message: 'Please enter the 6 to 8 digit verification code from your email.' } };
+  if (!trimmedToken || (trimmedToken.length !== 4 && (trimmedToken.length < 6 || trimmedToken.length > 8))) {
+    return { data: null, error: { message: 'Please enter the 4-digit verification code from your email.' } };
+  }
+
+  // 0. Primary First-Party Path: Custom 4-digit OTP generated via Resend
+  if (trimmedToken.length === 4) {
+    try {
+      const verifyRes = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          code: trimmedToken,
+          purpose: 'signin',
+          role,
+        }),
+      });
+      const verifyResult = await verifyRes.json();
+      if (verifyRes.ok && verifyResult.success) {
+        const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+        const profile: AuthProfile = {
+          id: verifyResult.user?.id || `usr-${Date.now()}`,
+          email: cleanEmail,
+          name: verifyResult.user?.name || cleanEmail.split('@')[0],
+          role: isSuper ? 'super_admin' : role,
+          handle: verifyResult.user?.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+          brand_color: '#0A0A0A',
+          brand_font: 'Inter',
+          onboarded: true,
+          isDemo: false,
+        };
+        setLocalAuthSession(profile);
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('vibe_pending_signup');
+          window.dispatchEvent(new Event('vibe_auth_changed'));
+        }
+        return { data: { user: verifyResult.user, session: null } as any, error: null };
+      } else if (verifyResult.error) {
+        return { data: null, error: verifyResult.error };
+      }
+    } catch (apiErr: any) {
+      console.warn('API verify-otp fetch failed:', apiErr);
+    }
   }
 
   // 1. Primary: Tokens generated via signInWithOtp MUST be verified with type: 'email'
@@ -1052,8 +1093,64 @@ export const verifySignupOtp = async (
     } catch {}
   }
 
-  if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
-    return { data: null, error: { message: 'Please enter the 6 to 8 digit verification code from your email.' } };
+  if (!cleanCode || (cleanCode.length !== 4 && (cleanCode.length < 6 || cleanCode.length > 8))) {
+    return { data: null, error: { message: 'Please enter the 4-digit verification code from your email.' } };
+  }
+
+  // 0. Primary First-Party Path: Custom 4-digit OTP generated via Resend
+  if (cleanCode.length === 4) {
+    try {
+      const verifyRes = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          code: cleanCode,
+          purpose: 'signup',
+          role,
+          name: pendingSignup?.name,
+          password: pendingSignup?.password,
+          handle: pendingSignup?.handle,
+        }),
+      });
+      const verifyResult = await verifyRes.json();
+      if (verifyRes.ok && verifyResult.success) {
+        // Attempt password sign in to hydrate client session if password exists
+        if (client && pendingSignup?.password) {
+          try {
+            await client.auth.signInWithPassword({
+              email: cleanEmail,
+              password: pendingSignup.password,
+            });
+          } catch (signInErr) {
+            console.warn('Post-verification client signIn warning:', signInErr);
+          }
+        }
+
+        const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+        const profile: AuthProfile = {
+          id: verifyResult.user?.id || `usr-${Date.now()}`,
+          email: cleanEmail,
+          name: verifyResult.user?.name || pendingSignup?.name || cleanEmail.split('@')[0],
+          role: isSuper ? 'super_admin' : (pendingSignup?.role || role),
+          handle: verifyResult.user?.handle || pendingSignup?.handle || cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
+          brand_color: '#0A0A0A',
+          brand_font: 'Inter',
+          onboarded: role === 'guest',
+          isDemo: false,
+        };
+        setLocalAuthSession(profile);
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('vibe_pending_signup');
+          window.dispatchEvent(new Event('vibe_auth_changed'));
+        }
+        return { data: { user: verifyResult.user } as any, error: null };
+      } else if (verifyResult.error) {
+        return { data: null, error: verifyResult.error };
+      }
+    } catch (apiErr: any) {
+      console.warn('API verify-otp fetch failed for signup:', apiErr);
+    }
   }
 
   if (!client) {
