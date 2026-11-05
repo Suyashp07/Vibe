@@ -248,6 +248,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
               {/* Feature 2: Vibe Instant */}
               <Link
+                id="vt-instant"
                 href="/vibes"
                 className={`px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer ${
                   pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
@@ -294,6 +295,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
               {/* Host an Event Button matching reference image with pure white text */}
               <Magnetic pullFactor={0.35}>
                 <Link
+                  id="vt-host"
                   href="/create"
                   className="vibe-host-btn inline-flex items-center gap-1.5 px-4 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0"
                   style={{ color: '#FFFFFF', backgroundColor: '#0066F5' }}
@@ -589,6 +591,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
         {/* 2. ⚡ Vibe Instant Tab */}
         <Link
+          id="vt-instant-mobile"
           href="/vibes"
           className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
@@ -614,6 +617,7 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
 
         {/* 3. Floating Center + Host Button */}
         <Link
+          id="vt-host-mobile"
           href="/create"
           className="relative flex flex-col items-center -mt-4 group"
           title="Host an event"

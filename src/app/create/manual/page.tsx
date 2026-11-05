@@ -1,26 +1,49 @@
 'use client';
 
 import React from 'react';
-import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/common/Footer';
+import { useRouter } from 'next/navigation';
 import SingleStepCreateForm from '@/components/events/SingleStepCreateForm';
 import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
-import { Sparkles, LogIn, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, LogIn, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CreateManualPage() {
+  const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
   const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
   const isAuth = isLoggedIn || Boolean(localSession);
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/create');
+    }
+  };
+
   if (loading && !localSession) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
-        <Navbar />
+        {/* Top Header with Back Arrow Button */}
+        <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+            vibe<span className="text-[#08B9F5]">.</span>
+          </Link>
+          <div className="w-10" />
+        </header>
+
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="w-7 h-7 border-2 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -28,7 +51,22 @@ export default function CreateManualPage() {
   if (!isAuth && !loading) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
-        <Navbar />
+        {/* Top Header with Back Arrow Button */}
+        <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+            vibe<span className="text-[#08B9F5]">.</span>
+          </Link>
+          <div className="w-10" />
+        </header>
 
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-2xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
@@ -95,19 +133,34 @@ export default function CreateManualPage() {
             </div>
           </div>
         </main>
-
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#050505] text-slate-900 dark:text-[#F3F4F6]">
+      {/* Top Header with Back Arrow Button instead of Navbar */}
+      <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+          title="Go back"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
+        <Link href="/" className="font-display font-black tracking-tight text-slate-900 dark:text-white text-xl">
+          vibe<span className="text-[#08B9F5]">.</span>
+        </Link>
+
+        <div className="w-10" />
+      </header>
+
       <main className="flex-1">
         <SingleStepCreateForm mode="manual" />
       </main>
-      <Footer />
     </div>
   );
 }

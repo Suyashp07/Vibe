@@ -59,7 +59,7 @@ function LoginContent() {
   const [otpCode, setOtpCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
 
-  const destination = redirectParam || '/dashboard';
+  const destination = redirectParam || '/';
 
   const handlePasswordSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

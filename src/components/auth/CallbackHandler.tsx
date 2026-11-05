@@ -51,7 +51,7 @@ export function CallbackHandler({
       }
 
       if (!next) {
-        next = '/dashboard';
+        next = '/';
       }
       setNextUrl(next);
 

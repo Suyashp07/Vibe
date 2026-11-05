@@ -1331,7 +1331,7 @@ export const signInWithGoogle = async (
 
   const redirectDestination =
     nextUrl ||
-    (!isAuthPage && currentPath ? currentPath : '/dashboard');
+    (!isAuthPage && currentPath ? currentPath : '/');
 
   const isPWA = typeof window !== 'undefined' && (
     window.matchMedia('(display-mode: standalone)').matches ||

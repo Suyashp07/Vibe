@@ -7,6 +7,7 @@ import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import WhatsOnFeed from '@/components/events/WhatsOnFeed';
 import { CallbackHandler } from '@/components/auth/CallbackHandler';
+import ProductWalkthrough from '@/components/walkthrough/ProductWalkthrough';
 
 function LandingPageContent() {
   const searchParams = useSearchParams();
@@ -17,7 +18,7 @@ function LandingPageContent() {
     return (
       <CallbackHandler
         customTitle="Signing you in with Google..."
-        customSubtitle="Redirecting you straight to your dashboard."
+        customSubtitle="Redirecting you back to Vibe..."
       />
     );
   }
@@ -31,6 +32,9 @@ function LandingPageContent() {
       </main>
 
       <Footer />
+
+      {/* Product Walkthrough Spotlight Tour */}
+      <ProductWalkthrough />
     </div>
   );
 }

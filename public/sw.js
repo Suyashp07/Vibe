@@ -1,5 +1,5 @@
 // Vibe by Swaniki Service Worker
-const CACHE_NAME = 'vibe-cache-v1';
+const CACHE_NAME = 'vibe-cache-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',

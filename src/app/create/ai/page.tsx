@@ -27,8 +27,6 @@ import {
   Check,
   AlertTriangle,
 } from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/common/Footer';
 import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
 import { saveEvent } from '@/lib/store';
 
@@ -190,14 +188,37 @@ export default function SingleClickCreateAIPage() {
   const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
   const isAuth = isLoggedIn || Boolean(localSession);
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/create');
+    }
+  };
+
   if (loading && !localSession) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
-        <Navbar />
+        {/* Top Header with Back Arrow Button */}
+        <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+            vibe<span className="text-[#08B9F5]">.</span>
+          </Link>
+          <div className="w-10" />
+        </header>
+
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="w-8 h-8 border-3 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -206,7 +227,22 @@ export default function SingleClickCreateAIPage() {
   if (!isAuth && !loading) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
-        <Navbar />
+        {/* Top Header with Back Arrow Button */}
+        <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+            vibe<span className="text-[#08B9F5]">.</span>
+          </Link>
+          <div className="w-10" />
+        </header>
 
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
@@ -273,8 +309,6 @@ export default function SingleClickCreateAIPage() {
             </div>
           </div>
         </main>
-
-        <Footer />
       </div>
     );
   }
@@ -287,7 +321,24 @@ export default function SingleClickCreateAIPage() {
       <div className="absolute -top-32 left-1/3 w-80 h-80 bg-[#08B9F5]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-48 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <Navbar />
+      {/* Top Header with Back Arrow Button instead of Navbar */}
+      <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+          title="Go back"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
+        <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+          vibe<span className="text-[#08B9F5]">.</span>
+        </Link>
+
+        <div className="w-10" />
+      </header>
 
       <main className="flex-1 max-w-xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full relative z-10 flex flex-col justify-center">
         {/* Compact Breadcrumb & Header */}
@@ -679,8 +730,6 @@ export default function SingleClickCreateAIPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

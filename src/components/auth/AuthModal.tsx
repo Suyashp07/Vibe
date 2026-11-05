@@ -90,7 +90,7 @@ export default function AuthModal({
 
   const destination =
     redirectUrl ||
-    (!isAuthPage && currentPath ? currentPath : '/dashboard');
+    (!isAuthPage && currentPath ? currentPath : '/');
 
   // Synchronize defaultMode on prop change
   useEffect(() => {

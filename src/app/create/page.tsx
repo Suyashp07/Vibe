@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,27 +13,47 @@ import {
   ShieldCheck,
   LogIn,
   Zap,
-  Lock,
-  MessageCircle
 } from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/common/Footer';
 import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
 
 export default function CreateEventHubPage() {
+  const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
   const localSession = typeof window !== 'undefined' ? getLocalAuthSession() : null;
   const isAuth = isLoggedIn || Boolean(localSession);
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
 
   // Synchronous session check eliminates loading spinner flash for logged-in users
   if (loading && !localSession) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
-        <Navbar />
+        {/* Top Header with Back Arrow Button */}
+        <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+            vibe<span className="text-[#08B9F5]">.</span>
+          </Link>
+          <div className="w-10" />
+        </header>
+
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="w-8 h-8 border-3 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -41,7 +62,22 @@ export default function CreateEventHubPage() {
   if (!isAuth && !loading) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#08B9F5] selection:text-white">
-        <Navbar />
+        {/* Top Header with Back Arrow Button */}
+        <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+            vibe<span className="text-[#08B9F5]">.</span>
+          </Link>
+          <div className="w-10" />
+        </header>
 
         <main className="flex-1 max-w-md mx-auto px-4 py-12 sm:py-20 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-3xl p-7 sm:p-9 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95 text-white">
@@ -110,8 +146,6 @@ export default function CreateEventHubPage() {
             </div>
           </div>
         </main>
-
-        <Footer />
       </div>
     );
   }
@@ -123,7 +157,24 @@ export default function CreateEventHubPage() {
       <div className="absolute -top-32 left-1/4 w-80 h-80 bg-[#08B9F5]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-48 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <Navbar />
+      {/* Top Header with Back Arrow Button instead of Navbar */}
+      <header className="w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+          title="Go back"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
+        <Link href="/" className="font-display font-black tracking-tight text-white text-xl">
+          vibe<span className="text-[#08B9F5]">.</span>
+        </Link>
+
+        <div className="w-10" />
+      </header>
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full relative z-10 flex flex-col justify-center">
         {/* Header Strip - Compact & Informative */}
@@ -248,43 +299,17 @@ export default function CreateEventHubPage() {
 
             {/* Action CTA */}
             <div className="mt-5 pt-4 border-t border-white/10">
-              <div className="w-full py-2.5 px-4 rounded-xl bg-[#111114] group-hover:bg-white/15 border border-white/10 group-hover:border-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-between transition-colors shadow-2xs">
+              <div className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-between transition-colors border border-white/15">
                 <span className="flex items-center gap-1.5">
-                  <SlidersHorizontal className="w-4 h-4" />
-                  <span>Start Custom Setup</span>
+                  <SlidersHorizontal className="w-4 h-4 text-white" />
+                  <span>Open Custom Studio</span>
                 </span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>
         </div>
-
-        {/* Compact Trust Footer Strip */}
-        <div className="mt-6 sm:mt-8 p-3.5 sm:p-4 rounded-2xl bg-[#0D0D10] backdrop-blur-xs border border-white/10 shadow-2xs flex flex-wrap items-center justify-around gap-3 text-[11px] text-white/60">
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold flex items-center justify-center text-[10px]">
-              0%
-            </span>
-            <span className="font-semibold text-white">Zero Host Fees</span>
-          </div>
-
-          <div className="hidden sm:block w-px h-4 bg-white/10" />
-
-          <div className="flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-white/70" />
-            <span className="font-semibold text-white">Public or Invite-Only</span>
-          </div>
-
-          <div className="hidden sm:block w-px h-4 bg-white/10" />
-
-          <div className="flex items-center gap-1.5">
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-semibold text-white">WhatsApp &amp; Telegram Alerts</span>
-          </div>
-        </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -1423,7 +1423,7 @@ export default function WhatsOnFeed() {
           {/* ========================================================================= */}
           {/* HOST QUICK SHORT EVENT BANNER CARD (SLIM CTA STRIP)                       */}
           {/* ========================================================================= */}
-          <section className="host-card" aria-label="Host an event with us">
+          <section id="vt-bot-card" className="host-card" aria-label="Host an event with us">
             <style dangerouslySetInnerHTML={{ __html: `
               .host-card {
                 position: relative;
@@ -1574,7 +1574,7 @@ export default function WhatsOnFeed() {
                 </p>
               </div>
 
-              <div className="host-card-buttons">
+              <div id="vt-bot-buttons" className="host-card-buttons">
                 {/* 
                   REPLACE WHATSAPP NUMBER BELOW:
                   Format: https://wa.me/<country_code><phone_number>?text=<encoded_message>
