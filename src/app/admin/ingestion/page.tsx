@@ -73,7 +73,7 @@ export default function AdminIngestionPage() {
       {/* Scraper Testing Console */}
       <div className="rounded-2xl bg-white border border-[#E2E8F0] p-6 space-y-5 shadow-xs">
         <div className="flex items-center gap-2.5 pb-4 border-b border-[#E2E8F0]">
-          <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center text-[#E8621A]">
+          <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-[#075CE5]">
             <Terminal className="w-4 h-4" />
           </div>
           <div>
@@ -162,7 +162,7 @@ export default function AdminIngestionPage() {
                     </div>
                     <div>
                       <span className="text-[#64748B]">Suggested Category:</span>{' '}
-                      <span className="text-orange-600 font-mono font-semibold">
+                      <span className="text-[#075CE5] font-mono font-semibold">
                         {testResult.extracted.category}
                       </span>
                     </div>

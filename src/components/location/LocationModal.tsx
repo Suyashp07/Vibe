@@ -127,10 +127,10 @@ export default function LocationModal({
           </button>
 
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-[#FF5500]/15 border border-amber-200 dark:border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
-              <Compass className="w-4 h-4 text-[#FF5500]" />
+            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-[#08B9F5]/15 border border-amber-200 dark:border-[#08B9F5]/30 flex items-center justify-center text-[#08B9F5] shrink-0">
+              <Compass className="w-4 h-4 text-[#08B9F5]" />
             </div>
-            <span className="text-[11px] font-mono font-bold tracking-widest text-[#FF5500] uppercase">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-[#08B9F5] uppercase">
               Location-Aware Discovery
             </span>
           </div>
@@ -149,16 +149,16 @@ export default function LocationModal({
             <button
               onClick={handleDetectGPS}
               disabled={isLocating}
-              className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-white dark:from-[#111114] dark:via-[#111114] dark:to-[#0D0D10] border border-amber-200 dark:border-white/15 hover:border-[#FF5500] text-left flex items-center justify-between group transition-all cursor-pointer shadow-xs disabled:opacity-60"
+              className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-sky-50/40 to-white dark:from-[#111114] dark:via-[#111114] dark:to-[#0D0D10] border border-amber-200 dark:border-white/15 hover:border-[#08B9F5] text-left flex items-center justify-between group transition-all cursor-pointer shadow-xs disabled:opacity-60"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#FF5500] text-white flex items-center justify-center shadow-md shadow-[#FF5500]/20 shrink-0 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-[#08B9F5] text-white flex items-center justify-center shadow-md shadow-[#08B9F5]/20 shrink-0 group-hover:scale-105 transition-transform">
                   <Navigation className={`w-5 h-5 ${isLocating ? 'animate-spin' : ''}`} />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-[#0F172A] dark:text-white flex items-center gap-1.5">
                     <span>{isLocating ? 'Detecting your proximity...' : 'Use Current GPS Location'}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100/90 dark:bg-[#FF5500]/20 text-[#9A3412] dark:text-[#FF5500] font-mono font-bold uppercase border border-amber-200 dark:border-[#FF5500]/30">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100/90 dark:bg-[#08B9F5]/20 text-[#9A3412] dark:text-[#08B9F5] font-mono font-bold uppercase border border-amber-200 dark:border-[#08B9F5]/30">
                       Fastest
                     </span>
                   </div>
@@ -167,7 +167,7 @@ export default function LocationModal({
                   </div>
                 </div>
               </div>
-              <span className="text-xs text-[#FF5500] font-bold group-hover:translate-x-1 transition-transform">
+              <span className="text-xs text-[#08B9F5] font-bold group-hover:translate-x-1 transition-transform">
                 Detect →
               </span>
             </button>
@@ -188,7 +188,7 @@ export default function LocationModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Indian city, hub, or neighborhood (e.g. Bandra, Indiranagar)..."
-              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111114] hover:bg-white dark:hover:bg-[#16161b] focus:bg-white dark:focus:bg-[#16161b] border border-[#E2E8F0] dark:border-white/15 focus:border-[#FF5500] dark:focus:border-[#FF5500] text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder:text-white/40 focus:outline-none transition shadow-2xs"
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111114] hover:bg-white dark:hover:bg-[#16161b] focus:bg-white dark:focus:bg-[#16161b] border border-[#E2E8F0] dark:border-white/15 focus:border-[#08B9F5] dark:focus:border-[#08B9F5] text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder:text-white/40 focus:outline-none transition shadow-2xs"
             />
             {search && (
               <button
@@ -216,15 +216,15 @@ export default function LocationModal({
                     <button
                       key={city.name}
                       onClick={() => handleSelect(city.name, { lat: city.lat, lng: city.lng })}
-                      className="p-3 rounded-2xl bg-white dark:bg-[#111114] hover:bg-[#F8FAFC] dark:hover:bg-white/10 border border-[#E2E8F0] dark:border-white/10 hover:border-[#FF5500] dark:hover:border-[#FF5500] text-left flex items-center justify-between transition cursor-pointer shadow-2xs group"
+                      className="p-3 rounded-2xl bg-white dark:bg-[#111114] hover:bg-[#F8FAFC] dark:hover:bg-white/10 border border-[#E2E8F0] dark:border-white/10 hover:border-[#08B9F5] dark:hover:border-[#08B9F5] text-left flex items-center justify-between transition cursor-pointer shadow-2xs group"
                     >
                       <div>
-                        <div className="text-xs font-bold text-[#0F172A] dark:text-white group-hover:text-[#FF5500] transition-colors">
+                        <div className="text-xs font-bold text-[#0F172A] dark:text-white group-hover:text-[#08B9F5] transition-colors">
                           {city.name}
                         </div>
                         <div className="text-[11px] text-[#64748B] dark:text-white/50 mt-0.5">{city.state}</div>
                       </div>
-                      <MapPin className="w-3.5 h-3.5 text-[#94A3B8] dark:text-white/40 group-hover:text-[#FF5500] transition-colors" />
+                      <MapPin className="w-3.5 h-3.5 text-[#94A3B8] dark:text-white/40 group-hover:text-[#08B9F5] transition-colors" />
                     </button>
                   ))}
                 </div>
@@ -247,22 +247,22 @@ export default function LocationModal({
                       onClick={() => handleSelect(city.name, { lat: city.lat, lng: city.lng })}
                       className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center justify-between shadow-2xs group ${
                         isCurrent
-                          ? 'bg-[#FDF8EE] dark:bg-[#FF5500]/15 border-2 border-[#FF5500] text-[#FF5500] shadow-xs'
-                          : 'bg-[#F8FAFC] dark:bg-[#111114] hover:bg-white dark:hover:bg-white/10 border-[#E2E8F0] dark:border-white/10 hover:border-[#FF5500] dark:hover:border-[#FF5500] text-[#0F172A] dark:text-white'
+                          ? 'bg-[#FDF8EE] dark:bg-[#08B9F5]/15 border-2 border-[#08B9F5] text-[#08B9F5] shadow-xs'
+                          : 'bg-[#F8FAFC] dark:bg-[#111114] hover:bg-white dark:hover:bg-white/10 border-[#E2E8F0] dark:border-white/10 hover:border-[#08B9F5] dark:hover:border-[#08B9F5] text-[#0F172A] dark:text-white'
                       }`}
                     >
                       <div className="min-w-0 pr-1">
-                        <div className={`text-xs flex items-center gap-1 truncate ${isCurrent ? 'font-black text-[#FF5500]' : 'font-bold text-[#0F172A] dark:text-white group-hover:text-[#FF5500] transition-colors'}`}>
+                        <div className={`text-xs flex items-center gap-1 truncate ${isCurrent ? 'font-black text-[#08B9F5]' : 'font-bold text-[#0F172A] dark:text-white group-hover:text-[#08B9F5] transition-colors'}`}>
                           <span className="truncate">{city.name}</span>
-                          {isCurrent && <Check className="w-3 h-3 text-[#FF5500] shrink-0 stroke-[3]" />}
+                          {isCurrent && <Check className="w-3 h-3 text-[#08B9F5] shrink-0 stroke-[3]" />}
                         </div>
-                        <div className={`text-[10px] font-medium mt-0.5 truncate ${isCurrent ? 'text-[#FF5500]/80' : 'text-[#64748B] dark:text-white/50'}`}>
+                        <div className={`text-[10px] font-medium mt-0.5 truncate ${isCurrent ? 'text-[#08B9F5]/80' : 'text-[#64748B] dark:text-white/50'}`}>
                           {city.state}
                         </div>
                       </div>
                       <MapPin
                         className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                          isCurrent ? 'text-[#FF5500]' : 'text-[#94A3B8] dark:text-white/40 group-hover:text-[#FF5500]'
+                          isCurrent ? 'text-[#08B9F5]' : 'text-[#94A3B8] dark:text-white/40 group-hover:text-[#08B9F5]'
                         }`}
                       />
                     </button>
@@ -279,10 +279,10 @@ export default function LocationModal({
               className={`w-full p-3 rounded-2xl text-center text-xs font-bold flex items-center justify-center gap-2 border transition cursor-pointer shadow-2xs ${
                 activeCity === 'All India' || activeCity === 'All'
                   ? 'bg-[#0F172A] dark:bg-white border-[#0F172A] dark:border-white text-white dark:text-black shadow-xs'
-                  : 'bg-[#F8FAFC] dark:bg-[#111114] hover:bg-white dark:hover:bg-white/10 border-[#E2E8F0] dark:border-white/10 hover:border-[#FF5500] dark:hover:border-[#FF5500] text-[#0F172A] dark:text-white'
+                  : 'bg-[#F8FAFC] dark:bg-[#111114] hover:bg-white dark:hover:bg-white/10 border-[#E2E8F0] dark:border-white/10 hover:border-[#08B9F5] dark:hover:border-[#08B9F5] text-[#0F172A] dark:text-white'
               }`}
             >
-              <Globe2 className="w-4 h-4 text-[#FF5500]" />
+              <Globe2 className="w-4 h-4 text-[#08B9F5]" />
               <span>Explore Events Across All of India (No Filter)</span>
             </button>
           </div>

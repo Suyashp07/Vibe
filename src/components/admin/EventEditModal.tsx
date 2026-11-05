@@ -85,7 +85,7 @@ export default function EventEditModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0B0F19]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#E8621A]/20 border border-[#E8621A]/30 flex items-center justify-center text-[#FF8442]">
+            <div className="w-8 h-8 rounded-lg bg-[#075CE5]/20 border border-[#075CE5]/30 flex items-center justify-center text-[#00D5E8]">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
@@ -119,7 +119,7 @@ export default function EventEditModal({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function EventEditModal({
                 type="text"
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function EventEditModal({
                 value={date}
                 placeholder="e.g. 26 Sept 2026"
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
             <div>
@@ -152,7 +152,7 @@ export default function EventEditModal({
                 value={time}
                 placeholder="e.g. 7:00 PM"
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
             <div>
@@ -161,7 +161,7 @@ export default function EventEditModal({
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function EventEditModal({
                 type="text"
                 value={venueName}
                 onChange={(e) => setVenueName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
             <div>
@@ -183,14 +183,14 @@ export default function EventEditModal({
                 type="text"
                 value={venueAddress}
                 onChange={(e) => setVenueAddress(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
           </div>
 
           {/* Pricing & Ticket Rules */}
           <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
-            <span className="text-xs font-bold text-orange-300 font-mono uppercase tracking-wider">
+            <span className="text-xs font-bold text-[#38BDF8] font-mono uppercase tracking-wider">
               Pricing & Ingestion Controls
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -206,7 +206,7 @@ export default function EventEditModal({
                     if (val === 0) setTicketType('free');
                     else setTicketType('paid');
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
                 />
               </div>
 
@@ -215,7 +215,7 @@ export default function EventEditModal({
                 <select
                   value={ticketType}
                   onChange={(e) => setTicketType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
                 >
                   <option value="free">Free RSVP</option>
                   <option value="paid">Paid Ticket</option>
@@ -228,7 +228,7 @@ export default function EventEditModal({
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
                 >
                   <option value="draft">Draft (Unpublished)</option>
                   <option value="live">Live (Published)</option>
@@ -275,7 +275,7 @@ export default function EventEditModal({
                   type="checkbox"
                   checked={isExternal}
                   onChange={(e) => setIsExternal(e.target.checked)}
-                  className="rounded border-zinc-700 text-[#E8621A] focus:ring-0 w-4 h-4 bg-zinc-950"
+                  className="rounded border-zinc-700 text-[#075CE5] focus:ring-0 w-4 h-4 bg-zinc-950"
                 />
                 <span className="text-xs font-medium text-zinc-200">
                   External Event (District, BookMyShow, Luma, Unstop redirect)
@@ -289,7 +289,7 @@ export default function EventEditModal({
                     <select
                       value={platform}
                       onChange={(e) => setPlatform(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
                     >
                       <option value="district">District</option>
                       <option value="bookmyshow">BookMyShow</option>
@@ -308,7 +308,7 @@ export default function EventEditModal({
                       value={ticketLink}
                       placeholder="https://district.in/events/..."
                       onChange={(e) => setTicketLink(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
                     />
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function EventEditModal({
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
                 placeholder="https://..."
-                className="flex-1 px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="flex-1 px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
               {coverImage && (
                 <a
@@ -348,7 +348,7 @@ export default function EventEditModal({
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A] resize-y"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5] resize-y"
             />
           </div>
 
@@ -364,7 +364,7 @@ export default function EventEditModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8442] hover:opacity-95 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-500/20 disabled:opacity-50 transition"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:opacity-95 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-sky-500/20 disabled:opacity-50 transition"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Saving...' : 'Save Changes'}</span>

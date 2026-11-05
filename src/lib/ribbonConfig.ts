@@ -18,7 +18,7 @@ export const DEFAULT_RIBBON_CONFIG: RibbonConfig = {
 
 export const RIBBON_PRESETS = [
   { name: 'Violet & Pink (Original)', front: '#5227ff', back: '#e0409a' },
-  { name: 'Vibe Sunset', front: '#FF5500', back: '#E0409A' },
+  { name: 'Vibe Sunset', front: '#08B9F5', back: '#E0409A' },
   { name: 'Cyber Neon', front: '#00F0FF', back: '#7000FF' },
   { name: 'Acid Emerald', front: '#10B981', back: '#3B82F6' },
   { name: 'Gold & Noir', front: '#F59E0B', back: '#8B5CF6' },

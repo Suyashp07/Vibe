@@ -23,7 +23,7 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2.5 sm:pt-3.5 pb-8 sm:pb-10 w-full">
@@ -41,7 +41,7 @@ export default function LandingPage() {
       fallback={
         <div className="min-h-screen bg-[#050505] flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <RefreshCw className="w-6 h-6 animate-spin text-[#FF5500]" />
+            <RefreshCw className="w-6 h-6 animate-spin text-[#08B9F5]" />
             <p className="text-xs font-bold text-white/50 tracking-wider uppercase">Loading Vibe...</p>
           </div>
         </div>

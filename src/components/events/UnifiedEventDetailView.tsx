@@ -247,7 +247,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                   data-preserve-contrast="true"
                   className="preserve-light-contrast px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-bold !text-white shadow-sm border border-white/20 flex items-center gap-1.5"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
                   <span className="!text-white">via {displayPlatform}</span>
                 </span>
               ) : (
@@ -268,7 +268,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
               {isExternal && (
                 <>
                   <span>•</span>
-                  <span className="text-[#FF5500] font-semibold">Official Partner: {displayPlatform}</span>
+                  <span className="text-[#08B9F5] font-semibold">Official Partner: {displayPlatform}</span>
                 </>
               )}
             </div>
@@ -276,7 +276,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             {/* Title with styled period */}
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
               {cleanTitle}
-              <span className="text-[#FF5500]">.</span>
+              <span className="text-[#08B9F5]">.</span>
             </h1>
 
             {/* Tagline */}
@@ -291,8 +291,8 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             {/* Date / Time Card */}
             <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex items-start gap-3.5 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 dark:bg-[#23150F] border border-[#FF5500]/20 flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4 text-[#FF5500]" />
+              <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-[#23150F] border border-[#08B9F5]/20 flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4 text-[#08B9F5]" />
               </div>
               <div className="min-w-0">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">WHEN</div>
@@ -303,8 +303,8 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
 
             {/* Location Card */}
             <div className="p-4 rounded-2xl bg-[#0D0D10] border border-white/10 flex items-start gap-3.5 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 dark:bg-[#23150F] border border-[#FF5500]/20 flex items-center justify-center shrink-0">
-                <MapPin className="w-4 h-4 text-[#FF5500]" />
+              <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-[#23150F] border border-[#08B9F5]/20 flex items-center justify-center shrink-0">
+                <MapPin className="w-4 h-4 text-[#08B9F5]" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">WHERE</div>
@@ -316,7 +316,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF5500] hover:underline mt-0.5 cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#08B9F5] hover:underline mt-0.5 cursor-pointer"
                   >
                     <span>View on map</span>
                     <span className="text-xs">↗</span>
@@ -339,11 +339,11 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             <h2 className="text-base sm:text-lg font-bold text-white">Before you arrive</h2>
             <div className="space-y-2.5">
               <div className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
-                <Clock className="w-4 h-4 text-[#FF5500] shrink-0" />
+                <Clock className="w-4 h-4 text-[#08B9F5] shrink-0" />
                 <span>Doors open 30 minutes before the scheduled time.</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
-                <Ticket className="w-4 h-4 text-[#FF5500] shrink-0" />
+                <Ticket className="w-4 h-4 text-[#08B9F5] shrink-0" />
                 <span>
                   {isExternal
                     ? `Keep your ${displayPlatform} ticket confirmation handy at the venue.`
@@ -400,7 +400,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                   href={normalizedTicketUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
+                  className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#08B9F5]/25 flex items-center justify-center gap-2 cursor-pointer group"
                 >
                   <Ticket className="w-4 h-4" />
                   <span>Book Tickets on {displayPlatform}</span>
@@ -422,7 +422,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             ) : (
               <button
                 onClick={() => setShowRsvpModal(true)}
-                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#FF5500]/25 flex items-center justify-center gap-2 cursor-pointer group"
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:brightness-110 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-[#08B9F5]/25 flex items-center justify-center gap-2 cursor-pointer group"
               >
                 <Ticket className="w-4 h-4" />
                 <span>Reserve your spot</span>
@@ -438,7 +438,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
                 onClick={() => setShowShareModal(true)}
                 className="w-full py-2.5 px-4 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-100 hover:bg-neutral-200 dark:bg-[#111114] dark:hover:bg-white/10 text-xs font-semibold text-neutral-800 dark:text-white transition flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#FF5500]" />
+                <Share2 className="w-3.5 h-3.5 text-[#08B9F5]" />
                 <span>Invite friends</span>
               </button>
             </div>
@@ -496,7 +496,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             href={normalizedTicketUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#FF5500]/25 flex items-center gap-1.5 shrink-0"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#08B9F5]/25 flex items-center gap-1.5 shrink-0"
           >
             <span>Book Tickets</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -504,7 +504,7 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
         ) : (
           <button
             onClick={() => setShowRsvpModal(true)}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#FF5500]/25 flex items-center gap-1.5 shrink-0"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#08B9F5]/25 flex items-center gap-1.5 shrink-0"
           >
             <span>Reserve spot</span>
             <ArrowRight className="w-3.5 h-3.5" />

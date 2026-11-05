@@ -227,7 +227,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
             event,
             organizer: {
               name: (!event.organizer_name || /^(organizer|event host|host|admin)$/i.test(event.organizer_name)) ? 'Vibe by Swaniki' : event.organizer_name,
-              brand_color: event.theme?.palette || '#FF5500',
+              brand_color: event.theme?.palette || '#08B9F5',
               logo_url: event.cover_image_url,
               handle: event.slug,
             },
@@ -275,7 +275,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
             event,
             organizer: {
               name: (!event.organizer_name || /^(organizer|event host|host|admin)$/i.test(event.organizer_name)) ? 'Vibe by Swaniki' : event.organizer_name,
-              brand_color: event.theme?.palette || '#FF5500',
+              brand_color: event.theme?.palette || '#08B9F5',
               logo_url: event.cover_image_url,
               handle: event.slug,
             },

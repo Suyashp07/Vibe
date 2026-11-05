@@ -138,12 +138,12 @@ export async function issueOtp({
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0A0A0A; color: #FFFFFF; margin: 0; padding: 24px 12px; }
     .card { max-width: 480px; margin: 0 auto; background: #121214; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 36px 28px; text-align: center; }
     .brand { font-size: 26px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; }
-    .dot { color: #FF5500; }
+    .dot { color: #08B9F5; }
     .subhead { color: #94A3B8; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; margin-bottom: 24px; }
     .title { font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 0 0 10px 0; }
     .desc { color: #CBD5E1; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; }
-    .otp-box { background: rgba(255, 85, 0, 0.08); border: 2px dashed rgba(255, 85, 0, 0.45); border-radius: 16px; padding: 20px 24px; margin: 24px 0; display: inline-block; min-width: 220px; }
-    .otp-code { font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 42px; font-weight: 900; letter-spacing: 12px; color: #FF5500; padding-left: 12px; }
+    .otp-box { background: rgba(8, 185, 245, 0.08); border: 2px dashed rgba(8, 185, 245, 0.45); border-radius: 16px; padding: 20px 24px; margin: 24px 0; display: inline-block; min-width: 220px; }
+    .otp-code { font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 42px; font-weight: 900; letter-spacing: 12px; color: #08B9F5; padding-left: 12px; }
     .notice { font-size: 13px; color: #94A3B8; margin-top: 10px; }
     .footer { font-size: 12px; color: #64748B; margin-top: 28px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px; }
   </style>

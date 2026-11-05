@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Zap,
   SlidersHorizontal,
   Users,
@@ -261,6 +262,32 @@ export default function WhatsOnFeed() {
 
   // Active filter states
   const [searchQuery, setSearchQuery] = useState(queryParam);
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const dateDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Close date dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
+        setIsDateDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Shortcut key listener (Cmd+K / Ctrl+K) to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const [dateFilter, setDateFilter] = useState<DateFilterType>(
     DATE_FILTER_OPTIONS.some((d) => d.id === whenParam) ? whenParam : 'anytime'
   );
@@ -804,254 +831,354 @@ export default function WhatsOnFeed() {
         {currentFlashEvent && (
           <div
             data-cursor="view"
-            className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/10 group min-h-[460px] sm:min-h-[440px] md:h-[480px] bg-black touch-pan-y select-none"
+            className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-white/10 group min-h-[460px] sm:min-h-[480px] md:h-[500px] lg:h-[520px] bg-[#07133A] touch-pan-y select-none"
             onMouseEnter={() => setIsFlashcardPaused(true)}
             onMouseLeave={() => setIsFlashcardPaused(false)}
           >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentFlashEvent.id}
-                initial={{ opacity: 0, scale: 1.02 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(_e, info) => {
-                  if (info.offset.x < -40 || info.velocity.x < -300) {
-                    setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
-                  } else if (info.offset.x > 40 || info.velocity.x > 300) {
-                    setFlashcardIdx((prev) => (prev - 1 + prominentEvents.length) % prominentEvents.length);
-                  }
-                }}
-                className="absolute inset-0"
-              >
-                {/* Background Poster Image */}
-                <Image
-                  src={currentFlashEvent.cover_image_url}
-                  alt={currentFlashEvent.title}
-                  fill
-                  unoptimized
-                  priority
-                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
+            {/* Seamless Image Crossfade Layer (Zero Black Flash) */}
+            <div className="absolute inset-0 overflow-hidden">
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={currentFlashEvent.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeInOut' }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(_e, info) => {
+                    if (info.offset.x < -40 || info.velocity.x < -300) {
+                      setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
+                    } else if (info.offset.x > 40 || info.velocity.x > 300) {
+                      setFlashcardIdx((prev) => (prev - 1 + prominentEvents.length) % prominentEvents.length);
+                    }
+                  }}
+                  className="absolute inset-0"
+                >
+                  {/* Natural Vibrant Event Photograph - full-bleed, no heavy black filter */}
+                  <Image
+                    src={currentFlashEvent.cover_image_url}
+                    alt={currentFlashEvent.title}
+                    fill
+                    unoptimized
+                    priority
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-                {/* Multi-layer protective gradient overlay */}
-                <div className="absolute inset-0 bg-black/30 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-transparent pointer-events-none" />
+            {/* Soft Directional Cinematic Scrim (Netflix-style, lighter & anchored at bottom-left) */}
+            <div
+              className="absolute inset-0 pointer-events-none z-10"
+              style={{
+                background:
+                  'radial-gradient(circle at bottom left, rgba(7, 19, 58, 0.72) 0%, rgba(7, 19, 58, 0.30) 42%, rgba(7, 19, 58, 0) 75%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#07133A]/75 via-[#07133A]/30 to-transparent pointer-events-none z-10" />
 
-                {/* Spotlight Content Overlay */}
-                <div className="absolute inset-0 p-5 sm:p-7 md:p-9 flex flex-col justify-between z-10 text-white">
-                  {/* Top Badge Row */}
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 sm:bg-white/10 border border-white/15 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-sm">
-                      <Zap className="w-3 h-3 fill-[#E8621A] text-[#E8621A]" />
+            {/* Content Group at Bottom-Left with Razor-Sharp Readability */}
+            <div className="flashcard-hero-overlay absolute bottom-0 left-0 p-6 sm:p-8 md:p-10 max-w-xl lg:max-w-2xl z-20 pointer-events-auto">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentFlashEvent.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-3 sm:space-y-3.5"
+                >
+                  {/* Badge Row (with mobile-friendly pagination inline on small screens) */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-sm">
+                      <Zap className="w-3 h-3 fill-[#08B9F5] text-[#08B9F5]" />
                       <span>IN THE SPOTLIGHT</span>
                     </span>
-                  </div>
 
-                  {/* Middle: Date, Venue, Title & Tagline */}
-                  <div className="space-y-2 sm:space-y-2.5 mt-auto mb-4 sm:mb-6 max-w-2xl">
-                    <div className="space-y-1 text-xs font-semibold">
-                      <div className="flex items-center gap-1.5 text-slate-200">
-                        <Calendar className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
-                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide">
-                          {formatSpotlightDate(currentFlashEvent.start_at)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-slate-300">
-                        <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
-                        <span className="text-[11px] sm:text-xs font-medium truncate">
-                          {currentFlashEvent.location_name || 'Live Venue'}, {currentFlashEvent.city || 'Mumbai'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Link
-                      href={flashcardLink}
-                      className="block group-hover:text-amber-100 transition-colors"
-                    >
-                      <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white leading-[1.15] tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] line-clamp-3">
-                        {currentFlashEvent.title}
-                      </h2>
-                    </Link>
-
-                    <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 max-w-xl font-normal leading-relaxed drop-shadow-md">
-                      {currentFlashEvent.tagline || 'Live music. Open skies. A crowd that feels like your people.'}
-                    </p>
-                  </div>
-
-                  {/* Bottom Row */}
-                  <div className="flex items-center justify-between gap-4 pt-3 border-t border-white/10">
-                    <Link
-                      href={flashcardLink}
-                      className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2.5 rounded-full bg-[#E8621A] hover:bg-[#d05312] text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(232,98,26,0.35)] transition-all cursor-pointer active:scale-95 shrink-0"
-                    >
-                      <span>Find your spot</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-
-                    <div className="flex items-center gap-2.5 shrink-0">
-                      <span className="text-[11px] sm:text-xs font-mono font-medium text-slate-400">
-                        {String(flashcardIdx + 1).padStart(2, '0')} / {String(prominentEvents.length).padStart(2, '0')}
-                      </span>
+                    {/* Mobile pagination controls inside card */}
+                    <div className="sm:hidden flex items-center gap-1.5 font-mono text-[11px] font-bold text-white/90">
+                      <span>{String(flashcardIdx + 1).padStart(2, '0')}/{String(prominentEvents.length).padStart(2, '0')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={handlePrevFlashcard}
-                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-black/40 border border-white/10 hover:bg-white/15 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
-                          aria-label="Previous event"
+                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+                          aria-label="Previous"
                         >
-                          <ChevronLeft className="w-4 h-4" />
+                          <ChevronLeft className="w-3.5 h-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={handleNextFlashcard}
-                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-black/40 border border-white/10 hover:bg-white/15 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
-                          aria-label="Next event"
+                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+                          aria-label="Next"
                         >
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+
+                  {/* Event Meta: Date & Venue with Soft Shadow */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-100/90 text-xs sm:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#08B9F5] shrink-0" />
+                      <span className="font-semibold uppercase tracking-wide">
+                        {formatSpotlightDate(currentFlashEvent.start_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <MapPin className="w-3.5 h-3.5 text-[#08B9F5] shrink-0" />
+                      <span className="truncate">
+                        {currentFlashEvent.location_name || 'Live Venue'}, {currentFlashEvent.city || 'Mumbai'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Title: Crisp bold white text with soft shadow */}
+                  <Link
+                    href={flashcardLink}
+                    className="block group/title"
+                  >
+                    <h2 className="hero-spotlight-title font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight tracking-tight line-clamp-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)] group-hover/title:text-[#08B9F5] transition-colors" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}>
+                      {currentFlashEvent.title}
+                    </h2>
+                  </Link>
+
+                  {/* Subtitle / Description: High-contrast soft white */}
+                  <p className="text-slate-100/90 text-sm sm:text-base line-clamp-2 font-normal leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)] max-w-lg">
+                    {currentFlashEvent.tagline || 'Live music. Open skies. A crowd that feels like your people.'}
+                  </p>
+
+                  {/* Action Button: Bright blue button with subtle glow */}
+                  <div className="pt-2 sm:pt-3">
+                    <Link
+                      href={flashcardLink}
+                      className="hero-spotlight-btn inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                      style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}
+                    >
+                      <span className="hero-spotlight-btn-text" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}>Find your spot</span>
+                      <ArrowRight className="w-4 h-4 text-white" style={{ color: "#FFFFFF", stroke: "#FFFFFF" }} />
+                    </Link>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Desktop Frosted Glass Capsule for Pagination & Controls (Bottom-Right) */}
+            <div className="hidden sm:flex absolute bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 z-20 items-center gap-2.5 px-3.5 py-2 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 text-white shadow-lg">
+              <span className="text-[11px] sm:text-xs font-mono font-bold text-white tracking-wider">
+                {String(flashcardIdx + 1).padStart(2, '0')} / {String(prominentEvents.length).padStart(2, '0')}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handlePrevFlashcard}
+                  className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                  aria-label="Previous event"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextFlashcard}
+                  className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                  aria-label="Next event"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
-
         {/* ========================================================================= */}
         {/* 2. DISCOVERY SECTION: SEARCH, DATE PILLS, CATEGORIES & CONTROLS           */}
         {/* ========================================================================= */}
         {/* ========================================================================= */}
         {/* 2-TIER COMPACT TOOLBAR                                                    */}
         {/* ========================================================================= */}
-        <div id="whats-on-feed" className="space-y-4 pt-2">
-          {/* TIER 1: Title (left) + Search & Date Pills (right) */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div id="whats-on-feed" className="space-y-5 pt-3">
+          {/* ========================================================================= */}
+          {/* 1. STREAMLINED HEADER: Bold Navy Heading + Sleek Search Input             */}
+          {/* ========================================================================= */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
-                <span>Find your next good time</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-[#FF5500] inline-block animate-pulse" />
+              <h2 className="text-3xl font-extrabold text-[#07133A] dark:text-white tracking-tight">
+                Find your next good time
               </h2>
-              <p className="text-xs sm:text-sm text-white/60 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Live gigs, founder mixers, sports games, and underground meetups.
               </p>
             </div>
 
-            {/* Right Controls: Search + Date Pills */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-              {/* Tokenized Search Input */}
-              <div className="relative w-full sm:w-60 md:w-64">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search events, venues..."
-                  className="w-full pl-9 pr-8 py-2 rounded-full bg-[#111114] border border-white/10 text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500] shadow-inner transition-colors"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white cursor-pointer"
-                    aria-label="Clear search"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Compact Date Pills */}
-              <div className="flex items-center gap-1 bg-[#111114] border border-white/10 p-1 rounded-full overflow-x-auto no-scrollbar shrink-0">
-                {DATE_FILTER_OPTIONS.map((opt) => {
-                  const active = dateFilter === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setDateFilter(opt.id)}
-                      className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                        active
-                          ? 'bg-white text-black font-bold shadow-sm'
-                          : 'text-white/60 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Right: Sleek Pill-shaped Search Input with shortcut badge */}
+            <div className="relative w-full md:w-80 shrink-0">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search events, venues..."
+                className="w-full pl-10 pr-12 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white/90 dark:bg-slate-900/90 shadow-sm text-sm text-[#07133A] dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#07133A]/20 dark:focus:ring-white/20 transition-all"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  ⌘K
+                </span>
+              )}
             </div>
           </div>
 
-          {/* TIER 2: Important Filters (left) + Price Toggle & Filters Tab (right) */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-white/5">
-            {/* Important Category Pills (No horizontal scrolling) */}
-            <div className="flex flex-wrap items-center gap-2 py-0.5">
-              {(() => {
-                const secondLineCategories = IMPORTANT_CATEGORY_FILTERS.includes(categoryFilter)
-                  ? IMPORTANT_CATEGORY_FILTERS
-                  : [...IMPORTANT_CATEGORY_FILTERS, categoryFilter];
-
-                return secondLineCategories.map((cat) => {
-                  const active = categoryFilter === cat;
-                  const config = CATEGORY_CONFIG[cat];
-                  const Icon = config.icon;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setCategoryFilter(cat)}
-                      className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
-                        active
-                          ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.35)] scale-[1.02]'
-                          : 'bg-[#111114] text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{config.label}</span>
-                    </button>
-                  );
-                });
-              })()}
+          {/* ========================================================================= */}
+          {/* 2. FILTER BAR (Single Clean Row)                                         */}
+          {/* ========================================================================= */}
+          <div className="flex items-center justify-between gap-3 pt-1">
+            {/* Scrollable Category Pills on Left */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 flex-1 min-w-0">
+              {CATEGORY_FILTERS.map((cat) => {
+                const active = categoryFilter === cat;
+                const config = CATEGORY_CONFIG[cat];
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`category-pill rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      active
+                        ? 'category-pill-active bg-[#07133A] text-white shadow-sm dark:bg-white dark:text-[#07133A]'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-300'
+                    }`}
+                    style={active ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
+                  >
+                    <Icon
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={active ? { color: '#FFFFFF', stroke: '#FFFFFF' } : undefined}
+                    />
+                    <span style={active ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}>
+                      {config.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Quick Actions: Price Toggle + More Filters */}
+            {/* Right Utility Pills: Date Dropdown + Filters Button */}
             <div className="flex items-center gap-2 shrink-0">
-              {/* Price Toggle */}
-              <div className="inline-flex rounded-full bg-[#111114] border border-white/10 p-0.5">
-                {PRICE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => setPriceFilter(opt.id)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                      priceFilter === opt.id
-                        ? 'bg-white text-black font-bold shadow-sm'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+              {/* Quick Date Dropdown */}
+              <div className="relative" ref={dateDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap border ${
+                    dateFilter !== 'anytime'
+                      ? 'feed-active-btn bg-[#07133A] text-white border-[#07133A] shadow-sm dark:bg-white dark:text-[#07133A] dark:border-white'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/80 dark:border-white/10'
+                  }`}
+                  style={dateFilter !== 'anytime' ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
+                >
+                  <Calendar className="w-3.5 h-3.5" style={dateFilter !== 'anytime' ? { color: '#FFFFFF', stroke: '#FFFFFF' } : undefined} />
+                  <span style={dateFilter !== 'anytime' ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}>
+                    {dateFilter === 'weekend'
+                      ? 'This Weekend'
+                      : DATE_FILTER_OPTIONS.find((d) => d.id === dateFilter)?.label || 'Date'}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      isDateDropdownOpen ? 'rotate-180' : ''
                     }`}
-                  >
-                    {opt.id === 'all' ? 'All' : opt.id === 'free' ? 'Free' : 'Paid'}
-                  </button>
-                ))}
+                    style={dateFilter !== 'anytime' ? { color: '#FFFFFF', stroke: '#FFFFFF' } : undefined}
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {isDateDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-44 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xl py-1.5 z-40 overflow-hidden"
+                    >
+                      {DATE_FILTER_OPTIONS.map((opt) => {
+                        const isSelected = dateFilter === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setDateFilter(opt.id);
+                              setIsDateDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center justify-between transition-colors ${
+                              isSelected
+                                ? 'bg-slate-100 dark:bg-slate-800 text-[#07133A] dark:text-white font-bold'
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                            }`}
+                          >
+                            <span>{opt.label}</span>
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-[#08B9F5]" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* Filters Drawer Button */}
+              {/* Clean Filters Button */}
               <button
                 type="button"
                 onClick={() => setShowFiltersDrawer(!showFiltersDrawer)}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                  showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off' || categoryFilter !== 'All'
-                    ? 'bg-[#FF5500]/20 border border-[#FF5500]/50 text-[#FF5500]'
-                    : 'bg-[#111114] text-white/80 border border-white/10 hover:bg-white/10 hover:text-white'
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap border ${
+                  showFiltersDrawer ||
+                  selectedMoods.length > 0 ||
+                  distanceFilter !== 'Off' ||
+                  priceFilter !== 'all'
+                    ? 'feed-active-btn bg-[#07133A] text-white border-[#07133A] shadow-sm dark:bg-white dark:text-[#07133A] dark:border-white'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/80 dark:border-white/10'
                 }`}
+                style={
+                  showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off' || priceFilter !== 'all'
+                    ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }
+                    : undefined
+                }
               >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Filters</span>
-                {(selectedMoods.length > 0 || distanceFilter !== 'Off' || categoryFilter !== 'All') && (
-                  <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+                <SlidersHorizontal
+                  className="w-3.5 h-3.5"
+                  style={
+                    showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off' || priceFilter !== 'all'
+                      ? { color: '#FFFFFF', stroke: '#FFFFFF' }
+                      : undefined
+                  }
+                />
+                <span
+                  style={
+                    showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off' || priceFilter !== 'all'
+                      ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }
+                      : undefined
+                  }
+                >
+                  Filters
+                </span>
+                {(selectedMoods.length > 0 ||
+                  distanceFilter !== 'Off' ||
+                  priceFilter !== 'all') && (
+                  <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
                 )}
               </button>
             </div>
@@ -1062,54 +1189,58 @@ export default function WhatsOnFeed() {
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 flex-wrap text-xs pt-1 border-t border-white/5"
+              className="flex items-center gap-2 flex-wrap text-xs pt-1"
             >
-              <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider">Active:</span>
+              <span className="text-[11px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-wider">
+                Active:
+              </span>
 
               {searchQuery.trim() && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/10">
-                  <Search className="w-3 h-3 text-[#FF5500]" />
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200/80 dark:border-white/10">
+                  <Search className="w-3 h-3 text-[#0038A8] dark:text-[#08B9F5]" />
                   <span>&quot;{searchQuery}&quot;</span>
-                  <button onClick={() => setSearchQuery('')} className="hover:text-red-400">
+                  <button onClick={() => setSearchQuery('')} className="hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {dateFilter !== 'anytime' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/10">
-                  <Calendar className="w-3 h-3 text-[#FF5500]" />
-                  <span>{DATE_FILTER_OPTIONS.find((d) => d.id === dateFilter)?.label}</span>
-                  <button onClick={() => setDateFilter('anytime')} className="hover:text-red-400">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200/80 dark:border-white/10">
+                  <Calendar className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#08B9F5]" />
+                  <span>
+                    {DATE_FILTER_OPTIONS.find((d) => d.id === dateFilter)?.label}
+                  </span>
+                  <button onClick={() => setDateFilter('anytime')} className="hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {categoryFilter !== 'All' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/10">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200/80 dark:border-white/10">
                   <span>{CATEGORY_CONFIG[categoryFilter].label}</span>
-                  <button onClick={() => setCategoryFilter('All')} className="hover:text-red-400">
+                  <button onClick={() => setCategoryFilter('All')} className="hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {priceFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/10">
-                  <Ticket className="w-3 h-3 text-[#FF5500]" />
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200/80 dark:border-white/10">
+                  <Ticket className="w-3 h-3 text-[#0038A8] dark:text-[#08B9F5]" />
                   <span>{priceFilter === 'free' ? 'Free RSVP' : 'Paid Passes'}</span>
-                  <button onClick={() => setPriceFilter('all')} className="hover:text-red-400">
+                  <button onClick={() => setPriceFilter('all')} className="hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {distanceFilter !== 'Off' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/10">
-                  <MapPin className="w-3 h-3 text-[#FF5500]" />
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200/80 dark:border-white/10">
+                  <MapPin className="w-3 h-3 text-[#0038A8] dark:text-[#08B9F5]" />
                   <span>Within {distanceFilter}</span>
-                  <button onClick={() => setDistanceFilter('Off')} className="hover:text-red-400">
+                  <button onClick={() => setDistanceFilter('Off')} className="hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -1118,10 +1249,10 @@ export default function WhatsOnFeed() {
               {selectedMoods.map((mood) => (
                 <span
                   key={mood}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FF5500]/15 text-[#FF8540] border border-[#FF5500]/30"
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-[#08B9F5]/15 text-[#0038A8] dark:text-[#08B9F5] border border-blue-200/60 dark:border-[#08B9F5]/30 font-medium"
                 >
                   <span>{mood}</span>
-                  <button onClick={() => handleToggleMood(mood)} className="hover:text-white">
+                  <button onClick={() => handleToggleMood(mood)} className="hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -1130,7 +1261,7 @@ export default function WhatsOnFeed() {
               <button
                 type="button"
                 onClick={handleResetMyView}
-                className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-white/50 hover:text-white transition-colors cursor-pointer"
+                className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-[#07133A] dark:hover:text-white transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Reset all</span>
@@ -1138,7 +1269,7 @@ export default function WhatsOnFeed() {
             </motion.div>
           )}
 
-          {/* Expandable Advanced Mood & Distance Filter Drawer */}
+          {/* Expandable Filter Drawer */}
           <AnimatePresence>
             {showFiltersDrawer && (
               <motion.div
@@ -1146,59 +1277,44 @@ export default function WhatsOnFeed() {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="bg-[#111114] rounded-2xl p-5 border border-white/10 space-y-4 overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-white/10 shadow-sm space-y-4 overflow-hidden"
               >
-                {/* All Category Filter Tags */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">
-                      ALL CATEGORIES & VIBES:
-                    </span>
-                    {categoryFilter !== 'All' && (
+                {/* 1. Price / Passes Option */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider">
+                    ENTRY & TICKETS:
+                  </span>
+                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200/80 dark:border-white/10">
+                    {PRICE_OPTIONS.map((opt) => (
                       <button
-                        onClick={() => setCategoryFilter('All')}
-                        className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-white transition-colors cursor-pointer"
+                        key={opt.id}
+                        onClick={() => setPriceFilter(opt.id)}
+                        className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                          priceFilter === opt.id
+                            ? 'bg-[#07133A] text-white shadow-sm dark:bg-white dark:text-[#07133A]'
+                            : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
+                        }`}
                       >
-                        <RotateCcw className="w-3 h-3" />
-                        <span>Reset category</span>
+                        {opt.id === 'all' ? 'All' : opt.id === 'free' ? 'Free RSVP' : 'Paid Passes'}
                       </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {CATEGORY_FILTERS.map((cat) => {
-                      const active = categoryFilter === cat;
-                      const config = CATEGORY_CONFIG[cat];
-                      const Icon = config.icon;
-                      return (
-                        <button
-                          key={cat}
-                          onClick={() => setCategoryFilter(cat)}
-                          className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
-                            active
-                              ? 'bg-[#FF5500] text-white shadow-[0_0_12px_rgba(255,85,0,0.35)] font-bold scale-[1.02]'
-                              : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
-                          }`}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          <span>{config.label}</span>
-                        </button>
-                      );
-                    })}
+                    ))}
                   </div>
                 </div>
 
-                {/* Distance Row */}
-                <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-white/10">
-                  <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">RADIUS FROM YOU:</span>
+                {/* 2. Radius / Distance from You */}
+                <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-slate-100 dark:border-white/10">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider">
+                    RADIUS FROM YOU:
+                  </span>
                   <div className="flex items-center gap-2">
                     {DISTANCE_OPTIONS.map((dist) => (
                       <button
                         key={dist}
                         onClick={() => setDistanceFilter(dist)}
-                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer border ${
                           distanceFilter === dist
-                            ? 'bg-[#FF5500] text-white shadow-sm'
-                            : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
+                            ? 'bg-[#07133A] text-white border-[#07133A] shadow-sm dark:bg-white dark:text-[#07133A] dark:border-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/5 dark:text-white/70 border-slate-200/80 dark:border-white/10'
                         }`}
                       >
                         {dist === 'Off' ? 'Anywhere' : dist}
@@ -1207,17 +1323,21 @@ export default function WhatsOnFeed() {
                   </div>
                 </div>
 
-                {/* Mood Tags */}
-                <div className="space-y-2 pt-3 border-t border-white/10">
+                {/* 3. Mood & Vibe Tags */}
+                <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-white/10">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">MOOD & VIBE TAGS:</span>
-                    <button
-                      onClick={() => setSelectedMoods([])}
-                      className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-white transition-colors cursor-pointer"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>Clear tags</span>
-                    </button>
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider">
+                      MOOD & VIBE TAGS:
+                    </span>
+                    {selectedMoods.length > 0 && (
+                      <button
+                        onClick={() => setSelectedMoods([])}
+                        className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-[#07133A] dark:hover:text-white transition-colors cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Clear tags</span>
+                      </button>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     {MOOD_TAGS.map((tag) => {
@@ -1226,10 +1346,10 @@ export default function WhatsOnFeed() {
                         <button
                           key={tag}
                           onClick={() => handleToggleMood(tag)}
-                          className={`px-3 py-1 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                          className={`px-3 py-1 text-xs font-medium rounded-full transition-all cursor-pointer border ${
                             active
-                              ? 'bg-[#FF5500] text-white font-semibold'
-                              : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
+                              ? 'bg-[#07133A] text-white border-[#07133A] font-semibold dark:bg-white dark:text-[#07133A] dark:border-white'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/5 dark:text-white/70 border-slate-200/80 dark:border-white/10'
                           }`}
                         >
                           {tag}
@@ -1242,35 +1362,26 @@ export default function WhatsOnFeed() {
             )}
           </AnimatePresence>
 
-          {/* Results Count Sub-bar */}
-          <div className="flex items-center justify-between text-xs text-white/50 font-medium pt-1">
-            <span>
-              {filteredEvents.length} {filteredEvents.length === 1 ? 'experience' : 'experiences'} found
-            </span>
-            <div className="flex items-center gap-1.5 text-white/70">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
-              <span>Good times ahead</span>
-            </div>
-          </div>
-
           {/* ========================================================================= */}
-          {/* 3. EVENTS GRID & EMPTY STATE                                              */}
+          {/* 3. EVENTS GRID & EMPTY STATE (4 columns on desktop)                      */}
           {/* ========================================================================= */}
           {filteredEvents.length === 0 ? (
-            <div className="p-10 sm:p-14 text-center bg-[#111114] rounded-3xl border border-dashed border-white/15 space-y-4 max-w-2xl mx-auto my-6">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-white/40">
+            <div className="p-10 sm:p-14 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-white/15 space-y-4 max-w-2xl mx-auto my-6">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-400 dark:text-white/40">
                 <FilterX className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold text-lg text-white">No experiences match these filters</h3>
-                <p className="text-xs sm:text-sm text-white/60 max-w-md mx-auto">
+                <h3 className="font-bold text-lg text-[#07133A] dark:text-white">
+                  No experiences match these filters
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-white/60 max-w-md mx-auto">
                   Try broadening your dates, clearing tags, or resetting distance radius to see upcoming vibes.
                 </p>
               </div>
               <div className="pt-2 flex items-center justify-center gap-3">
                 <button
                   onClick={handleResetMyView}
-                  className="px-5 py-2.5 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold rounded-full transition-all shadow-md cursor-pointer flex items-center gap-2"
+                  className="px-5 py-2.5 bg-[#07133A] hover:bg-[#0A1F4D] text-white text-xs font-bold rounded-full transition-all shadow-md cursor-pointer flex items-center gap-2"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset All Filters</span>
@@ -1278,9 +1389,9 @@ export default function WhatsOnFeed() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredEvents.map((event) => (
-                <div key={event.id} className="h-full flex flex-col transition-all duration-200">
+                <div key={event.id} className="h-full flex flex-col">
                   <EventCard
                     event={event}
                     distanceKm={event.distanceKm}
@@ -1294,12 +1405,12 @@ export default function WhatsOnFeed() {
             </div>
           )}
 
-          {/* ========================================================================= */}
+                    {/* ========================================================================= */}
           {/* 4. BRING YOUR PEOPLE TOGETHER BANNER                                      */}
           {/* ========================================================================= */}
           <div className="rounded-2xl sm:rounded-3xl bg-[#111114] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FF5500]/15 border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#08B9F5]/15 border border-[#08B9F5]/30 flex items-center justify-center text-[#08B9F5] shrink-0">
                 <Users className="w-6 h-6" />
               </div>
               <div>
@@ -1310,7 +1421,7 @@ export default function WhatsOnFeed() {
 
             <Link
               href="/create"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer hover:border-[#FF5500] hover:text-[#FF5500] shrink-0"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer hover:border-[#08B9F5] hover:text-[#08B9F5] shrink-0"
             >
               <span>Host an event</span>
               <ArrowRight className="w-4 h-4" />

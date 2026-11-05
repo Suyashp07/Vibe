@@ -18,7 +18,7 @@ export default function CreateManualPage() {
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-7 h-7 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -33,7 +33,7 @@ export default function CreateManualPage() {
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-2xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
             <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-white mx-auto flex items-center justify-center shadow-xs">
-              <Sparkles className="w-6 h-6 text-[#FF5500]" />
+              <Sparkles className="w-6 h-6 text-[#08B9F5]" />
             </div>
 
             <div className="space-y-2">
@@ -82,7 +82,7 @@ export default function CreateManualPage() {
 
               <Link
                 href="/signup?redirect=/create/manual"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-semibold text-xs transition-all shadow-md"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white font-semibold text-xs transition-all shadow-md"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />

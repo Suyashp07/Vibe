@@ -169,7 +169,7 @@ export default function VibeReelCard({
           particleCount: 40,
           spread: 60,
           origin: { x: 0.9, y: 0.5 },
-          colors: ['#F97316', '#EC4899', '#FBBF24'],
+          colors: ['#08B9F5', '#EC4899', '#FBBF24'],
         });
       } catch {}
     }
@@ -289,7 +289,7 @@ export default function VibeReelCard({
             {/* Dynamic ambient color glow from event accent */}
             <div
               className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full blur-3xl opacity-25 pointer-events-none"
-              style={{ backgroundColor: event.theme?.custom_accent || '#E8621A' }}
+              style={{ backgroundColor: event.theme?.custom_accent || '#075CE5' }}
             />
 
             {/* True Uncropped Poster naturally fitted to screen dimensions */}
@@ -325,7 +325,7 @@ export default function VibeReelCard({
       {/* Floating Instagram-style Heart/Flame on Double Tap */}
       {showHeartAnim && (
         <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-in zoom-in-50 fade-in duration-300">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#E8621A]/85 backdrop-blur-xl border border-white/40 flex items-center justify-center text-white shadow-2xl shadow-[#E8621A]/60 animate-bounce">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#075CE5]/85 backdrop-blur-xl border border-white/40 flex items-center justify-center text-white shadow-2xl shadow-[#075CE5]/60 animate-bounce">
             <Flame className="w-14 h-14 sm:w-16 sm:h-16 fill-white drop-shadow-lg" />
           </div>
         </div>
@@ -346,13 +346,13 @@ export default function VibeReelCard({
           <div
             className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all active:scale-90 ${
               hasCheered
-                ? 'bg-[#E8621A] border-[#E8621A] text-white scale-105 shadow-lg shadow-[#E8621A]/40'
+                ? 'bg-[#075CE5] border-[#075CE5] text-white scale-105 shadow-lg shadow-[#075CE5]/40'
                 : 'bg-black/50 border-white/20 text-white hover:bg-black/70 hover:scale-105'
             }`}
           >
             <Flame className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform ${hasCheered ? 'fill-white scale-110' : ''}`} />
           </div>
-          <span className={`text-[11px] font-black drop-shadow-md transition-colors ${hasCheered ? 'text-[#FF8C42]' : 'text-white'}`}>
+          <span className={`text-[11px] font-black drop-shadow-md transition-colors ${hasCheered ? 'text-[#00D5E8]' : 'text-white'}`}>
             {cheers}
           </span>
         </button>
@@ -402,7 +402,7 @@ export default function VibeReelCard({
       <div className="relative z-10 p-4 sm:p-5 w-full max-w-lg pb-5 sm:pb-6">
         {/* Host Info */}
         <div className="flex items-center gap-2 mb-1.5">
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-[#E8621A] to-purple-500 overflow-hidden border border-white/30 shrink-0">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-[#075CE5] to-purple-500 overflow-hidden border border-white/30 shrink-0">
             {event.organizer_logo ? (
               <img
                 src={event.organizer_logo}
@@ -436,7 +436,7 @@ export default function VibeReelCard({
               </span>
             )}
 
-          <span className="px-2.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[#FF8C42] border border-white/10 font-bold flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[#00D5E8] border border-white/10 font-bold flex items-center gap-1">
             <Clock className="w-3 h-3" />
             <span>{formatStartTime()}</span>
           </span>
@@ -461,7 +461,7 @@ export default function VibeReelCard({
           <div className="bg-black/50 backdrop-blur-md border border-white/10 rounded-xl p-2 mb-3 max-w-sm">
             <div className="flex items-center justify-between text-[11px] mb-1">
               <span className="font-bold text-white flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-[#E8621A]" />
+                <Users className="w-3.5 h-3.5 text-[#075CE5]" />
                 <span>{filled}/{limit} spots filled</span>
               </span>
               <span className={`text-[10px] font-black ${remaining <= 3 ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`}>
@@ -470,7 +470,7 @@ export default function VibeReelCard({
             </div>
             <div className="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[#075CE5] to-[#08B9F5] rounded-full transition-all duration-500"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -482,11 +482,13 @@ export default function VibeReelCard({
           <button
             type="button"
             onClick={() => setQuickJoinOpen(true)}
-            className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#FF5500]/35 transition-all cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#08B9F5]/35 transition-all cursor-pointer"
             title="Join now"
+            className="vibe-join-btn flex-1 py-3 px-4 rounded-2xl bg-[#0066F5] hover:bg-[#0052cc] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer"
+            style={{ color: "#FFFFFF" }}
           >
-            <Zap className="w-4 h-4 text-white shrink-0 fill-current" />
-            <span>Join now</span>
+            <Zap className="w-4 h-4 text-white shrink-0 fill-white" style={{ color: "#FFFFFF" }} />
+            <span className="vibe-join-text text-white font-bold" style={{ color: "#FFFFFF" }}>Join now</span>
           </button>
           <button
             type="button"
@@ -494,7 +496,7 @@ export default function VibeReelCard({
             className="py-3 px-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md shrink-0"
             title="Connect with host"
           >
-            <MessageCircle className="w-4 h-4 text-[#FF8C42] shrink-0" />
+            <MessageCircle className="w-4 h-4 text-[#00D5E8] shrink-0" />
             <span>Connect with host</span>
           </button>
           <button
@@ -517,7 +519,7 @@ export default function VibeReelCard({
         >
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#E8621A]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#075CE5]">
                 ⚡ Event Details
               </span>
               <button
@@ -552,7 +554,7 @@ export default function VibeReelCard({
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-[#E8621A] hover:underline font-bold mt-1"
+                  className="inline-flex items-center gap-1 text-xs text-[#075CE5] hover:underline font-bold mt-1"
                 >
                   <MapPin className="w-3 h-3" />
                   <span>Open in Google Maps</span>
@@ -584,7 +586,7 @@ export default function VibeReelCard({
                 setDetailsOpen(false);
                 setQuickJoinOpen(true);
               }}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#FF5500]/30"
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#08B9F5]/30"
               title="Join now"
             >
               <Zap className="w-4 h-4 text-white fill-current" />
@@ -599,7 +601,7 @@ export default function VibeReelCard({
               className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0"
               title="Connect with host"
             >
-              <MessageCircle className="w-4 h-4 text-[#FF8C42]" />
+              <MessageCircle className="w-4 h-4 text-[#00D5E8]" />
               <span>Connect with host</span>
             </button>
           </div>
@@ -624,8 +626,8 @@ export default function VibeReelCard({
             {/* Handle + Header */}
             <div className="flex items-center justify-between px-5 pt-3 pb-2 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#E8621A]/20 flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4 text-[#E8621A]" />
+                <div className="w-8 h-8 rounded-full bg-[#075CE5]/20 flex items-center justify-center">
+                  <MessageCircle className="w-4 h-4 text-[#075CE5]" />
                 </div>
                 <span className="text-sm font-black text-white">
                   Comments <span className="text-white/50 font-normal">({commentCount})</span>
@@ -644,7 +646,7 @@ export default function VibeReelCard({
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 no-scrollbar min-h-[120px] max-h-[35vh]">
               {!commentsLoaded ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#E8621A]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#075CE5]" />
                 </div>
               ) : comments.length === 0 ? (
                 <div className="text-center py-8">
@@ -653,7 +655,7 @@ export default function VibeReelCard({
               ) : (
                 comments.map((cmt) => (
                   <div key={cmt.id} className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#E8621A] to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#075CE5] to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
                       {(cmt.user_name || 'G')[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -685,7 +687,7 @@ export default function VibeReelCard({
                   onKeyDown={(e) => e.stopPropagation()}
                   placeholder="Your name"
                   maxLength={50}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 mb-2 focus:outline-none focus:border-[#E8621A]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 mb-2 focus:outline-none focus:border-[#075CE5]/50"
                 />
               )}
               <div className="flex items-end gap-2">
@@ -703,13 +705,13 @@ export default function VibeReelCard({
                   placeholder="Add a comment..."
                   maxLength={500}
                   rows={1}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#E8621A]/50 transition-colors"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#075CE5]/50 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handlePostComment}
                   disabled={!commentText.trim() || postingComment}
-                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0"
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0"
                 >
                   {postingComment ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

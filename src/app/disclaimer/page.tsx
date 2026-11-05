@@ -8,7 +8,7 @@ import { ShieldAlert, ArrowLeft, ExternalLink, CheckCircle2, AlertTriangle, File
 
 export default function DisclaimerPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 w-full">
@@ -30,7 +30,7 @@ export default function DisclaimerPage() {
             <span>Platform Disclaimer</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Disclaimer & Partner Advisory<span className="text-[#FF5500]">.</span>
+            Disclaimer & Partner Advisory<span className="text-[#08B9F5]">.</span>
           </h1>
           <p className="text-xs sm:text-sm text-white/50">
             Last Updated: October 2026 · Vibe by Swaniki Platform Governance
@@ -42,7 +42,7 @@ export default function DisclaimerPage() {
           {/* Section 1 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>1. Nature of the Platform & Intermediary Role</span>
             </h2>
             <p>
@@ -53,7 +53,7 @@ export default function DisclaimerPage() {
           {/* Section 2 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>2. Third-Party Ticketing & Partner Listed Events</span>
             </h2>
             <div className="p-4 sm:p-5 rounded-2xl bg-[#0D0D10] border border-white/10 space-y-2.5">
@@ -81,7 +81,7 @@ export default function DisclaimerPage() {
           {/* Section 3 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>3. Host Responsibility, Venue Safety & Permissions</span>
             </h2>
             <p>
@@ -98,7 +98,7 @@ export default function DisclaimerPage() {
           {/* Section 4 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>4. Participant Assumption of Risk (Sports, Fitness & Outdoor Gatherings)</span>
             </h2>
             <p>
@@ -109,7 +109,7 @@ export default function DisclaimerPage() {
           {/* Section 5 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>5. Information Accuracy & Event Changes</span>
             </h2>
             <p>
@@ -120,7 +120,7 @@ export default function DisclaimerPage() {
           {/* Section 6 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>6. Reporting Content & Grievance Contact</span>
             </h2>
             <p>

@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@supabase/supabase-js', '@supabase/ssr', '@supabase/auth-js'],
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -42,6 +44,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/discover',
+        destination: '/',
+        permanent: true,
+      },
+      {
         source: '/guest',
         destination: '/passes',
         permanent: true,
@@ -56,10 +63,6 @@ const nextConfig = {
   async rewrites() {
     const adminSecret = (process.env.NEXT_PUBLIC_ADMIN_ROUTE_PREFIX || 'control-99f').replace(/^\//, '').trim();
     return [
-      {
-        source: '/discover',
-        destination: '/',
-      },
       {
         source: `/${adminSecret}`,
         destination: '/admin',

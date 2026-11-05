@@ -608,11 +608,11 @@ Current Draft: ${description || tagline}`,
             onClick={() => setShowAiAutofill(!showAiAutofill)}
             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer border shrink-0 ${
               showAiAutofill
-                ? 'bg-[#E8621A] text-white border-[#E8621A]'
-                : 'bg-white hover:bg-[#FAF8F5] text-[#0F172A] border-[#E2E8F0] hover:border-[#E8621A]/50'
+                ? 'bg-[#075CE5] text-white border-[#075CE5]'
+                : 'bg-white hover:bg-[#FAF8F5] text-[#0F172A] border-[#E2E8F0] hover:border-[#075CE5]/50'
             }`}
           >
-            <Sparkles className={`w-3.5 h-3.5 ${showAiAutofill ? 'fill-white' : 'text-[#E8621A]'}`} />
+            <Sparkles className={`w-3.5 h-3.5 ${showAiAutofill ? 'fill-white' : 'text-[#075CE5]'}`} />
             <span>{showAiAutofill ? 'Close AI Auto-Fill' : '⚡ Auto-Fill with AI'}</span>
           </button>
         </div>
@@ -620,10 +620,10 @@ Current Draft: ${description || tagline}`,
 
       {/* AI Extraction Workstation (Collapsible drawer) */}
       {showAiAutofill && (
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E8621A]/40 shadow-lg shadow-[#E8621A]/5 mb-6 space-y-4 animate-in fade-in zoom-in-95">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#075CE5]/40 shadow-lg shadow-[#075CE5]/5 mb-6 space-y-4 animate-in fade-in zoom-in-95">
           <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-[#E8621A]/10 text-[#E8621A] flex items-center justify-center">
+              <span className="w-7 h-7 rounded-lg bg-[#075CE5]/10 text-[#075CE5] flex items-center justify-center">
                 <Wand2 className="w-4 h-4" />
               </span>
               <div>
@@ -687,7 +687,7 @@ Current Draft: ${description || tagline}`,
               type="button"
               onClick={handleExtractWithAI}
               disabled={isExtractingAi || (!aiUrl.trim() && !aiPosterBase64 && !aiText.trim())}
-              className="py-2 px-4 rounded-xl bg-[#E8621A] hover:bg-[#FF8C42] text-white text-xs font-bold transition flex items-center gap-2 disabled:opacity-40 cursor-pointer shadow-sm"
+              className="py-2 px-4 rounded-xl bg-[#075CE5] hover:bg-[#00D5E8] text-white text-xs font-bold transition flex items-center gap-2 disabled:opacity-40 cursor-pointer shadow-sm"
             >
               {isExtractingAi ? (
                 <>
@@ -734,12 +734,12 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">1</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#08B9F5]/10 text-[#08B9F5] border border-[#08B9F5]/25 flex items-center justify-center text-xs font-bold">1</span>
                   <span>General Information</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Core identity and discovery settings</p>
               </div>
-              <span className="text-[11px] font-semibold text-[#E8621A]">Required</span>
+              <span className="text-[11px] font-semibold text-[#075CE5]">Required</span>
             </div>
 
             {/* Event Visibility */}
@@ -853,7 +853,7 @@ Current Draft: ${description || tagline}`,
                   type="button"
                   onClick={handlePolishDescription}
                   disabled={isEnhancing}
-                  className="text-[11px] font-bold text-[#E8621A] hover:text-[#FF8C42] flex items-center gap-1 transition-colors cursor-pointer"
+                  className="text-[11px] font-bold text-[#075CE5] hover:text-[#00D5E8] flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   {isEnhancing ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -886,7 +886,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">2</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#08B9F5]/10 text-[#08B9F5] border border-[#08B9F5]/25 flex items-center justify-center text-xs font-bold">2</span>
                   <span>Date, Schedule & Venue</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Timings and physical or virtual location</p>
@@ -1022,7 +1022,7 @@ Current Draft: ${description || tagline}`,
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearchQuery)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] font-bold text-[#E8621A] hover:underline flex items-center gap-1"
+                      className="text-[11px] font-bold text-[#075CE5] hover:underline flex items-center gap-1"
                     >
                       <span>Open in Google Maps</span>
                       <ExternalLink className="w-3 h-3" />
@@ -1070,7 +1070,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9] gap-2">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">3</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#08B9F5]/10 text-[#08B9F5] border border-[#08B9F5]/25 flex items-center justify-center text-xs font-bold">3</span>
                   <span>Event Cover & Flyer</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Preset curated artwork, custom flyer, or image URL</p>
@@ -1081,7 +1081,7 @@ Current Draft: ${description || tagline}`,
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-[#0F172A] dark:text-white text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
                 title="Randomize cover"
               >
-                <Shuffle className="w-3.5 h-3.5 text-[#FF5500]" />
+                <Shuffle className="w-3.5 h-3.5 text-[#08B9F5]" />
                 <span>🎲 Surprise Me</span>
               </button>
             </div>
@@ -1093,7 +1093,7 @@ Current Draft: ${description || tagline}`,
                   <span className="text-xs font-semibold text-[#475569] dark:text-white/70">
                     Instant Curated Presets
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 dark:bg-[#FF5500]/15 text-[#FF5500] border border-orange-100 dark:border-[#FF5500]/30">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-[#08B9F5]/15 text-[#08B9F5] border border-sky-100 dark:border-[#08B9F5]/30">
                     {displayedPresets.length} choices
                   </span>
                 </div>
@@ -1107,7 +1107,7 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setSelectedPresetTab('Match Category')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     selectedPresetTab === 'Match Category'
-                      ? 'bg-[#FF5500] text-white shadow-xs font-bold'
+                      ? 'bg-[#08B9F5] text-white shadow-xs font-bold'
                       : 'bg-slate-100 dark:bg-white/10 text-[#64748B] dark:text-white/70 hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/15'
                   }`}
                   style={selectedPresetTab === 'Match Category' ? { color: '#FFFFFF' } : undefined}
@@ -1119,7 +1119,7 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setSelectedPresetTab('All')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     selectedPresetTab === 'All'
-                      ? 'bg-[#FF5500] text-white shadow-xs font-bold'
+                      ? 'bg-[#08B9F5] text-white shadow-xs font-bold'
                       : 'bg-slate-100 dark:bg-white/10 text-[#64748B] dark:text-white/70 hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/15'
                   }`}
                   style={selectedPresetTab === 'All' ? { color: '#FFFFFF' } : undefined}
@@ -1133,7 +1133,7 @@ Current Draft: ${description || tagline}`,
                     onClick={() => setSelectedPresetTab(cat)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       selectedPresetTab === cat
-                        ? 'bg-[#FF5500] text-white shadow-xs font-bold'
+                        ? 'bg-[#08B9F5] text-white shadow-xs font-bold'
                         : 'bg-slate-100 dark:bg-white/10 text-[#64748B] dark:text-white/70 hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/15'
                     }`}
                     style={selectedPresetTab === cat ? { color: '#FFFFFF' } : undefined}
@@ -1156,14 +1156,14 @@ Current Draft: ${description || tagline}`,
                     }}
                     className={`relative aspect-[16/10] w-full min-h-[76px] sm:min-h-[88px] rounded-xl overflow-hidden border-2 transition-all cursor-pointer group shadow-2xs ${
                       coverUrl === url
-                        ? 'border-[#FF5500] ring-2 ring-[#FF5500]/30 scale-[1.02]'
+                        ? 'border-[#08B9F5] ring-2 ring-[#08B9F5]/30 scale-[1.02]'
                         : 'border-transparent hover:border-slate-300 opacity-90 hover:opacity-100'
                     }`}
                   >
                     <Image src={url} alt={`Preset ${i + 1}`} fill className="object-cover group-hover:scale-105 transition duration-300" unoptimized />
                     {coverUrl === url && (
-                      <div className="absolute inset-0 bg-[#FF5500]/25 flex items-center justify-center">
-                        <div className="w-5 h-5 rounded-full bg-[#FF5500] text-white flex items-center justify-center shadow-sm" style={{ color: '#FFFFFF' }}>
+                      <div className="absolute inset-0 bg-[#08B9F5]/25 flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full bg-[#08B9F5] text-white flex items-center justify-center shadow-sm" style={{ color: '#FFFFFF' }}>
                           <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       </div>
@@ -1217,7 +1217,7 @@ Current Draft: ${description || tagline}`,
                       }
                     }}
                     placeholder="https://images.unsplash.com/... or paste image URL"
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#CBD5E1] focus:border-[#E8621A] focus:outline-none text-[#0F172A] bg-white placeholder-[#94A3B8]"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#CBD5E1] focus:border-[#075CE5] focus:outline-none text-[#0F172A] bg-white placeholder-[#94A3B8]"
                   />
                 </div>
                 <button
@@ -1267,7 +1267,7 @@ Current Draft: ${description || tagline}`,
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <div>
                 <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 flex items-center justify-center text-xs font-bold">4</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#08B9F5]/10 text-[#08B9F5] border border-[#08B9F5]/25 flex items-center justify-center text-xs font-bold">4</span>
                   <span>Passes, Pricing & RSVP Controls</span>
                 </h3>
                 <p className="text-xs text-[#64748B] ml-8">Capacity, ticket tiers, and guest questionnaire</p>
@@ -1285,7 +1285,7 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setTicketingMode('free')}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     ticketingMode === 'free'
-                      ? 'border-[#FF5500] bg-[#FF5500] text-white shadow-xs'
+                      ? 'border-[#08B9F5] bg-[#08B9F5] text-white shadow-xs'
                       : 'border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-white/5 text-[#475569] dark:text-white/70 hover:bg-[#F8FAFC] dark:hover:bg-white/10'
                   }`}
                 >
@@ -1298,7 +1298,7 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setTicketingMode('paid')}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     ticketingMode === 'paid'
-                      ? 'border-[#FF5500] bg-[#FF5500] text-white shadow-xs'
+                      ? 'border-[#08B9F5] bg-[#08B9F5] text-white shadow-xs'
                       : 'border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-white/5 text-[#475569] dark:text-white/70 hover:bg-[#F8FAFC] dark:hover:bg-white/10'
                   }`}
                 >
@@ -1310,7 +1310,7 @@ Current Draft: ${description || tagline}`,
                   onClick={() => setTicketingMode('external')}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     ticketingMode === 'external'
-                      ? 'border-[#FF5500] bg-[#FF5500] text-white shadow-xs'
+                      ? 'border-[#08B9F5] bg-[#08B9F5] text-white shadow-xs'
                       : 'border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-white/5 text-[#475569] dark:text-white/70 hover:bg-[#F8FAFC] dark:hover:bg-white/10'
                   }`}
                 >
@@ -1336,7 +1336,7 @@ Current Draft: ${description || tagline}`,
                     placeholder="499"
                     value={priceInr}
                     onChange={(e) => setPriceInr(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 text-xs sm:text-sm border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#FF5500] bg-white dark:bg-white/5 text-[#0F172A] dark:text-white font-bold"
+                    className="w-full pl-8 pr-3 py-2 text-xs sm:text-sm border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#08B9F5] bg-white dark:bg-white/5 text-[#0F172A] dark:text-white font-bold"
                   />
                 </div>
                 <p className="text-[11px] text-[#64748B] dark:text-white/50">
@@ -1538,7 +1538,7 @@ Current Draft: ${description || tagline}`,
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white text-sm font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#E8621A]/30 cursor-pointer disabled:opacity-50 hover:scale-105 active:scale-95"
+              className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-95 text-white text-sm font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#075CE5]/30 cursor-pointer disabled:opacity-50 hover:scale-105 active:scale-95"
             >
               {isSubmitting ? (
                 <>
@@ -1614,7 +1614,7 @@ Current Draft: ${description || tagline}`,
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1 text-[#64748B] truncate max-w-[190px]">
-                    <MapPin className="w-3.5 h-3.5 text-[#E8621A] shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-[#075CE5] shrink-0" />
                     <span className="truncate">
                       {eventType === 'online' ? 'Online Gathering' : venueName || city}
                     </span>
@@ -1642,7 +1642,7 @@ Current Draft: ${description || tagline}`,
                       {profile?.name || 'Your Profile'}
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#E8621A]">
+                  <span className="text-[11px] font-bold text-[#075CE5]">
                     {capacity ? `${capacity} spots` : 'Open'}
                   </span>
                 </div>
@@ -1723,7 +1723,7 @@ Current Draft: ${description || tagline}`,
               onClick={() => setShowMobilePreview(!showMobilePreview)}
               className="lg:hidden px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0F172A] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Eye className="w-3.5 h-3.5 text-[#E8621A]" />
+              <Eye className="w-3.5 h-3.5 text-[#075CE5]" />
               <span>Preview</span>
             </button>
           </div>
@@ -1733,7 +1733,7 @@ Current Draft: ${description || tagline}`,
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white text-xs sm:text-sm font-black flex items-center gap-2 transition-all shadow-lg shadow-[#E8621A]/30 cursor-pointer disabled:opacity-50 hover:scale-105 active:scale-95"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-95 text-white text-xs sm:text-sm font-black flex items-center gap-2 transition-all shadow-lg shadow-[#075CE5]/30 cursor-pointer disabled:opacity-50 hover:scale-105 active:scale-95"
           >
             {isSubmitting ? (
               <>

@@ -277,7 +277,7 @@ export default function DetailInspector({
                 📥 Ingested ({event.source_platform || 'External'})
               </span>
             ) : (
-              <span className="text-[10px] text-[#E8621A] bg-[#E8621A]/10 border border-[#E8621A]/20 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[10px] text-[#075CE5] bg-[#075CE5]/10 border border-[#075CE5]/20 px-2 py-0.5 rounded-full font-bold">
                 ⚡ Vibe Specific Event
               </span>
             )}

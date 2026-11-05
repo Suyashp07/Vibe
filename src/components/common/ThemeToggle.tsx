@@ -13,7 +13,7 @@ interface ThemeToggleProps {
 export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const { theme, toggleTheme, isMounted } = useTheme();
 
-  const isDark = !isMounted || theme === 'dark';
+  const isDark = isMounted ? theme === 'dark' : false;
 
   return (
     <Magnetic pullFactor={0.3}>
@@ -49,7 +49,7 @@ export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center justify-center"
             >
-              <Sun className="w-4 h-4 stroke-[2.2] text-[#FF5500] group-hover:text-[#E04B00] transition-colors group-hover:rotate-45 duration-300" />
+              <Sun className="w-4 h-4 stroke-[2.2] text-[#08B9F5] group-hover:text-[#075CE5] transition-colors group-hover:rotate-45 duration-300" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -59,7 +59,7 @@ export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
           className={`absolute inset-0 rounded-full pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${
             isDark
               ? 'bg-gradient-to-tr from-amber-400/10 via-transparent to-white/10'
-              : 'bg-gradient-to-tr from-[#FF5500]/10 via-transparent to-amber-500/10'
+              : 'bg-gradient-to-tr from-[#08B9F5]/10 via-transparent to-amber-500/10'
           }`}
         />
       </button>

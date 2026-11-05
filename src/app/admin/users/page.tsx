@@ -148,9 +148,9 @@ export default function AdminUsersPage() {
         <div className="p-4 rounded-2xl bg-[#0B0F19] border border-zinc-800">
           <div className="flex items-center justify-between text-zinc-400 text-xs">
             <span>Organizers (Hosts)</span>
-            <Building2 className="w-4 h-4 text-[#E8621A]" />
+            <Building2 className="w-4 h-4 text-[#075CE5]" />
           </div>
-          <div className="text-2xl font-black text-[#FF8442] font-mono mt-2">{organizersCount}</div>
+          <div className="text-2xl font-black text-[#00D5E8] font-mono mt-2">{organizersCount}</div>
           <div className="text-[11px] text-zinc-500 mt-1">Event creators</div>
         </div>
 
@@ -190,7 +190,7 @@ export default function AdminUsersPage() {
             onClick={() => setActiveRoleTab('organizer')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
               activeRoleTab === 'organizer'
-                ? 'bg-[#E8621A]/20 text-[#FF8442] border border-[#E8621A]/30'
+                ? 'bg-[#075CE5]/20 text-[#00D5E8] border border-[#075CE5]/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -235,7 +235,7 @@ export default function AdminUsersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email, handle..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8621A]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#075CE5]"
           />
         </div>
       </div>
@@ -269,7 +269,7 @@ export default function AdminUsersPage() {
                     {/* User Identity */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#E8621A]/30 to-purple-500/30 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#075CE5]/30 to-purple-500/30 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden">
                           {user.logo_url ? (
                             <img src={user.logo_url} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
                             : user.role === 'curator'
                             ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                             : user.role === 'organizer'
-                            ? 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+                            ? 'bg-sky-500/20 text-[#38BDF8] border-[#08B9F5]/30'
                             : 'bg-zinc-800 text-zinc-300 border-zinc-700'
                         }`}
                       >
@@ -334,7 +334,7 @@ export default function AdminUsersPage() {
                         <button
                           onClick={() => setSelectedUser(user)}
                           title="Edit user account & role"
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-[#FF8442] hover:bg-zinc-800 transition"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-[#00D5E8] hover:bg-zinc-800 transition"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>

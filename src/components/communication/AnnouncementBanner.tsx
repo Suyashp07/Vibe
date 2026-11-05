@@ -12,7 +12,7 @@ interface AnnouncementBannerProps {
 
 export default function AnnouncementBanner({
   announcements,
-  brandColor = '#E8621A'
+  brandColor = '#075CE5'
 }: AnnouncementBannerProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -38,7 +38,7 @@ export default function AnnouncementBanner({
               className={`p-2 rounded-xl shrink-0 mt-0.5 ${
                 primaryAnnouncement.is_urgent
                   ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20'
+                  : 'bg-sky-500/10 text-[#075CE5] dark:text-[#00D5E8] border border-[#08B9F5]/20'
               }`}
             >
               {primaryAnnouncement.is_urgent ? (

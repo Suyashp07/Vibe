@@ -24,6 +24,11 @@ import {
   Ticket,
   Info,
   User,
+  Volume2,
+  VolumeX,
+  Filter,
+  Check,
+  X,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,6 +54,7 @@ import VibeDetailsModal from '@/components/vibes/VibeDetailsModal';
 import StructuredDescription from '@/components/vibes/StructuredDescription';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Navbar from '@/components/common/Navbar';
+import LocationModal from '@/components/location/LocationModal';
 import { isUserUploadedPoster } from '@/lib/posterUtils';
 
 interface VibeInstantItem {
@@ -187,6 +193,15 @@ const ACTIVITY_FILTERS = [
   { id: 'social', label: 'Social & Cafes', match: ['coffee', 'chai', 'social', 'cafe', 'milan', 'samaroh', 'meetup'] },
 ];
 
+const FILTER_CITIES = [
+  { id: 'all', name: 'All Cities' },
+  { id: 'mumbai', name: 'Mumbai' },
+  { id: 'pune', name: 'Pune' },
+  { id: 'indore', name: 'Indore' },
+  { id: 'bengaluru', name: 'Bengaluru' },
+  { id: 'delhi', name: 'Delhi' },
+];
+
 function VibesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -238,6 +253,8 @@ function VibesContent() {
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
   const [selectedCommentsVibe, setSelectedCommentsVibe] = useState<VibeInstantItem | null>(null);
   const [commentCountsMap, setCommentCountsMap] = useState<Record<string, number>>({});
+  const [isMuted, setIsMuted] = useState(true);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   // Check which vibes the current user has confirmed passes for
   const activeUserEmail = useMemo(() => {
@@ -581,6 +598,25 @@ function VibesContent() {
   }, [allVibes, selectedActivity]);
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
+
+  // Real count of vibes per category matching current city
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: allVibes.length,
+    };
+    ACTIVITY_FILTERS.forEach((f) => {
+      if (f.id === 'all') return;
+      if (!f.match) {
+        counts[f.id] = 0;
+        return;
+      }
+      counts[f.id] = allVibes.filter((v) => {
+        const text = `${v.category} ${v.title} ${v.description}`.toLowerCase();
+        return f.match!.some((m) => text.includes(m));
+      }).length;
+    });
+    return counts;
+  }, [allVibes]);
 
   // Ensure the feed starts strictly at index 0 on initial mount
   useEffect(() => {
@@ -1117,7 +1153,7 @@ function VibesContent() {
           particleCount: 28,
           spread: 50,
           origin: { y: 0.7 },
-          colors: ['#FF5500', '#FF8C42', '#FFA07A'],
+          colors: ['#08B9F5', '#00D5E8', '#38BDF8'],
         });
       } catch {}
     }
@@ -1306,125 +1342,75 @@ function VibesContent() {
 
   return (
     <div
-      className="vibe-instant-container fixed inset-0 h-[100dvh] w-full bg-[#08080A] text-white overflow-hidden overscroll-none select-none flex flex-col justify-between"
+      className="vibe-instant-container min-h-screen w-full bg-[#F4F7FB] dark:bg-[#081426] text-slate-900 dark:text-white flex flex-col justify-between transition-colors duration-200 relative overflow-x-hidden"
     >
+      {/* Global Site Navbar */}
+      <Navbar />
+
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/90 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#FF5500]" />
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/90 dark:bg-black/90 backdrop-blur-md border border-slate-700/40 dark:border-white/20 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-[#0066F5]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Ambient Radial Glow in background (like in Screenshot 1) */}
-      <div className="absolute inset-0 pointer-events-none opacity-40">
-        <div className="absolute left-1/4 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FF5500]/10 rounded-full blur-[140px]" />
+      {/* Ambient Radial Glow in background */}
+      <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-40">
+        <div className="absolute left-1/4 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#0066F5]/10 rounded-full blur-[140px]" />
       </div>
 
-      {/* ========================================================= */}
-      {/* 1. UNIVERSAL TOP BAR (DESKTOP & MOBILE)                   */}
-      {/* ========================================================= */}
-      <header className="w-full max-w-6xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between z-30 shrink-0">
-        {/* Left: Back Arrow + Vibe INSTANT */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      {/* Desktop Filter Bar (aligned to far left under the site logo) */}
+      <div className="hidden md:flex w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 pt-3 pb-1 items-center justify-start z-30 shrink-0">
+        <button
+          type="button"
+          onClick={() => setFilterOpen(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#0D1D35] hover:bg-slate-50 dark:hover:bg-white/10 border border-slate-200/90 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-white shadow-xs transition-colors cursor-pointer"
+        >
+          <Filter className="w-3.5 h-3.5 text-[#0066F5] dark:text-[#08B9F5]" />
+          <span>{selectedFilterLabel}</span>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-400" />
+        </button>
+      </div>
+
+      {/* Mobile Top Bar */}
+      <header className="md:hidden w-full max-w-6xl mx-auto px-4 py-3 flex items-center justify-between z-30 shrink-0">
+        <div className="flex items-center gap-2.5">
           <Link
             href="/"
-            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-white"
             title="Back to home"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-
           <div className="flex items-center gap-1 font-sans">
-            <Zap className="w-4 h-4 text-[#FF5500] fill-[#FF5500]" />
-            <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">Vibe</span>
-            <span className="text-[10px] font-black uppercase tracking-wider bg-[#FF5500] text-white px-2 py-0.5 rounded-md ml-0.5">
-              INSTANT
-            </span>
+            <Zap className="w-4 h-4 text-[#0066F5] fill-[#0066F5]" />
+            <span className="font-extrabold text-base text-slate-900 dark:text-white">Vibe</span>
+            <span className="text-[10px] font-black uppercase bg-[#0066F5] text-white px-1.5 py-0.5 rounded ml-0.5">INSTANT</span>
           </div>
         </div>
 
-        {/* Right: Location Badge + Filter Dropdown + Theme Toggle */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Near Mumbai (Desktop pill) */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-neutral-300">
-            <MapPin className="w-3.5 h-3.5 text-[#FF5500]" />
-            <span>Near {activeCity || 'Mumbai'}</span>
-          </div>
-
-          {/* Filter Dropdown */}
-          <div className="relative" ref={filterDropdownRef}>
-            <button
-              onClick={() => setFilterOpen(!filterOpen)}
-              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors cursor-pointer"
-            >
-              <Zap className="w-3 h-3 text-[#FF5500]" />
-              <span className="max-w-[90px] sm:max-w-none truncate">{selectedFilterLabel}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-            </button>
-
-            {filterOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#141416] border border-white/15 shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95">
-                {ACTIVITY_FILTERS.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => {
-                      setSelectedActivity(f.id);
-                      setFilterOpen(false);
-                      setCurrentIndex(0);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium flex items-center justify-between transition-colors ${
-                      selectedActivity === f.id
-                        ? 'bg-[#FF5500]/20 text-[#FF5500] font-bold'
-                        : 'text-neutral-300 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <span>{f.label}</span>
-                    {selectedActivity === f.id && <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Theme Toggle Button */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFilterOpen(!filterOpen)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-white"
+          >
+            <span>{selectedFilterLabel}</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
+          </button>
           <ThemeToggle />
-
-          {/* Sign Up / Sign In / Profile Button (Mobile & Desktop) */}
-          {isLoggedIn ? (
-            <Link
-              href="/profile"
-              className="w-8 h-8 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-[#FF5500] transition-all cursor-pointer"
-              title="My Profile"
-            >
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xs font-bold text-white">{(profile?.name || 'U').charAt(0).toUpperCase()}</span>
-              )}
-            </Link>
-          ) : (
-            <Link
-              href={typeof window !== 'undefined' ? `/signup?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}` : '/signup?redirect=%2Fvibes'}
-              className="px-2.5 sm:px-3 py-1.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-white text-[11px] sm:text-xs font-bold transition-all shadow-[0_0_12px_rgba(255,85,0,0.4)] shrink-0 flex items-center gap-1 cursor-pointer active:scale-95"
-              title="Sign Up or Sign In"
-            >
-              <User className="w-3 h-3" />
-              <span>Sign Up</span>
-            </Link>
-          )}
         </div>
       </header>
 
       {/* ========================================================= */}
-      {/* 2. DESKTOP VIEW (SPLIT-SCREEN CARD - SCREENSHOT 1)        */}
+      {/* 2. DESKTOP VIEW (SPLIT-SCREEN CARD - MATCHING SCREENSHOT) */}
       {/* ========================================================= */}
       <main
         onPointerDown={handleDesktopPointerDown}
         onPointerMove={handleDesktopPointerMove}
         onPointerUp={handleDesktopPointerUp}
         onPointerCancel={handleDesktopPointerUp}
-        className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-4 select-none cursor-grab active:cursor-grabbing touch-none"
+        className="hidden md:flex flex-1 items-center justify-center w-full px-4 pb-6 pt-1 select-none cursor-grab active:cursor-grabbing touch-none"
       >
         <motion.div
           animate={{
@@ -1433,17 +1419,17 @@ function VibesContent() {
             rotate: desktopDragOffset.x * 0.015,
           }}
           transition={{ type: 'spring', stiffness: 450, damping: 28 }}
-          className="flex items-center justify-center gap-5 lg:gap-7 max-w-6xl w-full"
+          className="flex items-center justify-center gap-6 lg:gap-8 max-w-6xl w-full"
         >
-          {/* Left Card: Vertical Reel Frame with Mouse/Trackpad Drag Gesture & Double-Click Like */}
+          {/* Left Card: Vertical Reel Frame */}
           <div
             onDoubleClick={handleDesktopDoubleClick}
-            className="vibe-reel-card relative w-[360px] lg:w-[400px] h-[560px] lg:h-[620px] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900 shrink-0 group select-none cursor-grab active:cursor-grabbing"
+            className="vibe-reel-card relative w-[clamp(320px,27vw,410px)] h-[min(620px,calc(100vh-140px))] min-h-[490px] rounded-[32px] overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.18)] bg-neutral-950 shrink-0 group select-none cursor-grab active:cursor-grabbing"
           >
             {/* Desktop Double-click animated Flame Pop */}
             {desktopFlamePop && (
               <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center animate-in zoom-in-50 fade-in duration-200">
-                <div className="w-20 h-20 rounded-full bg-[#FF5500]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,85,0,0.85)] animate-bounce">
+                <div className="w-20 h-20 rounded-full bg-[#0066F5]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(0,102,245,0.85)] animate-bounce">
                   <Flame className="w-12 h-12 text-white fill-white" />
                 </div>
               </div>
@@ -1451,9 +1437,23 @@ function VibesContent() {
 
             {/* Badge: Community pick */}
             <div className="absolute top-4 left-4 z-20 pointer-events-none">
-              <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/50 backdrop-blur-md text-white/90 border border-white/10 shadow-sm">
+              <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-black/45 backdrop-blur-md text-white border border-white/15 shadow-sm">
                 {currentVibe.badge || 'Community pick'}
               </span>
+            </div>
+
+            {/* Top-Right Badge: All Cities dropdown trigger matching screenshot */}
+            <div className="absolute top-4 right-4 z-20">
+              <button
+                type="button"
+                onClick={() => setLocationModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-black/45 hover:bg-black/60 backdrop-blur-md text-white border border-white/15 shadow-sm transition-colors cursor-pointer"
+                title="Filter by City"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#00D5E8]" />
+                <span>{activeCity === 'All India' ? 'All Cities' : activeCity}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-white/70" />
+              </button>
             </div>
 
             {/* Visual Media with Buttery Spring Directional Motion */}
@@ -1469,7 +1469,6 @@ function VibesContent() {
                 >
                   {isUserUploadedPoster(currentVibe.cover_image_url, currentVibe) ? (
                     <>
-                      {/* User-Uploaded Flyer: Ambient Blurred Canvas + Uncropped Fitted Poster */}
                       <Image
                         src={currentVibe.cover_image_url}
                         alt=""
@@ -1480,8 +1479,6 @@ function VibesContent() {
                         aria-hidden="true"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-
-                      {/* True Uncropped Poster naturally fitted to screen dimensions */}
                       <div className="absolute inset-0 flex items-center justify-center p-3">
                         <div className="relative w-full h-full max-h-[90%] flex items-center justify-center">
                           <Image
@@ -1497,7 +1494,6 @@ function VibesContent() {
                     </>
                   ) : (
                     <>
-                      {/* AI-Generated / Ambient Cover: Fits Full Screen Seamlessly */}
                       <Image
                         src={currentVibe.cover_image_url}
                         alt={currentVibe.title}
@@ -1506,7 +1502,6 @@ function VibesContent() {
                         priority
                         className="object-cover w-full h-full scale-[1.02]"
                       />
-                      {/* Scrim overlay for typography contrast */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/50" />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20" />
                     </>
@@ -1515,12 +1510,12 @@ function VibesContent() {
               </AnimatePresence>
             </div>
 
-            {/* Floating Action Stack (Right Edge) - stopPropagation prevents dragging when clicking actions */}
+            {/* Floating Action Stack (Right Edge) matching screenshot exactly */}
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="absolute right-3.5 bottom-5 z-20 flex flex-col items-center gap-3.5"
+              className="absolute right-3.5 bottom-6 z-20 flex flex-col items-center gap-3.5"
             >
-              {/* Flame */}
+              {/* 1. Flame */}
               {(() => {
                 const { isLiked: desktopLiked, count: desktopLikesCount } = getVibeLikeData(currentVibe);
                 return (
@@ -1533,31 +1528,31 @@ function VibesContent() {
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                         desktopLiked
-                          ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
+                          ? 'bg-[#0066F5] text-white shadow-[0_0_15px_rgba(0,102,245,0.5)]'
                           : 'bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70'
                       }`}
                     >
                       <Flame className="w-5 h-5 fill-current" />
                     </div>
-                    <span className="text-xs font-bold text-white shadow-sm">{desktopLikesCount}</span>
+                    <span className="text-xs font-bold text-white drop-shadow-sm">{desktopLikesCount}</span>
                   </button>
                 );
               })()}
 
-              {/* Chat / Comments */}
+              {/* 2. Chat / Comments */}
               <button
                 type="button"
                 onClick={() => openComments(currentVibe)}
                 className="flex flex-col items-center gap-1 cursor-pointer group/chat"
-                title="View & post comments"
+                title="View comments"
               >
-                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover/chat:text-white group-hover/chat:bg-[#FF5500]/20 group-hover/chat:border-[#FF5500]/40 flex items-center justify-center transition-all group-hover/chat:scale-105 active:scale-95 shadow-md">
+                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 group-hover/chat:text-white group-hover/chat:bg-[#0066F5]/20 group-hover/chat:border-[#0066F5]/40 flex items-center justify-center transition-all group-hover/chat:scale-105 active:scale-95 shadow-md">
                   <MessageSquare className="w-4.5 h-4.5" />
                 </div>
-                <span className="text-xs font-bold text-white shadow-sm">{getVibeCommentsCount(currentVibe)}</span>
+                <span className="text-xs font-bold text-white drop-shadow-sm">{getVibeCommentsCount(currentVibe)}</span>
               </button>
 
-              {/* Share */}
+              {/* 3. Share */}
               <button
                 type="button"
                 onClick={handleShare}
@@ -1567,69 +1562,50 @@ function VibesContent() {
                 <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/90 hover:bg-black/70 flex items-center justify-center transition-all group-hover/share:scale-105 active:scale-95">
                   <Share2 className="w-4.5 h-4.5" />
                 </div>
-                <span className="text-[10px] font-semibold text-white/80 shadow-sm">Share</span>
+                <span className="text-[10px] font-semibold text-white/90 drop-shadow-sm">Share</span>
               </button>
+
+
             </div>
           </div>
 
-          {/* Center Floating Navigation Chevrons & Pill Progress Indicator */}
+          {/* Center Navigation Chevrons & Counter matching screenshot */}
           <div className="flex flex-col items-center gap-3 z-20 shrink-0">
             <button
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
+              className={`w-10 h-10 rounded-full border flex items-center justify-center shadow-md transition-all ${
                 currentIndex === 0
-                  ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
-                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
+                  ? 'bg-white/60 dark:bg-white/5 border-slate-200/50 dark:border-white/5 text-slate-300 dark:text-white/20 cursor-not-allowed'
+                  : 'bg-white hover:bg-slate-50 border-slate-200/90 text-slate-700 dark:bg-[#0D1D35] dark:border-white/15 dark:text-white dark:hover:bg-white/10 cursor-pointer hover:scale-105 active:scale-95'
               }`}
-              title="Previous vibe (Up Arrow / Scroll Up)"
+              title="Previous vibe (Up Arrow)"
               aria-label="Previous vibe"
             >
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="w-4 h-4 stroke-[2.5]" />
             </button>
 
-            {/* Vertical Pill Progress Indicator */}
-            <div className="flex flex-col items-center gap-1.5 py-1">
-              {activeVibes.slice(0, 8).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setScrollDirection(idx > currentIndex ? 'next' : 'prev');
-                    setCurrentIndex(idx);
-                  }}
-                  className={`rounded-full transition-all duration-300 ${
-                    idx === currentIndex
-                      ? 'w-1.5 h-5 bg-[#FF5500] shadow-[0_0_10px_rgba(255,85,0,0.8)]'
-                      : 'w-1.5 h-1.5 bg-white/25 hover:bg-white/60'
-                  }`}
-                  title={`Jump to vibe ${idx + 1}`}
-                  aria-label={`Jump to vibe ${idx + 1}`}
-                />
-              ))}
-              {activeVibes.length > 8 && (
-                <span className="text-[10px] font-mono font-bold text-white/40 pt-0.5">
-                  {currentIndex + 1}/{activeVibes.length}
-                </span>
-              )}
-            </div>
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 py-1">
+              {currentIndex + 1} / {activeVibes.length}
+            </span>
 
             <button
               onClick={handleNext}
               disabled={currentIndex >= activeVibes.length - 1}
-              className={`w-9 h-9 rounded-full border flex items-center justify-center backdrop-blur-md transition-all ${
+              className={`w-10 h-10 rounded-full border flex items-center justify-center shadow-md transition-all ${
                 currentIndex >= activeVibes.length - 1
-                  ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'
-                  : 'bg-white/10 hover:bg-[#FF5500] border-white/15 hover:border-[#FF5500] text-white shadow-lg cursor-pointer hover:scale-105 active:scale-95'
+                  ? 'bg-white/60 dark:bg-white/5 border-slate-200/50 dark:border-white/5 text-slate-300 dark:text-white/20 cursor-not-allowed'
+                  : 'bg-white hover:bg-slate-50 border-slate-200/90 text-slate-700 dark:bg-[#0D1D35] dark:border-white/15 dark:text-white dark:hover:bg-white/10 cursor-pointer hover:scale-105 active:scale-95'
               }`}
-              title="Next vibe (Down Arrow / Scroll Down)"
+              title="Next vibe (Down Arrow)"
               aria-label="Next vibe"
             >
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
 
-          {/* Right Card: Details & Actions (Synchronized with Reel) */}
-          <div className="w-[380px] lg:w-[420px] rounded-3xl bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-2xl flex flex-col justify-between shrink-0 space-y-4 overflow-hidden relative min-h-[560px] lg:min-h-[620px]">
+          {/* Right Card: Details & Actions matching screenshot */}
+          <div className="vibe-details-card w-[clamp(360px,32vw,460px)] h-[min(620px,calc(100vh-140px))] min-h-[490px] rounded-[32px] bg-white dark:bg-[#0D1D35] border border-slate-100 dark:border-white/10 p-6 lg:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-2xl flex flex-col justify-between shrink-0 overflow-hidden relative transition-colors">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={currentVibe.id || currentVibe.slug}
@@ -1637,86 +1613,98 @@ function VibesContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: scrollDirection === 'next' ? -40 : 40 }}
                 transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col justify-between h-full space-y-4 w-full"
+                className="flex flex-col justify-between h-full w-full"
               >
-                {/* Host Identity */}
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-[#3D251A] text-[#FF8542] border border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
-                    {currentVibe.host_initials}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">{currentVibe.host_name}</h4>
-                    <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
-                      <span className="text-amber-400">★</span>
-                      <span>{currentVibe.host_rating} · {currentVibe.host_vibes_count} vibes hosted</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Category Tag & Headline */}
                 <div>
-                  <span className="text-xs font-mono font-bold tracking-wider text-[#FF5500] uppercase">
-                    {currentVibe.category}
-                  </span>
-                  <h2 className="text-2xl lg:text-[26px] font-black tracking-tight text-white mt-1 leading-tight">
-                    {currentVibe.title}
-                  </h2>
-                </div>
-
-                {/* Specs */}
-                <div className="space-y-2 text-xs font-medium text-neutral-300">
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="w-4 h-4 text-neutral-400 shrink-0" />
-                    <span>{currentVibe.formatted_date}</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
-                    <span>{currentVibe.formatted_time}</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-                    <span>{currentVibe.location_name}</span>
-                  </div>
-                </div>
-
-                {/* Description - Structured in separate lines */}
-                <div className="max-h-52 overflow-y-auto pr-1 no-scrollbar overscroll-contain">
-                  <StructuredDescription description={currentVibe.description} />
-                </div>
-
-                {/* Spots Capacity Bar - ONLY shown when host explicitly asked for spots */}
-                {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
-                      </span>
-                      <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                        <Zap className="w-3 h-3 fill-[#FF5500]" />
-                        <span>{currentVibe.spots_left} spots left</span>
-                      </span>
+                  {/* Host Identity Row */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-blue-50 dark:bg-blue-900/40 text-[#0066F5] dark:text-[#08B9F5] border border-blue-100 dark:border-blue-800/50 flex items-center justify-center font-bold text-sm shrink-0">
+                        {currentVibe.host_initials || 'SS'}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{currentVibe.host_name}</h4>
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5 font-medium">
+                          <span className="text-amber-500">★</span>
+                          <span>{currentVibe.host_rating || '4.9'} · {currentVibe.host_vibes_count || '12'} vibes hosted</span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#FF5500] rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (currentVibe.going_count / (currentVibe.capacity || 1)) * 100)}%` }}
-                      />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-white/10 px-2.5 py-1 rounded-full shrink-0">
+                      VERIFIED HOST
+                    </span>
+                  </div>
+
+                  {/* Category Tag & Headline */}
+                  <div className="mt-5">
+                    <span className="text-xs font-bold tracking-wider text-[#0066F5] dark:text-[#08B9F5] uppercase font-mono">
+                      {currentVibe.category}
+                    </span>
+                    <h2 className="text-2xl lg:text-[28px] font-black tracking-tight text-slate-900 dark:text-white mt-1.5 leading-snug">
+                      {currentVibe.title}
+                    </h2>
+                  </div>
+
+                  {/* Date, Time, Venue Box */}
+                  <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-white/5 border border-slate-100 dark:border-white/10 space-y-2 mt-4 text-xs font-medium text-slate-700 dark:text-slate-200">
+                    <div className="flex items-center gap-2.5">
+                      <Calendar className="w-4 h-4 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
+                      <span className="font-semibold uppercase">{currentVibe.formatted_date}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
+                      <span className="font-semibold">{currentVibe.formatted_time}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <MapPin className="w-4 h-4 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
+                      <span className="font-semibold break-words">{currentVibe.location_name}</span>
                     </div>
                   </div>
-                )}
 
-                {/* Action Buttons: Join Now & Connect with Host */}
-                <div className="flex items-center gap-2.5 pt-1">
+                  {/* About Section (No line cuts or hidden content) */}
+                  <div className="mt-3.5 flex-1 min-h-0 flex flex-col overflow-hidden">
+                    <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1 block shrink-0">
+                      ABOUT THIS VIBE
+                    </span>
+                    <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed overflow-y-auto no-scrollbar pr-1 flex-1">
+                      <StructuredDescription description={currentVibe.description} />
+                    </div>
+                  </div>
+
+                  {/* Spots Capacity Bar (if applicable) */}
+                  {currentVibe.has_spots_limit && (currentVibe.capacity || 0) > 0 && (
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 space-y-1.5 mt-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-700 dark:text-neutral-300 flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-400" />
+                          <span>{currentVibe.going_count}/{currentVibe.capacity} going</span>
+                        </span>
+                        <span className="font-bold text-[#0066F5] dark:text-[#08B9F5] flex items-center gap-1">
+                          <Zap className="w-3 h-3 fill-current" />
+                          <span>{currentVibe.spots_left} spots left</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#0066F5] dark:bg-[#08B9F5] rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, (currentVibe.going_count / (currentVibe.capacity || 1)) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Action Row */}
+                <div className="flex items-center gap-3 pt-3 mt-auto">
                   {(() => {
                     const currentRsvp = userPassMap[currentVibe.id] || userPassMap[currentVibe.slug];
                     if (currentRsvp) {
                       return (
                         <button
                           onClick={() => openPassModal(currentRsvp, currentVibe)}
-                          className="flex-1 py-3 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-bold text-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-98"
+                          className="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                           <span>You're in · View pass</span>
                         </button>
                       );
@@ -1724,10 +1712,11 @@ function VibesContent() {
                     return (
                       <button
                         onClick={() => openQuickJoin(currentVibe)}
-                        className="flex-1 py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(255,85,0,0.35)] flex items-center justify-center gap-2 cursor-pointer"
+                        className="vibe-join-btn flex-1 py-3.5 px-6 rounded-2xl bg-[#0066F5] hover:bg-[#0052cc] active:scale-[0.98] text-xs sm:text-sm font-bold transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer"
+                        style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}
                       >
-                        <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span>Join now</span>
+                        <Zap className="w-4 h-4 fill-white text-white" style={{ color: '#FFFFFF', stroke: '#FFFFFF', fill: '#FFFFFF' }} />
+                        <span className="vibe-join-text font-bold" style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>Join now</span>
                       </button>
                     );
                   })()}
@@ -1735,22 +1724,11 @@ function VibesContent() {
                   <button
                     type="button"
                     onClick={() => openAskHost(currentVibe)}
-                    className="py-3 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
-                    title="Connect with host"
+                    className="py-3.5 px-5 rounded-2xl bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border border-slate-200 dark:border-white/15 text-slate-700 hover:text-slate-900 dark:text-white/90 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] shrink-0"
                   >
-                    <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
                     <span>Connect with host</span>
                   </button>
                 </div>
-
-                {/* Keyboard, Mouse & Trackpad Gesture Hint */}
-                <p className="text-[11px] text-white/40 font-medium text-center flex items-center justify-center gap-1.5 select-none">
-                  <span>Drag or scroll to browse</span>
-                  <span>·</span>
-                  <span>Double-click to like</span>
-                  <span>·</span>
-                  <span>Use ↑ ↓</span>
-                </p>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -1802,7 +1780,7 @@ function VibesContent() {
               {/* Double-tap animated Flame Pop */}
               {isDoubleTapped && (
                 <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center animate-in zoom-in-50 fade-in duration-200">
-                  <div className="w-20 h-20 rounded-full bg-[#FF5500]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,85,0,0.8)] animate-bounce">
+                  <div className="w-20 h-20 rounded-full bg-[#08B9F5]/95 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(8,185,245,0.8)] animate-bounce">
                     <Flame className="w-12 h-12 text-white fill-white" />
                   </div>
                 </div>
@@ -1879,7 +1857,7 @@ function VibesContent() {
                   <div
                     className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                       isLiked
-                        ? 'bg-[#FF5500] text-white shadow-[0_0_15px_rgba(255,85,0,0.5)]'
+                        ? 'bg-[#08B9F5] text-white shadow-[0_0_15px_rgba(8,185,245,0.5)]'
                         : 'bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80'
                     }`}
                   >
@@ -1906,23 +1884,7 @@ function VibesContent() {
                   <span className="text-[11px] font-bold text-white shadow-sm">{getVibeCommentsCount(vibe)}</span>
                 </button>
 
-                {/* Event Details "i" icon */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    openEventDetails(vibe);
-                  }}
-                  className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition-transform touch-manipulation pointer-events-auto select-none"
-                  aria-label="Event details"
-                  title="Event details"
-                >
-                  <div className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md hover:bg-black/80 hover:border-[#FF5500]/50 transition-colors">
-                    <Info className="w-5 h-5 text-white/90" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-white shadow-sm">Info</span>
-                </button>
+
 
                 {/* Share */}
                 <button
@@ -1970,14 +1932,14 @@ function VibesContent() {
                         <Users className="w-3.5 h-3.5 text-neutral-400" />
                         <span>{vibe.going_count}/{vibe.capacity} going</span>
                       </span>
-                      <span className="font-bold text-[#FF5500] flex items-center gap-1">
-                        <Zap className="w-3 h-3 fill-[#FF5500]" />
+                      <span className="font-bold text-[#08B9F5] flex items-center gap-1">
+                        <Zap className="w-3 h-3 fill-[#08B9F5]" />
                         <span>{vibe.spots_left} spots left</span>
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#FF5500] rounded-full transition-all duration-300"
+                        className="h-full bg-[#08B9F5] rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%` }}
                       />
                     </div>
@@ -2009,10 +1971,11 @@ function VibesContent() {
                           e.stopPropagation();
                           openQuickJoin(vibe);
                         }}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] hover:brightness-110 active:scale-[0.98] text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer touch-manipulation select-none"
+                        className="vibe-join-btn flex-1 py-2.5 px-3 rounded-xl bg-[#0066F5] hover:bg-[#0052cc] active:scale-[0.98] text-xs font-bold flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer touch-manipulation select-none"
+                        style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}
                       >
-                        <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span>Join now</span>
+                        <Zap className="w-3.5 h-3.5 fill-white text-white" style={{ color: '#FFFFFF', stroke: '#FFFFFF', fill: '#FFFFFF' }} />
+                        <span className="vibe-join-text font-bold" style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>Join now</span>
                       </button>
                     );
                   })()}
@@ -2026,7 +1989,7 @@ function VibesContent() {
                     className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 backdrop-blur-md shadow-lg cursor-pointer active:scale-[0.98] transition-all shrink-0"
                     title="Connect with host"
                   >
-                    <MessageCircle className="w-3.5 h-3.5 text-[#FF8C42]" />
+                    <MessageCircle className="w-3.5 h-3.5 text-[#00D5E8]" />
                     <span>Connect with host</span>
                   </button>
                 </div>
@@ -2125,8 +2088,164 @@ function VibesContent() {
         }
       />
 
-      {/* Mobile Bottom Navigation Bar & Swipe Gestures */}
-      <Navbar bottomNavOnly />
+
+            {/* ========================================================= */}
+      {/* 4. BLURRED PAGE BACKDROP & CATEGORY/CITY DRAWER          */}
+      {/* ========================================================= */}
+      <AnimatePresence>
+        {filterOpen && (
+          <>
+            {/* Blurred Backdrop covering entire screen */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setFilterOpen(false)}
+              className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md cursor-pointer"
+            />
+
+            {/* Left Drawer Card (matching reference screenshot) */}
+            <motion.aside
+              initial={{ x: -340 }}
+              animate={{ x: 0 }}
+              exit={{ x: -340 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+              className="fixed top-0 bottom-0 left-0 z-50 w-72 sm:w-80 h-full bg-white dark:bg-[#0D1D35] border-r border-slate-200/90 dark:border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.3)] flex flex-col justify-between p-6 select-none overflow-y-auto no-scrollbar"
+            >
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[11px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                    CATEGORIES
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFilterOpen(false)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-slate-500 dark:text-slate-300 transition-colors cursor-pointer"
+                    aria-label="Close categories"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Categories List */}
+                <div className="space-y-1.5">
+                  {ACTIVITY_FILTERS.map((cat) => {
+                    const isSelected = selectedActivity === cat.id;
+                    const count = categoryCounts[cat.id] ?? 0;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedActivity(cat.id);
+                          setCurrentIndex(0);
+                          setFilterOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-[#0052cc] to-[#0066F5] text-white shadow-md shadow-blue-600/25'
+                            : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-neutral-300 dark:hover:bg-white/5 dark:hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              isSelected ? 'bg-cyan-300' : 'bg-slate-300 dark:bg-slate-600'
+                            }`}
+                          />
+                          <span className={`text-xs sm:text-sm ${isSelected ? 'font-bold' : 'font-medium'}`}>
+                            {cat.label}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                              isSelected
+                                ? 'bg-white/20 text-white'
+                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-neutral-400'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                          {isSelected && (
+                            <Check className="w-4 h-4 stroke-[2.5] text-white shrink-0" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Section 2: FILTER BY CITY */}
+                <div className="mt-8">
+                  <span className="text-[11px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-3 block">
+                    FILTER BY CITY
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {FILTER_CITIES.map((city) => {
+                      const isCitySelected =
+                        (city.id === 'all' && (activeCity === 'All India' || activeCity === 'All Cities')) ||
+                        activeCity.toLowerCase() === city.id.toLowerCase() ||
+                        activeCity.toLowerCase() === city.name.toLowerCase();
+                      return (
+                        <button
+                          key={city.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveCity(city.id === 'all' ? 'All India' : city.name);
+                            setCurrentIndex(0);
+                            setFilterOpen(false);
+                          }}
+                          className={`py-2 px-3 rounded-xl text-xs font-semibold text-center transition-all cursor-pointer ${
+                            isCitySelected
+                              ? 'bg-[#0066F5] text-white shadow-md shadow-blue-500/25'
+                              : 'bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {city.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Bottom Action Button */}
+              <div className="pt-6 mt-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterOpen(false);
+                    setCreateModalOpen(true);
+                  }}
+                  className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0B1E48] to-[#0066F5] hover:brightness-110 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  style={{ color: '#FFFFFF' }}
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" style={{ color: '#FFFFFF' }} />
+                  <span className="font-bold text-white">Host an Instant Vibe</span>
+                </button>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-2 font-medium">
+                  Free 60-second spontaneous gathering
+                </p>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Location Modal */}
+      <LocationModal
+        isOpen={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        onSelectCity={(city) => {
+          setActiveCity(city);
+          setLocationModalOpen(false);
+        }}
+        currentCity={activeCity}
+      />
     </div>
   );
 }
@@ -2135,9 +2254,9 @@ export default function VibesPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-[100dvh] w-full bg-black flex flex-col items-center justify-center text-white">
-          <RefreshCw className="w-8 h-8 animate-spin text-[#FF5500] mb-3" />
-          <p className="text-xs font-bold text-white/60 tracking-wider uppercase">Loading Vibe Stream...</p>
+        <div className="h-[100dvh] w-full bg-white dark:bg-[#081426] flex flex-col items-center justify-center text-slate-900 dark:text-white">
+          <RefreshCw className="w-8 h-8 animate-spin text-[#08B9F5] mb-3" />
+          <p className="text-xs font-bold text-slate-500 dark:text-white/60 tracking-wider uppercase">Loading Vibe Stream...</p>
         </div>
       }
     >

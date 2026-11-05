@@ -80,7 +80,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
       organizer_id: profile?.id || 'org-flash',
       organizer_name: profile?.name || 'Spontaneous Host',
       organizer_handle: profile?.handle || 'flash_host',
-      organizer_brand_color: '#E8621A',
+      organizer_brand_color: '#075CE5',
       slug,
       title: title.trim(),
       tagline: `Spontaneous meetup in ${city} • ${timeText}`,
@@ -92,7 +92,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
         font: 'Inter',
         bg_style: 'solid',
         button_style: 'pill',
-        custom_accent: '#E8621A',
+        custom_accent: '#075CE5',
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: true },
       event_type: 'in-person',
@@ -146,7 +146,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient Top Glow */}
-        <div className="absolute -top-24 -left-20 w-56 h-56 bg-gradient-to-br from-[#E8621A]/30 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -left-20 w-56 h-56 bg-gradient-to-br from-[#075CE5]/30 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close Button */}
         <button
@@ -159,7 +159,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
 
         {/* Header */}
         <div className="flex items-center gap-2 mb-2">
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#E8621A] text-white flex items-center gap-1 shadow-xs">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#075CE5] text-white flex items-center gap-1 shadow-xs">
             <Zap className="w-3 h-3 fill-white" />
             <span>Vibe Creator</span>
           </span>
@@ -214,7 +214,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
               </p>
               <ol className="text-xs text-white/70 space-y-1.5 list-decimal pl-4">
                 <li>Tap below to open WhatsApp with the bridge bot.</li>
-                <li>Send a message starting with <code className="bg-black/50 px-1.5 py-0.5 rounded text-[#E8621A] font-mono">/vibe</code> followed by your plans.</li>
+                <li>Send a message starting with <code className="bg-black/50 px-1.5 py-0.5 rounded text-[#075CE5] font-mono">/vibe</code> followed by your plans.</li>
                 <li>Gemini AI will extract details, publish it to Vibe Instant, and reply with your live link!</li>
               </ol>
             </div>
@@ -275,7 +275,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                         onClick={() => setActivity(act.id)}
                         className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                           activity === act.id
-                            ? 'bg-[#E8621A] text-white border-[#E8621A]'
+                            ? 'bg-[#075CE5] text-white border-[#075CE5]'
                             : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                       >
@@ -295,7 +295,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                     placeholder="e.g. 6v6 Box Cricket Match at Turf"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A]"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#075CE5]"
                   />
                 </div>
 
@@ -310,7 +310,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                       placeholder="e.g. Bandra Urban Turf"
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#E8621A]"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#075CE5]"
                     />
                   </div>
 
@@ -321,7 +321,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                     <select
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1C1F26] border border-white/10 text-white text-sm focus:outline-none focus:border-[#E8621A]"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1C1F26] border border-white/10 text-white text-sm focus:outline-none focus:border-[#075CE5]"
                     >
                       <option value="Mumbai">Mumbai</option>
                       <option value="Bengaluru">Bengaluru</option>
@@ -341,7 +341,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                     value={timeText}
                     onChange={(e) => setTimeText(e.target.value)}
                     placeholder="e.g. Tonight at 8 PM"
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E8621A]"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#075CE5]"
                   />
                 </div>
 
@@ -352,7 +352,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                       type="checkbox"
                       checked={limitSpots}
                       onChange={(e) => setLimitSpots(e.target.checked)}
-                      className="rounded accent-[#E8621A] w-4 h-4 cursor-pointer"
+                      className="rounded accent-[#075CE5] w-4 h-4 cursor-pointer"
                     />
                     <span className="text-xs text-white/90 font-semibold">
                       Need a specific number of players / persons?
@@ -368,7 +368,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                         max={100}
                         value={spots}
                         onChange={(e) => setSpots(parseInt(e.target.value, 10) || 8)}
-                        className="w-20 px-3 py-1.5 rounded-lg bg-black/40 border border-white/20 text-white text-sm text-center font-bold focus:outline-none focus:border-[#E8621A]"
+                        className="w-20 px-3 py-1.5 rounded-lg bg-black/40 border border-white/20 text-white text-sm text-center font-bold focus:outline-none focus:border-[#075CE5]"
                       />
                     </div>
                   )}
@@ -377,7 +377,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#E8621A] to-[#FF8C42] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#E8621A]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#075CE5]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? 'Publishing Vibe...' : '⚡ Post to Vibe Instant Stream'}
                 </button>
@@ -394,7 +394,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-[#E8621A] text-white font-bold text-xs shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-[#075CE5] text-white font-bold text-xs shadow-md"
                 >
                   View in Instant
                 </button>

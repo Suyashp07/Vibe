@@ -346,7 +346,7 @@ function DashboardInner() {
       <div className="min-h-screen flex flex-col bg-[#070709] text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-7 h-7 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
       </div>
     );
@@ -361,11 +361,11 @@ function DashboardInner() {
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6">
             <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 text-white mx-auto flex items-center justify-center">
-              <ShieldCheck className="w-7 h-7 text-[#FF5500]" />
+              <ShieldCheck className="w-7 h-7 text-[#08B9F5]" />
             </div>
 
             <div className="space-y-2">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-[#FF5500] font-bold">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#08B9F5] font-bold">
                 Host Space Restricted
               </span>
               <h1 className="font-sans font-bold text-2xl text-white">
@@ -413,7 +413,7 @@ function DashboardInner() {
 
               <Link
                 href="/signup?redirect=/dashboard"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-semibold text-xs transition shadow-md"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white font-semibold text-xs transition shadow-md"
               >
                 <span>Sign Up Free</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -428,7 +428,7 @@ function DashboardInner() {
   const broadcastTarget = hostEvents[0] || events[0] || null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA] dark:bg-[#070709] text-neutral-900 dark:text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] dark:bg-[#070709] text-neutral-900 dark:text-[#F3F4F6] selection:bg-[#08B9F5] selection:text-white transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-12 sm:space-y-14">
@@ -441,7 +441,7 @@ function DashboardInner() {
               YOUR HOST SPACE
             </span>
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-neutral-900 dark:text-white mt-2 leading-tight">
-              Good things are happening<span className="text-[#FF5500]">.</span>
+              Good things are happening<span className="text-[#08B9F5]">.</span>
             </h1>
             <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mt-2 font-normal">
               Your events, your guests, all together.
@@ -450,7 +450,7 @@ function DashboardInner() {
 
           <Link
             href="/create"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-sm font-semibold transition-all shadow-[0_0_24px_rgba(255,85,0,0.35)] shrink-0 self-start hover:scale-[1.02] active:scale-98 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-sm font-semibold transition-all shadow-[0_0_24px_rgba(8,185,245,0.35)] shrink-0 self-start hover:scale-[1.02] active:scale-98 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Create an event</span>
@@ -515,7 +515,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('upcoming')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'upcoming'
-                  ? 'bg-[#FFF1EB] text-[#FF5500] border border-[#FF5500]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
+                  ? 'bg-[#FFF1EB] text-[#08B9F5] border border-[#08B9F5]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
                   : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-transparent border border-transparent'
               }`}
             >
@@ -525,7 +525,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('past')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'past'
-                  ? 'bg-[#FFF1EB] text-[#FF5500] border border-[#FF5500]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
+                  ? 'bg-[#FFF1EB] text-[#08B9F5] border border-[#08B9F5]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
                   : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-transparent border border-transparent'
               }`}
             >
@@ -535,7 +535,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('drafts')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'drafts'
-                  ? 'bg-[#FFF1EB] text-[#FF5500] border border-[#FF5500]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
+                  ? 'bg-[#FFF1EB] text-[#08B9F5] border border-[#08B9F5]/30 dark:bg-[#2A160E] dark:text-[#FF6A1A]'
                   : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-transparent border border-transparent'
               }`}
             >
@@ -566,7 +566,7 @@ function DashboardInner() {
                   >
                     {/* Left: Thumbnail & Details */}
                     <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-                      <div className="relative w-28 sm:w-32 h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 block group-hover:border-[#FF5500]/40 transition-colors">
+                      <div className="relative w-28 sm:w-32 h-20 rounded-xl overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 block group-hover:border-[#08B9F5]/40 transition-colors">
                         <Image
                           src={event.cover_image_url}
                           alt={event.title}
@@ -582,7 +582,7 @@ function DashboardInner() {
                           <span>Published</span>
                         </span>
 
-                        <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white group-hover:text-[#FF5500] transition-colors mt-1 truncate">
+                        <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white group-hover:text-[#08B9F5] transition-colors mt-1 truncate">
                           {event.title}
                         </h3>
 
@@ -595,7 +595,7 @@ function DashboardInner() {
                     {/* Right: Guest Count, Inbox button & Scan passes */}
                     <div className="flex items-center gap-3 sm:gap-4 shrink-0 self-start md:self-auto pt-2 md:pt-0">
                       <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300 font-medium">
-                        <Users className="w-4 h-4 text-[#FF5500]" />
+                        <Users className="w-4 h-4 text-[#08B9F5]" />
                         <span>{event.guests_count} guests</span>
                       </div>
 
@@ -635,7 +635,7 @@ function DashboardInner() {
         {/* ========================================================= */}
         <div className="p-6 rounded-2xl bg-white dark:bg-[#111114] border border-neutral-200 dark:border-white/10 shadow-xs dark:shadow-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FFF1EB] dark:bg-[#2A160E] border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#FFF1EB] dark:bg-[#2A160E] border border-[#08B9F5]/30 flex items-center justify-center text-[#08B9F5] shrink-0">
               <Send className="w-5 h-5 -rotate-12 translate-x-0.5" />
             </div>
             <div>
@@ -660,7 +660,7 @@ function DashboardInner() {
       <footer className="mt-20 border-t border-neutral-200 dark:border-white/[0.08] py-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 dark:text-neutral-400">
         <div className="flex items-center gap-3">
           <span className="font-bold text-neutral-900 dark:text-white text-sm tracking-tight">
-            vibe<span className="text-[#FF5500]">.</span>
+            vibe<span className="text-[#08B9F5]">.</span>
             <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tracking-wider ml-1">BY SWANIKI</span>
           </span>
           <span className="text-neutral-300 dark:text-neutral-700">·</span>
@@ -709,7 +709,7 @@ export default function DashboardPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#070709] flex items-center justify-center">
-          <RefreshCw className="w-6 h-6 animate-spin text-[#FF5500]" />
+          <RefreshCw className="w-6 h-6 animate-spin text-[#08B9F5]" />
         </div>
       }
     >

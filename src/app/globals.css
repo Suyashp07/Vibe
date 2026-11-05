@@ -1,33 +1,42 @@
+/* ======================================================== */
+/* GLOBAL HEADING TYPOGRAPHY: Bricolage Grotesque            */
+/* ======================================================== */
+h1, h2, h3, h4, h5, h6,
+.font-display,
+.font-heading {
+  font-family: var(--font-bricolage), 'Bricolage Grotesque', var(--font-outfit), 'Outfit', -apple-system, sans-serif !important;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #050505;
-  --primary: #FF5500;
-  --muted-foreground: #9CA3AF;
+  --background: #081426;
+  --primary: #08B9F5;
+  --muted-foreground: #94A3B8;
   --secondary: rgba(255, 255, 255, 0.15);
-  --font-display: var(--font-inter), sans-serif;
+  --font-display: var(--font-bricolage), 'Bricolage Grotesque', sans-serif;
   --brand: #FFFFFF;
-  --brand-mid: #E5E5E5;
-  --brand-deep: #050505;
-  --accent: #FF5500;
-  --accent-dark: #E04B00;
-  --accent-light: #261105;
-  --gold: #F59E0B;
-  --gold-light: #261D07;
-  --ink: #F3F4F6;
-  --ink-secondary: #9CA3AF;
-  --ink-muted: #6B7280;
-  --surface: #0A0A0C;
-  --surface-2: #050505;
-  --surface-3: #111114;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --brand-mid: #E2E8F0;
+  --brand-deep: #081426;
+  --accent: #08B9F5;
+  --accent-dark: #075CE5;
+  --accent-light: #0D1D35;
+  --gold: #00D5E8;
+  --gold-light: rgba(0, 213, 232, 0.15);
+  --ink: #F8FAFC;
+  --ink-secondary: #94A3B8;
+  --ink-muted: #64748B;
+  --surface: #0D1D35;
+  --surface-2: #081426;
+  --surface-3: #112544;
+  --border: rgba(8, 185, 245, 0.15);
+  --border-strong: rgba(8, 185, 245, 0.28);
   --success: #10B981;
   --success-bg: rgba(16, 185, 129, 0.12);
-  --warning: #F59E0B;
-  --warning-bg: rgba(245, 158, 11, 0.12);
+  --warning: #00D5E8;
+  --warning-bg: rgba(0, 213, 232, 0.12);
 }
 
 html {
@@ -46,8 +55,8 @@ html {
 }
 
 body {
-  background-color: #050505;
-  color: #F3F4F6;
+  background-color: #081426;
+  color: #F8FAFC;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
@@ -224,7 +233,7 @@ html.light .spotlight-card::before {
 .bg-texture-paper {
   background-color: #FAF8F5;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(232, 98, 26, 0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(7, 92, 229, 0.03) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.02) 0px, transparent 50%),
     radial-gradient(#CBD5E1 0.85px, transparent 0.85px);
   background-size: 100% 100%, 100% 100%, 24px 24px;
@@ -319,26 +328,89 @@ html.light .spotlight-card::before {
 
 html.dark {
   color-scheme: dark;
+  --background: #081426;
+  --brand: #FFFFFF;
+  --brand-mid: #E2E8F0;
+  --brand-deep: #081426;
+  --accent: #08B9F5;
+  --accent-dark: #075CE5;
+  --accent-light: #0D1D35;
+  --gold: #00D5E8;
+  --gold-light: rgba(0, 213, 232, 0.15);
+  --ink: #F8FAFC;
+  --ink-secondary: #94A3B8;
+  --ink-muted: #64748B;
+  --surface: #0D1D35;
+  --surface-2: #081426;
+  --surface-3: #112544;
+  --border: rgba(8, 185, 245, 0.15);
+  --border-strong: rgba(8, 185, 245, 0.28);
+}
+
+html.dark body {
+  background-color: #081426 !important;
+  color: #F8FAFC !important;
+}
+
+html.dark .bg-\[\#050505\],
+html.dark .bg-\[\#000000\],
+html.dark .bg-black {
+  background-color: #081426 !important;
+}
+
+html.dark .bg-\[\#0A0A0A\],
+html.dark .bg-\[\#0A0A0C\],
+html.dark .bg-\[\#0a0a0c\],
+html.dark .bg-\[\#0D0D10\],
+html.dark .bg-\[\#111114\],
+html.dark .bg-\[\#111113\],
+html.dark .bg-\[\#12151D\],
+html.dark .bg-\[\#12151d\],
+html.dark .bg-\[\#0B0F19\],
+html.dark .bg-\[\#0F131E\],
+html.dark .bg-\[\#070709\],
+html.dark .bg-\[\#12141A\],
+html.dark .bg-\[\#0D0F14\] {
+  background-color: #0D1D35 !important;
+}
+
+html.dark header.bg-\[\#0A0A0A\]\/95,
+html.dark header.bg-\[\#0B0F19\]\/95 {
+  background-color: rgba(13, 29, 53, 0.95) !important;
+  border-bottom-color: rgba(8, 185, 245, 0.15) !important;
+}
+
+html.dark footer.bg-\[\#050505\] {
+  background-color: #081426 !important;
+  border-top-color: rgba(8, 185, 245, 0.15) !important;
+}
+
+html.dark .border-zinc-800,
+html.dark .border-zinc-800\/80,
+html.dark .border-zinc-800\/60,
+html.dark .border-zinc-900,
+html.dark .border-white\/10 {
+  border-color: rgba(8, 185, 245, 0.15) !important;
 }
 
 html.light {
   color-scheme: light;
-  --brand: #0A0A0A;
-  --brand-mid: #262626;
+  --brand: #0B1B3A;
+  --brand-mid: #1E293B;
   --brand-deep: #FFFFFF;
-  --accent: #FF5500;
-  --accent-dark: #E04B00;
-  --accent-light: #FFF0E6;
-  --gold: #D97706;
-  --gold-light: #FEF3C7;
-  --ink: #0F172A;
+  --accent: #08B9F5;
+  --accent-dark: #075CE5;
+  --accent-light: #F0F7FF;
+  --gold: #00D5E8;
+  --gold-light: #E0F7FA;
+  --ink: #0B1B3A;
   --ink-secondary: #475569;
-  --ink-muted: #94A3B8;
+  --ink-muted: #64748B;
   --surface: #FFFFFF;
-  --surface-2: #F8F9FA;
-  --surface-3: #F1F3F5;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.16);
+  --surface-2: #F8FAFC;
+  --surface-3: #F0F7FF;
+  --border: rgba(8, 185, 245, 0.12);
+  --border-strong: rgba(7, 92, 229, 0.2);
 }
 
 /* Smooth background and text transition across theme change */
@@ -350,20 +422,18 @@ body, header, nav, main, footer {
 
 /* --- LIGHT MODE THEME OVERRIDES --- */
 html.light body {
-  background-color: #F8F9FA !important;
-  color: #0F172A !important;
+  background-color: #FFFFFF !important;
+  color: #0B1B3A !important;
 }
 
-html.light .bg-\[\#050505\] {
-  background-color: #F8F9FA !important;
-  color: #0F172A !important;
+html.light .bg-\[\#050505\] {background-color: #F8F9FA !important;
+  color: #0B1B3A !important;
 }
 
 /* Sticky Header */
-html.light header.bg-\[\#0A0A0A\]\/95 {
-  background-color: rgba(255, 255, 255, 0.94) !important;
+html.light header.bg-\[\#0A0A0A\]\/95 {background-color: rgba(255, 255, 255, 0.94) !important;
   border-bottom-color: rgba(0, 0, 0, 0.08) !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
 }
 
@@ -388,31 +458,27 @@ html.light .bg-\[\#0a0a0c\] {
 }
 
 html.light .bg-\[\#0A0C10\],
-html.light .bg-\[\#0a0c10\] {
-  background-color: #F8F9FA !important;
-  color: #0F172A !important;
+html.light .bg-\[\#0a0c10\] {background-color: #F8F9FA !important;
+  color: #0B1B3A !important;
 }
 
 html.light .bg-\[\#12151D\],
-html.light .bg-\[\#12151d\] {
-  background-color: #FFFFFF !important;
+html.light .bg-\[\#12151d\] {background-color: #FFFFFF !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
 }
 
 /* Admin Panel Light Mode Support */
 html.light .bg-\[\#0B0F19\],
-html.light .bg-\[\#0F131E\] {
-  background-color: #FFFFFF !important;
+html.light .bg-\[\#0F131E\] {background-color: #FFFFFF !important;
   border-color: #E2E8F0 !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
-html.light header.bg-\[\#0B0F19\]\/95 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+html.light header.bg-\[\#0B0F19\]\/95 {background-color: rgba(255, 255, 255, 0.95) !important;
   border-bottom-color: #E2E8F0 !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
 }
 
@@ -424,26 +490,22 @@ html.light .border-zinc-700\/80 {
   border-color: #E2E8F0 !important;
 }
 
-html.light .bg-zinc-900:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]) {
-  background-color: #F8FAFC !important;
+html.light .bg-zinc-900:not(button.bg-\[\#08B9F5\]):not(a.bg-\[\#08B9F5\]) {background-color: #F8FAFC !important;
   border-color: #E2E8F0 !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
 }
 
-html.light .bg-zinc-800:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]) {
-  background-color: #F1F5F9 !important;
+html.light .bg-zinc-800:not(button.bg-\[\#08B9F5\]):not(a.bg-\[\#08B9F5\]) {background-color: #F1F5F9 !important;
   border-color: #CBD5E1 !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
 }
 
-html.light .hover\:bg-zinc-800:hover {
-  background-color: #E2E8F0 !important;
-  color: #0F172A !important;
+html.light .hover\:bg-zinc-800:hover {background-color: #E2E8F0 !important;
+  color: #0B1B3A !important;
 }
 
-html.light .hover\:bg-zinc-900\/60:hover {
-  background-color: #F1F5F9 !important;
-  color: #0F172A !important;
+html.light .hover\:bg-zinc-900\/60:hover {background-color: #F1F5F9 !important;
+  color: #0B1B3A !important;
 }
 
 html.light .text-zinc-400,
@@ -471,10 +533,9 @@ html.light .hover\:bg-zinc-800\/30:hover {
 
 html.light input.bg-zinc-900,
 html.light select.bg-zinc-900,
-html.light textarea.bg-zinc-900 {
-  background-color: #FFFFFF !important;
+html.light textarea.bg-zinc-900 {background-color: #FFFFFF !important;
   border-color: #CBD5E1 !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
 }
 
 html.light input.bg-zinc-900::placeholder {
@@ -499,62 +560,59 @@ html.light .border-white\/20 {
 }
 
 /* Buttons, Chips, and Sub-elements in Light Mode */
-html.light .bg-white\/5:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .bg-white\/5:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-html.light .bg-white\/10:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .bg-white\/10:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.07) !important;
 }
 
-html.light .hover\:bg-white\/10:hover:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .hover\:bg-white\/10:hover:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-html.light .hover\:bg-white\/20:hover:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .hover\:bg-white\/20:hover:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.12) !important;
 }
 
-html.light .hover\:bg-white\/5:hover:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .hover\:bg-white\/5:hover:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-html.light .hover\:text-white:hover:not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
-  color: #0F172A !important;
+html.light .hover\:text-white:hover:not(button.bg-\[\#08B9F5\] *):not(a.bg-\[\#08B9F5\] *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {color: #0B1B3A !important;
 }
 
-html.light .border-white\/10:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .border-white\/10:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-html.light .border-white\/15:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *),
-html.light .border-white\/20:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
+html.light .border-white\/15:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *),
+html.light .border-white\/20:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *) {
   border-color: rgba(0, 0, 0, 0.14) !important;
 }
 
 /* Text Overrides for Light Mode (applied ONLY to regular light content) */
-html.light .text-white:not(button.bg-\[\#FF5500\]):not(a.bg-\[\#FF5500\]):not(button.bg-\[\#FF5500\] *):not(a.bg-\[\#FF5500\] *):not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not(.preview-card-cover *):not([class*="bg-black"]):not([class*="bg-black"] *):not([class*="bg-slate-9"]):not([class*="bg-slate-9"] *):not([class*="bg-slate-8"]):not([class*="bg-slate-8"] *):not([class*="bg-\[\#0F172A\]"]):not([class*="bg-\[\#0F172A\]"] *):not([class*="bg-neutral-9"]):not([class*="bg-neutral-9"] *):not([class*="bg-neutral-8"]):not([class*="bg-neutral-8"] *):not(.pointer-events-none *):not(.pwa-install-banner *) {
-  color: #0F172A !important;
+html.light .text-white:not(button.bg-\[\#08B9F5\]):not(a.bg-\[\#08B9F5\]):not(button.bg-\[\#08B9F5\] *):not(a.bg-\[\#08B9F5\] *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not(.preview-card-cover *):not([class*="bg-black"]):not([class*="bg-black"] *):not([class*="bg-slate-9"]):not([class*="bg-slate-9"] *):not([class*="bg-slate-8"]):not([class*="bg-slate-8"] *):not([class*="bg-\[\#0F172A\]"]):not([class*="bg-\[\#0F172A\]"] *):not([class*="bg-neutral-9"]):not([class*="bg-neutral-9"] *):not([class*="bg-neutral-8"]):not([class*="bg-neutral-8"] *):not(.pointer-events-none *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {color: #0B1B3A !important;
 }
 
-html.light .text-white\/90:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
-  color: #0F172A !important;
+html.light .text-white\/90:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {color: #0B1B3A !important;
 }
 
-html.light .text-white\/80:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
+html.light .text-white\/80:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {
   color: #1E293B !important;
 }
 
-html.light .text-white\/70:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *),
-html.light .text-white\/60:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
+html.light .text-white\/70:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *),
+html.light .text-white\/60:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {
   color: #334155 !important;
 }
 
-html.light .text-white\/50:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
+html.light .text-white\/50:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {
   color: #475569 !important;
 }
 
-html.light .text-white\/40:not(.vibe-instant-container *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *) {
+html.light .text-white\/40:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *) {
   color: #64748B !important;
 }
 
@@ -562,23 +620,30 @@ html.light .text-white\/40:not(.vibe-instant-container *):not(.vibe-reel-card *)
    IMMERSIVE DARK SURFACES (Vibe Instant, Reels, Dark Modals, Hero Overlays)
    Retain 100% crisp white text, glowing accents, and translucent dark styling
    ========================================================================= */
-html.light .vibe-instant-container,
 html.light .vibe-reel-card,
 html.light .dark-dialog,
 html.light .dark-canvas {
   color: #FFFFFF !important;
 }
 
-html.light .vibe-instant-container {
-  background-color: #08080A !important;
+/* Vibe Instant Page - Light Theme Support */
+html.light .vibe-instant-container {background-color: #FFFFFF !important;
+  color: #0B1B3A !important;
 }
 
-html.light .vibe-instant-container h1,
-html.light .vibe-instant-container h2,
-html.light .vibe-instant-container h3,
-html.light .vibe-instant-container h4,
-html.light .vibe-instant-container h5,
-html.light .vibe-instant-container h6,
+html.light .vibe-instant-container h1:not(.vibe-reel-card *),
+html.light .vibe-instant-container h2:not(.vibe-reel-card *),
+html.light .vibe-instant-container h3:not(.vibe-reel-card *),
+html.light .vibe-instant-container h4:not(.vibe-reel-card *),
+html.light .vibe-instant-container h5:not(.vibe-reel-card *),
+html.light .vibe-instant-container h6:not(.vibe-reel-card *) {color: #0B1B3A !important;
+}
+
+html.light .vibe-instant-container .vibe-details-card {background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #0B1B3A !important;
+}
+
 html.light .vibe-reel-card h1,
 html.light .vibe-reel-card h2,
 html.light .vibe-reel-card h3,
@@ -594,85 +659,66 @@ html.light .dark-dialog h6 {
   color: #FFFFFF !important;
 }
 
-html.light .vibe-instant-container .text-neutral-300,
 html.light .vibe-reel-card .text-neutral-300 {
   color: #D4D4D8 !important;
 }
 
-html.light .vibe-instant-container .text-neutral-400,
 html.light .vibe-reel-card .text-neutral-400 {
   color: #A1A1AA !important;
 }
 
-html.light .vibe-instant-container .text-neutral-500,
 html.light .vibe-reel-card .text-neutral-500 {
   color: #71717A !important;
 }
 
-html.light .vibe-instant-container button[aria-label*="Switch to"],
-html.light .vibe-instant-container button[title*="Switch to"] {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-html.light .vibe-instant-container .text-white,
 html.light .vibe-reel-card .text-white,
 html.light .dark-dialog .text-white,
 html.light .dark-canvas .text-white {
   color: #FFFFFF !important;
 }
 
-html.light .vibe-instant-container .text-white\/90,
 html.light .vibe-reel-card .text-white\/90,
 html.light .dark-dialog .text-white\/90,
 html.light .dark-canvas .text-white\/90 {
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
-html.light .vibe-instant-container .text-white\/80,
 html.light .vibe-reel-card .text-white\/80,
 html.light .dark-dialog .text-white\/80,
 html.light .dark-canvas .text-white\/80 {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-html.light .vibe-instant-container .text-white\/70,
 html.light .vibe-reel-card .text-white\/70,
 html.light .dark-dialog .text-white\/70,
 html.light .dark-canvas .text-white\/70 {
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
-html.light .vibe-instant-container .text-white\/60,
 html.light .vibe-reel-card .text-white\/60,
 html.light .dark-dialog .text-white\/60,
 html.light .dark-canvas .text-white\/60 {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-html.light .vibe-instant-container .text-white\/50,
 html.light .vibe-reel-card .text-white\/50,
 html.light .dark-dialog .text-white\/50,
 html.light .dark-canvas .text-white\/50 {
   color: rgba(255, 255, 255, 0.5) !important;
 }
 
-html.light .vibe-instant-container .text-white\/40,
 html.light .vibe-reel-card .text-white\/40,
 html.light .dark-dialog .text-white\/40,
 html.light .dark-canvas .text-white\/40 {
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
-html.light .vibe-instant-container .text-white\/30,
 html.light .vibe-reel-card .text-white\/30,
 html.light .dark-dialog .text-white\/30,
 html.light .dark-canvas .text-white\/30 {
   color: rgba(255, 255, 255, 0.3) !important;
 }
 
-html.light .vibe-instant-container .text-white\/20,
 html.light .vibe-reel-card .text-white\/20,
 html.light .dark-dialog .text-white\/20,
 html.light .dark-canvas .text-white\/20 {
@@ -680,140 +726,118 @@ html.light .dark-canvas .text-white\/20 {
 }
 
 /* Backgrounds in Vibe Instant & Dark Dialogs */
-html.light .vibe-instant-container .bg-white\/5,
 html.light .vibe-reel-card .bg-white\/5,
 html.light .dark-dialog .bg-white\/5 {
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-html.light .vibe-instant-container .bg-white\/10,
 html.light .vibe-reel-card .bg-white\/10,
 html.light .dark-dialog .bg-white\/10 {
   background-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-html.light .vibe-instant-container .bg-white\/15,
 html.light .vibe-reel-card .bg-white\/15,
 html.light .dark-dialog .bg-white\/15 {
   background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-html.light .vibe-instant-container .bg-white\/20,
 html.light .vibe-reel-card .bg-white\/20,
 html.light .dark-dialog .bg-white\/20 {
   background-color: rgba(255, 255, 255, 0.20) !important;
 }
 
-html.light .vibe-instant-container .bg-black\/40,
 html.light .vibe-reel-card .bg-black\/40,
 html.light .dark-dialog .bg-black\/40 {
   background-color: rgba(0, 0, 0, 0.40) !important;
 }
 
-html.light .vibe-instant-container .bg-black\/50,
 html.light .vibe-reel-card .bg-black\/50,
 html.light .dark-dialog .bg-black\/50 {
   background-color: rgba(0, 0, 0, 0.50) !important;
 }
 
-html.light .vibe-instant-container .bg-black\/60,
 html.light .vibe-reel-card .bg-black\/60,
 html.light .dark-dialog .bg-black\/60 {
   background-color: rgba(0, 0, 0, 0.60) !important;
 }
 
-html.light .vibe-instant-container .bg-black\/70,
 html.light .vibe-reel-card .bg-black\/70,
 html.light .dark-dialog .bg-black\/70 {
   background-color: rgba(0, 0, 0, 0.70) !important;
 }
 
-html.light .vibe-instant-container .bg-black\/80,
 html.light .vibe-reel-card .bg-black\/80,
 html.light .dark-dialog .bg-black\/80 {
   background-color: rgba(0, 0, 0, 0.80) !important;
 }
 
-html.light .vibe-instant-container .bg-black\/90,
 html.light .vibe-reel-card .bg-black\/90,
 html.light .dark-dialog .bg-black\/90 {
   background-color: rgba(0, 0, 0, 0.90) !important;
 }
 
 /* Borders in Vibe Instant & Dark Dialogs */
-html.light .vibe-instant-container .border-white\/5,
 html.light .vibe-reel-card .border-white\/5,
 html.light .dark-dialog .border-white\/5 {
   border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-html.light .vibe-instant-container .border-white\/10,
 html.light .vibe-reel-card .border-white\/10,
 html.light .dark-dialog .border-white\/10 {
   border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-html.light .vibe-instant-container .border-white\/15,
 html.light .vibe-reel-card .border-white\/15,
 html.light .dark-dialog .border-white\/15 {
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-html.light .vibe-instant-container .border-white\/20,
 html.light .vibe-reel-card .border-white\/20,
 html.light .dark-dialog .border-white\/20 {
   border-color: rgba(255, 255, 255, 0.20) !important;
 }
 
-html.light .vibe-instant-container .border-white\/30,
 html.light .vibe-reel-card .border-white\/30,
 html.light .dark-dialog .border-white\/30 {
   border-color: rgba(255, 255, 255, 0.30) !important;
 }
 
 /* Hovers in Vibe Instant */
-html.light .vibe-instant-container .hover\:bg-white\/10:hover,
 html.light .vibe-reel-card .hover\:bg-white\/10:hover {
   background-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-html.light .vibe-instant-container .hover\:bg-white\/20:hover,
 html.light .vibe-reel-card .hover\:bg-white\/20:hover {
   background-color: rgba(255, 255, 255, 0.20) !important;
 }
 
-html.light .vibe-instant-container .hover\:text-white:hover,
 html.light .vibe-reel-card .hover\:text-white:hover,
 html.light .dark-dialog .hover\:text-white:hover {
   color: #FFFFFF !important;
 }
 
 /* Universal Form Fields & Inputs in Light Mode */
-html.light input:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *),
-html.light select:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *),
-html.light textarea:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *) {
-  background-color: #FFFFFF !important;
+html.light input:not(.dark-dialog *):not(.vibe-reel-card *),
+html.light select:not(.dark-dialog *):not(.vibe-reel-card *),
+html.light textarea:not(.dark-dialog *):not(.vibe-reel-card *) {background-color: #FFFFFF !important;
   border-color: #CBD5E1 !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
 }
 
-html.light input:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *)::placeholder,
-html.light textarea:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *)::placeholder {
+html.light input:not(.dark-dialog *):not(.vibe-reel-card *)::placeholder,
+html.light textarea:not(.dark-dialog *):not(.vibe-reel-card *)::placeholder {
   color: #94A3B8 !important;
   opacity: 1 !important;
 }
 
-html.light input:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *):focus,
-html.light select:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *):focus,
-html.light textarea:not(.vibe-instant-container *):not(.dark-dialog *):not(.vibe-reel-card *):focus {
-  border-color: #FF5500 !important;
-  box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15) !important;
+html.light input:not(.dark-dialog *):not(.vibe-reel-card *):focus,
+html.light select:not(.dark-dialog *):not(.vibe-reel-card *):focus,
+html.light textarea:not(.dark-dialog *):not(.vibe-reel-card *):focus {
+  border-color: #08B9F5 !important;
+  box-shadow: 0 0 0 3px rgba(8, 185, 245, 0.15) !important;
 }
 
 /* Inputs & Form Elements in Vibe Instant & Dark Modals */
-html.light .vibe-instant-container input,
-html.light .vibe-instant-container textarea,
-html.light .vibe-instant-container select,
 html.light .vibe-reel-card textarea,
 html.light .dark-dialog input,
 html.light .dark-dialog textarea,
@@ -822,15 +846,12 @@ html.light .dark-dialog select {
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-html.light .vibe-instant-container input::placeholder,
-html.light .vibe-instant-container textarea::placeholder,
 html.light .dark-dialog input::placeholder,
 html.light .dark-dialog textarea::placeholder {
   color: rgba(255, 255, 255, 0.35) !important;
 }
 
 /* SVG stroke/fill preservation */
-html.light .vibe-instant-container svg:not([class*="text-"]),
 html.light .vibe-reel-card svg:not([class*="text-"]),
 html.light .dark-dialog svg:not([class*="text-"]) {
   stroke: currentColor;
@@ -840,8 +861,7 @@ html.light .dark-dialog svg:not([class*="text-"]) {
 html.light .event-card-body,
 html.light .event-card-body h3,
 html.light .bg-\[\#0D0D10\] h3,
-html.light .bg-\[\#111114\] h3 {
-  color: #0F172A !important;
+html.light .bg-\[\#111114\] h3 {color: #0B1B3A !important;
 }
 
 html.light .event-card-body .text-white\/50,
@@ -852,8 +872,7 @@ html.light .bg-\[\#0D0D10\] .text-white\/60 {
 }
 
 html.light .event-card-body .text-white,
-html.light .bg-\[\#0D0D10\] .text-white {
-  color: #0F172A !important;
+html.light .bg-\[\#0D0D10\] .text-white {color: #0B1B3A !important;
 }
 
 html.light .event-card-body .text-white\/40,
@@ -877,9 +896,8 @@ html.light .bg-\[\#0D0D10\] .bg-white\/5 {
 }
 
 html.light .event-card-body button.bg-white\/5:hover,
-html.light .bg-\[\#0D0D10\] button.bg-white\/5:hover {
-  background-color: #E2E8F0 !important;
-  color: #0F172A !important;
+html.light .bg-\[\#0D0D10\] button.bg-white\/5:hover {background-color: #E2E8F0 !important;
+  color: #0B1B3A !important;
 }
 
 /* Verified Pill in Light Mode */
@@ -891,15 +909,14 @@ html.light .bg-\[\#0D0D10\] .bg-emerald-500\/10 {
 }
 
 /* Brand Logo Text */
-html.light .brand-logo-text {
-  color: #0F172A !important;
+html.light .brand-logo-text {color: #0B1B3A !important;
 }
 
 /* Keep High-Contrast Vibrant Elements Clean */
-html.light button.bg-\[\#FF5500\],
-html.light a.bg-\[\#FF5500\],
-html.light button.bg-\[\#FF5500\] *,
-html.light a.bg-\[\#FF5500\] *,
+html.light button.bg-\[\#08B9F5\],
+html.light a.bg-\[\#08B9F5\],
+html.light button.bg-\[\#08B9F5\] *,
+html.light a.bg-\[\#08B9F5\] *,
 html.light .shadow-\[0_0_25px_rgba\(255\,85\,0\,0\.45\)\] {
   color: #FFFFFF !important;
 }
@@ -918,17 +935,16 @@ html.light .flashcard-hero-overlay .text-amber-300 {
   color: #FCD34D !important;
 }
 
-html.light .event-card-cover .text-\[\#FF5500\],
-html.light .flashcard-hero-overlay .text-\[\#FF5500\] {
-  color: #FF5500 !important;
+html.light .event-card-cover .text-\[\#08B9F5\],
+html.light .flashcard-hero-overlay .text-\[\#08B9F5\] {
+  color: #08B9F5 !important;
 }
 
 /* Search input on feed */
 html.light input[placeholder*="Search for a vibe"],
-html.light input[placeholder*="Search events"] {
-  background-color: #FFFFFF !important;
+html.light input[placeholder*="Search events"] {background-color: #FFFFFF !important;
   border-color: rgba(0, 0, 0, 0.12) !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
 }
 html.light input[placeholder*="Search for a vibe"]::placeholder,
 html.light input[placeholder*="Search events"]::placeholder {
@@ -937,10 +953,9 @@ html.light input[placeholder*="Search events"]::placeholder {
 
 /* Mobile Bottom Nav Bar Bright Mode (Light Mode) Styling */
 html.light nav[aria-label="Mobile Web App Navigation"],
-html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] {
-  background-color: rgba(255, 255, 255, 0.96) !important;
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] {background-color: rgba(255, 255, 255, 0.96) !important;
   border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
-  color: #0F172A !important;
+  color: #0B1B3A !important;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06) !important;
 }
 
@@ -950,15 +965,14 @@ html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a
 }
 
 html.light nav[aria-label="Mobile Web App Navigation"] a:hover,
-html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a:hover {
-  color: #0F172A !important;
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a:hover {color: #0B1B3A !important;
 }
 
 html.light nav[aria-label="Mobile Web App Navigation"] a.nav-active,
-html.light nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"],
+html.light nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#08B9F5]"],
 html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a.nav-active,
-html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"] {
-  color: #FF5500 !important;
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#08B9F5]"] {
+  color: #08B9F5 !important;
 }
 
 html.light nav[aria-label="Mobile Web App Navigation"] .mobile-nav-label,
@@ -967,15 +981,14 @@ html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] .
 }
 
 html.light nav[aria-label="Mobile Web App Navigation"] a.nav-active .mobile-nav-label,
-html.light nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"] .mobile-nav-label,
+html.light nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#08B9F5]"] .mobile-nav-label,
 html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a.nav-active .mobile-nav-label,
-html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#FF5500]"] .mobile-nav-label {
-  color: #FF5500 !important;
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] a[class*="text-[#08B9F5]"] .mobile-nav-label {
+  color: #08B9F5 !important;
 }
 
 html.light nav[aria-label="Mobile Web App Navigation"] .center-host-label,
-html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] .center-host-label {
-  color: #0F172A !important;
+html.light .vibe-instant-container nav[aria-label="Mobile Web App Navigation"] .center-host-label {color: #0B1B3A !important;
 }
 
 html.light nav[aria-label="Mobile Web App Navigation"] .center-host-ring,
@@ -1066,17 +1079,17 @@ html:not(.light) .studio-workspace-container .fixed.bottom-0 {
   border-top-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-html:not(.light) .studio-workspace-container button[class*="bg-\[\#E8621A\]"],
-html:not(.light) .studio-workspace-container button[class*="bg-\[\#FF5500\]"] {
-  background-color: #FF5500 !important;
+html:not(.light) .studio-workspace-container button[class*="bg-\[\#075CE5\]"],
+html:not(.light) .studio-workspace-container button[class*="bg-\[\#08B9F5\]"] {
+  background-color: #08B9F5 !important;
   color: #FFFFFF !important;
-  border-color: #FF5500 !important;
+  border-color: #08B9F5 !important;
 }
 
-html:not(.light) .studio-workspace-container .bg-orange-50 {
-  background-color: rgba(255, 85, 0, 0.15) !important;
-  border-color: rgba(255, 85, 0, 0.3) !important;
-  color: #FF7733 !important;
+html:not(.light) .studio-workspace-container .bg-sky-50 {
+  background-color: rgba(8, 185, 245, 0.15) !important;
+  border-color: rgba(8, 185, 245, 0.3) !important;
+  color: #08B9F5 !important;
 }
 
 /* ========================================================================= */
@@ -1097,7 +1110,7 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
   z-index: 99999;
   display: grid;
   place-items: center;
-  background: var(--background, #050505);
+  background: var(--background, #081426);
   overflow: hidden;
   cursor: pointer;
 }
@@ -1139,8 +1152,8 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
   height: 15px;
   margin-left: 6px;
   border-radius: 50%;
-  background-color: #FF5500;
-  box-shadow: 0 0 22px rgba(255, 85, 0, 0.95);
+  background-color: #08B9F5;
+  box-shadow: 0 0 22px rgba(8, 185, 245, 0.95);
   transform: translateY(-2px);
 }
 
@@ -1175,7 +1188,7 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
   display: block;
   height: 100%;
   width: 100%;
-  background: var(--primary, #FF5500);
+  background: var(--primary, #08B9F5);
   transform-origin: left;
   animation: splash-fill 1.5s .2s ease-in-out both;
 }
@@ -1257,3 +1270,177 @@ html:not(.light) .studio-workspace-container .bg-orange-50 {
 }
 
 
+
+/* ========================================================================= */
+/* NAVBAR: DOWNLOAD (BLUE TEXT) & HOST (WHITE TEXT) BUTTONS                  */
+/* ========================================================================= */
+.vibe-download-btn,
+.vibe-download-btn span,
+.vibe-download-btn svg,
+html.light .vibe-download-btn,
+html.light .vibe-download-btn span,
+html.light .vibe-download-btn svg {
+  color: #0066F5 !important;
+  stroke: #0066F5 !important;
+  border-color: #0066F5 !important;
+}
+
+html.dark .vibe-download-btn,
+html.dark .vibe-download-btn span,
+html.dark .vibe-download-btn svg {
+  color: #08B9F5 !important;
+  stroke: #08B9F5 !important;
+  border-color: #08B9F5 !important;
+}
+
+.vibe-host-btn,
+.vibe-host-btn span,
+.vibe-host-btn svg,
+html.light .vibe-host-btn,
+html.light .vibe-host-btn span,
+html.light .vibe-host-btn svg,
+html.dark .vibe-host-btn,
+html.dark .vibe-host-btn span,
+html.dark .vibe-host-btn svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: transparent !important;
+  background-color: #0066F5 !important;
+}
+
+/* ========================================================================= */
+/* HERO FLOATING GLASS CARD (Vibrant Light & Dark Mode)                      */
+/* ========================================================================= */
+.hero-floating-glass-card {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html.light .hero-floating-glass-card {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 20px 50px rgba(7, 19, 58, 0.14) !important;
+}
+
+html.light .hero-floating-glass-card h2,
+html.light .hero-floating-glass-card .hero-title {
+  color: #07133A !important;
+}
+
+html.light .hero-floating-glass-card p,
+html.light .hero-floating-glass-card .hero-desc,
+html.light .hero-floating-glass-card .hero-meta {
+  color: #475569 !important;
+}
+
+html.light .hero-floating-glass-card a[class*="bg-gradient"],
+html.light .hero-floating-glass-card a[class*="bg-gradient"] * {
+  color: #FFFFFF !important;
+}
+
+html.dark .hero-floating-glass-card {
+  background-color: rgba(13, 29, 53, 0.88) !important;
+  border-color: rgba(8, 185, 245, 0.18) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .hero-floating-glass-card h2,
+html.dark .hero-floating-glass-card .hero-title {
+  color: #FFFFFF !important;
+}
+
+html.dark .hero-floating-glass-card p,
+html.dark .hero-floating-glass-card .hero-desc,
+html.dark .hero-floating-glass-card .hero-meta {
+  color: #94A3B8 !important;
+}
+
+/* =========================================================================
+   VIBE JOIN NOW BUTTON - GUARANTEED 100% PURE WHITE TEXT & ICON IN ALL MODES
+   ========================================================================= */
+html.light .vibe-instant-container .vibe-details-card .vibe-join-btn,
+html.light .vibe-instant-container .vibe-details-card .vibe-join-btn *,
+html.light .vibe-instant-container .vibe-details-card .vibe-join-text,
+html.light .vibe-instant-container .vibe-join-btn,
+html.light .vibe-instant-container .vibe-join-btn *,
+html.light .vibe-instant-container .vibe-join-text,
+html.light .vibe-details-card .vibe-join-btn,
+html.light .vibe-details-card .vibe-join-btn *,
+html.light .vibe-details-card .vibe-join-text,
+html.light .vibe-join-btn,
+html.light .vibe-join-btn *,
+html.light .vibe-join-text,
+html.dark .vibe-join-btn,
+html.dark .vibe-join-btn *,
+html.dark .vibe-join-text,
+.vibe-join-btn,
+.vibe-join-btn *,
+.vibe-join-text,
+button.vibe-join-btn,
+button.vibe-join-btn *,
+button.vibe-join-btn span {
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+/* =========================================================================
+   HERO SPOTLIGHT BILLBOARD - GUARANTEED 100% PURE WHITE HEADING & BUTTON
+   ========================================================================= */
+.hero-spotlight-title,
+h2.hero-spotlight-title,
+html.light .hero-spotlight-title,
+html.light h2.hero-spotlight-title,
+html.dark .hero-spotlight-title,
+html.dark h2.hero-spotlight-title,
+.flashcard-hero-overlay h2,
+html.light .flashcard-hero-overlay h2 {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.hero-spotlight-btn,
+.hero-spotlight-btn *,
+.hero-spotlight-btn-text,
+html.light .hero-spotlight-btn,
+html.light .hero-spotlight-btn *,
+html.light .hero-spotlight-btn-text,
+html.dark .hero-spotlight-btn,
+html.dark .hero-spotlight-btn *,
+html.dark .hero-spotlight-btn-text {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.hero-spotlight-btn svg,
+html.light .hero-spotlight-btn svg,
+html.dark .hero-spotlight-btn svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* =========================================================================
+   CATEGORY PILLS (ALL VIBES) & EVENT SOURCE BADGES (BOOKMYSHOW) - PURE WHITE
+   ========================================================================= */
+.category-pill-active,
+.category-pill-active *,
+html.light .category-pill-active,
+html.light .category-pill-active *,
+button.category-pill-active,
+button.category-pill-active *,
+html.light button.category-pill-active,
+html.light button.category-pill-active *,
+.feed-active-btn,
+.feed-active-btn *,
+html.light .feed-active-btn,
+html.light .feed-active-btn *,
+.event-source-badge,
+.event-source-badge *,
+html.light .event-source-badge,
+html.light .event-source-badge *,
+span.event-source-badge,
+html.light span.event-source-badge {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}

@@ -390,7 +390,7 @@ function PassesInner() {
   }).length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
@@ -400,7 +400,7 @@ function PassesInner() {
         <div className="space-y-4 mb-8">
           {/* Top Pill Row */}
           <div className="flex items-center gap-2.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/30 shadow-xs">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#08B9F5]/15 text-[#08B9F5] border border-[#08B9F5]/30 shadow-xs">
               <Ticket className="w-3.5 h-3.5 fill-current" />
               <span>YOUR DIGITAL WALLET</span>
             </div>
@@ -418,7 +418,7 @@ function PassesInner() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-black tracking-tight text-white leading-tight">
-                My passes &amp; bookings<span className="text-[#FF5500]">.</span>
+                My passes &amp; bookings<span className="text-[#08B9F5]">.</span>
               </h1>
               <p className="text-sm sm:text-base text-neutral-400 mt-1">
                 Good plans. All in one place.
@@ -442,7 +442,7 @@ function PassesInner() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {/* Card 1: Confirmed passes */}
           <div className="p-5 rounded-2xl bg-[#0D0D10] border border-white/10 flex items-center gap-4 transition-all hover:border-white/15">
-            <div className="w-12 h-12 rounded-xl bg-[#FF5500]/15 border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500] shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#08B9F5]/15 border border-[#08B9F5]/30 flex items-center justify-center text-[#08B9F5] shrink-0">
               <Ticket className="w-5 h-5 fill-current" />
             </div>
             <div>
@@ -499,7 +499,7 @@ function PassesInner() {
               onClick={() => setPassFilter('upcoming')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 passFilter === 'upcoming'
-                  ? 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/30'
+                  ? 'bg-[#08B9F5]/15 text-[#08B9F5] border border-[#08B9F5]/30'
                   : 'bg-white/5 text-neutral-400 hover:text-white border border-white/10'
               }`}
             >
@@ -507,7 +507,7 @@ function PassesInner() {
               <span
                 className={`px-1.5 py-0.2 rounded-md text-[10px] font-bold ${
                   passFilter === 'upcoming'
-                    ? 'bg-[#FF5500] text-white'
+                    ? 'bg-[#08B9F5] text-white'
                     : 'bg-white/10 text-neutral-400'
                 }`}
               >
@@ -519,7 +519,7 @@ function PassesInner() {
               onClick={() => setPassFilter('past')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 passFilter === 'past'
-                  ? 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/30'
+                  ? 'bg-[#08B9F5]/15 text-[#08B9F5] border border-[#08B9F5]/30'
                   : 'bg-white/5 text-neutral-400 hover:text-white border border-white/10'
               }`}
             >
@@ -530,7 +530,7 @@ function PassesInner() {
               onClick={() => setPassFilter('all')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 passFilter === 'all'
-                  ? 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/30'
+                  ? 'bg-[#08B9F5]/15 text-[#08B9F5] border border-[#08B9F5]/30'
                   : 'bg-white/5 text-neutral-400 hover:text-white border border-white/10'
               }`}
             >
@@ -546,7 +546,7 @@ function PassesInner() {
               placeholder="Search event or venue"
               value={passSearch}
               onChange={(e) => setPassSearch(e.target.value)}
-              className="w-full pl-10 pr-8 py-2.5 rounded-xl bg-[#0D0D10] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FF5500]/60 transition-colors shadow-xs"
+              className="w-full pl-10 pr-8 py-2.5 rounded-xl bg-[#0D0D10] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#08B9F5]/60 transition-colors shadow-xs"
             />
             {passSearch && (
               <button
@@ -570,7 +570,7 @@ function PassesInner() {
         {/* ========================================================= */}
         {filteredPasses.length === 0 ? (
           <div className="py-20 bg-[#0D0D10] border border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center text-center p-8 text-white">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#FF5500] mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#08B9F5] mb-4">
               <Ticket className="w-7 h-7" />
             </div>
             <h3 className="text-base font-bold text-white">No bookings found</h3>
@@ -579,7 +579,7 @@ function PassesInner() {
             </p>
             <Link
               href="/discover"
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF5500] hover:bg-[#E04B00] text-xs font-bold text-white transition-all shadow-md"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#08B9F5] hover:bg-[#075CE5] text-xs font-bold text-white transition-all shadow-md"
             >
               <Compass className="w-4 h-4" />
               <span>Explore events</span>
@@ -634,13 +634,13 @@ function PassesInner() {
                   <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
                     <div>
                       {/* Date & Time in Orange */}
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#FF5500] uppercase tracking-wide">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#08B9F5] uppercase tracking-wide">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>{formattedDate}</span>
                       </div>
 
                       {/* Event Title */}
-                      <h3 className="text-lg font-black text-white leading-snug mt-1.5 line-clamp-1 group-hover:text-[#FF5500] transition-colors">
+                      <h3 className="text-lg font-black text-white leading-snug mt-1.5 line-clamp-1 group-hover:text-[#08B9F5] transition-colors">
                         {event.title}
                       </h3>
 
@@ -698,7 +698,7 @@ function PassesInner() {
         {/* Email switcher utility footer row */}
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-500">
           <div className="flex items-center gap-2">
-            <Mail className="w-3.5 h-3.5 text-[#FF5500]" />
+            <Mail className="w-3.5 h-3.5 text-[#08B9F5]" />
             <span>
               Passes synced for:{' '}
               <strong className="text-neutral-300 font-semibold">
@@ -714,11 +714,11 @@ function PassesInner() {
                 placeholder="Enter booking email..."
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                className="px-3 py-1 text-xs bg-[#111114] border border-white/15 rounded-lg focus:outline-none focus:border-[#FF5500] text-white"
+                className="px-3 py-1 text-xs bg-[#111114] border border-white/15 rounded-lg focus:outline-none focus:border-[#08B9F5] text-white"
               />
               <button
                 type="submit"
-                className="px-3 py-1 bg-[#FF5500] text-white text-xs font-bold rounded-lg hover:bg-[#E04B00]"
+                className="px-3 py-1 bg-[#08B9F5] text-white text-xs font-bold rounded-lg hover:bg-[#075CE5]"
               >
                 Update
               </button>
@@ -734,7 +734,7 @@ function PassesInner() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsEditingEmail(true)}
-                className="text-[#FF5500] hover:underline font-bold cursor-pointer"
+                className="text-[#08B9F5] hover:underline font-bold cursor-pointer"
               >
                 Switch Email
               </button>
@@ -768,7 +768,7 @@ export default function PassesPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-          <RefreshCw className="w-6 h-6 animate-spin text-[#FF5500]" />
+          <RefreshCw className="w-6 h-6 animate-spin text-[#08B9F5]" />
         </div>
       }
     >

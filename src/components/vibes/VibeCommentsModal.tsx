@@ -241,7 +241,7 @@ export default function VibeCommentsModal({
           particleCount: 25,
           spread: 45,
           origin: { y: 0.8 },
-          colors: ['#FF5500', '#FF8C42', '#FFA07A'],
+          colors: ['#08B9F5', '#00D5E8', '#38BDF8'],
         });
       } catch {}
     } catch (err) {
@@ -270,41 +270,41 @@ export default function VibeCommentsModal({
   return (
     <>
       <div
-        className="dark-dialog fixed inset-0 z-[70] flex flex-col justify-end"
+        className="fixed inset-0 z-[70] flex flex-col justify-end"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 
         {/* Drawer */}
         <div
-          className="relative z-10 w-full max-w-lg mx-auto bg-[#0D0F14] border-t border-white/10 rounded-t-3xl max-h-[85dvh] flex flex-col animate-in slide-in-from-bottom duration-300 shadow-2xl"
+          className="relative z-10 w-full max-w-lg mx-auto bg-white dark:bg-[#0D0F14] border-t border-slate-200 dark:border-white/10 rounded-t-3xl max-h-[85dvh] flex flex-col animate-in slide-in-from-bottom duration-300 shadow-2xl text-slate-900 dark:text-white transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Handle */}
           <div className="flex justify-center pt-2.5 pb-1">
-            <div className="w-10 h-1 bg-white/20 rounded-full" />
+            <div className="w-10 h-1 bg-slate-300 dark:bg-white/20 rounded-full" />
           </div>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 pt-2 pb-2.5 border-b border-white/10">
+          <div className="flex items-center justify-between px-5 pt-2 pb-2.5 border-b border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#FF5500]/20 flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-[#FF5500]" />
+              <div className="w-8 h-8 rounded-full bg-[#08B9F5]/20 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-[#08B9F5]" />
               </div>
-              <span className="text-sm font-black text-white">
-                Comments <span className="text-white/50 font-normal">({comments.length})</span>
+              <span className="text-sm font-black text-slate-900 dark:text-white">
+                Comments <span className="text-slate-400 dark:text-white/50 font-normal">({comments.length})</span>
               </span>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white/70 dark:hover:text-white transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -314,28 +314,28 @@ export default function VibeCommentsModal({
           <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 no-scrollbar min-h-[140px] max-h-[45vh]">
             {isLoading && comments.length === 0 ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-[#FF5500]" />
+                <Loader2 className="w-5 h-5 animate-spin text-[#08B9F5]" />
               </div>
             ) : comments.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-white/40 text-xs">No comments yet. Be the first to start the vibe! 🎉</p>
+                <p className="text-slate-400 dark:text-white/40 text-xs">No comments yet. Be the first to start the vibe! 🎉</p>
               </div>
             ) : (
               comments.map((cmt) => (
                 <div key={cmt.id} className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#FF5500] to-amber-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#08B9F5] to-[#075CE5] flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm">
                     {(cmt.author_name || 'U')[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-bold text-white truncate">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                         {cmt.author_name || 'Member'}
                       </span>
-                      <span className="text-[10px] text-white/30 shrink-0">
+                      <span className="text-[10px] text-slate-400 dark:text-white/30 shrink-0">
                         {formatDate(cmt.created_at)}
                       </span>
                     </div>
-                    <p className="text-xs text-white/80 leading-relaxed mt-0.5 break-words">
+                    <p className="text-xs text-slate-700 dark:text-white/80 leading-relaxed mt-0.5 break-words">
                       {cmt.body}
                     </p>
                   </div>
@@ -347,34 +347,34 @@ export default function VibeCommentsModal({
 
           {/* Auth Gate: User must be signed in to comment */}
           {!isAuthenticated ? (
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-white/10 bg-[#0D0F14] flex items-center justify-between gap-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0D0F14] flex items-center justify-between gap-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 shrink-0">
-                  <User className="w-4 h-4 text-[#FF5500]" />
+                <div className="w-8 h-8 rounded-full bg-slate-200/80 dark:bg-white/5 border border-slate-300 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 shrink-0">
+                  <User className="w-4 h-4 text-[#08B9F5]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">Join conversation</p>
-                  <p className="text-[10px] text-white/40 truncate">Sign in or create account</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Join conversation</p>
+                  <p className="text-[10px] text-slate-500 dark:text-white/40 truncate">Sign in or create account</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#FF8C42] hover:opacity-90 text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#00D5E8] hover:opacity-90 text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In / Sign Up</span>
               </button>
             </div>
           ) : (
-            <div className="px-4 py-3 border-t border-white/10 bg-[#0D0F14] pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0">
+            <div className="px-4 py-3 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#0D0F14] pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0">
               {/* Authenticated Member Tag */}
               <div className="flex items-center gap-1.5 mb-2 px-1">
-                <div className="w-4 h-4 rounded-full bg-[#FF5500]/20 flex items-center justify-center text-[9px] font-bold text-[#FF5500]">
+                <div className="w-4 h-4 rounded-full bg-[#08B9F5]/20 flex items-center justify-center text-[9px] font-bold text-[#08B9F5]">
                   {(currentProfile?.name || 'U')[0].toUpperCase()}
                 </div>
-                <span className="text-[11px] font-medium text-white/40">
-                  Commenting as <span className="text-white font-semibold">{currentProfile?.name || currentProfile?.email}</span>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-white/40">
+                  Commenting as <span className="text-slate-900 dark:text-white font-semibold">{currentProfile?.name || currentProfile?.email}</span>
                 </span>
               </div>
 
@@ -392,13 +392,13 @@ export default function VibeCommentsModal({
                   placeholder={`What's your take, ${currentProfile?.name?.split(' ')[0] || ''}?`}
                   maxLength={500}
                   rows={1}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#FF5500]/50 transition-colors"
+                  className="flex-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 resize-none focus:outline-none focus:border-[#08B9F5]/50 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={!commentText.trim() || isSubmitting}
-                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF5500] to-[#FF8C42] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md"
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#08B9F5] to-[#00D5E8] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

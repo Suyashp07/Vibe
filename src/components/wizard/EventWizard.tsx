@@ -182,16 +182,16 @@ export default function EventWizard() {
   const handleApplyBrandPreset = () => {
     const activeOrg = profile || {
       name: 'My Brand',
-      brand_color: '#E8621A',
+      brand_color: '#075CE5',
       brand_font: 'Playfair Display'
     };
     setTheme(prev => ({
       ...prev,
-      custom_accent: activeOrg.brand_color || '#E8621A',
+      custom_accent: activeOrg.brand_color || '#075CE5',
       font: activeOrg.brand_font ? `${activeOrg.brand_font} + Inter` : 'Playfair Display + Inter',
       palette: 'amber'
     }));
-    setBrandPresetToast(`✨ Applied "${activeOrg.name}" preset: ${activeOrg.brand_color || '#E8621A'}, ${activeOrg.brand_font || 'Playfair Display'}`);
+    setBrandPresetToast(`✨ Applied "${activeOrg.name}" preset: ${activeOrg.brand_color || '#075CE5'}, ${activeOrg.brand_font || 'Playfair Display'}`);
     setTimeout(() => setBrandPresetToast(null), 3500);
   };
 
@@ -459,7 +459,7 @@ export default function EventWizard() {
       organizer_name: profile?.name || 'Organizer',
       organizer_handle: profile?.handle || 'organizer',
       organizer_logo: profile?.avatar_url || '',
-      organizer_brand_color: profile?.brand_color || '#E8621A',
+      organizer_brand_color: profile?.brand_color || '#075CE5',
       slug: `${slug}-${Math.floor(100 + Math.random() * 900)}`,
       title,
       tagline,
@@ -570,13 +570,13 @@ export default function EventWizard() {
       palette: 'Electric Orange + Dark Carbon',
       font: 'Cal Sans + Inter (Italic Heavy)',
       vibe: 'Bold, energetic, high-voltage movement',
-      color: '#E8621A',
+      color: '#075CE5',
       heroGradient: 'from-[#1A0C05] via-[#100702] to-[#070301]',
       badgeText: '⚡ HIGH VOLTAGE RUN & SPRINT',
       icon: Zap,
       cardStyleLabel: 'Sharp-edge carbon slate · Orange neon borders',
       sampleButtonText: 'JOIN THE SPRINT ⚡',
-      sampleButtonStyle: 'bg-gradient-to-r from-[#E8621A] to-[#FF7700] text-white font-black uppercase rounded-lg shadow-lg',
+      sampleButtonStyle: 'bg-gradient-to-r from-[#075CE5] to-[#08B9F5] text-white font-black uppercase rounded-lg shadow-lg',
       highlights: ['Slanted athletic condensed headlines', 'Speed telemetry & live pace counters', 'Full dark mode carbon canvas']
     },
     {
@@ -724,7 +724,7 @@ export default function EventWizard() {
                     <div className="z-10 space-y-1 my-auto">
                       <h3 className={`text-xl font-black ${
                         item.id === 'grove' ? 'font-tagline text-emerald-100' :
-                        item.id === 'sprint' ? 'font-sans uppercase italic text-orange-400 tracking-tighter' :
+                        item.id === 'sprint' ? 'font-sans uppercase italic text-[#00D5E8] tracking-tighter' :
                         item.id === 'bloom' ? 'font-display italic text-rose-200' :
                         item.id === 'vertex' ? 'font-sans text-cyan-300 font-black' :
                         'font-tagline text-amber-200 font-bold'
@@ -848,7 +848,7 @@ export default function EventWizard() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {[
                   { id: 'forest', name: 'Forest & Moss', color: '#2D5A27' },
-                  { id: 'sprint', name: 'Sprint Orange', color: '#E8621A' },
+                  { id: 'sprint', name: 'Sprint Orange', color: '#075CE5' },
                   { id: 'bloom', name: 'Dusty Rose', color: '#C47B89' },
                   { id: 'vertex', name: 'Vertex Navy', color: '#0F3460' },
                   { id: 'ember', name: 'Ember Terracotta', color: '#C85A32' }
@@ -949,7 +949,7 @@ export default function EventWizard() {
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={theme.custom_accent || '#E8621A'}
+                    value={theme.custom_accent || '#075CE5'}
                     onChange={e => setTheme(prev => ({ ...prev, custom_accent: e.target.value }))}
                     className="w-8 h-8 rounded cursor-pointer border border-border"
                   />
@@ -1944,7 +1944,7 @@ export default function EventWizard() {
             return (
               <div className={`mx-auto transition-all ${previewDevice === 'mobile' ? 'max-w-md' : 'max-w-4xl'}`}>
                 <div className={`rounded-3xl border shadow-elevated overflow-hidden transition-all ${
-                  template === 'sprint' ? 'bg-[#0B0C10] border-orange-500/30' :
+                  template === 'sprint' ? 'bg-[#0B0C10] border-[#08B9F5]/30' :
                   template === 'vertex' ? 'bg-[#060913] border-sky-500/30' :
                   template === 'bloom' ? 'bg-[#FAF4F7] border-rose-200/80' :
                   template === 'ember' ? 'bg-[#FAF5ED] border-amber-200/80' :
@@ -1958,7 +1958,7 @@ export default function EventWizard() {
                     <div className="relative z-10 space-y-2">
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border backdrop-blur-md ${
-                          template === 'sprint' ? 'bg-orange-500 text-black border-orange-400 font-black' :
+                          template === 'sprint' ? 'bg-sky-500 text-black border-[#00D5E8] font-black' :
                           template === 'vertex' ? 'bg-sky-950/80 text-cyan-300 border-cyan-500/50 font-mono' :
                           template === 'bloom' ? 'bg-rose-950/70 text-rose-200 border-rose-400/40' :
                           template === 'ember' ? 'bg-amber-950/80 text-amber-300 border-amber-500/40' :
@@ -1982,7 +1982,7 @@ export default function EventWizard() {
                       </h2>
 
                       <p className={`text-xs sm:text-sm ${
-                        template === 'sprint' ? 'font-sans uppercase font-bold text-orange-400' :
+                        template === 'sprint' ? 'font-sans uppercase font-bold text-[#00D5E8]' :
                         template === 'vertex' ? 'font-mono text-cyan-300' :
                         template === 'bloom' ? 'font-display italic text-rose-200' :
                         'font-tagline italic text-amber-200'
@@ -2002,7 +2002,7 @@ export default function EventWizard() {
                     </div>
 
                     <div className={`p-5 sm:p-6 rounded-2xl border ${
-                      template === 'sprint' ? 'bg-[#13151F] border-orange-500/25 text-slate-200' :
+                      template === 'sprint' ? 'bg-[#13151F] border-[#08B9F5]/25 text-slate-200' :
                       template === 'vertex' ? 'bg-[#0C1322] border-sky-500/25 text-slate-200' :
                       template === 'bloom' ? 'bg-white/95 border-rose-200 text-stone-700' :
                       template === 'ember' ? 'bg-[#FFFDF9] border-amber-200 text-stone-700' :
@@ -2046,7 +2046,7 @@ export default function EventWizard() {
             organizer_name: profile?.name || 'Organizer',
             organizer_handle: profile?.handle || 'organizer',
             organizer_logo: profile?.avatar_url || '',
-            organizer_brand_color: profile?.brand_color || '#E8621A',
+            organizer_brand_color: profile?.brand_color || '#075CE5',
             slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             title,
             tagline,

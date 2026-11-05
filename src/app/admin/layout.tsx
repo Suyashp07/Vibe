@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-[#050505] flex items-center justify-center text-slate-500 dark:text-white/50 transition-colors">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-7 h-7 text-[#FF5500] animate-spin" />
+          <Loader2 className="w-7 h-7 text-[#08B9F5] animate-spin" />
           <span className="text-xs uppercase tracking-widest font-mono text-slate-400 dark:text-white/40">
             Verifying Admin Session...
           </span>
@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex gap-3">
             <Link
               href="/"
-              className="flex-1 py-2.5 px-4 rounded-full bg-[#FF5500] hover:bg-[#FF661A] text-white text-xs font-bold transition text-center"
+              className="flex-1 py-2.5 px-4 rounded-full bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold transition text-center"
             >
               Back to Home
             </Link>

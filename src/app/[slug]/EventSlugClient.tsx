@@ -69,7 +69,7 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
                 organizer_name: orgProfile.name || r.organizer_name || 'Organizer',
                 organizer_handle: orgProfile.handle || r.organizer_handle || 'organizer',
                 organizer_logo: orgProfile.logo_url || r.organizer_logo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-                organizer_brand_color: orgProfile.brand_color || r.organizer_brand_color || '#E8621A',
+                organizer_brand_color: orgProfile.brand_color || r.organizer_brand_color || '#075CE5',
                 slug: r.slug,
                 title: r.title,
                 tagline: r.tagline || '',
@@ -192,7 +192,7 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -240,14 +240,14 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
           </div>
         )}
         {Boolean(event.is_flash || event.source_platform === 'whatsapp' || (event as any).source_type === 'bot') && (
-          <div className="bg-gradient-to-r from-[#E8621A]/20 via-[#E8621A]/10 to-transparent border-b border-[#E8621A]/30 px-4 py-2 text-xs text-white flex items-center justify-between gap-3 sticky top-0 z-40 backdrop-blur-md">
+          <div className="bg-gradient-to-r from-[#075CE5]/20 via-[#075CE5]/10 to-transparent border-b border-[#075CE5]/30 px-4 py-2 text-xs text-white flex items-center justify-between gap-3 sticky top-0 z-40 backdrop-blur-md">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#E8621A] animate-pulse shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-[#075CE5] animate-pulse shrink-0" />
               <span className="font-semibold text-white">This meetup is live on Vibe Instant</span>
             </div>
             <Link
               href={`/vibes?event=${encodeURIComponent(event.slug)}`}
-              className="px-3 py-1 rounded-full bg-[#E8621A] hover:bg-[#d05312] text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm shrink-0"
+              className="px-3 py-1 rounded-full bg-[#075CE5] hover:bg-[#d05312] text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm shrink-0"
             >
               <span>⚡ Open in Vibe Instant ↗</span>
             </Link>

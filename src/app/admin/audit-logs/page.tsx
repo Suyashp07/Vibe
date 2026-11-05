@@ -125,7 +125,7 @@ export default function AdminAuditLogsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search action, actor, target..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8621A]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#075CE5]"
           />
         </div>
       </div>

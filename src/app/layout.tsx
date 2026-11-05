@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Outfit, Plus_Jakarta_Sans, Playfair_Display, Fraunces } from 'next/font/google';
+import { Inter, Outfit, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
@@ -8,35 +8,20 @@ const inter = Inter({
   display: 'swap',
 });
 
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-bricolage',
+  display: 'swap',
+  weight: ['400', '600', '700', '800'],
+});
+
 const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-outfit',
   display: 'swap',
-  weight: ['400', '600', '700', '800', '900'],
+  weight: ['400', '600', '700'],
 });
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  display: 'swap',
-  weight: ['600', '700', '800'],
-});
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-  weight: ['400', '600', '700', '900'],
-  style: ['normal', 'italic'],
-});
-
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-fraunces',
-  display: 'swap',
-  weight: ['400', '600', '700', '900'],
-  style: ['normal', 'italic'],
-});
 
 import PWARegister from '@/components/pwa/PWARegister';
 import AutoLocationDetector from '@/components/location/AutoLocationDetector';
@@ -52,7 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#0F172A',
+  themeColor: '#FFFFFF',
 };
 
 const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/$/, '');
@@ -188,7 +173,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`dark ${inter.variable} ${outfit.variable} ${jakarta.variable} ${playfair.variable} ${fraunces.variable}`}
+      className={`light ${inter.variable} ${bricolage.variable} ${outfit.variable}`}
     >
       <head>
         {/* Google Knowledge Graph & Structured Data */}
@@ -205,16 +190,16 @@ export default function RootLayout({
             __html: `
               try {
                 const storedTheme = localStorage.getItem('vibe-theme');
-                if (storedTheme === 'light') {
-                  document.documentElement.classList.remove('dark');
-                  document.documentElement.classList.add('light');
-                  document.documentElement.setAttribute('data-theme', 'light');
-                  document.documentElement.style.colorScheme = 'light';
-                } else {
+                if (storedTheme === 'dark') {
                   document.documentElement.classList.remove('light');
                   document.documentElement.classList.add('dark');
                   document.documentElement.setAttribute('data-theme', 'dark');
                   document.documentElement.style.colorScheme = 'dark';
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.setAttribute('data-theme', 'light');
+                  document.documentElement.style.colorScheme = 'light';
                 }
               } catch (e) {}
             `,
@@ -244,7 +229,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen bg-[#050505] text-[#F3F4F6] antialiased pb-16 md:pb-0 selection:bg-[#FF5500] selection:text-white relative">
+      <body className="min-h-screen bg-[#081426] text-[#F8FAFC] antialiased pb-16 md:pb-0 selection:bg-[#08B9F5] selection:text-white relative">
         <ThemeProvider>
           <ScrollResetManager />
           <SplashScreen />

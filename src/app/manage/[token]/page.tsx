@@ -471,7 +471,7 @@ export default function MagicLinkHostSheet() {
       <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0C10] text-gray-900 dark:text-white flex flex-col justify-between">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-12 h-12 rounded-full border-3 border-[#FF5500]/20 border-t-[#FF5500] animate-spin mb-4" />
+          <div className="w-12 h-12 rounded-full border-3 border-[#08B9F5]/20 border-t-[#08B9F5] animate-spin mb-4" />
           <p className="text-gray-900 dark:text-white/80 text-sm font-medium">Opening your Host Management Sheet...</p>
           <p className="text-gray-500 dark:text-white/40 text-xs mt-1">Verifying private security token</p>
         </div>
@@ -505,14 +505,14 @@ export default function MagicLinkHostSheet() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0C10] text-gray-900 dark:text-white font-sans selection:bg-[#FF5500]/30 selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0C10] text-gray-900 dark:text-white font-sans selection:bg-[#08B9F5]/30 selection:text-white flex flex-col justify-between">
       {/* Platform Navigation */}
       <Navbar />
 
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-gray-900/95 dark:bg-black/90 backdrop-blur-xl border border-gray-700 dark:border-white/20 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#08B9F5]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -538,13 +538,13 @@ export default function MagicLinkHostSheet() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pt-1">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase text-gray-500 dark:text-white/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
               <span>YOUR HOST SPACE</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-black text-gray-950 dark:text-white tracking-tight flex items-baseline">
               <span>{event.title}</span>
-              <span className="text-[#FF5500]">.</span>
+              <span className="text-[#08B9F5]">.</span>
             </h1>
 
             {event.tagline && (
@@ -556,11 +556,11 @@ export default function MagicLinkHostSheet() {
             {/* Meta row */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-600 dark:text-white/60 pt-1">
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#FF8C42]" />
+                <Calendar className="w-3.5 h-3.5 text-[#00D5E8]" />
                 {formattedDate}
               </span>
               <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#FF8C42]" />
+                <MapPin className="w-3.5 h-3.5 text-[#00D5E8]" />
                 {event.location_name}{event.city ? `, ${event.city}` : ''}
               </span>
               <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
@@ -570,7 +570,7 @@ export default function MagicLinkHostSheet() {
               <Link
                 href={publicReelUrl}
                 target="_blank"
-                className="flex items-center gap-1 text-[#FF8C42] hover:text-[#FF5500] hover:underline font-medium ml-auto sm:ml-0"
+                className="flex items-center gap-1 text-[#00D5E8] hover:text-[#08B9F5] hover:underline font-medium ml-auto sm:ml-0"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
                 <span>Open in Vibe Instant ↗</span>
@@ -607,16 +607,16 @@ export default function MagicLinkHostSheet() {
         </div>
 
         {/* For Hosts Only Warning Banner */}
-        <div className="p-3.5 px-4 rounded-xl bg-[#FFF4ED] dark:bg-[#2B160C]/60 border border-[#FDBA74] dark:border-[#FF5500]/25 flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5 text-[#9A3412] dark:text-[#FFA07A]">
-            <Lock className="w-4 h-4 text-[#EA580C] dark:text-[#FF5500] shrink-0" />
+        <div className="p-3.5 px-4 rounded-xl bg-[#FFF4ED] dark:bg-[#2B160C]/60 border border-[#FDBA74] dark:border-[#08B9F5]/25 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-[#9A3412] dark:text-[#38BDF8]">
+            <Lock className="w-4 h-4 text-[#EA580C] dark:text-[#08B9F5] shrink-0" />
             <span>
               <strong className="font-semibold text-[#7C2D12] dark:text-white/95">For hosts only.</strong> This link controls guest access. Share the public invite with your guests, not this page.
             </span>
           </div>
           <button
             onClick={copyPublicInvite}
-            className="text-[#EA580C] dark:text-[#FF8C42] hover:underline font-semibold flex items-center gap-1 shrink-0 text-xs cursor-pointer"
+            className="text-[#EA580C] dark:text-[#00D5E8] hover:underline font-semibold flex items-center gap-1 shrink-0 text-xs cursor-pointer"
           >
             Share invite ↗
           </button>
@@ -656,9 +656,9 @@ export default function MagicLinkHostSheet() {
           <div className="px-4 py-3 sm:py-0">
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-white/50 font-medium">
               <span>Pending review</span>
-              <Shield className="w-4 h-4 text-[#FF8C42]" />
+              <Shield className="w-4 h-4 text-[#00D5E8]" />
             </div>
-            <div className="text-3xl font-black text-[#EA580C] dark:text-[#FF8C42] mt-2">
+            <div className="text-3xl font-black text-[#EA580C] dark:text-[#00D5E8] mt-2">
               {stats.waitlisted}
             </div>
             <div className="text-[11px] text-gray-400 dark:text-white/40 mt-1">
@@ -686,7 +686,7 @@ export default function MagicLinkHostSheet() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#FF5500]" />
+                <Shield className="w-4 h-4 text-[#08B9F5]" />
                 <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                   Admission & access
                 </h2>
@@ -733,7 +733,7 @@ export default function MagicLinkHostSheet() {
                 type="button"
                 onClick={handleToggleApprovalMode}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  stats.requireApproval ? 'bg-[#FF5500]' : 'bg-gray-300 dark:bg-white/20'
+                  stats.requireApproval ? 'bg-[#08B9F5]' : 'bg-gray-300 dark:bg-white/20'
                 }`}
               >
                 <span
@@ -761,7 +761,7 @@ export default function MagicLinkHostSheet() {
                 type="button"
                 onClick={handleToggleRegistrations}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  !stats.registrationsClosed ? 'bg-[#FF5500]' : 'bg-gray-300 dark:bg-white/20'
+                  !stats.registrationsClosed ? 'bg-[#08B9F5]' : 'bg-gray-300 dark:bg-white/20'
                 }`}
               >
                 <span
@@ -834,7 +834,7 @@ export default function MagicLinkHostSheet() {
                     <span>{tab.label}</span>
                     <span className="text-[11px] opacity-70">{tab.count}</span>
                     {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF5500] rounded-full" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#08B9F5] rounded-full" />
                     )}
                   </button>
                 );
@@ -848,7 +848,7 @@ export default function MagicLinkHostSheet() {
                 placeholder="Search name, phone or email"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-[#12151D] border border-gray-200 dark:border-white/10 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:border-[#FF5500] shadow-2xs"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-[#12151D] border border-gray-200 dark:border-white/10 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:border-[#08B9F5] shadow-2xs"
               />
               {searchQuery && (
                 <button
@@ -1110,7 +1110,7 @@ export default function MagicLinkHostSheet() {
 
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-[#FF5500]" />
+                <QrCode className="w-5 h-5 text-[#08B9F5]" />
                 <h3 className="text-base font-bold text-gray-900 dark:text-white">Door Pass Check-In</h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-white/60">
@@ -1126,14 +1126,14 @@ export default function MagicLinkHostSheet() {
                   placeholder="e.g. 9820011223 or rahul@gmail.com"
                   value={scannerManualInput}
                   onChange={(e) => setScannerManualInput(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:outline-none focus:border-[#FF5500]"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:outline-none focus:border-[#08B9F5]"
                   autoFocus
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-[#FF5500] hover:bg-[#FF5500]/90 text-sm font-bold text-white transition-all cursor-pointer shadow-lg shadow-[#FF5500]/20"
+                className="w-full py-3 rounded-xl bg-[#08B9F5] hover:bg-[#08B9F5]/90 text-sm font-bold text-white transition-all cursor-pointer shadow-lg shadow-[#08B9F5]/20"
               >
                 Verify & Check In
               </button>

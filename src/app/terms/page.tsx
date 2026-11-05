@@ -20,7 +20,7 @@ export default function TermsPage() {
   const [activeTab, setActiveTab] = useState<'terms' | 'privacy' | 'guidelines'>('terms');
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 w-full space-y-8">
@@ -41,7 +41,7 @@ export default function TermsPage() {
             LEGAL &amp; COMPLIANCE
           </span>
           <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-baseline">
-            Terms of Service<span className="text-[#FF5500]">.</span>
+            Terms of Service<span className="text-[#08B9F5]">.</span>
           </h1>
           <p className="text-xs sm:text-sm text-white/60">
             Last updated: October 2026 · Governing access and ticketing on Vibe by Swaniki
@@ -83,7 +83,7 @@ export default function TermsPage() {
         {/* Executive Highlights Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div className="p-3.5 rounded-2xl bg-[#0D0D10] border border-white/10 space-y-1">
-            <Ticket className="w-4 h-4 text-[#FF5500]" />
+            <Ticket className="w-4 h-4 text-[#08B9F5]" />
             <h3 className="text-xs font-bold text-white">Genuine Passes</h3>
             <p className="text-[11px] text-white/50 leading-relaxed">
               Tamper-proof digital QR entry codes for every confirmed guest.
@@ -99,7 +99,7 @@ export default function TermsPage() {
           </div>
 
           <div className="p-3.5 rounded-2xl bg-[#0D0D10] border border-white/10 space-y-1">
-            <Users className="w-4 h-4 text-[#FF5500]" />
+            <Users className="w-4 h-4 text-[#08B9F5]" />
             <h3 className="text-xs font-bold text-white">Fair Community</h3>
             <p className="text-[11px] text-white/50 leading-relaxed">
               Zero tolerance for scalping, harassment, or unlawful conduct.
@@ -120,7 +120,7 @@ export default function TermsPage() {
           <div className="space-y-8 text-xs sm:text-sm text-white/70 leading-relaxed">
             <section className="space-y-2.5">
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
                 <span>1. Overview &amp; Agreement</span>
               </h2>
               <p>
@@ -130,7 +130,7 @@ export default function TermsPage() {
 
             <section className="space-y-2.5">
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
                 <span>2. Ticketing, Passes &amp; Gate Entry</span>
               </h2>
               <div className="space-y-2">
@@ -148,7 +148,7 @@ export default function TermsPage() {
 
             <section className="space-y-2.5">
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
                 <span>3. Organizer &amp; Host Obligations</span>
               </h2>
               <p>
@@ -163,7 +163,7 @@ export default function TermsPage() {
 
             <section className="space-y-2.5">
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
                 <span>4. Intermediary Status &amp; Liability</span>
               </h2>
               <p>
@@ -173,7 +173,7 @@ export default function TermsPage() {
 
             <section className="space-y-2.5">
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#08B9F5]" />
                 <span>5. Governing Law &amp; Grievance Redressal</span>
               </h2>
               <p>
@@ -181,7 +181,7 @@ export default function TermsPage() {
               </p>
               <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 space-y-1">
                 <p><strong>Grievance Officer:</strong> Swaniki Legal &amp; Compliance</p>
-                <p><strong>Email:</strong> <a href="mailto:grievance@swaniki.com" className="text-[#FF5500] hover:underline">grievance@swaniki.com</a></p>
+                <p><strong>Email:</strong> <a href="mailto:grievance@swaniki.com" className="text-[#08B9F5] hover:underline">grievance@swaniki.com</a></p>
                 <p><strong>Jurisdiction:</strong> Mumbai, Maharashtra, India</p>
               </div>
             </section>

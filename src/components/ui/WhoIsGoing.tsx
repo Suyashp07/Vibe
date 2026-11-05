@@ -68,7 +68,7 @@ export default function WhoIsGoing({
     <div className="space-y-3">
       <div className={`flex items-center justify-between text-xs font-semibold ${textSecondary || 'text-ink-secondary'}`}>
         <span className="uppercase tracking-wider">Who's Going ({confirmedRsvps.length})</span>
-        <span className="font-medium" style={{ color: accentColor || '#E8621A' }}>Verified Guests</span>
+        <span className="font-medium" style={{ color: accentColor || '#075CE5' }}>Verified Guests</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -165,7 +165,7 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
       return;
     }
 
-    const brandColorHex = (event.organizer_brand_color || '#E8621A').replace('#', '');
+    const brandColorHex = (event.organizer_brand_color || '#075CE5').replace('#', '');
     const fallback = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(event.organizer_name || 'Vibe')}&backgroundColor=${brandColorHex}&textColor=ffffff`;
     setOrganizerAvatar(fallback);
   }, [event, isGenericOrg]);
@@ -326,7 +326,7 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                 ? '#94A3B8' 
                 : isWaitlisted 
                 ? '#D97706' 
-                : event.organizer_brand_color || '#E8621A' 
+                : event.organizer_brand_color || '#075CE5' 
             }}
           />
 
@@ -337,7 +337,7 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
                   {isGenericOrg ? (
-                    <div className="w-11 h-11 rounded-2xl bg-black border-2 border-[#FF5500]/60 flex items-center justify-center shadow-xs overflow-hidden">
+                    <div className="w-11 h-11 rounded-2xl bg-black border-2 border-[#08B9F5]/60 flex items-center justify-center shadow-xs overflow-hidden">
                       <img
                         src="/icons/icon-192.png"
                         alt="Vibe Pass"
@@ -349,13 +349,13 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                       src={organizerAvatar}
                       alt={displayOrganizerName}
                       className="w-11 h-11 rounded-2xl object-cover border-2 shadow-xs"
-                      style={{ borderColor: event.organizer_brand_color || '#E8621A' }}
+                      style={{ borderColor: event.organizer_brand_color || '#075CE5' }}
                       onError={() => setAvatarError(true)}
                     />
                   ) : (
                     <div
                       className="w-11 h-11 rounded-2xl text-white font-display font-black text-base flex items-center justify-center shadow-xs"
-                      style={{ backgroundColor: event.organizer_brand_color || '#E8621A' }}
+                      style={{ backgroundColor: event.organizer_brand_color || '#075CE5' }}
                     >
                       {displayOrganizerName?.[0]?.toUpperCase() || 'V'}
                     </div>
@@ -374,7 +374,7 @@ export default function DigitalPassModal({ rsvp: initialRsvp, event, onClose }: 
                     <span>{displayOrganizerName}</span>
                     <span className={`text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded border ${
                       isGenericOrg
-                        ? 'bg-[#FF5500]/10 border-[#FF5500]/30 text-[#FF5500]'
+                        ? 'bg-[#08B9F5]/10 border-[#08B9F5]/30 text-[#08B9F5]'
                         : 'bg-surface-2 border-border text-ink-muted'
                     }`}>
                       {displayBadgeText}

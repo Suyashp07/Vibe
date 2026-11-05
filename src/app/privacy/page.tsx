@@ -8,7 +8,7 @@ import { ShieldCheck, ArrowLeft, Lock, CheckCircle2, UserCheck, Trash2, Mail } f
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 w-full">
@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
             <span>DPDP Act 2023 Compliant</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Privacy Policy<span className="text-[#FF5500]">.</span>
+            Privacy Policy<span className="text-[#08B9F5]">.</span>
           </h1>
           <p className="text-xs sm:text-sm text-white/50">
             Last Updated: October 2026 · Digital Personal Data Protection Governance
@@ -42,7 +42,7 @@ export default function PrivacyPolicyPage() {
           {/* Section 1 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>1. Commitment to Personal Data Protection</span>
             </h2>
             <p>
@@ -53,14 +53,14 @@ export default function PrivacyPolicyPage() {
           {/* Section 2 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>2. Data We Collect & Lawful Grounds</span>
             </h2>
             <p>We process personal data solely with your explicit consent for specified, legitimate purposes:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div className="p-4 rounded-xl bg-[#0D0D10] border border-white/10 space-y-1.5">
                 <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-[#FF5500]" />
+                  <UserCheck className="w-3.5 h-3.5 text-[#08B9F5]" />
                   <span>Profile Information</span>
                 </div>
                 <p className="text-white/60 text-xs">
@@ -70,7 +70,7 @@ export default function PrivacyPolicyPage() {
 
               <div className="p-4 rounded-xl bg-[#0D0D10] border border-white/10 space-y-1.5">
                 <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#FF5500]" />
+                  <Lock className="w-3.5 h-3.5 text-[#08B9F5]" />
                   <span>Pass & Ticketing Data</span>
                 </div>
                 <p className="text-white/60 text-xs">
@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
           {/* Section 3: Data Principal Rights under DPDP Act */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>3. Your Rights as a Data Principal (Section 11, 12 & 13)</span>
             </h2>
             <p>Under the DPDP Act 2023, you enjoy statutory rights regarding your personal digital data:</p>
@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
                   <strong>Right to Correction & Updating:</strong> You can edit your name, contact email, and profile details anytime via{' '}
-                  <Link href="/profile" className="text-[#FF5500] hover:underline">
+                  <Link href="/profile" className="text-[#08B9F5] hover:underline">
                     Edit Profile
                   </Link>.
                 </div>
@@ -124,7 +124,7 @@ export default function PrivacyPolicyPage() {
           {/* Section 4 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>4. Data Sharing & Third-Party Gateways</span>
             </h2>
             <ul className="list-disc list-inside space-y-1.5 text-white/70">
@@ -143,7 +143,7 @@ export default function PrivacyPolicyPage() {
           {/* Section 5: Grievance Officer */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span className="w-2 h-2 rounded-full bg-[#08B9F5]" />
               <span>5. Grievance Redressal Officer (Section 13)</span>
             </h2>
             <p>

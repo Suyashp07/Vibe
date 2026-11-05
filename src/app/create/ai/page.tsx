@@ -195,7 +195,7 @@ export default function SingleClickCreateAIPage() {
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-8 h-8 border-3 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -210,7 +210,7 @@ export default function SingleClickCreateAIPage() {
 
         <main className="flex-1 max-w-md mx-auto px-4 py-16 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF5500] to-amber-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-[#FF5500]/25">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#08B9F5] to-[#075CE5] text-white mx-auto flex items-center justify-center shadow-lg shadow-[#08B9F5]/25">
               <Wand2 className="w-7 h-7" />
             </div>
 
@@ -260,7 +260,7 @@ export default function SingleClickCreateAIPage() {
 
               <Link
                 href="/signup?redirect=/create/ai"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white font-bold text-xs transition-all shadow-md"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white font-bold text-xs transition-all shadow-md"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -284,7 +284,7 @@ export default function SingleClickCreateAIPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] relative overflow-hidden">
       {/* Decorative ambient lights */}
-      <div className="absolute -top-32 left-1/3 w-80 h-80 bg-[#FF5500]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 left-1/3 w-80 h-80 bg-[#08B9F5]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-48 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <Navbar />
@@ -300,7 +300,7 @@ export default function SingleClickCreateAIPage() {
               <ArrowLeft className="w-3 h-3" />
               <span>Back</span>
             </Link>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FF5500]/10 text-[#FF5500] text-[11px] font-black uppercase tracking-wider border border-[#FF5500]/20">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#08B9F5]/10 text-[#08B9F5] text-[11px] font-black uppercase tracking-wider border border-[#08B9F5]/20">
               <Sparkles className="w-3 h-3" />
               <span>1-Click AI</span>
             </span>
@@ -334,7 +334,7 @@ export default function SingleClickCreateAIPage() {
               onClick={() => setActiveMode('poster')}
               className={`py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeMode === 'poster'
-                  ? 'bg-[#FF5500] text-white shadow-xs'
+                  ? 'bg-[#08B9F5] text-white shadow-xs'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -348,7 +348,7 @@ export default function SingleClickCreateAIPage() {
               onClick={() => setActiveMode('link')}
               className={`py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeMode === 'link'
-                  ? 'bg-[#FF5500] text-white shadow-xs'
+                  ? 'bg-[#08B9F5] text-white shadow-xs'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -362,7 +362,7 @@ export default function SingleClickCreateAIPage() {
               onClick={() => setActiveMode('notes')}
               className={`py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeMode === 'notes'
-                  ? 'bg-[#FF5500] text-white shadow-xs'
+                  ? 'bg-[#08B9F5] text-white shadow-xs'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -393,16 +393,16 @@ export default function SingleClickCreateAIPage() {
                     onClick={() => fileInputRef.current?.click()}
                     className={`py-5 sm:py-6 px-4 border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center gap-2 cursor-pointer ${
                       isDragging
-                        ? 'border-[#FF5500] bg-[#FF5500]/10 scale-[1.01]'
-                        : 'border-white/15 hover:border-[#FF5500] bg-white/5 hover:bg-white/10'
+                        ? 'border-[#08B9F5] bg-[#08B9F5]/10 scale-[1.01]'
+                        : 'border-white/15 hover:border-[#08B9F5] bg-white/5 hover:bg-white/10'
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#111114] border border-white/10 flex items-center justify-center text-[#FF5500] shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-[#111114] border border-white/10 flex items-center justify-center text-[#08B9F5] shadow-xs">
                       <Upload className="w-5 h-5" />
                     </div>
                     <div className="text-center">
                       <div className="text-xs font-bold text-white">
-                        Drop flyer image here, or <span className="text-[#FF5500] underline">browse</span>
+                        Drop flyer image here, or <span className="text-[#08B9F5] underline">browse</span>
                       </div>
                       <p className="text-[10px] text-white/40 mt-0.5">JPEG, PNG, or WebP · Gemini Vision OCR</p>
                     </div>
@@ -452,7 +452,7 @@ export default function SingleClickCreateAIPage() {
                     placeholder="https://in.bookmyshow.com/... or https://lu.ma/... or district.in"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm border border-white/10 rounded-xl focus:outline-none focus:border-[#FF5500] bg-[#111114] text-white transition-colors placeholder:text-white/30"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm border border-white/10 rounded-xl focus:outline-none focus:border-[#08B9F5] bg-[#111114] text-white transition-colors placeholder:text-white/30"
                   />
                   {url.trim() && (
                     <button
@@ -483,7 +483,7 @@ export default function SingleClickCreateAIPage() {
                   placeholder="e.g. Subko Bandra coffee cupping session this Saturday at 5pm. Free entry for coffee enthusiasts."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-white/10 rounded-xl focus:outline-none focus:border-[#FF5500] bg-[#111114] text-white transition-colors resize-none placeholder:text-white/30"
+                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-white/10 rounded-xl focus:outline-none focus:border-[#08B9F5] bg-[#111114] text-white transition-colors resize-none placeholder:text-white/30"
                 />
               </div>
             )}
@@ -495,7 +495,7 @@ export default function SingleClickCreateAIPage() {
                   <button
                     type="button"
                     onClick={() => setShowExtraNotes(true)}
-                    className="text-[11px] font-semibold text-[#FF5500] hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] font-semibold text-[#08B9F5] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>+ Add extra notes or prompt (optional)</span>
                   </button>
@@ -519,7 +519,7 @@ export default function SingleClickCreateAIPage() {
                       placeholder="e.g. Bring your own badminton racquet, RSVP deadline 4pm"
                       value={extraNotes}
                       onChange={(e) => setExtraNotes(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs border border-white/10 rounded-lg focus:outline-none focus:border-[#FF5500] bg-[#111114] text-white placeholder:text-white/30"
+                      className="w-full px-3 py-1.5 text-xs border border-white/10 rounded-lg focus:outline-none focus:border-[#08B9F5] bg-[#111114] text-white placeholder:text-white/30"
                     />
                   </div>
                 )}
@@ -537,7 +537,7 @@ export default function SingleClickCreateAIPage() {
                 onClick={() => setIsPublic(true)}
                 className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   isPublic
-                    ? 'border-[#FF5500] bg-[#FF5500] text-white shadow-xs'
+                    ? 'border-[#08B9F5] bg-[#08B9F5] text-white shadow-xs'
                     : 'border-white/10 hover:border-white/20 bg-[#111114] text-white/60'
                 }`}
               >
@@ -550,7 +550,7 @@ export default function SingleClickCreateAIPage() {
                 onClick={() => setIsPublic(false)}
                 className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   !isPublic
-                    ? 'border-[#FF5500] bg-[#FF5500] text-white shadow-xs'
+                    ? 'border-[#08B9F5] bg-[#08B9F5] text-white shadow-xs'
                     : 'border-white/10 hover:border-white/20 bg-[#111114] text-white/60'
                 }`}
               >
@@ -566,7 +566,7 @@ export default function SingleClickCreateAIPage() {
               type="button"
               onClick={handleSingleClickCreate}
               disabled={isCreating || !hasAnyInput}
-              className="w-full py-3 px-5 rounded-2xl bg-[#FF5500] hover:bg-[#FF661A] text-white text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 shadow-lg shadow-[#FF5500]/25 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-3 px-5 rounded-2xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 shadow-lg shadow-[#08B9F5]/25 hover:scale-[1.01] active:scale-[0.99]"
             >
               {isCreating ? (
                 <>

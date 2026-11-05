@@ -144,7 +144,7 @@ export default function EventApprovalQueue({
               onClick={() => onSelectEvent(isSelected ? null : event)}
               className={`group relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                 isSelected
-                  ? 'border-[#FF5500] bg-slate-100 dark:bg-zinc-800/80 shadow-xs ring-1 ring-[#FF5500]'
+                  ? 'border-[#08B9F5] bg-slate-100 dark:bg-zinc-800/80 shadow-xs ring-1 ring-[#08B9F5]'
                   : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0B0F19] hover:border-slate-400 dark:hover:border-zinc-600 hover:shadow-xs'
               }`}
             >
@@ -157,7 +157,7 @@ export default function EventApprovalQueue({
                   onToggleSelect(event.id);
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="accent-[#FF5500] w-4 h-4 shrink-0 rounded cursor-pointer"
+                className="accent-[#08B9F5] w-4 h-4 shrink-0 rounded cursor-pointer"
               />
 
               {/* Poster Thumbnail */}
@@ -194,7 +194,7 @@ export default function EventApprovalQueue({
                       📥 {event.source_platform || 'Ingested'}
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#E8621A]/10 text-[#E8621A] border border-[#E8621A]/20 dark:bg-[#E8621A]/20 dark:text-[#FF8442] dark:border-[#E8621A]/30">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#075CE5]/10 text-[#075CE5] border border-[#075CE5]/20 dark:bg-[#075CE5]/20 dark:text-[#00D5E8] dark:border-[#075CE5]/30">
                       ⚡ Vibe Specific
                     </span>
                   )}

@@ -101,7 +101,7 @@ export default function CursorDemoPage() {
         {/* Hero Section */}
         <div id="overview" className="space-y-6 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/15 text-white text-xs font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#08B9F5]" />
             <span>Interactive 3D Ribbon Trail Physics</span>
           </div>
 
@@ -134,7 +134,7 @@ export default function CursorDemoPage() {
               onClick={triggerRibbonFlick}
               className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-sm tracking-tight transition-transform hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
-              <Zap className="w-4 h-4 text-[#FF5500]" />
+              <Zap className="w-4 h-4 text-[#08B9F5]" />
               <span>Trigger 360° Flick</span>
             </button>
           </div>
@@ -152,7 +152,7 @@ export default function CursorDemoPage() {
         <div id="controls" className="p-6 sm:p-8 rounded-3xl bg-[#0D0D10] border border-white/10 space-y-6 shadow-2xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#FF5500]">
+              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#08B9F5]">
                 <Sliders className="w-4 h-4" />
               </div>
               <div>
@@ -198,7 +198,7 @@ export default function CursorDemoPage() {
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                     config.frontColor.toLowerCase() === preset.front.toLowerCase() &&
                     config.backColor.toLowerCase() === preset.back.toLowerCase()
-                      ? 'border-[#FF5500] bg-white/10 text-white shadow-xs'
+                      ? 'border-[#08B9F5] bg-white/10 text-white shadow-xs'
                       : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                 >
@@ -399,7 +399,7 @@ export default function CursorDemoPage() {
             >
               <div className="relative z-10 space-y-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-white">
-                  <Eye className="w-5 h-5 text-[#FF5500]" />
+                  <Eye className="w-5 h-5 text-[#08B9F5]" />
                 </div>
                 <h3 className="font-bold text-lg text-white">Lissajous Idle Dance</h3>
                 <p className="text-xs text-white/60 leading-relaxed">

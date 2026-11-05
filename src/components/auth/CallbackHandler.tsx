@@ -250,7 +250,7 @@ export function CallbackHandler({
   if (pwaReturnInfo) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#08080A] text-white p-6 space-y-6">
-        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#FF5500] to-[#E8621A] text-white flex items-center justify-center shadow-xl shadow-[#FF5500]/30 animate-bounce">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#08B9F5] to-[#075CE5] text-white flex items-center justify-center shadow-xl shadow-[#08B9F5]/30 animate-bounce">
           <Sparkles className="w-8 h-8" />
         </div>
 
@@ -269,7 +269,7 @@ export function CallbackHandler({
         <div className="w-full max-w-xs space-y-3 pt-2">
           <a
             href={pwaReturnInfo.url}
-            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#FF5500] to-[#E8621A] text-white font-black text-sm shadow-xl shadow-[#FF5500]/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:brightness-110 active:scale-[0.98]"
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] text-white font-black text-sm shadow-xl shadow-[#08B9F5]/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:brightness-110 active:scale-[0.98]"
           >
             <span>Tap to Open Vibe App</span>
             <ArrowRight className="w-4 h-4" />

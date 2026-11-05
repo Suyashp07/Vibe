@@ -240,7 +240,7 @@ export default function EventGuestListModal({
             {/* Broadcast Announcement to Attendees */}
             <button
               onClick={() => setIsBroadcastOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#075CE5] hover:bg-sky-500 text-white text-xs font-bold transition-colors shadow-sm"
               title="Broadcast email and live notice to guests"
             >
               <Megaphone className="w-3.5 h-3.5" />

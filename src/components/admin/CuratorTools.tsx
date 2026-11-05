@@ -89,7 +89,7 @@ export function CuratorFilterBar({
               placeholder="Search events, venues..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-zinc-800 rounded-full focus:outline-none focus:border-[#FF5500] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500"
+              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-zinc-800 rounded-full focus:outline-none focus:border-[#08B9F5] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500"
             />
             {searchQuery && (
               <button
@@ -138,12 +138,12 @@ export function CuratorFilterBar({
               onClick={() => onSourceChange('VIBE')}
               className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                 sourceFilter === 'VIBE'
-                  ? 'bg-white dark:bg-zinc-800 text-[#E8621A] dark:text-[#FF8442] shadow-xs'
+                  ? 'bg-white dark:bg-zinc-800 text-[#075CE5] dark:text-[#00D5E8] shadow-xs'
                   : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span>⚡ Vibe Specific</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'VIBE' ? 'bg-[#E8621A] text-white' : 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${sourceFilter === 'VIBE' ? 'bg-[#075CE5] text-white' : 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'}`}>
                 {counts.vibe}
               </span>
             </button>
@@ -172,7 +172,7 @@ export function CuratorFilterBar({
             <button
               type="button"
               onClick={() => onSourceChange('ALL')}
-              className="text-[11px] text-[#E8621A] hover:underline font-bold cursor-pointer"
+              className="text-[11px] text-[#075CE5] hover:underline font-bold cursor-pointer"
             >
               Reset filter
             </button>

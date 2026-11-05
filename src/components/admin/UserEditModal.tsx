@@ -24,7 +24,7 @@ export default function UserEditModal({
   const [handle, setHandle] = useState(user.handle || '');
   const [bio, setBio] = useState(user.bio || '');
   const [phone, setPhone] = useState(user.phone || '');
-  const [brandColor, setBrandColor] = useState(user.brand_color || '#E8621A');
+  const [brandColor, setBrandColor] = useState(user.brand_color || '#075CE5');
   const [brandFont, setBrandFont] = useState(user.brand_font || 'Playfair Display');
   const [onboarded, setOnboarded] = useState(Boolean(user.onboarded));
   const [newPassword, setNewPassword] = useState('');
@@ -65,7 +65,7 @@ export default function UserEditModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0B0F19]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-[#08B9F5]/30 flex items-center justify-center text-[#00D5E8]">
               <UserCheck className="w-4 h-4" />
             </div>
             <div>
@@ -99,7 +99,7 @@ export default function UserEditModal({
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
             <div>
@@ -109,7 +109,7 @@ export default function UserEditModal({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function UserEditModal({
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
             >
               <option value="organizer">Organizer (Event Host)</option>
               <option value="guest">Guest (Attendee)</option>
@@ -138,7 +138,7 @@ export default function UserEditModal({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
               />
             </div>
             <div className="flex items-center pt-6">
@@ -147,7 +147,7 @@ export default function UserEditModal({
                   type="checkbox"
                   checked={onboarded}
                   onChange={(e) => setOnboarded(e.target.checked)}
-                  className="rounded border-zinc-700 text-[#E8621A] focus:ring-0 w-4 h-4 bg-zinc-900"
+                  className="rounded border-zinc-700 text-[#075CE5] focus:ring-0 w-4 h-4 bg-zinc-900"
                 />
                 <span className="text-xs font-medium text-zinc-300">
                   Mark Account as Onboarded
@@ -164,7 +164,7 @@ export default function UserEditModal({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Short bio or company description..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#E8621A]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-[#075CE5]"
             />
           </div>
 
@@ -198,7 +198,7 @@ export default function UserEditModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E8621A] to-[#FF8442] hover:opacity-95 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-500/20 disabled:opacity-50 transition"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:opacity-95 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-sky-500/20 disabled:opacity-50 transition"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Saving...' : 'Save Account'}</span>

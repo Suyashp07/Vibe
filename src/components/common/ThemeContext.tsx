@@ -12,14 +12,14 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
   setTheme: () => {},
   isMounted: false,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -29,12 +29,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setThemeState(stored);
         applyTheme(stored);
       } else {
-        // Default to dark mode for Vibe
-        setThemeState('dark');
-        applyTheme('dark');
+        // Default to light mode for Vibe
+        setThemeState('light');
+        applyTheme('light');
       }
     } catch {
-      applyTheme('dark');
+      applyTheme('light');
     }
     setIsMounted(true);
   }, []);

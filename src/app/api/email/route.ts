@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       const handle = (!rawHandle || /^(organizer|host|admin)$/i.test(String(rawHandle).trim())) ? 'vibepass' : rawHandle;
       return {
         name,
-        brand_color: orgInput?.brand_color || eventInput?.organizer_brand_color || '#E8621A',
+        brand_color: orgInput?.brand_color || eventInput?.organizer_brand_color || '#075CE5',
         logo_url: (orgInput?.logo_url && !orgInput.logo_url.includes('unsplash'))
           ? orgInput.logo_url
           : `${appUrl.replace(/\/+$/, '')}/icons/icon-192.png`,
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
       const { sendEmail } = await import('@/lib/email');
       const html = `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #12141A; color: #ffffff; border-radius: 16px;">
-          <h2 style="color: #FF5500; margin-bottom: 8px;">Vibe by Swaniki</h2>
+          <h2 style="color: #08B9F5; margin-bottom: 8px;">Vibe by Swaniki</h2>
           <p style="font-size: 14px; color: #cccccc;">Your verification code to confirm your spot is:</p>
           <div style="font-size: 32px; font-weight: 900; letter-spacing: 6px; color: #ffffff; background: rgba(255,255,255,0.08); padding: 16px; border-radius: 12px; text-align: center; margin: 20px 0;">
             ${otpCode}

@@ -395,7 +395,7 @@ export default function ProfilePage() {
   ).sort();
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col font-sans selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col font-sans selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
@@ -425,7 +425,7 @@ export default function ProfilePage() {
               YOUR VIBE, YOUR WAY
             </span>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white flex items-baseline">
-              Personal profile &amp; privacy<span className="text-[#FF5500]">.</span>
+              Personal profile &amp; privacy<span className="text-[#08B9F5]">.</span>
             </h1>
             <p className="text-xs sm:text-sm text-white/60 pt-0.5">
               A little about you. Always in your control.
@@ -433,8 +433,8 @@ export default function ProfilePage() {
           </div>
 
           {/* Orange Shield Icon */}
-          <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-2xl bg-[#FF5500]/10 border border-[#FF5500]/25 text-[#FF5500] shrink-0 mt-1">
-            <Shield className="w-6 h-6 text-[#FF5500]" />
+          <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-2xl bg-[#08B9F5]/10 border border-[#08B9F5]/25 text-[#08B9F5] shrink-0 mt-1">
+            <Shield className="w-6 h-6 text-[#08B9F5]" />
           </div>
         </div>
 
@@ -449,7 +449,7 @@ export default function ProfilePage() {
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Camera className="w-3.5 h-3.5 text-[#FF5500]" />
+            <Camera className="w-3.5 h-3.5 text-[#08B9F5]" />
             <span>Profile photo</span>
           </button>
 
@@ -462,7 +462,7 @@ export default function ProfilePage() {
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <User className="w-3.5 h-3.5 text-[#FF5500]" />
+            <User className="w-3.5 h-3.5 text-[#08B9F5]" />
             <span>Personal info</span>
           </button>
 
@@ -475,7 +475,7 @@ export default function ProfilePage() {
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Mail className="w-3.5 h-3.5 text-[#FF5500]" />
+            <Mail className="w-3.5 h-3.5 text-[#08B9F5]" />
             <span>Contact details</span>
           </button>
 
@@ -488,7 +488,7 @@ export default function ProfilePage() {
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Lock className="w-3.5 h-3.5 text-[#FF5500]" />
+            <Lock className="w-3.5 h-3.5 text-[#08B9F5]" />
             <span>Privacy</span>
           </button>
         </div>
@@ -497,7 +497,7 @@ export default function ProfilePage() {
         <div className="lg:hidden mb-8 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] space-y-2">
           <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-white">
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#08B9F5]" />
               AI Bot Assistants
             </span>
             <span className="text-[10px] text-slate-500 dark:text-white/40">Direct redirect</span>
@@ -591,7 +591,7 @@ export default function ProfilePage() {
             {/* AI Bot Assistants Card (WhatsApp & Telegram redirect with message Vibe/Events) */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] space-y-3">
               <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-                <Sparkles className="w-4 h-4 text-[#FF5500]" />
+                <Sparkles className="w-4 h-4 text-[#08B9F5]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white/80">AI Bot Assistants</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-white/50 leading-relaxed">
@@ -629,7 +629,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="pt-6 border-t border-white/[0.08] space-y-2">
-              <Shield className="w-4 h-4 text-[#FF5500]" />
+              <Shield className="w-4 h-4 text-[#08B9F5]" />
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-white">Your identity. Your choice.</p>
                 <p className="text-[11px] text-white/50">Only share what feels right.</p>
@@ -681,7 +681,7 @@ export default function ProfilePage() {
                 </div>
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="px-5 py-2 bg-[#FF5500] hover:bg-[#FF661A] text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md shadow-[#FF5500]/20"
+                  className="px-5 py-2 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md shadow-[#08B9F5]/20"
                 >
                   Sign In to Continue
                 </button>
@@ -694,7 +694,7 @@ export default function ProfilePage() {
               <section id="section-photo" className="space-y-4">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                    <span className="text-[#FF5500] font-mono text-xs font-bold">01</span>
+                    <span className="text-[#08B9F5] font-mono text-xs font-bold">01</span>
                     <span>Profile photo</span>
                   </h2>
                   <p className="text-xs text-white/50 mt-0.5">
@@ -715,8 +715,8 @@ export default function ProfilePage() {
                           className="object-cover"
                         />
                       ) : (
-                        <span className="text-xl sm:text-2xl font-black text-[#E8621A]">
-                          {initials || <Sparkles className="w-6 h-6 text-[#E8621A]" />}
+                        <span className="text-xl sm:text-2xl font-black text-[#075CE5]">
+                          {initials || <Sparkles className="w-6 h-6 text-[#075CE5]" />}
                         </span>
                       )}
                     </div>
@@ -724,7 +724,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#FF5500] text-white hover:bg-[#FF661A] transition shadow-md cursor-pointer border-2 border-[#070709]"
+                      className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#08B9F5] text-white hover:bg-[#075CE5] transition shadow-md cursor-pointer border-2 border-[#070709]"
                       title="Upload photo"
                     >
                       <Camera className="w-3 h-3" />
@@ -793,7 +793,7 @@ export default function ProfilePage() {
                           }}
                           className={`w-11 h-11 rounded-full overflow-hidden shrink-0 border-2 transition hover:scale-105 cursor-pointer relative ${
                             avatarUrl === preset
-                              ? 'border-[#FF5500] ring-2 ring-[#FF5500]/30'
+                              ? 'border-[#08B9F5] ring-2 ring-[#08B9F5]/30'
                               : 'border-white/20 hover:border-white/50'
                           }`}
                         >
@@ -818,7 +818,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                      <span className="text-[#FF5500] font-mono text-xs font-bold">02</span>
+                      <span className="text-[#08B9F5] font-mono text-xs font-bold">02</span>
                       <span>Personal information</span>
                     </h2>
                     <p className="text-xs text-white/50 mt-0.5">
@@ -832,7 +832,7 @@ export default function ProfilePage() {
                   {/* Full Name (Takes full width, Username / handle removed) */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-white/80 block">
-                      Full name <span className="text-[#FF5500]">*</span>
+                      Full name <span className="text-[#08B9F5]">*</span>
                     </label>
                     <input
                       type="text"
@@ -840,7 +840,7 @@ export default function ProfilePage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Suyash Pandey"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] transition"
                     />
                   </div>
 
@@ -853,7 +853,7 @@ export default function ProfilePage() {
                       <select
                         value={gender}
                         onChange={(e) => setGender(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#FF5500] transition cursor-pointer"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#08B9F5] transition cursor-pointer"
                       >
                         <option value="male">Male</option>
                         <option value="female">Female</option>
@@ -871,7 +871,7 @@ export default function ProfilePage() {
                         <select
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#FF5500] transition cursor-pointer"
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#08B9F5] transition cursor-pointer"
                         >
                           {cityOptions.map((cityName) => (
                             <option key={cityName} value={cityName}>
@@ -900,7 +900,7 @@ export default function ProfilePage() {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Good music, new places, and great company.."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition resize-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] transition resize-none"
                     />
                   </div>
                 </div>
@@ -913,7 +913,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                      <span className="text-[#FF5500] font-mono text-xs font-bold">03</span>
+                      <span className="text-[#08B9F5] font-mono text-xs font-bold">03</span>
                       <span>Contact details</span>
                     </h2>
                     <p className="text-xs text-white/50 mt-0.5">
@@ -953,7 +953,7 @@ export default function ProfilePage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] transition"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] transition"
                     />
                   </div>
                 </div>
@@ -965,7 +965,7 @@ export default function ProfilePage() {
               <section id="section-privacy" className="space-y-4">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                    <span className="text-[#FF5500] font-mono text-xs font-bold">04</span>
+                    <span className="text-[#08B9F5] font-mono text-xs font-bold">04</span>
                     <span>Privacy preferences</span>
                   </h2>
                   <p className="text-xs text-white/50 mt-0.5">
@@ -987,7 +987,7 @@ export default function ProfilePage() {
                       aria-checked={communityProfileConsent}
                       onClick={() => setCommunityProfileConsent(!communityProfileConsent)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        communityProfileConsent ? 'bg-[#FF5500]' : 'bg-white/15'
+                        communityProfileConsent ? 'bg-[#08B9F5]' : 'bg-white/15'
                       }`}
                     >
                       <span
@@ -1013,7 +1013,7 @@ export default function ProfilePage() {
                       aria-checked={showHomeCity}
                       onClick={() => setShowHomeCity(!showHomeCity)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        showHomeCity ? 'bg-[#FF5500]' : 'bg-white/15'
+                        showHomeCity ? 'bg-[#08B9F5]' : 'bg-white/15'
                       }`}
                     >
                       <span
@@ -1026,7 +1026,7 @@ export default function ProfilePage() {
 
                   {/* Bottom Notice Banner */}
                   <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-white/60 flex items-start gap-2.5 mt-2">
-                    <ShieldCheck className="w-4 h-4 text-[#FF5500] shrink-0 mt-0.5" />
+                    <ShieldCheck className="w-4 h-4 text-[#08B9F5] shrink-0 mt-0.5" />
                     <span className="text-[11px] leading-relaxed">
                       Your personal data is encrypted and handled in compliance with India&apos;s DPDP Act 2023. Privacy settings are synchronized securely across your confirmed event passes.
                     </span>
@@ -1077,7 +1077,7 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="px-5 py-2.5 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 disabled:opacity-50 cursor-pointer"
                   >
                     {isSaving ? (
                       <>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Activity,
@@ -87,15 +88,28 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="flex items-center gap-2 group cursor-pointer shrink-0"
+              className="flex items-center gap-2.5 group cursor-pointer shrink-0"
               title="Return to Vibe Home"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF5500] to-[#FF8C42] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#FF5500]/25 group-hover:scale-105 transition-transform">
-                V
+              <div className="flex items-center group-hover:scale-105 transition-transform">
+                <Image
+                  src="/logo.png"
+                  alt="Vibe"
+                  width={90}
+                  height={33}
+                  className="h-7 w-auto object-contain dark:hidden"
+                />
+                <Image
+                  src="/logo-dark.png"
+                  alt="Vibe"
+                  width={90}
+                  height={33}
+                  className="h-7 w-auto object-contain hidden dark:block"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider font-display leading-tight flex items-center gap-1.5">
-                  VIBE <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#FF5500]/15 dark:bg-[#FF5500]/20 text-[#FF5500] font-mono border border-[#FF5500]/30 font-bold">ADMIN</span>
+                  VIBE <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#08B9F5]/15 dark:bg-[#08B9F5]/20 text-[#08B9F5] font-mono border border-[#08B9F5]/30 font-bold">ADMIN</span>
                 </span>
                 <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">Control Center</span>
               </div>
@@ -115,7 +129,7 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900/60'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${item.isActive ? 'text-[#FF5500]' : 'text-slate-400 dark:text-zinc-500'}`} />
+                    <Icon className={`w-3.5 h-3.5 ${item.isActive ? 'text-[#08B9F5]' : 'text-slate-400 dark:text-zinc-500'}`} />
                     <span>{item.label}</span>
                     {item.badge && (
                       <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full border ${item.badgeColor || 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'}`}>
@@ -152,7 +166,7 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
 
             {/* User Capsule */}
             <div className="hidden md:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-zinc-800">
-              <div className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5500] border border-[#FF5500]/20 dark:bg-[#3D251A] dark:text-[#FF8542] dark:border-white/10 flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-full bg-sky-100 text-[#075CE5] border border-[#08B9F5]/20 dark:bg-[#0B254A] dark:text-[#00D5E8] dark:border-white/10 flex items-center justify-center font-bold text-xs">
                 {email.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col text-left">
@@ -196,7 +210,7 @@ export default function AdminNavigation({ activeSection }: AdminNavigationProps)
                     : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white'
                 }`}
               >
-                <Icon className={`w-3 h-3 ${item.isActive ? 'text-[#FF5500]' : 'text-slate-400 dark:text-zinc-500'}`} />
+                <Icon className={`w-3 h-3 ${item.isActive ? 'text-[#08B9F5]' : 'text-slate-400 dark:text-zinc-500'}`} />
                 <span>{item.label}</span>
               </Link>
             );

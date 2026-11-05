@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import BrandLogo from '@/components/common/BrandLogo';
 import {
   Instagram,
   Linkedin,
@@ -53,10 +54,8 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
     return (
       <footer className="border-t border-black/10 dark:border-white/10 bg-white dark:bg-[#0A0A0C] py-8 text-neutral-500 dark:text-white/50 font-sans transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-neutral-900 dark:text-white tracking-tight text-base font-outfit">
-              vibe<span className="text-[#FF5500]">.</span>
-            </span>
+          <div className="flex items-center gap-3">
+            <BrandLogo size="sm" showSubtitle={false} />
             <a
               href="https://swaniki.com/"
               target="_blank"
@@ -94,12 +93,8 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 pb-12">
           {/* Column 1: Brand Wordmark + Platform Description + Social Handles */}
           <div className="space-y-4">
-            <div className="space-y-0.5">
-              <Link href="/" className="inline-block group">
-                <span className="font-black text-2xl tracking-tight text-neutral-900 dark:text-white block">
-                  vibe<span className="text-[#FF5500]">.</span>
-                </span>
-              </Link>
+            <div className="space-y-1">
+              <BrandLogo size="md" showSubtitle={false} />
               <a
                 href="https://swaniki.com/"
                 target="_blank"

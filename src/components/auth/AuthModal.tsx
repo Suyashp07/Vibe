@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import BrandLogo from '@/components/common/BrandLogo';
 import {
   X,
   Mail,
@@ -301,7 +302,7 @@ export default function AuthModal({
   }
 
   const inputCls =
-    'w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#FF5500] dark:focus:border-[#FF5500] transition-colors placeholder:text-gray-400 dark:placeholder:text-white/30 text-gray-900 dark:text-white';
+    'w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#08B9F5] dark:focus:border-[#08B9F5] transition-colors placeholder:text-gray-400 dark:placeholder:text-white/30 text-gray-900 dark:text-white';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
@@ -369,14 +370,14 @@ export default function AuthModal({
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="••••"
-                  className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-2.5 bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-[#FF5500] dark:focus:border-[#FF5500]"
+                  className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-2.5 bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-[#08B9F5] dark:focus:border-[#08B9F5]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={otpLoading || otpSuccess || otpCode.trim().length !== 4}
-                className="w-full py-2.5 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 cursor-pointer"
+                className="w-full py-2.5 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 cursor-pointer"
               >
                 {otpLoading ? (
                   <>
@@ -420,6 +421,9 @@ export default function AuthModal({
         ) : (
           /* Normal Auth Form */
           <>
+            <div className="mb-3">
+              <BrandLogo size="sm" showSubtitle={false} />
+            </div>
             {/* Title */}
             <h2 className="font-bold text-lg text-gray-900 dark:text-white mb-1">
               {mode === 'signin' ? 'Welcome back' : 'Create your account'}
@@ -571,7 +575,7 @@ export default function AuthModal({
               <button
                 type="submit"
                 disabled={emailLoading || googleLoading}
-                className="w-full py-2.5 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 cursor-pointer"
+                className="w-full py-2.5 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 cursor-pointer"
               >
                 {emailLoading ? (
                   <>

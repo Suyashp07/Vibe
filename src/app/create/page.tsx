@@ -30,7 +30,7 @@ export default function CreateEventHubPage() {
       <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-8 h-8 border-3 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#08B9F5] border-t-transparent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -40,12 +40,12 @@ export default function CreateEventHubPage() {
   // Guard: If unauthenticated, show clean sign-in prompt
   if (!isAuth && !loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#FF5500] selection:text-white">
+      <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] selection:bg-[#08B9F5] selection:text-white">
         <Navbar />
 
         <main className="flex-1 max-w-md mx-auto px-4 py-12 sm:py-20 flex items-center justify-center w-full">
           <div className="w-full bg-[#0D0D10] rounded-3xl p-7 sm:p-9 border border-white/10 shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95 text-white">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF5500] to-amber-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-[#FF5500]/25">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#08B9F5] to-[#075CE5] text-white mx-auto flex items-center justify-center shadow-lg shadow-[#08B9F5]/25">
               <Sparkles className="w-7 h-7 fill-white" />
             </div>
 
@@ -97,7 +97,7 @@ export default function CreateEventHubPage() {
 
               <Link
                 href="/signup?redirect=/create"
-                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white font-bold text-xs transition-all shadow-md shadow-[#FF5500]/25"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white font-bold text-xs transition-all shadow-md shadow-[#08B9F5]/25"
               >
                 <span>Sign Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -118,9 +118,9 @@ export default function CreateEventHubPage() {
 
   // Authenticated: Clean, compact, mobile-friendly 2-option creator choice
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] relative overflow-hidden selection:bg-[#FF5500] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] relative overflow-hidden selection:bg-[#08B9F5] selection:text-white">
       {/* Decorative ambient background accents */}
-      <div className="absolute -top-32 left-1/4 w-80 h-80 bg-[#FF5500]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 left-1/4 w-80 h-80 bg-[#08B9F5]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-48 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <Navbar />
@@ -128,8 +128,8 @@ export default function CreateEventHubPage() {
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full relative z-10 flex flex-col justify-center">
         {/* Header Strip - Compact & Informative */}
         <div className="text-center max-w-xl mx-auto mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 shadow-2xs text-[11px] font-bold text-[#FF5500] mb-2.5 uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 fill-[#FF5500]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 shadow-2xs text-[11px] font-bold text-[#08B9F5] mb-2.5 uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 fill-[#08B9F5]" />
             <span>Create &amp; Publish</span>
           </div>
 
@@ -146,25 +146,25 @@ export default function CreateEventHubPage() {
           {/* Option 1: 1-Click Instant AI */}
           <Link
             href="/create/ai"
-            className="group relative flex flex-col justify-between p-5 sm:p-7 rounded-3xl bg-[#0D0D10] border border-white/10 hover:border-[#FF5500] hover:shadow-[0_0_30px_rgba(255,85,0,0.18)] transition-all duration-200 text-left overflow-hidden cursor-pointer"
+            className="group relative flex flex-col justify-between p-5 sm:p-7 rounded-3xl bg-[#0D0D10] border border-white/10 hover:border-[#08B9F5] hover:shadow-[0_0_30px_rgba(8,185,245,0.18)] transition-all duration-200 text-left overflow-hidden cursor-pointer"
           >
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF5500] to-amber-400 opacity-90 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#08B9F5] to-amber-400 opacity-90 group-hover:opacity-100 transition-opacity" />
 
             <div className="space-y-4">
               {/* Badge & Icon Header */}
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#FF5500] to-[#FF8C42] text-white flex items-center justify-center shadow-md shadow-[#FF5500]/25 group-hover:scale-105 transition-transform duration-200">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#08B9F5] to-[#00D5E8] text-white flex items-center justify-center shadow-md shadow-[#08B9F5]/25 group-hover:scale-105 transition-transform duration-200">
                   <Wand2 className="w-6 h-6" />
                 </div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-2.5 py-1 rounded-full shadow-2xs">
-                  <Zap className="w-3 h-3 fill-[#FF5500]" />
+                <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#08B9F5] bg-[#08B9F5]/10 border border-[#08B9F5]/20 px-2.5 py-1 rounded-full shadow-2xs">
+                  <Zap className="w-3 h-3 fill-[#08B9F5]" />
                   <span>Fastest · 30s</span>
                 </span>
               </div>
 
               {/* Title & Concise Description */}
               <div>
-                <h2 className="text-lg sm:text-xl font-display font-black text-white tracking-tight group-hover:text-[#FF5500] transition-colors">
+                <h2 className="text-lg sm:text-xl font-display font-black text-white tracking-tight group-hover:text-[#08B9F5] transition-colors">
                   1-Click AI Fast Track
                 </h2>
                 <p className="text-xs text-white/60 mt-1.5 leading-relaxed">
@@ -191,7 +191,7 @@ export default function CreateEventHubPage() {
 
             {/* Action CTA */}
             <div className="mt-5 pt-4 border-t border-white/10">
-              <div className="w-full py-2.5 px-4 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white font-bold text-xs sm:text-sm flex items-center justify-between transition-colors shadow-[0_0_15px_rgba(255,85,0,0.3)]">
+              <div className="w-full py-2.5 px-4 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white font-bold text-xs sm:text-sm flex items-center justify-between transition-colors shadow-[0_0_15px_rgba(8,185,245,0.3)]">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 fill-white" />
                   <span>Create with AI</span>
@@ -221,7 +221,7 @@ export default function CreateEventHubPage() {
 
               {/* Title & Concise Description */}
               <div>
-                <h2 className="text-lg sm:text-xl font-display font-black text-white tracking-tight group-hover:text-[#FF5500] transition-colors">
+                <h2 className="text-lg sm:text-xl font-display font-black text-white tracking-tight group-hover:text-[#08B9F5] transition-colors">
                   Custom Event Studio
                 </h2>
                 <p className="text-xs text-white/60 mt-1.5 leading-relaxed">

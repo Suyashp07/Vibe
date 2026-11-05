@@ -629,14 +629,14 @@ function OrganizerCheckInContent() {
   if (loading && !localSession && !profile) {
     return (
       <div className="min-h-screen bg-[#070A12] text-white flex items-center justify-center">
-        <div className="w-7 h-7 border-2 border-[#E8621A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-[#075CE5] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!isAuth && !loading) {
     return (
-      <div className="min-h-screen bg-[#070A12] text-white flex flex-col font-sans selection:bg-[#E8621A] selection:text-white">
+      <div className="min-h-screen bg-[#070A12] text-white flex flex-col font-sans selection:bg-[#075CE5] selection:text-white">
         <header className="px-4 py-3 sm:px-6 sm:py-4 bg-[#0B0F19] border-b border-white/10 sticky top-0 z-40 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <Link
@@ -655,12 +655,12 @@ function OrganizerCheckInContent() {
 
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-md bg-[#0D121F] border border-white/10 rounded-2xl p-8 shadow-2xl text-center space-y-6">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-[#E8621A]/10 border border-[#E8621A]/20 flex items-center justify-center text-[#E8621A] shadow-inner">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-[#075CE5]/10 border border-[#075CE5]/20 flex items-center justify-center text-[#075CE5] shadow-inner">
               <ShieldCheck className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#E8621A]">
+              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#075CE5]">
                 Gate Access Restricted
               </span>
               <h2 className="text-2xl font-bold font-display text-white mt-1">
@@ -721,7 +721,7 @@ function OrganizerCheckInContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070A12] text-white flex flex-col font-sans selection:bg-[#E8621A] selection:text-white">
+    <div className="min-h-screen bg-[#070A12] text-white flex flex-col font-sans selection:bg-[#075CE5] selection:text-white">
       {/* ========================================================= */}
       {/* 1. TOP HEADER & EVENT SELECTOR COMMAND BAR                */}
       {/* ========================================================= */}
@@ -765,7 +765,7 @@ function OrganizerCheckInContent() {
               <select
                 value={selectedEventId}
                 onChange={(e) => setSelectedEventId(e.target.value)}
-                className="py-1.5 px-3 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white focus:outline-none focus:border-[#E8621A] transition-colors cursor-pointer max-w-[200px] truncate"
+                className="py-1.5 px-3 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white focus:outline-none focus:border-[#075CE5] transition-colors cursor-pointer max-w-[200px] truncate"
               >
                 <option value="all" className="bg-[#0B0F19]">
                   All Events Combined
@@ -799,7 +799,7 @@ function OrganizerCheckInContent() {
               className="py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors flex items-center gap-1.5 cursor-pointer"
               title="Download Admission Sheet (.CSV)"
             >
-              <Download className="w-3.5 h-3.5 text-[#E8621A]" />
+              <Download className="w-3.5 h-3.5 text-[#075CE5]" />
               <span className="hidden sm:inline">Export Sheet</span>
             </button>
 
@@ -810,7 +810,7 @@ function OrganizerCheckInContent() {
               className="py-1.5 px-3 rounded-xl bg-white hover:bg-slate-200 text-[#090D16] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
               title="Print Official Admission Ledger"
             >
-              <Printer className="w-3.5 h-3.5 text-[#E8621A]" />
+              <Printer className="w-3.5 h-3.5 text-[#075CE5]" />
               <span>Print Roster</span>
             </button>
           </div>
@@ -876,7 +876,7 @@ function OrganizerCheckInContent() {
             onClick={() => setMobileTab('scanner')}
             className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
               mobileTab === 'scanner'
-                ? 'bg-[#E8621A] text-white shadow-xs'
+                ? 'bg-[#075CE5] text-white shadow-xs'
                 : 'bg-white/5 text-white/60'
             }`}
           >
@@ -888,7 +888,7 @@ function OrganizerCheckInContent() {
             onClick={() => setMobileTab('sheet')}
             className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
               mobileTab === 'sheet'
-                ? 'bg-[#E8621A] text-white shadow-xs'
+                ? 'bg-[#075CE5] text-white shadow-xs'
                 : 'bg-white/5 text-white/60'
             }`}
           >
@@ -947,7 +947,7 @@ function OrganizerCheckInContent() {
             {/* Camera Controls Bar */}
             <div className="w-full flex items-center justify-between mb-3">
               <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white/60 flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-[#E8621A]" />
+                <Camera className="w-3.5 h-3.5 text-[#075CE5]" />
                 <span>QR Viewfinder</span>
               </span>
 
@@ -1033,7 +1033,7 @@ function OrganizerCheckInContent() {
                       onClick={() => fileInputRef.current?.click()}
                       className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <ImageIcon className="w-3.5 h-3.5 text-[#E8621A]" />
+                      <ImageIcon className="w-3.5 h-3.5 text-[#075CE5]" />
                       <span>Scan Pass Image / Photo</span>
                     </button>
                   </div>
@@ -1045,11 +1045,11 @@ function OrganizerCheckInContent() {
                 <>
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                     <div className="w-56 h-56 relative border-2 border-dashed border-white/30 rounded-2xl">
-                      <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#E8621A] rounded-tl-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                      <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#E8621A] rounded-tr-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#E8621A] rounded-bl-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#E8621A] rounded-br-xl shadow-[0_0_12px_rgba(232,98,26,0.6)]" />
-                      <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#E8621A] to-transparent shadow-[0_0_12px_rgba(232,98,26,0.9)] animate-qr-scan" />
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#075CE5] rounded-tl-xl shadow-[0_0_12px_rgba(7,92,229,0.6)]" />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#075CE5] rounded-tr-xl shadow-[0_0_12px_rgba(7,92,229,0.6)]" />
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#075CE5] rounded-bl-xl shadow-[0_0_12px_rgba(7,92,229,0.6)]" />
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#075CE5] rounded-br-xl shadow-[0_0_12px_rgba(7,92,229,0.6)]" />
+                      <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#075CE5] to-transparent shadow-[0_0_12px_rgba(7,92,229,0.9)] animate-qr-scan" />
                     </div>
                   </div>
 
@@ -1071,7 +1071,7 @@ function OrganizerCheckInContent() {
           {/* Quick Manual Check-In Bar */}
           <div className="bg-[#0D121F] border border-white/10 rounded-2xl p-3.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Search className="w-4 h-4 text-[#E8621A]" />
+              <Search className="w-4 h-4 text-[#075CE5]" />
               <div>
                 <p className="text-xs font-bold text-white">Manual Check-In</p>
                 <p className="text-[10px] text-white/50">For dead batteries or broken screens</p>
@@ -1101,7 +1101,7 @@ function OrganizerCheckInContent() {
             {/* Document Title Row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3 print:hidden">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#E8621A]/10 border border-[#E8621A]/30 flex items-center justify-center text-[#E8621A]">
+                <div className="w-8 h-8 rounded-xl bg-[#075CE5]/10 border border-[#075CE5]/30 flex items-center justify-center text-[#075CE5]">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>
@@ -1130,7 +1130,7 @@ function OrganizerCheckInContent() {
                       onClick={() => setSheetStatusFilter(tab.id as any)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                         active
-                          ? 'bg-[#E8621A] text-white shadow-xs'
+                          ? 'bg-[#075CE5] text-white shadow-xs'
                           : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
                     >
@@ -1149,7 +1149,7 @@ function OrganizerCheckInContent() {
                 placeholder="Filter sheet by guest name, email, phone, or pass serial..."
                 value={sheetSearch}
                 onChange={(e) => setSheetSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#E8621A] transition-colors"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#075CE5] transition-colors"
               />
             </div>
 
@@ -1386,7 +1386,7 @@ function OrganizerCheckInContent() {
                 onClick={handleResumeScanning}
                 className="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-slate-200 text-[#090D16] font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Camera className="w-4 h-4 text-[#E8621A]" />
+                <Camera className="w-4 h-4 text-[#075CE5]" />
                 <span>Scan Next Guest (Auto in 3s)</span>
               </button>
             </div>
@@ -1402,7 +1402,7 @@ function OrganizerCheckInContent() {
           <div className="max-w-lg w-full bg-[#131B2E] border border-white/15 rounded-3xl p-6 space-y-4 max-h-[85vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Search className="w-5 h-5 text-[#E8621A]" />
+                <Search className="w-5 h-5 text-[#075CE5]" />
                 <h3 className="font-bold text-base text-white">Manual Guest Check-In</h3>
               </div>
               <button
@@ -1419,7 +1419,7 @@ function OrganizerCheckInContent() {
               placeholder="Search by name, email, or phone..."
               value={manualQuery}
               onChange={(e) => setManualQuery(e.target.value)}
-              className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#E8621A]"
+              className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#075CE5]"
             />
 
             <div className="flex-1 overflow-y-auto space-y-2 max-h-72">

@@ -152,13 +152,13 @@ export default function HostBroadcastModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-stone-100 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+            <div className="p-2.5 rounded-2xl bg-sky-500/10 text-[#075CE5] dark:text-[#00D5E8] border border-[#08B9F5]/20">
               <Megaphone className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-lg text-stone-900 dark:text-white flex items-center gap-2">
                 Host Broadcast Gateway
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300">
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-[#081426]/60 dark:text-[#38BDF8]">
                   Live Dispatch
                 </span>
               </h3>
@@ -199,7 +199,7 @@ export default function HostBroadcastModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-sm font-bold shadow-lg shadow-orange-600/20 transition"
+                  className="px-6 py-2.5 rounded-xl bg-[#075CE5] hover:bg-sky-500 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition"
                 >
                   Done
                 </button>
@@ -210,7 +210,7 @@ export default function HostBroadcastModal({
               {/* Quick Template Chips */}
               <div>
                 <label className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-orange-500" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#08B9F5]" />
                   Quick Presets
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -301,7 +301,7 @@ export default function HostBroadcastModal({
                   placeholder="e.g., Gate 4 Check-in & Rooftop Seating Ready"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#08B9F5]/50 text-sm font-medium"
                 />
               </div>
 
@@ -321,7 +321,7 @@ export default function HostBroadcastModal({
                   placeholder="Write clear instructions, parking cues, dress code reminders, or schedule changes for your guests..."
                   value={message}
                   onChange={e => setMessage(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm leading-relaxed"
+                  className="w-full px-4 py-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#08B9F5]/50 text-sm leading-relaxed"
                 />
               </div>
 
@@ -333,7 +333,7 @@ export default function HostBroadcastModal({
                     type="checkbox"
                     checked={isUrgent}
                     onChange={e => setIsUrgent(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-stone-300 dark:border-stone-600"
+                    className="mt-0.5 w-4 h-4 rounded text-[#075CE5] focus:ring-[#08B9F5] border-stone-300 dark:border-stone-600"
                   />
                   <div>
                     <div className="text-xs font-bold text-stone-900 dark:text-white flex items-center gap-1.5">
@@ -352,11 +352,11 @@ export default function HostBroadcastModal({
                     type="checkbox"
                     checked={sendEmail}
                     onChange={e => setSendEmail(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-stone-300 dark:border-stone-600"
+                    className="mt-0.5 w-4 h-4 rounded text-[#075CE5] focus:ring-[#08B9F5] border-stone-300 dark:border-stone-600"
                   />
                   <div>
                     <div className="text-xs font-bold text-stone-900 dark:text-white flex items-center gap-1.5">
-                      <Mail className={`w-3.5 h-3.5 ${sendEmail ? 'text-orange-500' : 'text-stone-400'}`} />
+                      <Mail className={`w-3.5 h-3.5 ${sendEmail ? 'text-[#08B9F5]' : 'text-stone-400'}`} />
                       Send Email Blast
                     </div>
                     <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-tight">
@@ -390,7 +390,7 @@ export default function HostBroadcastModal({
                   <button
                     type="submit"
                     disabled={isSubmitting || !title.trim() || !message.trim()}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-600/20 disabled:opacity-50 transition"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#075CE5] hover:bg-sky-500 text-white text-xs font-bold shadow-lg shadow-blue-600/20 disabled:opacity-50 transition"
                   >
                     {isSubmitting ? (
                       <>

@@ -36,7 +36,7 @@ async function getSlugEntity(rawSlug: string): Promise<{ event: EventItem | null
           organizer_name: orgProfile.name || dbEvent.organizer_name || 'Organizer',
           organizer_handle: orgProfile.handle || dbEvent.organizer_handle || 'organizer',
           organizer_logo: orgProfile.logo_url || dbEvent.organizer_logo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-          organizer_brand_color: orgProfile.brand_color || dbEvent.organizer_brand_color || '#E8621A',
+          organizer_brand_color: orgProfile.brand_color || dbEvent.organizer_brand_color || '#075CE5',
           slug: dbEvent.slug,
           title: dbEvent.title,
           tagline: dbEvent.tagline || '',

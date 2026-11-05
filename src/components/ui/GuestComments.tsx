@@ -60,7 +60,7 @@ export default function GuestComments({
     <div className={`${cardClass || 'space-y-6'}`}>
       <div className={`flex items-center justify-between border-b ${borderClass || 'border-border'} pb-3.5`}>
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" style={{ color: accentColor || '#E8621A' }} />
+          <MessageSquare className="w-5 h-5" style={{ color: accentColor || '#075CE5' }} />
           <h3 className={headingClass || 'font-display font-bold text-lg text-ink'}>
             Guest Notes & Questions <span className={`text-sm font-normal ${textMuted || 'text-ink-muted'}`}>({comments.length})</span>
           </h3>

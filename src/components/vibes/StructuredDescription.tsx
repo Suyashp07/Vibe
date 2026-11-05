@@ -61,14 +61,14 @@ function renderFormattedLine(line: string, index: number) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-[#FF8542] hover:text-[#FFA066] transition-all break-all max-w-full group shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[#08B9F5] dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:text-[#00D5E8] hover:text-[#08B9F5] dark:hover:text-[#38BDF8] transition-all break-all max-w-full group shadow-xs cursor-pointer"
         >
           {isMapUrl ? (
             <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           ) : isFormUrl ? (
             <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
           ) : (
-            <LinkIcon className="w-3.5 h-3.5 text-[#FF8542] shrink-0" />
+            <LinkIcon className="w-3.5 h-3.5 text-[#00D5E8] shrink-0" />
           )}
           <span className="truncate max-w-[240px] sm:max-w-xs">{url}</span>
           <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 shrink-0 transition-opacity" />
@@ -85,10 +85,10 @@ function renderFormattedLine(line: string, index: number) {
 
     return (
       <div key={index} className="py-0.5">
-        <span className="text-white/90 font-bold uppercase tracking-wide text-[11px] block text-[#FF8542]">
+        <span className="font-bold uppercase tracking-wide text-[11px] block text-[#08B9F5] dark:text-[#00D5E8]">
           {label}
         </span>
-        {rest && <span className="text-neutral-300 text-xs block mt-0.5">{rest}</span>}
+        {rest && <span className="text-slate-700 dark:text-neutral-300 text-xs block mt-0.5">{rest}</span>}
       </div>
     );
   }
@@ -102,7 +102,7 @@ function renderFormattedLine(line: string, index: number) {
     const text = bulletMatch[2];
 
     return (
-      <div key={index} className="flex items-start gap-2 py-0.5 text-neutral-300">
+      <div key={index} className="flex items-start gap-2 py-0.5 text-slate-700 dark:text-neutral-300">
         <span className="shrink-0 select-none text-sm">{emoji}</span>
         <span className="text-xs sm:text-sm leading-relaxed">{text}</span>
       </div>
@@ -111,7 +111,7 @@ function renderFormattedLine(line: string, index: number) {
 
   // Regular paragraph line
   return (
-    <p key={index} className="text-xs sm:text-sm text-neutral-300 leading-relaxed py-0.5">
+    <p key={index} className="text-xs sm:text-sm text-slate-700 dark:text-neutral-300 leading-relaxed py-0.5">
       {line}
     </p>
   );
@@ -123,7 +123,7 @@ export default function StructuredDescription({
 }: StructuredDescriptionProps) {
   if (!description || !description.trim()) {
     return (
-      <p className="text-xs sm:text-sm text-neutral-400 italic">
+      <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 italic">
         A small, easy-going gathering. Come solo or bring friends.
       </p>
     );

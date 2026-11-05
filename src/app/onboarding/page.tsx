@@ -25,7 +25,7 @@ import { useAuth, updateAuthProfile, isSyntheticAvatar } from '@/lib/auth';
 import { saveOrganizer } from '@/lib/store';
 
 const BRAND_COLOR_PRESETS = [
-  { name: 'Sprint Orange', hex: '#E8621A', description: 'Energetic, action-oriented' },
+  { name: 'Sprint Orange', hex: '#075CE5', description: 'Energetic, action-oriented' },
   { name: 'Forest & Moss', hex: '#2D5A27', description: 'Organic, grounded, community' },
   { name: 'Vertex Navy', hex: '#0F3460', description: 'Tech, intellectual, high-signal' },
   { name: 'Dusty Rose', hex: '#C47B89', description: 'Celebrations, intimate, warm' },
@@ -55,7 +55,7 @@ export default function OrganizerOnboardingPage() {
   const [handle, setHandle] = useState('');
   const [bio, setBio] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
-  const [brandColor, setBrandColor] = useState('#E8621A');
+  const [brandColor, setBrandColor] = useState('#075CE5');
   const [brandFont, setBrandFont] = useState('Playfair Display');
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export default function OrganizerOnboardingPage() {
     if (profile) {
       if (profile.name && !name) setName(profile.name);
       if (profile.handle && !handle) setHandle(profile.handle);
-      if (profile.brand_color && brandColor === '#E8621A') setBrandColor(profile.brand_color);
+      if (profile.brand_color && brandColor === '#075CE5') setBrandColor(profile.brand_color);
       if (profile.brand_font && brandFont === 'Playfair Display') setBrandFont(profile.brand_font);
       if (profile.avatar_url && !logoUrl && !isSyntheticAvatar(profile.avatar_url)) {
         setLogoUrl(profile.avatar_url);

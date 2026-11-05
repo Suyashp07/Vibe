@@ -10,6 +10,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        vibe: {
+          electric: '#08B9F5',
+          royal: '#075CE5',
+          cyan: '#00D5E8',
+          navy: '#0B1B3A',
+          darkNavy: '#081426',
+          surfaceNavy: '#0D1D35',
+        },
         brand: {
           DEFAULT: "var(--brand)",
           mid: "var(--brand-mid)",
@@ -48,9 +56,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        brand: ["var(--font-outfit)", "Outfit", "var(--font-inter)", "-apple-system", "sans-serif"],
-        display: ["var(--font-outfit)", "Outfit", "var(--font-inter)", "-apple-system", "sans-serif"],
-        subbrand: ["var(--font-jakarta)", "Plus Jakarta Sans", "var(--font-inter)", "-apple-system", "sans-serif"],
+        brand: ["var(--font-bricolage)", "var(--font-outfit)", "Outfit", "-apple-system", "sans-serif"],
+        display: ["var(--font-bricolage)", "var(--font-outfit)", "Outfit", "-apple-system", "sans-serif"],
+        heading: ["var(--font-bricolage)", "var(--font-outfit)", "-apple-system", "sans-serif"],
         tagline: ["var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
         sans: ["var(--font-inter)", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
       },

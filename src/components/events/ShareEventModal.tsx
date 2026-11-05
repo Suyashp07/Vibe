@@ -146,7 +146,7 @@ export default function ShareEventModal({
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
                   copied
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-[#FF5500] hover:bg-[#E04B00] text-white shadow-xs'
+                    : 'bg-[#08B9F5] hover:bg-[#075CE5] text-white shadow-xs'
                 }`}
               >
                 {copied ? (

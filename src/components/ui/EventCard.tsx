@@ -1,14 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Calendar, Users, ArrowUpRight } from 'lucide-react';
+import { MapPin, Calendar, ArrowUpRight, Heart } from 'lucide-react';
 import { EventItem } from '@/types';
-import { formatIST, getEventRSVPs } from '@/lib/store';
-import { getEventDisplayTags } from '@/lib/eventTags';
-import { getUserCity } from '@/lib/location';
-import TiltCard from '@/components/common/TiltCard';
+import { formatIST } from '@/lib/store';
 
 interface EventCardProps {
   event: EventItem;
@@ -30,224 +27,179 @@ export default function EventCard({
   onTagClick,
 }: EventCardProps) {
   const router = useRouter();
-  const rsvps = getEventRSVPs(event.id);
-  const count = rsvps.length;
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // Check if event is happening in the active user city
-  const currentCity = (userCity || (typeof window !== 'undefined' ? getUserCity() : '') || 'All India').trim();
-  const isAllIndia = currentCity.toLowerCase() === 'all india' || !currentCity;
-  const isSameCity = !isAllIndia && Boolean(
-    event.city &&
-    event.city.toLowerCase().trim() === currentCity.toLowerCase()
-  );
+  // Initialize wishlist status from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
+        setIsWishlisted(saved.includes(event.id));
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+  }, [event.id]);
 
-  const isExternal = event.source_type === 'external';
-  const rawTicketUrl = event.external_ticket_url?.trim();
-  const normalizedTicketUrl = rawTicketUrl
-    ? rawTicketUrl.startsWith('http://') || rawTicketUrl.startsWith('https://')
-      ? rawTicketUrl
-      : `https://${rawTicketUrl}`
-    : '';
-  const hasExternalLink = Boolean(isExternal && normalizedTicketUrl);
+  // Wishlist toggle handler
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const next = !isWishlisted;
+    setIsWishlisted(next);
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
+        const updated = next
+          ? Array.from(new Set([...saved, event.id]))
+          : saved.filter((id: string) => id !== event.id);
+        localStorage.setItem('vibe_wishlist', JSON.stringify(updated));
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+  };
 
-  const tags = getEventDisplayTags(event);
-
+  // Card click navigation
   const handleCardClick = (e: React.MouseEvent) => {
-    // If the click came from a button, tag or link, do not navigate card
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('a')) {
+    if (target.closest('button[data-no-nav="true"]') || target.closest('a')) {
       return;
     }
-
-    // Always open the rich event details page on Vibe first!
     router.push(`/${event.slug}`);
   };
 
+  // Source Platform Pill (Top-left, ultra-clean)
+  const isExternal = event.source_type === 'external';
+  const sourceLabel = event.source_platform
+    ? event.source_platform.toUpperCase()
+    : isExternal
+    ? 'PARTNER'
+    : 'VIBE';
+
+  // Format Price in elegant bold text with small "onwards"
+  const renderPrice = () => {
+    const raw = (event.external_price_text || '').trim();
+    const isFree =
+      (event as any).is_free ||
+      !raw ||
+      raw.toLowerCase().includes('free') ||
+      raw === '₹0' ||
+      raw === '0';
+
+    if (isFree) {
+      return (
+        <span className="font-extrabold text-base text-[#07133A] dark:text-white">
+          Free
+        </span>
+      );
+    }
+
+    const hasOnwards = raw.toLowerCase().includes('onwards');
+    const cleanAmount = raw.replace(/onwards/i, '').trim();
+
+    return (
+      <div className="flex items-baseline gap-1">
+        <span className="font-extrabold text-base text-[#07133A] dark:text-white">
+          {cleanAmount}
+        </span>
+        {hasOnwards && (
+          <span className="text-xs font-normal text-slate-400">
+            onwards
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  // Date & Time in clear uppercase IST
+  const formattedDate = formatIST(event.start_at).toUpperCase();
+
+  // Venue & City Location display
+  const locationDisplay = event.location_name
+    ? `${event.location_name}, ${event.city || 'India'}`
+    : event.city || 'India';
+
   return (
-    <TiltCard glare={true} maxTilt={6} className="h-full">
-      <div
-        onClick={handleCardClick}
-        data-cursor="view"
-        className="group relative bg-[#0D0D10] rounded-2xl border border-white/10 overflow-hidden hover:border-[#FF5500]/50 hover:shadow-[0_0_30px_rgba(255,85,0,0.18)] transition-all duration-300 flex flex-col h-full cursor-pointer select-none text-white"
-      >
-      {/* Cover Image Container */}
-      <div className="event-card-cover relative h-48 w-full overflow-hidden bg-black">
+    <div
+      onClick={handleCardClick}
+      data-cursor="view"
+      className="group relative rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(7,19,58,0.06)] hover:shadow-[0_12px_32px_rgba(7,19,58,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer select-none"
+    >
+      {/* Image Thumbnail (Top) - Aspect 16/10 with minimal badges */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
         <Image
           src={event.cover_image_url}
           alt={event.title}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D10] via-transparent to-black/40" />
 
-        {/* Top Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-          {hasExternalLink ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white/20 bg-black/70 text-white backdrop-blur-md inline-flex items-center gap-1.5 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />
-              <span>{event.source_platform ? event.source_platform.toUpperCase() : 'PARTNER'}</span>
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white/15 bg-black/60 text-white/90 backdrop-blur-md">
-              Selling fast
-            </span>
-          )}
-
-          {count > 0 ? (
-            <span className="flex items-center gap-1 text-[10px] font-bold bg-black/60 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/15">
-              <Users className="w-3.5 h-3.5 text-[#FF5500]" />
-              {count} going
-            </span>
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/70">
-              <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </div>
-          )}
+        {/* Top-Left: Ultra-clean Source Pill */}
+        <div className="absolute top-3 left-3 pointer-events-none z-10">
+          <span
+            className="event-source-badge bg-black/75 backdrop-blur-md text-white font-semibold text-[11px] px-2.5 py-1 rounded-full shadow-sm"
+            style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}
+          >
+            {sourceLabel}
+          </span>
         </div>
 
-        {/* Bottom Left Category Badge (Clickable filter) */}
-        {tags.category && (
+        {/* Top-Right: Floating Wishlist Heart Button */}
+        <div className="absolute top-3 right-3 z-10">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onTagClick?.(tags.category, 'category');
-            }}
-            className={`absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold shadow-md transition-all cursor-pointer z-10 backdrop-blur-md ${
-              activeCategory.toLowerCase() === tags.category.toLowerCase()
-                ? 'bg-[#FF5500] text-white ring-2 ring-[#FF5500]/40'
-                : 'bg-black/75 hover:bg-[#FF5500] text-white border border-white/20 hover:scale-105'
-            }`}
-            title={`Filter by ${tags.category}`}
+            data-no-nav="true"
+            onClick={handleWishlistToggle}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+            className="w-8 h-8 rounded-full bg-white/80 hover:bg-white dark:bg-slate-900/80 dark:hover:bg-slate-900 backdrop-blur-md shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 transition cursor-pointer"
           >
-            {tags.category}
+            <Heart
+              className={`w-4 h-4 transition-colors ${
+                isWishlisted
+                  ? 'fill-rose-500 text-rose-500 stroke-rose-500'
+                  : 'text-slate-700 dark:text-slate-200'
+              }`}
+            />
           </button>
-        )}
-
-        {/* Bottom Right Distance or City Badge */}
-        {isSameCity && typeof distanceKm === 'number' && distanceKm < 100 ? (
-          <span className="absolute bottom-3 right-3 bg-black/85 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-amber-300 border border-amber-400/30 shadow-xs pointer-events-none flex items-center gap-1">
-            <MapPin className="w-2.5 h-2.5 text-amber-400" />
-            <span>{distanceKm < 1 ? '< 1 km away' : `${Math.round(distanceKm)} km away`}</span>
-          </span>
-        ) : (
-          <span className="absolute bottom-3 right-3 bg-black/85 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-white/95 border border-white/20 shadow-xs pointer-events-none flex items-center gap-1">
-            <MapPin className="w-2.5 h-2.5 text-[#FF5500]" />
-            <span>{event.city || 'India'}</span>
-          </span>
-        )}
+        </div>
       </div>
 
-      {/* Card Details */}
-      <div className="event-card-body p-4 sm:p-5 flex flex-col flex-1 justify-between bg-[#0D0D10]">
+      {/* Card Body (Bottom, clean spacing) */}
+      <div className="p-4 flex flex-col justify-between flex-1">
         <div>
-          {/* Date & Time row in IST */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-white/50 mb-1.5">
-            <Calendar className="w-3.5 h-3.5 text-[#FF5500]" />
-            <span>{formatIST(event.start_at)}</span>
+          {/* Row 1: Date & Time in clear blue/slate uppercase */}
+          <div className="text-xs font-bold text-[#0038A8] dark:text-[#38bdf8] tracking-wide flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#38bdf8] shrink-0" />
+            <span className="truncate">{formattedDate}</span>
           </div>
 
-          {/* Event Title */}
-          <h3 className="font-display font-black text-lg sm:text-xl text-white leading-snug group-hover:text-[#FF5500] transition-colors line-clamp-2">
+          {/* Row 2: Event Title */}
+          <h3 className="font-bold text-lg text-[#07133A] dark:text-white leading-snug line-clamp-2 mt-1 mb-1.5 group-hover:text-[#0038A8] dark:group-hover:text-[#38bdf8] transition-colors">
             {event.title}
           </h3>
 
-          {/* Venue Location */}
-          <div className="flex items-center gap-1 text-xs text-white/50 mt-1.5 truncate">
-            <MapPin className="w-3.5 h-3.5 text-[#FF5500]/70 shrink-0" />
-            <span className="truncate">{event.location_name || event.city}</span>
-          </div>
-
-          {/* Price Display */}
-          <div className="mt-2.5 text-sm font-black text-white flex items-center justify-between">
-            <span className="text-[#FF5500]">
-              {event.external_price_text || (isExternal ? 'Tickets on Partner' : 'Free Entry')}
-            </span>
-          </div>
-
-          {/* Tags Filter Row (Source, Price, Verified, Moods) */}
-          <div className="mt-3.5 flex flex-wrap items-center gap-1.5 pt-3 border-t border-white/10">
-            {/* 1. Source / Ticketing Partner Tag */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onTagClick?.(tags.sourceKey, 'source');
-              }}
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/15 text-white/80 border border-white/10 transition-all cursor-pointer hover:scale-105 active:scale-95"
-              title={`Filter by ${tags.sourceLabel}`}
-            >
-              {tags.sourceLabel}
-            </button>
-
-            {/* 2. Paid / Free Tag */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onTagClick?.(tags.priceTag, 'mood');
-              }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer hover:scale-105 active:scale-95 ${
-                activeMoods.includes(tags.priceTag)
-                  ? 'bg-[#FF5500] text-white shadow-xs'
-                  : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
-              }`}
-              title={`Filter ${tags.priceTag} events`}
-            >
-              {tags.priceTag}
-            </button>
-
-            {/* 3. Verified Badge */}
-            {tags.isVerified && (
-              <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                Verified
-              </span>
-            )}
-
-            {/* 4. Mood / Sub-category Tags */}
-            {tags.moodTags.slice(0, 2).map((tag) => {
-              const isActive = activeMoods.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onTagClick?.(tag, 'mood');
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer hover:scale-105 active:scale-95 ${
-                    isActive
-                      ? 'bg-[#FF5500] text-white shadow-xs'
-                      : 'bg-white/5 hover:bg-white/10 text-white/60 border border-white/10'
-                  }`}
-                  title={`Filter by ${tag}`}
-                >
-                  {tag}
-                </button>
-              );
-            })}
+          {/* Row 3: Venue & City */}
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 line-clamp-1 mb-3">
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{locationDisplay}</span>
           </div>
         </div>
 
-        {/* Action Row */}
-        <div className="pt-3.5 mt-3.5 border-t border-white/10 flex items-center justify-between">
-          <span className="text-xs text-white/40 truncate max-w-[150px]">
-            {event.city} · {event.event_type}
-          </span>
-          <span className="text-xs font-bold text-white group-hover:text-[#FF5500] transition-colors inline-flex items-center gap-1">
-            <span>{hasExternalLink ? 'View Details' : 'Explore'}</span>
-            <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </span>
+        {/* Row 4: Footer Row with Price & View Details Button */}
+        <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between mt-auto">
+          {renderPrice()}
+          <button
+            type="button"
+            onClick={handleCardClick}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#07133A] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-white dark:text-slate-200 dark:hover:text-[#07133A] transition-all duration-200 cursor-pointer"
+          >
+            <span>View Details</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </div>
-  </TiltCard>
-);
+  );
 }

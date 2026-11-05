@@ -55,7 +55,7 @@ export default function ShareBar({
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{
             backgroundColor: accentColor ? `${accentColor}18` : undefined,
-            color: accentColor || '#E8621A',
+            color: accentColor || '#075CE5',
             border: accentColor ? `1px solid ${accentColor}35` : undefined
           }}
         >
@@ -118,7 +118,7 @@ export default function ShareBar({
               innerCardClass || 'bg-surface-3 hover:bg-border text-ink border-border'
             }`}
           >
-            <CalendarIcon className="w-3.5 h-3.5" style={{ color: accentColor || '#E8621A' }} />
+            <CalendarIcon className="w-3.5 h-3.5" style={{ color: accentColor || '#075CE5' }} />
             <span>Add to Calendar</span>
           </button>
 

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
+import BrandLogo from '@/components/common/BrandLogo';
 import {
   signUpWithPassword,
   verifySignupOtp,
@@ -183,13 +184,16 @@ function SignupContent() {
         <div className="w-full max-w-md bg-white dark:bg-[#0D0D10] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 sm:p-8 animate-in fade-in">
           {/* Header */}
           <div className="mb-6">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors font-medium"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to events</span>
-            </Link>
+            <div className="flex items-center justify-between mb-4">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors font-medium"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to events</span>
+              </Link>
+              <BrandLogo size="sm" showSubtitle={false} />
+            </div>
 
             {isVerifyingOtp ? (
               <>
@@ -224,7 +228,7 @@ function SignupContent() {
                   <span className="font-medium text-red-400 dark:text-red-300">Ready to log in?</span>
                   <Link
                     href={`/login?redirect=${encodeURIComponent(destination)}`}
-                    className="px-3 py-1 bg-[#FF5500] text-white rounded-lg font-bold text-[11px] hover:bg-[#FF661A] transition"
+                    className="px-3 py-1 bg-[#08B9F5] text-white rounded-lg font-bold text-[11px] hover:bg-[#075CE5] transition"
                   >
                     Go to Sign In →
                   </Link>
@@ -258,7 +262,7 @@ function SignupContent() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="••••"
-                    className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-3 bg-white dark:bg-[#111114] border-2 border-[#FF5500]/40 focus:border-[#FF5500] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
+                    className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-3 bg-white dark:bg-[#111114] border-2 border-[#08B9F5]/40 focus:border-[#08B9F5] rounded-xl text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20 focus:outline-none shadow-2xs transition-colors"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-white/50 mt-1.5 text-center">
@@ -269,7 +273,7 @@ function SignupContent() {
               <button
                 type="submit"
                 disabled={otpLoading || otpSuccess || otpCode.trim().length !== 4}
-                className="w-full py-3 bg-[#FF5500] hover:bg-[#FF661A] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 bg-[#08B9F5] hover:bg-[#075CE5] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 disabled:opacity-50 cursor-pointer"
               >
                 {otpLoading ? (
                   <>
@@ -376,7 +380,7 @@ function SignupContent() {
                         if (isExistingUser) setIsExistingUser(false);
                       }}
                       placeholder="Aarav Sharma"
-                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] focus:ring-2 focus:ring-[#08B9F5]/15 dark:focus:ring-0 shadow-2xs transition-all"
                     />
                   </div>
                 </div>
@@ -420,8 +424,8 @@ function SignupContent() {
                       }}
                       placeholder="you@example.com"
                       className={`w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#111114] border ${
-                        emailError ? 'border-red-500 focus:border-red-400' : 'border-slate-200 dark:border-white/10 focus:border-[#FF5500]'
-                      } rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all`}
+                        emailError ? 'border-red-500 focus:border-red-400' : 'border-slate-200 dark:border-white/10 focus:border-[#08B9F5]'
+                      } rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#08B9F5]/15 dark:focus:ring-0 shadow-2xs transition-all`}
                     />
                   </div>
                   {emailSuggestion && (
@@ -457,7 +461,7 @@ function SignupContent() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="At least 6 characters"
-                      className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#FF5500] focus:ring-2 focus:ring-[#FF5500]/15 dark:focus:ring-0 shadow-2xs transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[#111114] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] focus:ring-2 focus:ring-[#08B9F5]/15 dark:focus:ring-0 shadow-2xs transition-all"
                     />
                     <button
                       type="button"
@@ -472,7 +476,7 @@ function SignupContent() {
                 <button
                   type="submit"
                   disabled={loading || googleLoading}
-                  className="w-full py-3 bg-[#FF5500] hover:bg-[#FF661A] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/20 disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3 bg-[#08B9F5] hover:bg-[#075CE5] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -491,7 +495,7 @@ function SignupContent() {
                   Already have an account?{' '}
                   <Link
                     href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
-                    className="font-bold text-[#FF5500] hover:underline"
+                    className="font-bold text-[#08B9F5] hover:underline"
                   >
                     Sign in
                   </Link>
@@ -511,8 +515,8 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#050505] text-[#FF5500]">
-          <Loader2 className="w-6 h-6 animate-spin text-[#FF5500]" />
+        <div className="min-h-screen flex items-center justify-center bg-[#050505] text-[#08B9F5]">
+          <Loader2 className="w-6 h-6 animate-spin text-[#08B9F5]" />
         </div>
       }
     >

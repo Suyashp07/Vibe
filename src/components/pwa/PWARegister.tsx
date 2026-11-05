@@ -190,7 +190,7 @@ export default function PWARegister() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF5500] to-[#C2410C] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#FF5500]/30">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#08B9F5] to-[#C2410C] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#08B9F5]/30">
                   v.
                 </div>
                 <div>
@@ -227,7 +227,7 @@ export default function PWARegister() {
               </div>
 
               <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
-                <div className="w-7 h-7 rounded-lg bg-[#FF5500]/20 text-[#FF5500] flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-[#08B9F5]/20 text-[#08B9F5] flex items-center justify-center shrink-0">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
@@ -239,7 +239,7 @@ export default function PWARegister() {
             <button
               type="button"
               onClick={() => setShowIOSModal(false)}
-              className="w-full py-2.5 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-semibold transition cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-semibold transition cursor-pointer"
             >
               Got it
             </button>

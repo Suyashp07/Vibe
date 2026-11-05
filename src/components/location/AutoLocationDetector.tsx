@@ -179,13 +179,13 @@ export default function AutoLocationDetector() {
             {/* Glowing Compass Badge */}
             <div className="flex items-center gap-3 mb-4">
               <div className="relative flex items-center justify-center">
-                <span className="absolute inline-flex h-10 w-10 rounded-2xl bg-[#E8621A]/25 animate-ping opacity-40" />
-                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#E8621A] to-[#FF8442] text-white flex items-center justify-center shadow-md shadow-[#E8621A]/20">
+                <span className="absolute inline-flex h-10 w-10 rounded-2xl bg-[#075CE5]/25 animate-ping opacity-40" />
+                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#08B9F5] to-[#075CE5] text-white flex items-center justify-center shadow-md shadow-[#075CE5]/20">
                   <Compass className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <span className="text-[10px] font-mono font-bold tracking-widest text-[#E8621A] uppercase">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-[#075CE5] uppercase">
                   Nearby Experiences
                 </span>
                 <h3 className="text-lg font-black text-[#0F172A] leading-tight font-display">
@@ -209,12 +209,12 @@ export default function AutoLocationDetector() {
               >
                 {isLocating ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#FF8442]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#00D5E8]" />
                     <span>Detecting your city...</span>
                   </>
                 ) : (
                   <>
-                    <Navigation className="w-4 h-4 text-[#FF8442]" />
+                    <Navigation className="w-4 h-4 text-[#00D5E8]" />
                     <span>Allow Location Access</span>
                   </>
                 )}
@@ -243,7 +243,7 @@ export default function AutoLocationDetector() {
       {toastCity && (
         <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-none">
           <div className="pointer-events-auto bg-[#0F172A] text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-3 text-xs max-w-sm">
-            <div className="w-8 h-8 rounded-xl bg-[#E8621A]/20 text-[#E8621A] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#075CE5]/20 text-[#075CE5] flex items-center justify-center shrink-0">
               <Navigation className="w-4 h-4 rotate-45" />
             </div>
             <div className="flex-1 min-w-0">
@@ -252,7 +252,7 @@ export default function AutoLocationDetector() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
               </p>
               <p className="text-slate-300 text-[11px] truncate">
-                Browsing events near <span className="text-[#FF8442] font-semibold">{toastCity}</span>
+                Browsing events near <span className="text-[#00D5E8] font-semibold">{toastCity}</span>
               </p>
             </div>
             <button

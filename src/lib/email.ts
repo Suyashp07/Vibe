@@ -23,7 +23,7 @@ function wrapWhiteLabelTemplate(
   const orgName = isGenericOrg ? 'Vibe Pass' : organizer.name;
   const isGenericHandle = !organizer?.handle || /^(organizer|host|admin)$/i.test(organizer.handle.trim());
   const orgHandle = isGenericHandle ? 'vibepass' : organizer.handle;
-  const brandColor = organizer?.brand_color || '#E8621A';
+  const brandColor = organizer?.brand_color || '#075CE5';
 
   const defaultAppUrl = (baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://vibe.swaniki.com').replace(/\/+$/, '');
   const defaultLogo = `${defaultAppUrl}/icons/icon-192.png`;
@@ -50,7 +50,7 @@ function wrapWhiteLabelTemplate(
     .cta-button { display: inline-block; background-color: ${brandColor}; color: #ffffff !important; padding: 13px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
     .secondary-button { display: inline-block; background-color: #F3F4F6; color: #1F2937 !important; padding: 12px 22px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px; text-align: center; border: 1px solid #E5E7EB; }
     .footer { padding: 24px 32px; background: #F8F6F2; border-top: 1px solid #E5E1D8; text-align: center; font-size: 11px; color: #6B7280; }
-    .footer a { color: #E8621A; text-decoration: none; font-weight: 600; }
+    .footer a { color: #075CE5; text-decoration: none; font-weight: 600; }
     @media only screen and (max-width: 600px) {
       body { padding: 12px 6px; }
       .content { padding: 22px 18px; }
@@ -192,7 +192,7 @@ export async function sendEventCreatedEmail({
   const eventUrl = `${baseUrl}/${event.slug}`;
   const dashboardUrl = `${baseUrl}/dashboard`;
   const formattedTime = formatIST(event.start_at);
-  const brandColor = organizer?.brand_color || event.organizer_brand_color || '#E8621A';
+  const brandColor = organizer?.brand_color || event.organizer_brand_color || '#075CE5';
 
   const orgData = organizer || {
     name: event.organizer_name || organizerName || 'Event Host',
@@ -335,7 +335,7 @@ export async function sendRsvpConfirmedEmail({
   const organizerName = isGenericOrg ? 'Vibe Pass' : organizer.name;
   const isGenericHandle = !organizer?.handle || /^(organizer|host|admin)$/i.test(organizer.handle.trim());
   const organizerHandle = isGenericHandle ? 'vibepass' : organizer.handle;
-  const brandColor = organizer?.brand_color || event.organizer_brand_color || '#E8621A';
+  const brandColor = organizer?.brand_color || event.organizer_brand_color || '#075CE5';
 
   const defaultLogo = `${baseUrl}/icons/icon-192.png`;
   const logoUrl = (organizer?.logo_url && !organizer.logo_url.includes('unsplash'))
@@ -722,10 +722,10 @@ export async function sendVerificationOtpEmail({
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC; margin: 0; padding: 32px 12px; color: #0F172A; }
     .email-wrapper { max-width: 560px; margin: 0 auto; background: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #E2E8F0; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05); }
-    .brand-accent-strip { height: 5px; background: linear-gradient(90deg, #0F172A 0%, #E8621A 100%); width: 100%; }
+    .brand-accent-strip { height: 5px; background: linear-gradient(90deg, #0F172A 0%, #075CE5 100%); width: 100%; }
     .header { padding: 32px 36px 20px 36px; border-bottom: 1px solid #F1F5F9; }
     .brand-title { font-size: 22px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; margin: 0; line-height: 1; }
-    .brand-badge { color: #E8621A; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-left: 6px; }
+    .brand-badge { color: #075CE5; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-left: 6px; }
     .brand-sub { font-size: 11px; color: #64748B; margin-top: 5px; display: block; font-weight: 500; }
     .body-content { padding: 36px; }
     .welcome-heading { font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 12px 0; }
@@ -743,7 +743,7 @@ export async function sendVerificationOtpEmail({
   <div class="email-wrapper">
     <div class="brand-accent-strip"></div>
     <div class="header">
-      <div style="font-size: 10px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: #E8621A; margin-bottom: 2px;">
+      <div style="font-size: 10px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: #075CE5; margin-bottom: 2px;">
         BY SWANIKI
       </div>
       <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; line-height: 1; margin: 0;">
@@ -812,13 +812,13 @@ export async function sendHostAnnouncementEmail({
 }): Promise<EmailSendResult> {
   const org = organizer || {
     name: event.organizer_name || 'Event Host',
-    brand_color: event.organizer_brand_color || '#E8621A',
+    brand_color: event.organizer_brand_color || '#075CE5',
     logo_url: event.organizer_logo,
     handle: event.organizer_handle
   };
 
   const isUrgent = !!announcement.is_urgent;
-  const brandColor = org.brand_color || '#E8621A';
+  const brandColor = org.brand_color || '#075CE5';
   const eventUrl = `${appUrl}/e/${event.slug}`;
   const guestUrl = `${appUrl}/passes`;
 
@@ -906,12 +906,12 @@ export async function sendDirectMessageNotificationEmail({
 }): Promise<EmailSendResult> {
   const org = organizer || {
     name: event.organizer_name || 'Event Host',
-    brand_color: event.organizer_brand_color || '#E8621A',
+    brand_color: event.organizer_brand_color || '#075CE5',
     logo_url: event.organizer_logo,
     handle: event.organizer_handle
   };
 
-  const brandColor = org.brand_color || '#E8621A';
+  const brandColor = org.brand_color || '#075CE5';
   const isFromHost = senderRole === 'host';
   const actionUrl = isFromHost 
     ? `${appUrl}/e/${event.slug}` 

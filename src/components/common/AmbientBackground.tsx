@@ -19,7 +19,7 @@ export default function AmbientBackground() {
 
     const updateSpotlight = () => {
       if (spotlightRef.current) {
-        spotlightRef.current.style.background = `radial-gradient(600px circle at ${currentX}px ${currentY}px, rgba(255, 85, 0, 0.045), transparent 75%)`;
+        spotlightRef.current.style.background = `radial-gradient(600px circle at ${currentX}px ${currentY}px, rgba(8, 185, 245, 0.045), transparent 75%)`;
         spotlightRef.current.style.opacity = '1';
       }
       rafId = null;
@@ -56,7 +56,7 @@ export default function AmbientBackground() {
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none">
         {/* Warm Orange Brand Blob */}
         <div
-          className="absolute -top-[10%] left-[15%] w-[480px] h-[480px] rounded-full bg-[#FF5500]/[0.04] blur-[110px]"
+          className="absolute -top-[10%] left-[15%] w-[480px] h-[480px] rounded-full bg-[#08B9F5]/[0.04] blur-[110px]"
           style={{ transform: 'translate3d(0,0,0)' }}
         />
         {/* Deep Violet Horizon Blob */}
@@ -66,7 +66,7 @@ export default function AmbientBackground() {
         />
         {/* Grounding Amber Bloom */}
         <div
-          className="absolute -bottom-[10%] left-[25%] w-[440px] h-[440px] rounded-full bg-[#FF7700]/[0.03] blur-[110px]"
+          className="absolute -bottom-[10%] left-[25%] w-[440px] h-[440px] rounded-full bg-[#08B9F5]/[0.03] blur-[110px]"
           style={{ transform: 'translate3d(0,0,0)' }}
         />
 

@@ -335,8 +335,8 @@ export default function OrganizerProfileView({ organizer, events }: OrganizerPro
               </button>
 
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: organizer.brand_color || '#E8621A' }} />
-                <span>Brand Hex: {organizer.brand_color || '#E8621A'}</span>
+                <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: organizer.brand_color || '#075CE5' }} />
+                <span>Brand Hex: {organizer.brand_color || '#075CE5'}</span>
               </span>
             </div>
           </div>

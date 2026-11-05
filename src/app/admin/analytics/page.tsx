@@ -219,7 +219,7 @@ export default function AdminAnalyticsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-12">
         <AdminNavigation activeSection="analytics" />
         <div className="h-96 flex flex-col items-center justify-center gap-3">
-          <RefreshCw className="w-8 h-8 text-[#FF5500] animate-spin" />
+          <RefreshCw className="w-8 h-8 text-[#08B9F5] animate-spin" />
           <span className="text-xs uppercase tracking-widest font-mono text-zinc-400">
             Loading Real-Time Analytics...
           </span>
@@ -502,7 +502,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="w-full h-2 rounded-full bg-zinc-900 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-[#FF5500] rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-purple-500 to-[#08B9F5] rounded-full transition-all duration-500"
                 style={{ width: `${Math.max(databaseUtilization.percentQuotaUsed || 2, 2)}%` }}
               />
             </div>
@@ -515,7 +515,7 @@ export default function AdminAnalyticsPage() {
           {/* Table Records List */}
           <div className="space-y-2">
             {[
-              { label: 'Events Collection', key: 'events', count: databaseUtilization.tableRows.events, sizeKb: databaseUtilization.tableStorageKb?.events ?? 392, color: 'bg-[#FF5500]' },
+              { label: 'Events Collection', key: 'events', count: databaseUtilization.tableRows.events, sizeKb: databaseUtilization.tableStorageKb?.events ?? 392, color: 'bg-[#08B9F5]' },
               { label: 'Registered Profiles', key: 'profiles', count: databaseUtilization.tableRows.profiles, sizeKb: databaseUtilization.tableStorageKb?.profiles ?? 24, color: 'bg-blue-500' },
               { label: 'RSVP Bookings & Passes', key: 'rsvps', count: databaseUtilization.tableRows.rsvps, sizeKb: databaseUtilization.tableStorageKb?.rsvps ?? 16, color: 'bg-emerald-500' },
               { label: 'Event Comments & Q&A', key: 'event_comments', count: databaseUtilization.tableRows.event_comments, sizeKb: databaseUtilization.tableStorageKb?.event_comments ?? 8, color: 'bg-amber-500' },

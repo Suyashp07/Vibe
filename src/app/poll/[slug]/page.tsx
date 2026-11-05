@@ -84,7 +84,7 @@ export default function DatePollPage() {
       particleCount: 60,
       spread: 60,
       origin: { y: 0.6 },
-      colors: ['#E8621A', '#C9A84C', '#1A1A2E']
+      colors: ['#075CE5', '#C9A84C', '#1A1A2E']
     });
   };
 
@@ -127,7 +127,7 @@ export default function DatePollPage() {
           <p className="text-xs text-ink-muted max-w-sm">
             This scheduling poll may have concluded, converted to an official event, or the link may be mistyped.
           </p>
-          <Link href="/discover" className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
+          <Link href="/discover" className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
             <span>Explore Community Events</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -353,7 +353,7 @@ export default function DatePollPage() {
 
             <Link
               href={`/create?title=${encodeURIComponent(poll.title)}&date=${encodeURIComponent(leadingOption?.date_label || '')}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-bold transition-all shadow-sm hover-lift whitespace-nowrap cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold transition-all shadow-sm hover-lift whitespace-nowrap cursor-pointer"
             >
               <span>Convert Winner to Event →</span>
             </Link>

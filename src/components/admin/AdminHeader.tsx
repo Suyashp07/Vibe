@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ADMIN_BASE_PATH } from '@/lib/adminConstants';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import BrandLogo from '@/components/common/BrandLogo';
 
 interface AdminHeaderProps {
   email?: string;
@@ -30,9 +31,7 @@ export default function AdminHeader({
     <header className="border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0B0F19] sticky top-0 z-30 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/" className="font-black text-base tracking-tight text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
-            VIBE
-          </Link>
+          <BrandLogo size="sm" showSubtitle={false} />
           <span className="text-slate-400 dark:text-zinc-600 text-sm">/</span>
           <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700">
             <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
@@ -61,7 +60,7 @@ export default function AdminHeader({
           </button>
           <button
             onClick={onOpenCreateModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-semibold rounded-full transition-colors cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-semibold rounded-full transition-colors cursor-pointer shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Event</span>

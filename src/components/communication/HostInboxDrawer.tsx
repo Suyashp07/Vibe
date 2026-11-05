@@ -170,14 +170,14 @@ export default function HostInboxDrawer({
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+            <div className="p-2.5 rounded-2xl bg-sky-500/10 text-[#075CE5] dark:text-[#00D5E8] border border-[#08B9F5]/20">
               <Inbox className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-lg text-stone-900 dark:text-white flex items-center gap-2">
                 Guest Communication Inbox
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-sky-500 text-white">
                     {unreadCount} new
                   </span>
                 )}
@@ -208,7 +208,7 @@ export default function HostInboxDrawer({
                   placeholder="Search inquiries..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="w-full pl-8 pr-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#08B9F5]"
                 />
               </div>
 
@@ -248,12 +248,12 @@ export default function HostInboxDrawer({
                       onClick={() => handleSelectThread(item)}
                       className={`w-full text-left p-3.5 transition flex flex-col gap-1.5 ${
                         isSelected 
-                          ? 'bg-orange-500/10 dark:bg-orange-950/40 border-l-4 border-orange-500' 
+                          ? 'bg-sky-500/10 dark:bg-[#081426]/40 border-l-4 border-[#08B9F5]' 
                           : 'hover:bg-white dark:hover:bg-stone-800/60'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <span className={`text-xs font-bold truncate ${hasUnread ? 'text-orange-600 dark:text-orange-400' : 'text-stone-900 dark:text-white'}`}>
+                        <span className={`text-xs font-bold truncate ${hasUnread ? 'text-[#075CE5] dark:text-[#00D5E8]' : 'text-stone-900 dark:text-white'}`}>
                           {item.sender_name}
                         </span>
                         <span className="text-[10px] text-stone-400 shrink-0">
@@ -331,12 +331,12 @@ export default function HostInboxDrawer({
                   {/* Host Replies */}
                   {threadReplies.map(reply => (
                     <div key={reply.id} className="flex items-start justify-end gap-3">
-                      <div className="max-w-lg bg-orange-600 text-white rounded-2xl rounded-tr-none p-4 space-y-1.5 shadow-sm">
+                      <div className="max-w-lg bg-[#075CE5] text-white rounded-2xl rounded-tr-none p-4 space-y-1.5 shadow-sm">
                         <div className="flex items-center justify-between gap-4">
-                          <span className="text-xs font-bold text-orange-100 flex items-center gap-1">
+                          <span className="text-xs font-bold text-sky-100 flex items-center gap-1">
                             {reply.sender_name} (Host)
                           </span>
-                          <span className="text-[10px] text-orange-200">
+                          <span className="text-[10px] text-sky-200">
                             {formatIST(reply.created_at)}
                           </span>
                         </div>
@@ -344,7 +344,7 @@ export default function HostInboxDrawer({
                           {reply.message}
                         </p>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#075CE5] text-white flex items-center justify-center text-xs font-bold shrink-0">
                         H
                       </div>
                     </div>
@@ -359,12 +359,12 @@ export default function HostInboxDrawer({
                       placeholder={`Reply directly to ${activeRoot.sender_name}...`}
                       value={replyText}
                       onChange={e => setReplyText(e.target.value)}
-                      className="w-full pl-4 pr-24 py-3 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                      className="w-full pl-4 pr-24 py-3 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#08B9F5]/50"
                     />
                     <button
                       type="submit"
                       disabled={isReplying || !replyText.trim()}
-                      className="absolute right-2 px-4 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition disabled:opacity-40 flex items-center gap-1.5 shadow-sm"
+                      className="absolute right-2 px-4 py-1.5 rounded-xl bg-[#075CE5] hover:bg-sky-500 text-white text-xs font-bold transition disabled:opacity-40 flex items-center gap-1.5 shadow-sm"
                     >
                       {isReplying ? (
                         <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
