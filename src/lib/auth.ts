@@ -1458,14 +1458,14 @@ export const useAuth = () => {
             const isDifferentUser = Boolean(local && local.email && local.email.toLowerCase() !== userEmail);
             const safeLocal = isDifferentUser ? null : local;
 
-            const isSuper = ADMIN_EMAILS.includes(userEmail);
             const meta = data.session.user.user_metadata || {};
+            const isSuper = ADMIN_EMAILS.includes(userEmail) || meta.role === 'super_admin';
 
             let mergedProfile: AuthProfile = {
               id: data.session.user.id,
               email: userEmail,
               name: meta.name || safeLocal?.name || userEmail.split('@')[0] || 'User',
-              role: isSuper ? 'super_admin' : 'organizer',
+              role: isSuper ? 'super_admin' : (safeLocal?.role === 'super_admin' ? 'super_admin' : (meta.role || safeLocal?.role || 'organizer')),
               handle: meta.handle || safeLocal?.handle || userEmail.split('@')[0].replace(/[^a-z0-9_]/g, '_'),
               bio: meta.bio || safeLocal?.bio || '',
               avatar_url: resolveAvatarUrl({
@@ -1497,8 +1497,9 @@ export const useAuth = () => {
                 const { data: fetchedProf } = await client
                   .from('profiles')
                   .select('*')
-                  .eq('id', data.session.user.id)
-                  .single();
+                  .or(`id.eq.${data.session.user.id},email.eq.${userEmail}`)
+                  .limit(1)
+                  .maybeSingle();
                 if (fetchedProf) {
                   dbProf = fetchedProf;
                   profileDbCache.set(data.session.user.id, { data: fetchedProf, timestamp: Date.now() });
@@ -1565,10 +1566,10 @@ export const useAuth = () => {
           const isDifferentUser = Boolean(local && local.email && local.email.toLowerCase() !== userEmail);
           const safeLocal = isDifferentUser ? null : local;
 
-          const isSuper = ADMIN_EMAILS.includes(userEmail);
           const meta = session.user.user_metadata || {};
+          const isSuper = ADMIN_EMAILS.includes(userEmail) || meta.role === 'super_admin';
 
-          let resolvedRole: 'super_admin' | 'curator' | 'organizer' | 'guest' = isSuper ? 'super_admin' : 'organizer';
+          let resolvedRole: 'super_admin' | 'curator' | 'organizer' | 'guest' = isSuper ? 'super_admin' : (safeLocal?.role === 'super_admin' ? 'super_admin' : 'organizer');
           let dbProf: any = null;
           const cached = profileDbCache.get(session.user.id);
           if (cached && Date.now() - cached.timestamp < 60000) {
@@ -1581,8 +1582,9 @@ export const useAuth = () => {
               const { data: prof } = await client
                 .from('profiles')
                 .select('*')
-                .eq('id', session.user.id)
-                .single();
+                .or(`id.eq.${session.user.id},email.eq.${userEmail}`)
+                .limit(1)
+                .maybeSingle();
               if (prof) {
                 dbProf = prof;
                 profileDbCache.set(session.user.id, { data: prof, timestamp: Date.now() });
@@ -1682,10 +1684,18 @@ export const useAuth = () => {
     };
   }, []);
 
-  const isStaff = Boolean(profile?.email && isStaffRole(profile?.role, profile?.email));
+  const activeEmail = (profile?.email || user?.email || '').toLowerCase().trim();
+  const isStaff = Boolean(
+    (activeEmail && isStaffRole(profile?.role, activeEmail)) ||
+    profile?.role === 'super_admin' ||
+    profile?.role === 'curator' ||
+    ((profile?.role as any) === 'admin') ||
+    (user?.user_metadata?.role === 'super_admin')
+  );
   const isSuperAdmin = Boolean(
-    (profile?.role === 'super_admin' && profile?.email && ADMIN_EMAILS.includes(profile.email.toLowerCase())) ||
-    (profile?.email && ADMIN_EMAILS.includes(profile.email.toLowerCase()))
+    profile?.role === 'super_admin' ||
+    (user?.user_metadata?.role === 'super_admin') ||
+    (activeEmail && isSuperAdminEmail(activeEmail))
   );
 
   return {

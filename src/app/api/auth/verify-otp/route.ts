@@ -61,11 +61,21 @@ export async function POST(req: NextRequest) {
     const name = body.name || payload.name || email.split('@')[0];
     const password = body.password || payload.password;
     const role = body.role || payload.role || 'organizer';
-    const isSuper = ADMIN_EMAILS.includes(email);
-    const effectiveRole = isSuper ? 'super_admin' : role;
-    const handle = (body.handle || payload.handle || name.toLowerCase().replace(/[^a-z0-9_]/g, '_')).slice(0, 30);
-
     const supabase = getAdminClient();
+
+    let existingDbRole: string | null = null;
+    try {
+      const { data: existingProf } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('email', email)
+        .maybeSingle();
+      if (existingProf?.role) existingDbRole = existingProf.role;
+    } catch {}
+
+    const isSuper = ADMIN_EMAILS.includes(email) || existingDbRole === 'super_admin';
+    const effectiveRole = isSuper ? 'super_admin' : (existingDbRole || role);
+    const handle = (body.handle || payload.handle || name.toLowerCase().replace(/[^a-z0-9_]/g, '_')).slice(0, 30);
 
     // 2. Resolve or create user in Supabase Auth
     let userId: string | null = null;

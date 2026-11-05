@@ -21,7 +21,11 @@ import {
   LogIn,
   ArrowRight,
   ShieldCheck,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Clock,
+  Copy,
+  Check,
+  AlertTriangle,
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -50,6 +54,15 @@ export default function SingleClickCreateAIPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [progressStep, setProgressStep] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Approval Needed Modal State
+  const [createdEventData, setCreatedEventData] = useState<{
+    slug: string;
+    event: any;
+    missingAspects: string[];
+  } | null>(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // File Upload Handlers
   const handleFileProcess = (file: File) => {
@@ -143,8 +156,29 @@ export default function SingleClickCreateAIPage() {
       // Save to local store for instant client synchronization
       saveEvent(data.event);
 
-      setProgressStep('Event created! Opening preview...');
-      router.push(`/${data.slug}`);
+      const isPendingApproval = Boolean(
+        data.surety?.needsAdminApproval ||
+        data.event?.status === 'draft' ||
+        data.event?.theme?.approval_status === 'pending' ||
+        (data.event?.theme?.missing_aspects && data.event.theme.missing_aspects.length > 0)
+      );
+
+      if (isPendingApproval) {
+        setCreatedEventData({
+          slug: data.slug,
+          event: data.event,
+          missingAspects:
+            data.event?.theme?.missing_aspects ||
+            data.surety?.missingAspects ||
+            ['Some event details are incomplete (e.g. venue TBA) and require admin review before appearing in the public feed.'],
+        });
+        setShowApprovalModal(true);
+        setIsCreating(false);
+        setProgressStep(null);
+      } else {
+        setProgressStep('Event created! Opening preview...');
+        router.push(`/${data.slug}`);
+      }
     } catch (err: any) {
       console.error('Instant create error:', err);
       setErrorMessage(err.message || 'Single-click event creation failed. Please try again.');
@@ -552,6 +586,99 @@ export default function SingleClickCreateAIPage() {
           </div>
         </div>
       </main>
+
+      {/* Admin Approval Needed Popup Modal */}
+      {showApprovalModal && createdEventData && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="max-w-md w-full bg-[#0D0D10] border border-amber-500/40 rounded-3xl p-6 sm:p-7 shadow-2xl text-white space-y-5 animate-in zoom-in-95">
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6 animate-pulse" />
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/${createdEventData.slug}`)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition cursor-pointer"
+                title="Close and view event"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold mb-2">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Admin Approval Needed</span>
+              </div>
+              <h2 className="text-xl font-black text-white">Event Created Successfully!</h2>
+              <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                Your gathering was generated, but requires quick administrator approval before appearing in the public discovery feed because some details are incomplete:
+              </p>
+            </div>
+
+            {/* Missing Details Breakdown */}
+            <div className="p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2 text-xs">
+              <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block">
+                Pending Verification:
+              </span>
+              <ul className="space-y-1.5 text-zinc-300 text-[12px]">
+                {createdEventData.missingAspects.map((aspect, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-amber-400 shrink-0 mt-0.5">•</span>
+                    <span>{aspect}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Direct Active Link Info */}
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/60 font-medium">Your Direct Link (Active Now):</span>
+                <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  Direct RSVP Active
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/${createdEventData.slug}` : `https://vibe.swaniki.com/${createdEventData.slug}`}
+                  className="flex-1 bg-black/60 border border-white/15 px-3 py-2 rounded-xl text-xs font-mono text-zinc-300 focus:outline-none select-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = typeof window !== 'undefined' ? `${window.location.origin}/${createdEventData.slug}` : `https://vibe.swaniki.com/${createdEventData.slug}`;
+                    navigator.clipboard.writeText(l);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition shrink-0 cursor-pointer"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-white/50 leading-relaxed">
+                You can already share this direct link with your attendees to collect reservations. An admin will review and feature it in the public feed soon.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => router.push(`/${createdEventData.slug}`)}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#FF5500] hover:bg-[#FF661A] text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#FF5500]/25 cursor-pointer"
+              >
+                <span>View Event Page</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

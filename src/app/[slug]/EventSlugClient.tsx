@@ -211,12 +211,16 @@ export default function EventSlugClient({ slug, initialEvent, initialOrganizer }
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
               <span className="font-bold uppercase tracking-wide text-amber-300">
-                {isAdmin ? 'Admin Draft Preview:' : 'Host Direct Preview:'}
+                {isAdmin ? 'Admin Approval Required:' : 'Awaiting Admin Review:'}
               </span>
-              <span>This event was created via bot/invite and is directly accessible via this link.</span>
+              <span>
+                {isAdmin
+                  ? 'Some details are pending verification. Verify and publish live to make it discoverable.'
+                  : 'Some details (e.g. venue TBA) need review before appearing in the public feed. Your link is live and shareable!'}
+              </span>
             </div>
             {isAdmin && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={handleAdminPublish}
                   disabled={isPublishing}

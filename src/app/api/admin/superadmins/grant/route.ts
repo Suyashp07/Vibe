@@ -58,30 +58,62 @@ export async function POST(req: NextRequest) {
 
     const supabase = getAdminClient();
 
-    // 1. Check if profile already exists in Supabase
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, email, name, role')
-      .eq('email', email)
-      .maybeSingle();
-
     let updatedInDb = false;
+    let existingProfile: any = null;
 
-    if (existingProfile) {
-      // Elevate existing profile to super_admin
-      const { error: updateErr } = await supabase
+    // 1. Update or create profile in Supabase profiles table
+    try {
+      const { data: foundProfile } = await supabase
         .from('profiles')
-        .update({
-          role: 'super_admin',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingProfile.id);
+        .select('id, email, name, role')
+        .eq('email', email)
+        .maybeSingle();
 
-      if (updateErr) {
-        console.warn('[Grant Superadmin] Failed to update profiles role:', updateErr.message);
+      existingProfile = foundProfile;
+
+      if (existingProfile) {
+        // Elevate existing profile to super_admin (Note: profiles has no updated_at column)
+        const { error: updateErr } = await supabase
+          .from('profiles')
+          .update({ role: 'super_admin' })
+          .eq('id', existingProfile.id);
+
+        if (!updateErr) updatedInDb = true;
       } else {
-        updatedInDb = true;
+        // Pre-create profile as super_admin so on first login they are immediately recognized
+        const { error: insertErr } = await supabase
+          .from('profiles')
+          .insert({
+            id: `usr_${Date.now()}`,
+            email,
+            name: email.split('@')[0],
+            role: 'super_admin',
+            onboarded: true,
+            brand_color: '#0A0A0A',
+            brand_font: 'Inter',
+          });
+        if (!insertErr) updatedInDb = true;
       }
+    } catch (profErr) {
+      console.warn('[Grant Superadmin] Profile update warning:', profErr);
+    }
+
+    // 2. Synchronize Supabase auth.users metadata if user already registered
+    try {
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+      const matchedUser = usersData?.users?.find(
+        (u) => (u.email || '').toLowerCase() === email
+      );
+      if (matchedUser) {
+        await supabase.auth.admin.updateUserById(matchedUser.id, {
+          user_metadata: {
+            ...matchedUser.user_metadata,
+            role: 'super_admin',
+          },
+        });
+      }
+    } catch (authSyncErr) {
+      console.warn('[Grant Superadmin] Auth user metadata sync warning:', authSyncErr);
     }
 
     // 2. Add to dynamic in-memory registry
@@ -170,11 +202,27 @@ export async function DELETE(req: NextRequest) {
 
     const supabase = getAdminClient();
 
-    // 1. Downgrade in profiles table to organizer/curator
+    // 1. Downgrade in profiles table to organizer (Note: profiles has no updated_at column)
     await supabase
       .from('profiles')
-      .update({ role: 'organizer', updated_at: new Date().toISOString() })
+      .update({ role: 'organizer' })
       .eq('email', email);
+
+    // 2. Synchronize auth.users metadata if registered
+    try {
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+      const matchedUser = usersData?.users?.find(
+        (u) => (u.email || '').toLowerCase() === email
+      );
+      if (matchedUser) {
+        await supabase.auth.admin.updateUserById(matchedUser.id, {
+          user_metadata: {
+            ...matchedUser.user_metadata,
+            role: 'organizer',
+          },
+        });
+      }
+    } catch {}
 
     // 2. Remove from dynamic in-memory set
     dynamicSuperAdmins.delete(email);

@@ -340,8 +340,9 @@ export async function POST(req: NextRequest) {
         score: suretyScore,
         tier: surety.tier,
         missingAspects: surety.missingAspects,
-        autoApproved: true,
-        approvalStatus: 'approved',
+        autoApproved: surety.autoApproved,
+        approvalStatus: surety.autoApproved ? 'approved' : 'pending',
+        needsAdminApproval: !surety.autoApproved,
         label: surety.approvalLabel,
       },
     });

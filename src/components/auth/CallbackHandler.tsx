@@ -94,19 +94,20 @@ export function CallbackHandler({
           setStatus('Finalizing your profile...');
           const meta = user.user_metadata || {};
           const cleanEmail = (user.email || '').toLowerCase();
-          const isSuper = ADMIN_EMAILS.includes(cleanEmail);
+          const isSuper = ADMIN_EMAILS.includes(cleanEmail) || meta.role === 'super_admin';
 
           let dbProf: any = null;
           try {
             const { data } = await client
               .from('profiles')
               .select('*')
-              .eq('id', user.id)
-              .single();
+              .or(`id.eq.${user.id},email.eq.${cleanEmail}`)
+              .limit(1)
+              .maybeSingle();
             dbProf = data;
           } catch {}
 
-          const assignedRole = isSuper
+          const assignedRole = isSuper || dbProf?.role === 'super_admin'
             ? 'super_admin'
             : (dbProf?.role || meta.role || 'organizer');
 

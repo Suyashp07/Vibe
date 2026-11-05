@@ -37,6 +37,10 @@ export const DEPRECATED_ADMIN_EMAILS: string[] = [
 
 export const ADMIN_EMAILS: string[] = [
   ...PRIMARY_FOUNDERS,
+  'shifamansuri1929@gmail.com', // Granted Super Admin
+  'shifakhan29047@gmail.com', // Granted Super Admin
+  'suyashpandey4002@gmail.com', // Granted Super Admin
+  'swanikitechnologiesllm@gmail.com',
   ...(process.env.ADMIN_EMAILS
     ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
     : []),
@@ -57,7 +61,7 @@ export function isStaffRole(role?: string, email?: string): boolean {
     if (DEPRECATED_ADMIN_EMAILS.includes(clean)) return false;
     if (ADMIN_EMAILS.includes(clean)) return true;
   }
-  return role === 'super_admin' || role === 'curator';
+  return role === 'super_admin' || role === 'curator' || role === 'admin';
 }
 
 export function isSuperAdminEmail(email?: string): boolean {

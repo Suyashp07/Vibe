@@ -145,7 +145,15 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
   const rawTitle = (event.title || 'Event Details').trim();
   const cleanTitle = rawTitle.endsWith('.') ? rawTitle.slice(0, -1) : rawTitle;
 
-  const isPrivate = event.is_public === false || String(event.is_public) === 'false';
+  const isPendingReview = Boolean(
+    event.status === 'draft' ||
+    (event.theme as any)?.approval_status === 'pending' ||
+    (event.theme as any)?.admin_approved === false
+  );
+  const isExplicitlyPrivate = Boolean(
+    !isPendingReview &&
+    (event.is_public === false || String(event.is_public) === 'false' || event.visibility === 'private')
+  );
 
   // Check if current attendee already has a confirmed RSVP for this event
   useEffect(() => {
@@ -210,12 +218,21 @@ export default function UnifiedEventDetailView({ event }: { event: EventItem }) 
             <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between pointer-events-none z-20">
               <span
                 data-preserve-contrast="true"
-                className="preserve-light-contrast px-3 py-1 rounded-full bg-black/75 backdrop-blur-md text-[11px] font-semibold !text-white shadow-sm flex items-center gap-1.5 border border-white/20"
+                className={`preserve-light-contrast px-3 py-1 rounded-full backdrop-blur-md text-[11px] font-semibold !text-white shadow-sm flex items-center gap-1.5 border ${
+                  isPendingReview
+                    ? 'bg-amber-600/85 border-amber-400/40 text-white'
+                    : 'bg-black/75 border-white/20'
+                }`}
               >
-                {isPrivate ? (
+                {isPendingReview ? (
+                  <>
+                    <Clock className="w-3 h-3 text-amber-200" />
+                    <span className="!text-white font-bold">Under Review</span>
+                  </>
+                ) : isExplicitlyPrivate ? (
                   <>
                     <Lock className="w-3 h-3 text-amber-400" />
-                    <span className="!text-white">Private</span>
+                    <span className="!text-white">Private Link</span>
                   </>
                 ) : (
                   <>
