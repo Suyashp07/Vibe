@@ -87,7 +87,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
   }
 
   return (
-    <footer className="border-t border-black/10 dark:border-white/10 bg-white dark:bg-[#0A0A0C] mt-16 sm:mt-24 pt-12 sm:pt-16 pb-10 text-neutral-600 dark:text-white/60 font-sans transition-colors">
+    <footer className="border-t border-black/10 dark:border-white/10 bg-white dark:bg-[#0A0A0C] mt-6 sm:mt-10 pt-10 sm:pt-14 pb-10 text-neutral-600 dark:text-white/60 font-sans transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main 4-Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 pb-12">

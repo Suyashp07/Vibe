@@ -27,12 +27,14 @@ interface LocationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectCity?: (city: string) => void;
+  currentCity?: string;
 }
 
 export default function LocationModal({
   isOpen,
   onClose,
   onSelectCity,
+  currentCity,
 }: LocationModalProps) {
   const [search, setSearch] = useState('');
   const [isLocating, setIsLocating] = useState(false);

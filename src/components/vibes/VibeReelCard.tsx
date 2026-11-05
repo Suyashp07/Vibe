@@ -482,7 +482,6 @@ export default function VibeReelCard({
           <button
             type="button"
             onClick={() => setQuickJoinOpen(true)}
-            className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:opacity-95 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#08B9F5]/35 transition-all cursor-pointer"
             title="Join now"
             className="vibe-join-btn flex-1 py-3 px-4 rounded-2xl bg-[#0066F5] hover:bg-[#0052cc] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer"
             style={{ color: "#FFFFFF" }}

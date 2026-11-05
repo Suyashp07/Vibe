@@ -28,10 +28,16 @@ import {
   GraduationCap,
   Clock,
   Ticket,
-  FilterX
+  FilterX,
+  Download,
+  Smartphone,
+  MessageCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EventCard from '@/components/ui/EventCard';
+import { triggerPWAInstall } from '@/components/pwa/PWARegister';
+import MomentsWall from '@/components/events/MomentsWall';
 import {
   getUserCity,
   getUserCoords,
@@ -1005,7 +1011,7 @@ export default function WhatsOnFeed() {
           {/* ========================================================================= */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-extrabold text-[#07133A] dark:text-white tracking-tight">
+              <h2 className="discovery-feed-title text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#07133A] dark:text-white tracking-tight leading-tight">
                 Find your next good time
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -1022,7 +1028,7 @@ export default function WhatsOnFeed() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search events, venues..."
-                className="w-full pl-10 pr-12 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white/90 dark:bg-slate-900/90 shadow-sm text-sm text-[#07133A] dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#07133A]/20 dark:focus:ring-white/20 transition-all"
+                className="w-full pl-10 pr-12 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 shadow-[0_4px_16px_rgba(0,0,0,0.06)] text-sm text-[#07133A] dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#07133A]/20 dark:focus:ring-white/20 transition-all"
               />
               {searchQuery ? (
                 <button
@@ -1050,7 +1056,7 @@ export default function WhatsOnFeed() {
               {CATEGORY_FILTERS.map((cat) => {
                 const active = categoryFilter === cat;
                 const config = CATEGORY_CONFIG[cat];
-                const Icon = config.icon;
+                const Icon = config.icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
                 return (
                   <button
                     key={cat}
@@ -1058,10 +1064,19 @@ export default function WhatsOnFeed() {
                     onClick={() => setCategoryFilter(cat)}
                     className={`category-pill rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                       active
-                        ? 'category-pill-active bg-[#07133A] text-white shadow-sm dark:bg-white dark:text-[#07133A]'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-300'
+                        ? 'category-pill-active bg-[#07133A] text-white shadow-sm border border-[#07133A]'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-300 border border-slate-200/90 dark:border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
                     }`}
-                    style={active ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
+                    style={
+                      active
+                        ? {
+                            backgroundColor: '#07133A',
+                            borderColor: '#07133A',
+                            color: '#FFFFFF',
+                            WebkitTextFillColor: '#FFFFFF',
+                          }
+                        : undefined
+                    }
                   >
                     <Icon
                       className="w-3.5 h-3.5 shrink-0"
@@ -1085,7 +1100,7 @@ export default function WhatsOnFeed() {
                   className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap border ${
                     dateFilter !== 'anytime'
                       ? 'feed-active-btn bg-[#07133A] text-white border-[#07133A] shadow-sm dark:bg-white dark:text-[#07133A] dark:border-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/80 dark:border-white/10'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
                   }`}
                   style={dateFilter !== 'anytime' ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
                 >
@@ -1150,7 +1165,7 @@ export default function WhatsOnFeed() {
                   distanceFilter !== 'Off' ||
                   priceFilter !== 'all'
                     ? 'feed-active-btn bg-[#07133A] text-white border-[#07133A] shadow-sm dark:bg-white dark:text-[#07133A] dark:border-white'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/80 dark:border-white/10'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
                 }`}
                 style={
                   showFiltersDrawer || selectedMoods.length > 0 || distanceFilter !== 'Off' || priceFilter !== 'all'
@@ -1277,7 +1292,7 @@ export default function WhatsOnFeed() {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-white/10 shadow-sm space-y-4 overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.08)] space-y-4 overflow-hidden"
               >
                 {/* 1. Price / Passes Option */}
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1405,28 +1420,196 @@ export default function WhatsOnFeed() {
             </div>
           )}
 
-                    {/* ========================================================================= */}
-          {/* 4. BRING YOUR PEOPLE TOGETHER BANNER                                      */}
           {/* ========================================================================= */}
-          <div className="rounded-2xl sm:rounded-3xl bg-[#111114] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#08B9F5]/15 border border-[#08B9F5]/30 flex items-center justify-center text-[#08B9F5] shrink-0">
-                <Users className="w-6 h-6" />
+          {/* HOST QUICK SHORT EVENT BANNER CARD (SLIM CTA STRIP)                       */}
+          {/* ========================================================================= */}
+          <section className="host-card" aria-label="Host an event with us">
+            <style dangerouslySetInnerHTML={{ __html: `
+              .host-card {
+                position: relative;
+                overflow: hidden;
+                background: linear-gradient(135deg, #0b2a6f 0%, #1d4ed8 100%);
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 10px 30px -5px rgba(29, 78, 216, 0.25);
+                padding: 24px 32px;
+                margin: 36px 0 16px 0;
+                font-family: var(--font-inter), 'Segoe UI', system-ui, -apple-system, sans-serif;
+              }
+              .host-card-glow {
+                position: absolute;
+                top: -40px;
+                right: -40px;
+                width: 180px;
+                height: 180px;
+                background: radial-gradient(circle, rgba(147, 197, 253, 0.35) 0%, transparent 70%);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1;
+              }
+              .host-card-inner {
+                position: relative;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 24px;
+              }
+              .host-card-text {
+                flex: 1;
+                min-width: 0;
+              }
+              .host-card-heading {
+                font-family: var(--font-bricolage), 'Bricolage Grotesque', var(--font-outfit), 'Outfit', -apple-system, sans-serif !important;
+                font-size: 25px;
+                font-weight: 800;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                margin: 0 0 6px 0;
+                line-height: 1.22;
+                letter-spacing: -0.02em;
+              }
+              .host-card-subtext {
+                font-family: var(--font-inter), -apple-system, sans-serif;
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.88) !important;
+                -webkit-text-fill-color: rgba(255, 255, 255, 0.88) !important;
+                margin: 0;
+                line-height: 1.45;
+                max-width: 640px;
+              }
+              .host-card-buttons {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-shrink: 0;
+              }
+              .host-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 10px 22px;
+                border-radius: 9999px;
+                font-size: 14px;
+                font-weight: 600;
+                text-decoration: none;
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+                outline: none;
+                white-space: nowrap;
+              }
+              .host-btn:hover {
+                transform: translateY(-2px);
+              }
+              .host-btn:focus-visible {
+                outline: 2px solid #ffffff;
+                outline-offset: 3px;
+              }
+              .host-btn-whatsapp {
+                background-color: #ffffff;
+                color: #075e54 !important;
+                -webkit-text-fill-color: #075e54 !important;
+                border: 1px solid transparent;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+              }
+              .host-btn-whatsapp:hover {
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+                background-color: #f8fafc;
+              }
+              .host-btn-telegram {
+                background-color: transparent;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                border: 1.5px solid rgba(255, 255, 255, 0.9);
+              }
+              .host-btn-telegram:hover {
+                background-color: rgba(255, 255, 255, 0.12);
+                border-color: #ffffff;
+              }
+              @media (max-width: 720px) {
+                .host-card {
+                  padding: 20px 18px;
+                }
+                .host-card-inner {
+                  flex-direction: column;
+                  align-items: stretch;
+                  gap: 16px;
+                }
+                .host-card-heading {
+                  font-size: 20px;
+                }
+                .host-card-subtext {
+                  font-size: 13px;
+                }
+                .host-card-buttons {
+                  flex-direction: column;
+                  width: 100%;
+                  gap: 10px;
+                }
+                .host-btn {
+                  width: 100%;
+                }
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .host-btn {
+                  transition: none;
+                }
+                .host-btn:hover {
+                  transform: none;
+                }
+              }
+            `}} />
+
+            {/* Soft light-blue glow in top-right corner */}
+            <div className="host-card-glow" aria-hidden="true" />
+
+            <div className="host-card-inner">
+              <div className="host-card-text">
+                <h3 className="host-card-heading">
+                  Host a quick, short event with us
+                </h3>
+                <p className="host-card-subtext">
+                  Webinar, meetup or mini workshop: we handle the setup, you just bring the idea. Message us and your event can be live in no time.
+                </p>
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-black text-white">Bring your people together.</h3>
-                <p className="text-xs sm:text-sm text-white/50">Something in mind? Make it a Vibe in 30 seconds.</p>
+
+              <div className="host-card-buttons">
+                {/* 
+                  REPLACE WHATSAPP NUMBER BELOW:
+                  Format: https://wa.me/<country_code><phone_number>?text=<encoded_message>
+                */}
+                <a
+                  href="https://wa.me/919183123093?text=Hi%2C%20I%20want%20to%20host%20a%20quick%20short%20event%20with%20you!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="host-btn host-btn-whatsapp"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.41a8.17 8.17 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                  </svg>
+                  <span>WhatsApp</span>
+                </a>
+
+                {/* 
+                  REPLACE TELEGRAM USERNAME BELOW:
+                  Format: https://t.me/<your_username>
+                */}
+                <a
+                  href="https://t.me/vibe_events"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="host-btn host-btn-telegram"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                  </svg>
+                  <span>Telegram</span>
+                </a>
               </div>
             </div>
-
-            <Link
-              href="/create"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer hover:border-[#08B9F5] hover:text-[#08B9F5] shrink-0"
-            >
-              <span>Host an event</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+          </section>
+          <MomentsWall />
         </div>
       </div>
     </>

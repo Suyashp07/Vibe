@@ -2145,9 +2145,10 @@ function VibesContent() {
                         }}
                         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-gradient-to-r from-[#0052cc] to-[#0066F5] text-white shadow-md shadow-blue-600/25'
+                            ? 'category-active-btn bg-gradient-to-r from-[#0052cc] to-[#0066F5] text-white shadow-md shadow-blue-600/25'
                             : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-neutral-300 dark:hover:bg-white/5 dark:hover:text-white'
                         }`}
+                        style={isSelected ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
                       >
                         <div className="flex items-center gap-2.5">
                           <span
@@ -2155,7 +2156,10 @@ function VibesContent() {
                               isSelected ? 'bg-cyan-300' : 'bg-slate-300 dark:bg-slate-600'
                             }`}
                           />
-                          <span className={`text-xs sm:text-sm ${isSelected ? 'font-bold' : 'font-medium'}`}>
+                          <span
+                            className={`text-xs sm:text-sm ${isSelected ? 'font-bold text-white' : 'font-medium'}`}
+                            style={isSelected ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
+                          >
                             {cat.label}
                           </span>
                         </div>
@@ -2167,11 +2171,15 @@ function VibesContent() {
                                 ? 'bg-white/20 text-white'
                                 : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-neutral-400'
                             }`}
+                            style={isSelected ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
                           >
                             {count}
                           </span>
                           {isSelected && (
-                            <Check className="w-4 h-4 stroke-[2.5] text-white shrink-0" />
+                            <Check
+                              className="w-4 h-4 stroke-[2.5] text-white shrink-0"
+                              style={{ stroke: '#FFFFFF', color: '#FFFFFF' }}
+                            />
                           )}
                         </div>
                       </button>
@@ -2201,11 +2209,14 @@ function VibesContent() {
                           }}
                           className={`py-2 px-3 rounded-xl text-xs font-semibold text-center transition-all cursor-pointer ${
                             isCitySelected
-                              ? 'bg-[#0066F5] text-white shadow-md shadow-blue-500/25'
+                              ? 'city-active-btn bg-[#0066F5] text-white shadow-md shadow-blue-500/25'
                               : 'bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-200'
                           }`}
+                          style={isCitySelected ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}
                         >
-                          {city.name}
+                          <span style={isCitySelected ? { color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' } : undefined}>
+                            {city.name}
+                          </span>
                         </button>
                       );
                     })}
@@ -2221,11 +2232,16 @@ function VibesContent() {
                     setFilterOpen(false);
                     setCreateModalOpen(true);
                   }}
-                  className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0B1E48] to-[#0066F5] hover:brightness-110 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
-                  style={{ color: '#FFFFFF' }}
+                  className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0052cc] to-[#0066F5] hover:brightness-110 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}
                 >
-                  <Plus className="w-4 h-4 stroke-[2.5]" style={{ color: '#FFFFFF' }} />
-                  <span className="font-bold text-white">Host an Instant Vibe</span>
+                  <Plus className="w-4 h-4 stroke-[2.5]" style={{ stroke: '#FFFFFF', color: '#FFFFFF' }} />
+                  <span
+                    className="font-bold text-white"
+                    style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}
+                  >
+                    Host an Instant Vibe
+                  </span>
                 </button>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-2 font-medium">
                   Free 60-second spontaneous gathering

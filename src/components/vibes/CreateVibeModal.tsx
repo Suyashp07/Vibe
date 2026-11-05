@@ -63,17 +63,6 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
 
     setSubmitting(true);
 
-    const FLASH_COVERS: Record<string, string> = {
-      cricket: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
-      football: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&auto=format&fit=crop&q=80',
-      badminton: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
-      pickleball: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&auto=format&fit=crop&q=80',
-      coffee: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80',
-      games: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1200&auto=format&fit=crop&q=80',
-      music: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80',
-      other: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&auto=format&fit=crop&q=80',
-    };
-
     const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}-${nanoid(5)}`;
     const newFlashEvent: any = {
       id: `flash-${nanoid(8)}`,
@@ -102,19 +91,17 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
       start_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
       end_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
       timezone: 'Asia/Kolkata',
-      capacity: limitSpots ? spots : null,
+      capacity: limitSpots ? spots : 25,
       is_public: true,
       status: 'live',
-      ai_generated: false,
       is_flash: true,
       flash_activity: activity,
       spots_limit: limitSpots ? spots : undefined,
-      spots_filled: limitSpots ? 1 : 0,
-      whatsapp_host_phone: profile?.phone || bridgePhone,
+      spots_filled: 1,
       vibe_cheers_count: 0,
-      flash_tags: [activity, city, 'Flash Vibe'],
+      flash_tags: [activity.toUpperCase(), city, 'Instant Vibe'],
       faq: [
-        { q: 'What do I need to bring?', a: 'Just bring your good energy and casual gear!' }
+        { q: 'How do I join?', a: 'Tap Join Now to verify your spot instantly.' },
       ],
       rsvp_form_config: {
         ask_plus_one: true,
@@ -140,19 +127,20 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
   };
 
   return (
-    <div className="dark-dialog fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="dark-dialog-content w-full sm:max-w-lg bg-[#111318] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden"
+        className="w-full sm:max-w-lg bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl text-slate-900 dark:text-white relative overflow-hidden transition-colors max-h-[90dvh] overflow-y-auto no-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient Top Glow */}
-        <div className="absolute -top-24 -left-20 w-56 h-56 bg-gradient-to-br from-[#075CE5]/30 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -left-20 w-56 h-56 bg-gradient-to-br from-[#075CE5]/10 to-purple-600/10 dark:from-[#075CE5]/20 dark:to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-white/70 dark:hover:text-white transition-colors cursor-pointer"
+          aria-label="Close"
         >
           <X className="w-4 h-4" />
         </button>
@@ -164,29 +152,29 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
             <span>Vibe Creator</span>
           </span>
           {bridgeConnected && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               WhatsApp Bridge Online
             </span>
           )}
         </div>
 
-        <h3 className="text-xl font-black text-white mb-1">
+        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">
           Post a Flash Event in 10 Seconds
         </h3>
-        <p className="text-xs text-white/60 mb-5">
+        <p className="text-xs text-slate-500 dark:text-white/60 mb-5">
           Spontaneous meetups made for right now — pickup cricket, midnight chai, co-working, or gaming.
         </p>
 
         {/* Tabs: WhatsApp vs Web Quick Form */}
-        <div className="flex rounded-xl bg-white/5 p-1 mb-5 border border-white/10">
+        <div className="flex rounded-xl bg-slate-100 dark:bg-white/5 p-1 mb-5 border border-slate-200 dark:border-white/10">
           <button
             type="button"
             onClick={() => setActiveTab('whatsapp')}
             className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === 'whatsapp'
-                ? 'bg-[#25D366] text-black shadow-md'
-                : 'text-white/60 hover:text-white'
+                ? 'bg-[#25D366] text-white shadow-md'
+                : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5 fill-current" />
@@ -197,8 +185,8 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
             onClick={() => setActiveTab('quickform')}
             className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === 'quickform'
-                ? 'bg-white text-black shadow-md'
-                : 'text-white/60 hover:text-white'
+                ? 'bg-white dark:bg-white/15 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
             }`}
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
@@ -208,19 +196,19 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
 
         {activeTab === 'whatsapp' ? (
           <div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-4 space-y-2">
-              <p className="text-xs font-semibold text-white/90">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 mb-4 space-y-2">
+              <p className="text-xs font-bold text-slate-900 dark:text-white/90">
                 💬 How to post using WhatsApp:
               </p>
-              <ol className="text-xs text-white/70 space-y-1.5 list-decimal pl-4">
+              <ol className="text-xs text-slate-600 dark:text-white/70 space-y-1.5 list-decimal pl-4">
                 <li>Tap below to open WhatsApp with the bridge bot.</li>
-                <li>Send a message starting with <code className="bg-black/50 px-1.5 py-0.5 rounded text-[#075CE5] font-mono">/vibe</code> followed by your plans.</li>
+                <li>Send a message starting with <code className="bg-slate-200 dark:bg-black/50 px-1.5 py-0.5 rounded text-[#075CE5] font-mono font-bold">/vibe</code> followed by your plans.</li>
                 <li>Gemini AI will extract details, publish it to Vibe Instant, and reply with your live link!</li>
               </ol>
             </div>
 
             <div className="mb-4">
-              <p className="text-[11px] font-bold text-white/60 uppercase tracking-wider mb-2">
+              <p className="text-[11px] font-bold text-slate-500 dark:text-white/60 uppercase tracking-wider mb-2">
                 Tap a template to launch WhatsApp:
               </p>
               <div className="space-y-2">
@@ -230,9 +218,9 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                     href={getWhatsAppPromptUrl(p)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-xs text-white/90 transition-all cursor-pointer flex items-center justify-between group"
+                    className="block p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white/90 transition-all cursor-pointer flex items-center justify-between group"
                   >
-                    <span className="truncate pr-2">{p}</span>
+                    <span className="truncate pr-2 font-medium">{p}</span>
                     <ArrowRight className="w-3.5 h-3.5 text-[#25D366] shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </a>
                 ))}
@@ -243,9 +231,9 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
               href={`https://wa.me/${bridgePhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('/vibe ')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 transition-all cursor-pointer"
+              className="w-full py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer"
             >
-              <MessageSquare className="w-4 h-4 fill-black" />
+              <MessageSquare className="w-4 h-4 fill-white" />
               <span>Open WhatsApp & Post Live Vibe</span>
             </a>
           </div>
@@ -255,7 +243,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
             {!createdSuccess ? (
               <form onSubmit={handleQuickFormSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-white/70 uppercase tracking-wider mb-1">
                     Activity Type
                   </label>
                   <div className="grid grid-cols-4 gap-1.5">
@@ -275,8 +263,8 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                         onClick={() => setActivity(act.id)}
                         className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                           activity === act.id
-                            ? 'bg-[#075CE5] text-white border-[#075CE5]'
-                            : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                            ? 'bg-[#075CE5] text-white border-[#075CE5] shadow-xs'
+                            : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'
                         }`}
                       >
                         {act.label}
@@ -286,7 +274,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-white/70 uppercase tracking-wider mb-1">
                     What's the Plan? (Title)
                   </label>
                   <input
@@ -295,13 +283,13 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                     placeholder="e.g. 6v6 Box Cricket Match at Turf"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#075CE5]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 text-sm focus:outline-none focus:bg-white focus:border-[#075CE5] transition-colors"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-white/70 uppercase tracking-wider mb-1">
                       Venue / Turf Name
                     </label>
                     <input
@@ -310,18 +298,18 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                       placeholder="e.g. Bandra Urban Turf"
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#075CE5]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 text-sm focus:outline-none focus:bg-white focus:border-[#075CE5] transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-white/70 uppercase tracking-wider mb-1">
                       City
                     </label>
                     <select
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1C1F26] border border-white/10 text-white text-sm focus:outline-none focus:border-[#075CE5]"
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#1C1F26] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-[#075CE5] transition-colors"
                     >
                       <option value="Mumbai">Mumbai</option>
                       <option value="Bengaluru">Bengaluru</option>
@@ -333,7 +321,7 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-white/70 uppercase tracking-wider mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-white/70 uppercase tracking-wider mb-1">
                     When?
                   </label>
                   <input
@@ -341,12 +329,12 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                     value={timeText}
                     onChange={(e) => setTimeText(e.target.value)}
                     placeholder="e.g. Tonight at 8 PM"
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#075CE5]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 text-sm focus:outline-none focus:bg-white focus:border-[#075CE5] transition-colors"
                   />
                 </div>
 
                 {/* Optional Spots / Max Persons Limit */}
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -354,21 +342,21 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                       onChange={(e) => setLimitSpots(e.target.checked)}
                       className="rounded accent-[#075CE5] w-4 h-4 cursor-pointer"
                     />
-                    <span className="text-xs text-white/90 font-semibold">
+                    <span className="text-xs text-slate-800 dark:text-white/90 font-semibold">
                       Need a specific number of players / persons?
                     </span>
                   </label>
 
                   {limitSpots && (
-                    <div className="mt-2.5 pt-2.5 border-t border-white/10 flex items-center justify-between gap-3 animate-in fade-in duration-200">
-                      <span className="text-xs text-white/60">How many spots / players needed?</span>
+                    <div className="mt-2.5 pt-2.5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                      <span className="text-xs text-slate-600 dark:text-white/60">How many spots / players needed?</span>
                       <input
                         type="number"
                         min={2}
                         max={100}
                         value={spots}
                         onChange={(e) => setSpots(parseInt(e.target.value, 10) || 8)}
-                        className="w-20 px-3 py-1.5 rounded-lg bg-black/40 border border-white/20 text-white text-sm text-center font-bold focus:outline-none focus:border-[#075CE5]"
+                        className="w-20 px-3 py-1.5 rounded-lg bg-white dark:bg-black/40 border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white text-sm text-center font-bold focus:outline-none focus:border-[#075CE5]"
                       />
                     </div>
                   )}
@@ -377,24 +365,24 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#075CE5]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:brightness-110 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? 'Publishing Vibe...' : '⚡ Post to Vibe Instant Stream'}
                 </button>
               </form>
             ) : (
               <div className="text-center py-6">
-                <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center mx-auto mb-3">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h4 className="text-lg font-black text-white mb-1">Vibe is Live!</h4>
-                <p className="text-xs text-white/70 mb-4">
+                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">Vibe is Live!</h4>
+                <p className="text-xs text-slate-600 dark:text-white/70 mb-4">
                   Your event is now showing in the Vibe Instant feed for users in {city}.
                 </p>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-[#075CE5] text-white font-bold text-xs shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-[#075CE5] hover:bg-[#064ec7] text-white font-bold text-xs shadow-md cursor-pointer transition-colors"
                 >
                   View in Instant
                 </button>

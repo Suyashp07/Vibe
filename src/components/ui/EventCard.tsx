@@ -124,7 +124,7 @@ export default function EventCard({
     <div
       onClick={handleCardClick}
       data-cursor="view"
-      className="group relative rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(7,19,58,0.06)] hover:shadow-[0_12px_32px_rgba(7,19,58,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer select-none"
+      className="event-card group relative rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/10 shadow-[0_10px_25px_-5px_rgba(15,23,42,0.08),0_8px_10px_-6px_rgba(15,23,42,0.05)] hover:shadow-[0_20px_35px_-5px_rgba(15,23,42,0.16),0_10px_15px_-5px_rgba(15,23,42,0.08)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer select-none"
     >
       {/* Image Thumbnail (Top) - Aspect 16/10 with minimal badges */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
@@ -193,7 +193,7 @@ export default function EventCard({
           <button
             type="button"
             onClick={handleCardClick}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#07133A] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-white dark:text-slate-200 dark:hover:text-[#07133A] transition-all duration-200 cursor-pointer"
+            className="event-card-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#08B9F5] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-[#08B9F5] dark:text-slate-200 dark:hover:text-white transition-all duration-200 cursor-pointer"
           >
             <span>View Details</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
