@@ -29,80 +29,14 @@ import HostInboxDrawer from '@/components/communication/HostInboxDrawer';
 import {
   getEvents,
   getRSVPs,
+  getEventMessages,
   deleteEvent,
   syncEventsWithSupabase,
   syncRSVPsWithSupabase,
   subscribeToStore
 } from '@/lib/store';
-import { EventItem, RSVPItem } from '@/types';
+import { EventItem, RSVPItem, EventDirectMessage } from '@/types';
 import { useAuth, signInWithGoogle, getLocalAuthSession } from '@/lib/auth';
-
-// Default sample events matching the exact design reference screenshot
-const SAMPLE_WORKSPACE_EVENTS = [
-  {
-    id: 'sample-1',
-    slug: 'indore-box-cricket-championship',
-    title: 'Indore Box Cricket Championship',
-    start_at: '2026-10-24T19:00:00+05:30',
-    location_name: 'Arera Arena, Ground 2',
-    city: 'Indore',
-    formatted_date: 'Sun, 24 Oct · 7:00 PM',
-    cover_image_url: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&auto=format&fit=crop&q=80',
-    status: 'published' as const,
-    guests_count: 10,
-    capacity: 14,
-    category: 'CRICKET',
-    priceText: '₹150',
-  },
-  {
-    id: 'sample-2',
-    slug: 'weekend-standup-comedy-night',
-    title: 'Weekend Standup Comedy Night',
-    start_at: '2026-10-25T20:00:00+05:30',
-    location_name: 'The Piano Project, Vijay Nagar',
-    city: 'Indore',
-    formatted_date: 'Mon, 25 Oct · 8:00 PM',
-    cover_image_url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&auto=format&fit=crop&q=80',
-    status: 'published' as const,
-    guests_count: 45,
-    capacity: 50,
-    category: 'COMEDY',
-    priceText: '₹299',
-  },
-  {
-    id: 'sample-3',
-    slug: 'indore-tech-founders-meetup',
-    title: 'Indore Tech Founders Meetup',
-    start_at: '2026-10-28T18:30:00+05:30',
-    location_name: 'Workie Coworking, Sapna Sangeeta',
-    city: 'Indore',
-    formatted_date: 'Thu, 28 Oct · 6:30 PM',
-    cover_image_url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&auto=format&fit=crop&q=80',
-    status: 'published' as const,
-    guests_count: 61,
-    capacity: 80,
-    category: 'TECH & STARTUPS',
-    priceText: 'Free',
-  },
-];
-
-const SAMPLE_PAST_EVENTS = [
-  {
-    id: 'sample-past-1',
-    slug: 'indore-open-mic-acoustic-evening',
-    title: 'Indore Open Mic & Acoustic Evening',
-    start_at: '2026-10-18T18:00:00+05:30',
-    location_name: 'Chai Kapi, Old Palasia',
-    city: 'Indore',
-    formatted_date: 'Sun, 18 Oct · 6:00 PM',
-    cover_image_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80',
-    status: 'published' as const,
-    guests_count: 28,
-    capacity: 30,
-    category: 'MUSIC & POETRY',
-    priceText: '₹99',
-  },
-];
 
 function formatEventDate(dateStr?: string) {
   if (!dateStr) return 'Date TBA';
@@ -153,6 +87,16 @@ function DashboardInner() {
     }
     return [];
   });
+  const [messages, setMessages] = useState<EventDirectMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return getEventMessages();
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [isSyncing, setIsSyncing] = useState(true);
 
   // Tabs: 'upcoming' | 'past' | 'drafts'
@@ -172,6 +116,7 @@ function DashboardInner() {
     const unsub = subscribeToStore(() => {
       setEvents(getEvents());
       setRsvps(getRSVPs());
+      setMessages(getEventMessages());
     });
     return () => unsub();
   }, []);
@@ -189,6 +134,7 @@ function DashboardInner() {
     } finally {
       setEvents(getEvents());
       setRsvps(getRSVPs());
+      setMessages(getEventMessages());
       setIsSyncing(false);
     }
   };
@@ -199,12 +145,10 @@ function DashboardInner() {
 
   // Events hosted by this user
   const hostEvents = useMemo(() => {
-    if (!profile) return [];
-
-    const profileId = (profile.id || '').toLowerCase();
-    const profileHandle = (profile.handle || '').toLowerCase();
-    const profileName = (profile.name || '').toLowerCase();
-    const profileEmail = (profile.email || '').toLowerCase();
+    const profileId = (profile?.id || '').toLowerCase();
+    const profileHandle = (profile?.handle || '').toLowerCase();
+    const profileName = (profile?.name || '').toLowerCase();
+    const profileEmail = (profile?.email || '').toLowerCase();
 
     return events.filter((e) => {
       const eOrgId = (e.organizer_id || '').toLowerCase();
@@ -212,27 +156,34 @@ function DashboardInner() {
       const eOrgName = (e.organizer_name || '').toLowerCase();
       const eOrgEmail = (e.organizer_email || '').toLowerCase();
 
-      return (
-        (profileId && eOrgId === profileId) ||
-        (profileHandle && eOrgHandle === profileHandle) ||
-        (profileName && (eOrgName === profileName || eOrgName.includes(profileName))) ||
-        (profileEmail && eOrgEmail === profileEmail)
-      );
+      if (profile) {
+        if (profile.role === 'super_admin') return true;
+        if (profileId && eOrgId === profileId) return true;
+        if (profileHandle && eOrgHandle === profileHandle) return true;
+        if (profileName && (eOrgName === profileName || eOrgName.includes(profileName))) return true;
+        if (profileEmail && eOrgEmail === profileEmail) return true;
+      }
+
+      // Also capture events created locally on this device/browser
+      if (eOrgId === 'org-local' || (!eOrgId && !e.id?.startsWith('sample-'))) return true;
+
+      return false;
     });
   }, [events, profile]);
 
-  // Sample workspace preview applies for guests or when host has no personal hosted events yet
-  const isSampleWorkspace = hostEvents.length === 0;
+  // Messages corresponding to host's events
+  const hostMessages = useMemo(() => {
+    const hostEventIds = new Set(hostEvents.map((e) => e.id));
+    return messages.filter((m) => hostEventIds.has(m.event_id) && !m.parent_id);
+  }, [messages, hostEvents]);
+
+  const unreadMessagesCount = useMemo(() => {
+    return hostMessages.filter((m) => !m.is_read).length;
+  }, [hostMessages]);
 
   // Compute live list of events mapped to display row item format
   const mappedHostEvents = useMemo(() => {
     const now = new Date();
-
-    if (isSampleWorkspace) {
-      if (activeTab === 'upcoming') return SAMPLE_WORKSPACE_EVENTS;
-      if (activeTab === 'past') return SAMPLE_PAST_EVENTS;
-      return [];
-    }
 
     const filtered = hostEvents.filter((ev) => {
       if (activeTab === 'drafts') return ev.status === 'draft';
@@ -282,7 +233,7 @@ function DashboardInner() {
         originalEvent: ev,
       };
     });
-  }, [hostEvents, isSampleWorkspace, activeTab, rsvps]);
+  }, [hostEvents, activeTab, rsvps]);
 
   // Filter events by search input
   const filteredEvents = useMemo(() => {
@@ -300,9 +251,6 @@ function DashboardInner() {
 
   // Tab counts
   const tabCounts = useMemo(() => {
-    if (isSampleWorkspace) {
-      return { upcoming: 3, past: 1, drafts: 0 };
-    }
     const now = new Date();
     const upcoming = hostEvents.filter((e) => {
       if (e.status === 'draft') return false;
@@ -312,21 +260,13 @@ function DashboardInner() {
     const past = hostEvents.filter((e) => e.start_at && new Date(e.start_at) < now).length;
     const drafts = hostEvents.filter((e) => e.status === 'draft').length;
     return { upcoming, past, drafts };
-  }, [hostEvents, isSampleWorkspace]);
+  }, [hostEvents]);
 
   // Metric values
   const displayMetrics = useMemo(() => {
-    if (isSampleWorkspace) {
-      return {
-        upcoming: '3',
-        guests: '116',
-        messages: '3',
-        revenue: '₹18,466',
-      };
-    }
-
+    const hostEventIds = new Set(hostEvents.map((e) => e.id));
     const totalGuests = rsvps.filter(
-      (r) => hostEvents.some((e) => e.id === r.event_id) && r.status === 'confirmed'
+      (r) => hostEventIds.has(r.event_id) && r.status === 'confirmed'
     ).length;
 
     // Calculate revenue based on ticket prices
@@ -346,10 +286,10 @@ function DashboardInner() {
     return {
       upcoming: String(tabCounts.upcoming),
       guests: String(totalGuests),
-      messages: String(Math.max(hostEvents.length > 0 ? 2 : 0, totalGuests > 0 ? 3 : 0)),
+      messages: String(hostMessages.length),
       revenue: formattedRev,
     };
-  }, [isSampleWorkspace, hostEvents, rsvps, tabCounts.upcoming]);
+  }, [hostEvents, rsvps, tabCounts.upcoming, hostMessages.length]);
 
   const handleDelete = (id: string, title: string) => {
     if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
@@ -405,6 +345,11 @@ function DashboardInner() {
             >
               <MessageSquare className="w-4 h-4 text-[#0066F5]" />
               <span>Guest Messages ({displayMetrics.messages})</span>
+              {unreadMessagesCount > 0 && (
+                <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {unreadMessagesCount} new
+                </span>
+              )}
             </button>
 
             <Link
@@ -433,7 +378,7 @@ function DashboardInner() {
               </div>
               <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-2">
                 <TrendingUp className="w-3.5 h-3.5" />
-                <span>Live in your city</span>
+                <span>{tabCounts.upcoming > 0 ? 'Live in your city' : 'No active gatherings'}</span>
               </div>
             </div>
           </div>
@@ -484,9 +429,11 @@ function DashboardInner() {
                 <span className="text-2xl sm:text-3xl font-black text-[#0A1128] dark:text-white tracking-tight">
                   {displayMetrics.messages} Threads
                 </span>
-                <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  2 new
-                </span>
+                {unreadMessagesCount > 0 && (
+                  <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {unreadMessagesCount} new
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 mt-2 hover:underline">
                 <span>Click to open inbox</span>
@@ -538,9 +485,11 @@ function DashboardInner() {
             >
               <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
               <span>Guest Messages ({displayMetrics.messages})</span>
-              <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                2 new
-              </span>
+              {unreadMessagesCount > 0 && (
+                <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {unreadMessagesCount} new
+                </span>
+              )}
             </button>
           </div>
 
@@ -570,19 +519,37 @@ function DashboardInner() {
         {/* ========================================================= */}
         <div className="space-y-4">
           {filteredEvents.length === 0 ? (
-            <div className="py-16 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-white dark:bg-[#111318]">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                {searchQuery
-                  ? `No events matching "${searchQuery}"`
-                  : activeTab === 'past'
-                  ? 'No past events found'
-                  : 'No draft events found'}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {searchQuery
-                  ? 'Try searching with a different keyword or clear the search field.'
-                  : `Any ${activeTab} gatherings will appear here automatically.`}
-              </p>
+            <div className="py-16 px-6 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-white dark:bg-[#111318] flex flex-col items-center justify-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[#0066F5]">
+                <Calendar className="w-7 h-7" />
+              </div>
+              <div className="max-w-md space-y-1">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {searchQuery
+                    ? `No events matching "${searchQuery}"`
+                    : activeTab === 'upcoming'
+                    ? 'No upcoming gatherings yet'
+                    : activeTab === 'past'
+                    ? 'No past gatherings found'
+                    : 'No draft gatherings found'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {searchQuery
+                    ? 'Try searching with a different keyword or clear the search field.'
+                    : activeTab === 'upcoming'
+                    ? 'Host your first event to publish tickets, manage live RSVPs, and scan passes at the door.'
+                    : `Any ${activeTab} gatherings you host will appear here automatically.`}
+                </p>
+              </div>
+              {!searchQuery && activeTab === 'upcoming' && (
+                <Link
+                  href="/create"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0066F5] hover:bg-[#0055D6] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-98 cursor-pointer mt-2"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>+ Host an Event</span>
+                </Link>
+              )}
             </div>
           ) : (
             filteredEvents.map((event) => {
