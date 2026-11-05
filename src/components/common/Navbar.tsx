@@ -21,6 +21,7 @@ import {
   Sparkles,
   LayoutDashboard,
   Layers,
+  Bot,
   Music,
   Smile,
   Laptop,
@@ -258,6 +259,20 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
               >
                 <Zap className="w-3.5 h-3.5 fill-[#FF8442] text-[#FF8442] shrink-0" />
                 <span>Vibe Instant</span>
+              </Link>
+
+              {/* Feature 3: Bot */}
+              <Link
+                href="/bot"
+                className={`px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer ${
+                  pathname.startsWith('/bot')
+                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-bold shadow-xs'
+                    : 'text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+                title="Host via WhatsApp / Telegram Bot"
+              >
+                <Bot className="w-3.5 h-3.5 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
+                <span>Bot</span>
               </Link>
 
               {/* Feature 4: Dashboard */}
@@ -635,6 +650,29 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
             isLight ? 'text-slate-800' : 'text-white'
           }`}>+ Host</span>
           {pathname.startsWith('/create') && (
+            <motion.span
+              layoutId="mobile-nav-pill"
+              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#08B9F5] shadow-[0_0_8px_rgba(8,185,245,0.9)]"
+              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
+        </Link>
+
+        {/* 3b. Bot Tab */}
+        <Link
+          href="/bot"
+          className={`relative flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
+            pathname.startsWith('/bot')
+              ? 'text-[#0066F5] dark:text-[#08B9F5] font-semibold'
+              : isLight
+              ? 'text-slate-500 hover:text-[#08B9F5]'
+              : 'text-white/60 hover:text-[#08B9F5]'
+          }`}
+          title="Bot"
+        >
+          <Bot className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight mobile-nav-label">Bot</span>
+          {pathname.startsWith('/bot') && (
             <motion.span
               layoutId="mobile-nav-pill"
               className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#08B9F5] shadow-[0_0_8px_rgba(8,185,245,0.9)]"

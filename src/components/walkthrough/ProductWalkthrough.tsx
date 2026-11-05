@@ -10,7 +10,26 @@ export default function ProductWalkthrough() {
     // Only execute on home page
     if (pathname !== '/') return;
 
-    var STEPS = [
+    var q = function (s?: string): HTMLElement | null {
+      if (!s) return null;
+      if (s === '#vt-instant') {
+        var d = document.querySelector('#vt-instant') as HTMLElement | null;
+        if (d && d.offsetParent !== null) return d;
+        var m = document.querySelector('#vt-instant-mobile') as HTMLElement | null;
+        if (m && m.offsetParent !== null) return m;
+        return d || m;
+      }
+      if (s === '#vt-host') {
+        var d = document.querySelector('#vt-host') as HTMLElement | null;
+        if (d && d.offsetParent !== null) return d;
+        var m = document.querySelector('#vt-host-mobile') as HTMLElement | null;
+        if (m && m.offsetParent !== null) return m;
+        return d || m;
+      }
+      return document.querySelector(s) as HTMLElement | null;
+    };
+
+    var ALL_STEPS = [
       {
         icon: '👋',
         title: 'Welcome to Vibe',
@@ -60,6 +79,11 @@ export default function ProductWalkthrough() {
       },
     ];
 
+    var STEPS = ALL_STEPS.filter(function (s) {
+      if (!s.target) return true;
+      return q(s.target) !== null;
+    });
+
     var KEY = 'vibe_walkthrough_hidden';
     var AUTO_START_DELAY = 800;
 
@@ -89,25 +113,6 @@ export default function ProductWalkthrough() {
         return null;
       }
     }
-
-    var q = function (s?: string): HTMLElement | null {
-      if (!s) return null;
-      if (s === '#vt-instant') {
-        var d = document.querySelector('#vt-instant') as HTMLElement | null;
-        if (d && d.offsetParent !== null) return d;
-        var m = document.querySelector('#vt-instant-mobile') as HTMLElement | null;
-        if (m && m.offsetParent !== null) return m;
-        return d || m;
-      }
-      if (s === '#vt-host') {
-        var d = document.querySelector('#vt-host') as HTMLElement | null;
-        if (d && d.offsetParent !== null) return d;
-        var m = document.querySelector('#vt-host-mobile') as HTMLElement | null;
-        if (m && m.offsetParent !== null) return m;
-        return d || m;
-      }
-      return document.querySelector(s) as HTMLElement | null;
-    };
 
     function fill(s: any) {
       if (!tip) return;
