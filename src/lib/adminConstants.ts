@@ -30,16 +30,17 @@ export function getImmutableAdmin(email?: string): ImmutableAdminConfig | undefi
 export const PRIMARY_FOUNDERS: string[] = IMMUTABLE_ADMINS.map((a) => a.email.toLowerCase().trim());
 
 // Deprecated / revoked administrator emails that are explicitly barred from administrative privileges
-export const DEPRECATED_ADMIN_EMAILS: string[] = [
-  'suyashpersonal@gmail.com',
-  'suyashpersonal100@gmail.com',
-].map((e) => e.trim().toLowerCase());
+export const DEPRECATED_ADMIN_EMAILS: string[] = [];
 
 export const ADMIN_EMAILS: string[] = [
   ...PRIMARY_FOUNDERS,
-  'shifamansuri1929@gmail.com', // Granted Super Admin
-  'shifakhan29047@gmail.com', // Granted Super Admin
-  'suyashpandey4002@gmail.com', // Granted Super Admin
+  'suyashpersonal100@gmail.com',
+  'suyashpersona100@gmail.com',
+  'suyashpersonal@gmail.com',
+  'suyashpandey4002@gmail.com',
+  'shifamansuri1929@gmail.com',
+  'shifakhan29047@gmail.com',
+  'khanshifu2999@gmail.com',
   'swanikitechnologiesllm@gmail.com',
   ...(process.env.ADMIN_EMAILS
     ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
