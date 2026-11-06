@@ -31,6 +31,7 @@ import {
   Zap,
   X,
   Download,
+  Mail,
   MessageCircle,
   Send,
   ArrowUpRight,
@@ -570,19 +571,6 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                           )}
                         </Link>
 
-                        <Link
-                          href="/dashboard"
-                          onClick={() => setDropdownOpen(false)}
-                          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
-                            isLight
-                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
-                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
-                          }`}
-                        >
-                          <LayoutDashboard className={`w-4 h-4 stroke-[1.8] ${isLight ? 'text-slate-500' : 'text-neutral-300'}`} />
-                          <span>Host dashboard</span>
-                        </Link>
-
                         {isStaff && (
                           <Link
                             href={ADMIN_BASE_PATH}
@@ -597,55 +585,36 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                         )}
                       </div>
 
-                      {/* FIND EVENTS IN CHAT Section */}
+                      {/* CONNECT WITH PLATFORM Section */}
                       <div className="pt-3 pb-2 px-1">
                         <p className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isLight ? 'text-slate-400' : 'text-neutral-400'}`}>
-                          FIND EVENTS IN CHAT
+                          CONNECT WITH PLATFORM
                         </p>
                       </div>
 
-                      {/* Side-by-side WhatsApp & Telegram buttons */}
-                      <div className="grid grid-cols-2 gap-2 px-0.5 pb-2">
+                      {/* Platform Contact Email */}
+                      <div className="px-0.5 pb-2">
                         <a
-                          href={`https://wa.me/919183123093?text=${encodeURIComponent('Vibe/Events')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href="mailto:hello@swaniki.com"
                           onClick={() => setDropdownOpen(false)}
                           className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-xs font-semibold group cursor-pointer ${
                             isLight
-                              ? 'border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-950 shadow-xs'
+                              ? 'border-blue-200/80 bg-blue-50/70 hover:bg-blue-100/80 hover:border-blue-300 text-slate-900 shadow-xs'
                               : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white'
                           }`}
-                          title="Open WhatsApp Bot"
+                          title="Email Swaniki Platform"
                         >
-                          <div className="flex items-center gap-2">
-                            <MessageCircle className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#08B9F5]'} group-hover:scale-110 transition-transform`} />
-                            <span className={isLight ? 'text-emerald-950 font-bold' : 'text-white'}>
-                              WhatsApp
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                              isLight ? 'bg-blue-100 text-[#0038A8]' : 'bg-[#08B9F5]/10 text-[#08B9F5]'
+                            }`}>
+                              <Mail className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="truncate text-xs font-semibold">
+                              hello@swaniki.com
                             </span>
                           </div>
-                          <ArrowUpRight className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#08B9F5]'} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform`} />
-                        </a>
-
-                        <a
-                          href="https://t.me/VibeCurator_bot?start=Vibe_Events"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setDropdownOpen(false)}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-xs font-semibold group cursor-pointer ${
-                            isLight
-                              ? 'border-sky-200 bg-sky-50/80 hover:bg-sky-100 hover:border-sky-300 text-sky-950 shadow-xs'
-                              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white'
-                          }`}
-                          title="Open Telegram Bot"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Send className={`w-4 h-4 ${isLight ? 'text-sky-600' : 'text-[#08B9F5]'} group-hover:scale-110 transition-transform`} />
-                            <span className={isLight ? 'text-sky-950 font-bold' : 'text-white'}>
-                              Telegram
-                            </span>
-                          </div>
-                          <ArrowUpRight className={`w-3.5 h-3.5 ${isLight ? 'text-sky-600' : 'text-[#08B9F5]'} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform`} />
+                          <ArrowUpRight className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400 group-hover:text-slate-800' : 'text-neutral-400 group-hover:text-white'} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform`} />
                         </a>
                       </div>
 
