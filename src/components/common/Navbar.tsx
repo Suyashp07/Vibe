@@ -308,21 +308,25 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               <BrandLogo size="lg" />
             </div>
 
-            {/* Center Column: Perfectly Centered Capsule Navigation (Discover •, Instant ⚡, Bot, Dashboard) */}
+            {/* Center Column: Perfectly Centered Capsule Navigation (Discover, Instant ⚡, Dashboard) */}
             <div className="hidden md:flex items-center justify-center">
               <nav className="inline-flex items-center gap-4 lg:gap-6 px-4 lg:px-5 py-1.5 rounded-full border border-slate-200/90 dark:border-white/10 bg-[#EDF2F7]/80 dark:bg-white/[0.05] backdrop-blur-md shadow-2xs">
                 {/* Feature 1: Discover */}
                 <Link
                   href="/"
-                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center ${
                     pathname === '/' || pathname.startsWith('/discover')
-                      ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
+                      ? 'text-slate-950 dark:text-white font-bold'
+                      : 'text-slate-600 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                 >
                   <span>Discover</span>
                   {(pathname === '/' || pathname.startsWith('/discover')) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-sky-400 inline-block shrink-0" />
+                    <motion.span
+                      layoutId="desktop-nav-underline"
+                      className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-[#0038A8] dark:bg-sky-400"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    />
                   )}
                 </Link>
 
@@ -332,27 +336,38 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   href="/vibes"
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                     pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-                      ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
+                      ? 'text-slate-950 dark:text-white font-bold'
+                      : 'text-slate-600 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                 >
                   <span>Instant</span>
                   <Zap className="w-3.5 h-3.5 fill-[#FF8442] text-[#FF8442] shrink-0" />
+                  {(pathname.startsWith('/vibes') || pathname.startsWith('/vibe')) && (
+                    <motion.span
+                      layoutId="desktop-nav-underline"
+                      className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-[#0038A8] dark:bg-sky-400"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    />
+                  )}
                 </Link>
 
                 {/* Feature 3: Dashboard */}
                 <Link
                   href="/dashboard"
-                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center ${
                     pathname.startsWith('/dashboard')
-                      ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
+                      ? 'text-slate-950 dark:text-white font-bold'
+                      : 'text-slate-600 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                   title="Dashboard"
                 >
                   <span>Dashboard</span>
                   {pathname.startsWith('/dashboard') && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-sky-400 inline-block shrink-0" />
+                    <motion.span
+                      layoutId="desktop-nav-underline"
+                      className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-[#0038A8] dark:bg-sky-400"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    />
                   )}
                 </Link>
               </nav>
