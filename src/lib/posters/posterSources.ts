@@ -45,6 +45,17 @@ export function getPosterSources(event?: Partial<EventItem> | null): PosterSourc
   if (!aspectRatio && width && height && height > 0) {
     aspectRatio = Number((width / height).toFixed(4));
   }
+  // Default BookMyShow banners to standard 16:9 landscape aspect ratio
+  if (!aspectRatio) {
+    if (
+      event.source_platform === 'bookmyshow' ||
+      original.includes('bmscdn.com') ||
+      hero.includes('bmscdn.com') ||
+      card.includes('bmscdn.com')
+    ) {
+      aspectRatio = Number((16 / 9).toFixed(4));
+    }
+  }
 
   const dominantColor = (
     event.poster_dominant_color ||

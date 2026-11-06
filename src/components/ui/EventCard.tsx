@@ -143,6 +143,14 @@ export default function EventCard({
     : event.city || 'India';
 
   const poster = getPosterSources(event);
+  const [detectedRatio, setDetectedRatio] = useState<number | undefined>(poster.aspectRatio);
+
+  // Dynamic Aspect Ratio: adaptively matches the poster's actual dimensions
+  const dynamicRatio = detectedRatio || poster.aspectRatio || (
+    event.source_platform === 'bookmyshow' || poster.card?.includes('bmscdn.com') ? (16 / 9) : (16 / 9)
+  );
+  // Clamped between 0.75 (portrait) and 2.0 (wide banner) to ensure visual elegance
+  const clampedRatio = Math.max(0.75, Math.min(2.0, dynamicRatio));
 
   return (
     <div
@@ -150,19 +158,27 @@ export default function EventCard({
       data-cursor="view"
       className="event-card group relative rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/10 shadow-[0_10px_25px_-5px_rgba(15,23,42,0.08),0_8px_10px_-6px_rgba(15,23,42,0.05)] hover:shadow-[0_20px_35px_-5px_rgba(15,23,42,0.16),0_10px_15px_-5px_rgba(15,23,42,0.08)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer select-none"
     >
-      {/* Image Thumbnail (Top) - Fixed Aspect 4/5 with PosterImage (Uniform Height in Grid, Zero Cropping) */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 select-none">
+      {/* Image Thumbnail (Top) - Dynamic Aspect Ratio flexible to poster dimensions */}
+      <div
+        className="relative w-full overflow-hidden bg-slate-100 dark:bg-slate-900 select-none transition-[aspect-ratio] duration-300"
+        style={{ aspectRatio: `${clampedRatio}` }}
+      >
         <PosterImage
           src={poster.card}
           alt={event.title}
           width={poster.width}
           height={poster.height}
-          containerRatio={4 / 5}
-          ratio="card"
+          containerRatio={clampedRatio}
+          ratio="auto"
           blurDataURL={poster.blur}
           dominantColor={poster.dominantColor}
           isLowRes={poster.isLowRes}
           categoryName={event.category}
+          onNaturalDimensions={(w, h) => {
+            if (w && h && h > 0) {
+              setDetectedRatio(w / h);
+            }
+          }}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           className="w-full h-full"
         />

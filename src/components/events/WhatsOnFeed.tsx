@@ -663,9 +663,9 @@ export default function WhatsOnFeed() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
               {filteredEvents.map((event) => (
-                <div key={event.id} className="h-full flex flex-col">
+                <div key={event.id} className="flex flex-col">
                   <EventCard
                     event={event}
                     distanceKm={event.distanceKm}

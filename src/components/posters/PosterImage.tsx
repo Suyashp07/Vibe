@@ -20,6 +20,7 @@ export interface PosterImageProps {
   sizes?: string;
   badge?: React.ReactNode;
   categoryName?: string;
+  onNaturalDimensions?: (width: number, height: number) => void;
 }
 
 export default function PosterImage({
@@ -38,6 +39,7 @@ export default function PosterImage({
   sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
   badge,
   categoryName,
+  onNaturalDimensions,
 }: PosterImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -138,10 +140,16 @@ export default function PosterImage({
             placeholder={blurDataURL ? 'blur' : 'empty'}
             blurDataURL={blurDataURL}
             onError={() => setHasError(true)}
-            onLoad={() => setIsLoaded(true)}
-            className={`transition-all duration-500 ease-out ${
+            onLoad={(e) => {
+              setIsLoaded(true);
+              const img = e.currentTarget;
+              if (img && img.naturalWidth && img.naturalHeight) {
+                onNaturalDimensions?.(img.naturalWidth, img.naturalHeight);
+              }
+            }}
+            className={`transition-all duration-300 ease-out ${
               isNearMatch ? 'object-cover' : 'object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]'
-            } ${!isLoaded && !blurDataURL ? 'opacity-0 scale-98' : 'opacity-100 scale-100'} ${imageClassName}`}
+            } ${imageClassName}`}
           />
         </div>
       </div>
