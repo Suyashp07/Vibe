@@ -297,15 +297,15 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 <MapPin className="w-5 h-5 stroke-[2] text-[#0066F5] dark:text-[#08B9F5]" />
               </button>
 
-              {/* Mobile Circular '+' Host Button */}
+              {/* Mobile Top Bot Button (replaces black '+' button) */}
               <Link
-                id="vt-host-top-mobile"
-                href="/create"
-                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#07133A] dark:bg-white text-white dark:text-[#07133A] flex items-center justify-center shadow-xs transition-transform hover:scale-105 active:scale-95 shrink-0"
-                title="Host an event"
-                aria-label="Host an event"
+                id="vt-bot-mobile"
+                href="/bot"
+                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50/80 dark:bg-white/10 text-[#0066F5] dark:text-[#08B9F5] hover:bg-blue-100 dark:hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shrink-0 border border-blue-100 dark:border-white/10"
+                title="Create with Bot"
+                aria-label="Create with Bot"
               >
-                <Plus className="w-5 h-5 stroke-[2.8]" />
+                <Bot className="w-5 h-5 stroke-[2]" />
               </Link>
 
               {/* Desktop Location Selector (Right side, matching screenshot) */}
@@ -696,28 +696,6 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
           )}
         </Link>
 
-        {/* 3b. Bot Tab */}
-        <Link
-          href="/bot"
-          className={`relative flex flex-col items-center gap-1 py-1 px-2 transition-colors ${
-            pathname.startsWith('/bot')
-              ? 'text-[#0066F5] dark:text-[#08B9F5] font-semibold'
-              : isLight
-              ? 'text-slate-500 hover:text-[#08B9F5]'
-              : 'text-white/60 hover:text-[#08B9F5]'
-          }`}
-          title="Bot"
-        >
-          <Bot className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight mobile-nav-label">Bot</span>
-          {pathname.startsWith('/bot') && (
-            <motion.span
-              layoutId="mobile-nav-pill"
-              className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-[#08B9F5] shadow-[0_0_8px_rgba(8,185,245,0.9)]"
-              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-            />
-          )}
-        </Link>
 
         {/* 4. Host Dashboard Tab */}
         <Link

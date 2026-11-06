@@ -55,7 +55,7 @@ const ALL_STEPS: StepItem[] = [
   {
     id: 'host',
     target: '#vt-host',
-    fallbackTarget: '#vt-host-top-mobile',
+    fallbackTarget: '#vt-host-mobile',
     icon: Plus,
     title: 'Host an event',
     text: 'Create an event in minutes — or straight from WhatsApp or Telegram.',
@@ -159,10 +159,10 @@ export default function ProductWalkthrough() {
           window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
         }
       } else if (step.id === 'host') {
-        // On mobile, host is in the top navbar; scroll smoothly to the very top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (!isMobile) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       } else if (step.id === 'instant') {
-        // On desktop, scroll to top; on mobile, it is fixed in bottom nav
         if (!isMobile) {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -244,8 +244,8 @@ export default function ProductWalkthrough() {
     if (isMobile) {
       // DOCKED FLOATING BOTTOM CARD ON MOBILE
       const currentId = activeSteps[currentStep]?.id;
-      // If targeting the fixed bottom navigation bar (Vibe Instant), dock card right above it
-      const bottomPx = currentId === 'instant' ? 76 : 16;
+      // If targeting the fixed bottom navigation bar (Vibe Instant or Host), dock card right above it
+      const bottomPx = currentId === 'instant' || currentId === 'host' ? 76 : 16;
 
       return {
         position: 'fixed',
