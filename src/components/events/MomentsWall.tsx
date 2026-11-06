@@ -79,16 +79,16 @@ export default function MomentsWall() {
 
   return (
     <div className="memories-wrapper w-full py-10 sm:py-14 my-6 select-none overflow-hidden relative transition-colors duration-300">
-      {/* Ambient Soft Blue Accents */}
-      <div className="pointer-events-none absolute -top-20 left-1/4 w-[500px] h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(8,185,245,0.18),transparent_70%)] blur-3xl -z-0" />
-      <div className="pointer-events-none absolute -bottom-20 right-1/4 w-[500px] h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18),transparent_70%)] blur-3xl -z-0" />
+      {/* Ambient Soft Pinkish / Peach Accents */}
+      <div className="pointer-events-none absolute -top-20 left-1/4 w-[500px] h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(244,114,182,0.18),transparent_70%)] blur-3xl -z-0" />
+      <div className="pointer-events-none absolute -bottom-20 right-1/4 w-[500px] h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(251,146,60,0.18),transparent_70%)] blur-3xl -z-0" />
 
       {/* 1. Header Section */}
       <div className="memories-header text-center mb-8 px-4 relative z-10">
-        <h2 className="memories-title text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#07133A] tracking-tight leading-tight">
+        <h2 className="memories-title text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#07133A] dark:text-white tracking-tight leading-tight">
           The Moments That Make Vibe.
         </h2>
-        <p className="memories-subtitle text-sm sm:text-base md:text-lg text-slate-600 mt-2 font-medium">
+        <p className="memories-subtitle text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 mt-2 font-medium">
           Real people. Spontaneous hangouts. Unforgettable moments.
         </p>
       </div>
@@ -106,19 +106,19 @@ export default function MomentsWall() {
       >
         {/* Soft Left Edge Gradient Fade */}
         <div
-          className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-36 z-10 rounded-l-[28px] transition-opacity duration-300"
+          className="memories-edge-left pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-36 z-10 rounded-l-[28px] transition-opacity duration-300"
           style={{
             background:
-              'linear-gradient(to right, #E0F2FE 0%, rgba(224, 242, 254, 0.85) 40%, rgba(224, 242, 254, 0) 100%)',
+              'linear-gradient(to right, #F5F3FF 0%, rgba(245, 243, 255, 0.85) 40%, rgba(245, 243, 255, 0) 100%)',
           }}
         />
 
         {/* Soft Right Edge Gradient Fade */}
         <div
-          className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-36 z-10 rounded-r-[28px] transition-opacity duration-300"
+          className="memories-edge-right pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-36 z-10 rounded-r-[28px] transition-opacity duration-300"
           style={{
             background:
-              'linear-gradient(to left, #DBEAFE 0%, rgba(219, 234, 254, 0.85) 40%, rgba(219, 234, 254, 0) 100%)',
+              'linear-gradient(to left, #FFE7E3 0%, rgba(255, 231, 227, 0.85) 40%, rgba(255, 231, 227, 0) 100%)',
           }}
         />
 

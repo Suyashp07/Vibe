@@ -2026,23 +2026,31 @@ html.dark .event-card:hover {
 .memories-wrapper {
   width: 100%;
   padding: 44px 0px;
-  background: linear-gradient(110deg, #E0F2FE 15%, #EEF6FF 50%, #DBEAFE 85%);
+  background: linear-gradient(110deg, #F5F3FF 0%, #F9F0F8 30%, #FBECEF 60%, #FFE7E3 100%);
   font-family: inherit;
   border-radius: 28px;
-  border-top: 1px solid rgba(8, 185, 245, 0.15);
-  border-bottom: 1px solid rgba(8, 185, 245, 0.15);
+  border-top: 1px solid rgba(244, 114, 182, 0.22);
+  border-bottom: 1px solid rgba(244, 114, 182, 0.22);
   border-left: none !important;
   border-right: none !important;
-  box-shadow: 0 10px 35px rgba(8, 185, 245, 0.08);
+  box-shadow: 0 10px 40px rgba(244, 114, 182, 0.08);
 }
 
 html.dark .memories-wrapper {
-  background: linear-gradient(110deg, #E0F2FE 15%, #EEF6FF 50%, #DBEAFE 85%);
-  border-top: 1px solid rgba(8, 185, 245, 0.18);
-  border-bottom: 1px solid rgba(8, 185, 245, 0.18);
+  background: linear-gradient(110deg, #131026 0%, #171124 50%, #1A1020 100%);
+  border-top: 1px solid rgba(244, 114, 182, 0.22);
+  border-bottom: 1px solid rgba(244, 114, 182, 0.22);
   border-left: none !important;
   border-right: none !important;
-  box-shadow: 0 10px 35px rgba(8, 185, 245, 0.1);
+  box-shadow: 0 10px 40px rgba(244, 114, 182, 0.1);
+}
+
+html.dark .memories-edge-left {
+  background: linear-gradient(to right, #131026 0%, rgba(19, 16, 38, 0.85) 40%, rgba(19, 16, 38, 0) 100%) !important;
+}
+
+html.dark .memories-edge-right {
+  background: linear-gradient(to left, #1A1020 0%, rgba(26, 16, 32, 0.85) 40%, rgba(26, 16, 32, 0) 100%) !important;
 }
 
 .memories-main-container {
