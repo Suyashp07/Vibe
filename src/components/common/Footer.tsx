@@ -294,31 +294,14 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
             © Copyright 2026 Swaniki LLP. All Rights Reserved.
           </p>
 
-          <div className="flex items-center gap-2">
-            {SOCIAL_MEDIA_LINKS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={`sub-${item.name}`}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={item.ariaLabel}
-                  title={item.name}
-                  className="w-7 h-7 rounded-full bg-white/[0.05] hover:bg-white/[0.15] border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all duration-200"
-                >
-                  {Icon ? <Icon className="w-3 h-3" /> : item.customIcon}
-                </a>
-              );
-            })}
-
+          <div className="flex items-center gap-3">
             {/* Back to Top Smooth Scroll Button */}
             <button
               type="button"
               onClick={scrollToTop}
               title="Back to top"
               aria-label="Scroll back to top"
-              className="w-7 h-7 rounded-full bg-[#0055FF]/25 hover:bg-[#0055FF]/40 border border-[#08B9F5]/40 text-[#08B9F5] hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer shadow-sm hover:scale-105 active:scale-95 ml-1"
+              className="w-8 h-8 rounded-full bg-[#0055FF]/25 hover:bg-[#0055FF]/40 border border-[#08B9F5]/40 text-[#08B9F5] hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer shadow-sm hover:scale-105 active:scale-95"
             >
               <ChevronUp className="w-4 h-4 stroke-[2.5]" />
             </button>
