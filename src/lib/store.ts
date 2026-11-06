@@ -1089,13 +1089,17 @@ export const getFlashVibeEvents = (): EventItem[] => {
     deduplicatedFlash.push(ev);
   }
 
-  // If real live events exist from WhatsApp, Telegram, or Supabase, return ONLY real deduplicated events!
-  if (deduplicatedFlash.length > 0) {
-    return deduplicatedFlash;
+  // Combine real user/bot events with all 28 curated flash vibes (deduplicating by slug/id)
+  const sampleFiltered = SAMPLE_FLASH_VIBES.filter(s => !isEventExpired(s));
+  const combined = [...deduplicatedFlash];
+  for (const s of sampleFiltered) {
+    const sSlug = s.slug?.toLowerCase().trim();
+    if (sSlug && seenEvents.has(`slug:${sSlug}`)) continue;
+    if (seenEvents.has(s.id)) continue;
+    combined.push(s);
   }
 
-  // Only fallback to sample flash vibes if zero real events exist in store
-  return SAMPLE_FLASH_VIBES.filter(s => !isEventExpired(s));
+  return combined;
 };
 
 export const isFlashVibeLiked = (eventId: string, slug?: string): boolean => {

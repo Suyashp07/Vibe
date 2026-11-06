@@ -82,7 +82,7 @@ function VibesContent() {
   const searchParams = useSearchParams();
   const targetSlug = searchParams.get('event') || searchParams.get('id');
 
-  const [activeCity, setActiveCity] = useState<string>('Mumbai');
+  const [activeCity, setActiveCity] = useState<string>('All Cities');
   const [selectedActivity, setSelectedActivity] = useState<string>('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -207,11 +207,13 @@ function VibesContent() {
   const filterDropdownRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number>(0);
 
-  // Sync city from user location
+  // User detected city (used for prioritizing local vibes at index 0 without restricting feed to 1 event)
+  const [userDetectedCity, setUserDetectedCity] = useState<string>('');
+
   useEffect(() => {
     const c = getUserCity();
     if (c && c !== 'All India' && c !== 'all') {
-      setActiveCity(c);
+      setUserDetectedCity(c);
     }
   }, []);
 
@@ -429,6 +431,19 @@ function VibesContent() {
       }
     }
 
+    // Prioritize vibes matching the user's detected local city at the very top (index 0)
+    // while keeping all other 28 curated vibes immediately accessible right below it!
+    if (userDetectedCity) {
+      const localLower = userDetectedCity.toLowerCase().trim();
+      list.sort((a, b) => {
+        const aLocal = a.city.toLowerCase().includes(localLower);
+        const bLocal = b.city.toLowerCase().includes(localLower);
+        if (aLocal && !bLocal) return -1;
+        if (!aLocal && bLocal) return 1;
+        return 0;
+      });
+    }
+
     // Direct Redirect for Bot links (Requirement 5):
     // If targetSlug is provided in URL, prioritize the targeted vibe immediately at index 0.
     if (targetSlug) {
@@ -443,7 +458,7 @@ function VibesContent() {
     }
 
     return list;
-  }, [convertedStoreVibes, targetSlug]);
+  }, [convertedStoreVibes, userDetectedCity, targetSlug]);
 
   // If targeted via bot link but not yet in storeEvents, fetch it directly
   useEffect(() => {
@@ -2125,7 +2140,7 @@ function VibesContent() {
                           key={city.id}
                           type="button"
                           onClick={() => {
-                            setActiveCity(city.id === 'all' ? 'All India' : city.name);
+                            setActiveCity(city.id === 'all' ? 'All Cities' : city.name);
                             setCurrentIndex(0);
                             setFilterOpen(false);
                           }}
