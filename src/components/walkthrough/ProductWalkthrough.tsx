@@ -324,17 +324,27 @@ export default function ProductWalkthrough() {
             aria-modal="true"
             aria-labelledby="tour-title"
           >
-            {/* 1. Backdrop Spotlight / Dimming */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 bg-[#050C22]/75 backdrop-blur-[2.5px]"
-              onClick={closeTour}
-            />
+            {/* 1. Backdrop for Welcome Modal (Step 1 only) - Crisp dark scrim without any blur */}
+            {isFirstStep && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-[#040A1E]/75"
+                onClick={closeTour}
+              />
+            )}
 
-            {/* 2. Animated Spotlight Cutout with Pulsing Ring */}
+            {/* Click-outside dismiss handler for Steps 2-5 (Completely transparent - zero blur, zero dimming) */}
+            {!isFirstStep && (
+              <div
+                className="fixed inset-0 bg-transparent z-[9991]"
+                onClick={closeTour}
+              />
+            )}
+
+            {/* 2. Animated Spotlight Cutout with Crisp High-Contrast Ring */}
             {targetRect && !isFirstStep && (
               <motion.div
                 initial={false}
@@ -374,10 +384,10 @@ export default function ProductWalkthrough() {
                   };
                 })()}
                 transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                className="fixed pointer-events-none z-[9992] shadow-[0_0_0_9999px_rgba(5,12,34,0.76),0_0_0_2.5px_#FFFFFF,0_0_30px_rgba(0,102,245,0.7)]"
+                className="fixed pointer-events-none z-[9992] shadow-[0_0_0_9999px_rgba(4,10,30,0.76),0_0_0_2.5px_#FFFFFF,0_0_25px_rgba(0,102,245,0.8)]"
               >
-                {/* Subtle Breathing Animated Pulse Ring */}
-                <div className="absolute -inset-1.5 rounded-[inherit] border-2 border-[#08B9F5]/80 animate-ping opacity-35" />
+                {/* Crisp Glowing Accent Outline */}
+                <div className="absolute -inset-1 rounded-[inherit] border-2 border-[#0066F5] dark:border-[#08B9F5] shadow-[0_0_15px_rgba(0,102,245,0.7)] pointer-events-none" />
               </motion.div>
             )}
 
