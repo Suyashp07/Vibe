@@ -17,7 +17,7 @@ export default function BrandLogo({
   className = '',
   href = '/',
   size = 'md',
-  showSubtitle = true,
+  showSubtitle = false,
   forceDark = false,
 }: BrandLogoProps) {
   const [clickCount, setClickCount] = useState(0);
@@ -27,10 +27,10 @@ export default function BrandLogo({
   };
 
   const imgHeightClass = {
-    sm: 'h-6 sm:h-7',
-    md: 'h-8 sm:h-9',
-    lg: 'h-10 sm:h-11',
-    xl: 'h-12 sm:h-14',
+    sm: 'h-7 sm:h-8',
+    md: 'h-9 sm:h-10',
+    lg: 'h-11 sm:h-12',
+    xl: 'h-13 sm:h-15',
   }[size];
 
   return (

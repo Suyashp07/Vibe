@@ -70,14 +70,6 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-3">
             <BrandLogo size="sm" showSubtitle={false} forceDark={true} />
-            <a
-              href="https://swaniki.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] tracking-[0.25em] uppercase text-[#08B9F5] hover:text-white font-bold transition-colors"
-            >
-              BY SWANIKI
-            </a>
           </div>
 
           <div className="text-center sm:text-left text-[11px] text-slate-400 max-w-xl">
@@ -111,16 +103,8 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 pb-10">
           {/* Column 1: Brand Wordmark + Platform Description + Mission (Takes 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="space-y-1">
+            <div>
               <BrandLogo size="md" showSubtitle={false} forceDark={true} />
-              <a
-                href="https://swaniki.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] tracking-[0.25em] uppercase text-[#08B9F5] hover:text-white font-bold transition-colors inline-block"
-              >
-                BY SWANIKI
-              </a>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-md">
