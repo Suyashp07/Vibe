@@ -66,6 +66,9 @@ export function Splash() {
       // safe fallback
     }
 
+    if (typeof window !== 'undefined') {
+      (window as any).__vibeSplashActive = true;
+    }
     setMounted(true);
   }, []);
 
@@ -324,6 +327,10 @@ export function Splash() {
             try {
               sessionStorage.setItem(STORAGE_KEY, '1');
             } catch (e) {}
+            if (typeof window !== 'undefined') {
+              (window as any).__vibeSplashActive = false;
+              window.dispatchEvent(new CustomEvent('vibe:splash_completed'));
+            }
           });
         }
       }
@@ -426,6 +433,9 @@ export function Splash() {
     return () => {
       stop();
       document.body.style.removeProperty('overflow');
+      if (typeof window !== 'undefined') {
+        (window as any).__vibeSplashActive = false;
+      }
       splash.removeEventListener('click', skip);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', handleResize);

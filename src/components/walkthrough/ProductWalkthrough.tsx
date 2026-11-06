@@ -170,11 +170,40 @@ export default function ProductWalkthrough() {
     const isHidden = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) === '1' : false;
 
     if (isForced || !isHidden) {
-      const timer = setTimeout(() => {
-        setIsOpen(true);
+      if (typeof window !== 'undefined') {
+        (window as any).__vibeWalkthroughActive = true;
+      }
+
+      const startTour = () => {
+        const currentFiltered = ALL_STEPS.filter((s) => {
+          if (!s.target) return true;
+          return findElement(s) !== null;
+        });
+        setActiveSteps(currentFiltered.length > 0 ? currentFiltered : ALL_STEPS);
         setCurrentStep(0);
-      }, AUTO_START_DELAY);
-      return () => clearTimeout(timer);
+        setIsOpen(true);
+      };
+
+      const isSplashActive = typeof window !== 'undefined' && (
+        (window as any).__vibeSplashActive ||
+        (sessionStorage.getItem('vibe_seen_splash') !== '1' && document.getElementById('splash') !== null)
+      );
+
+      if (isSplashActive) {
+        const onSplashDone = () => {
+          window.removeEventListener('vibe:splash_completed', onSplashDone);
+          setTimeout(startTour, 450);
+        };
+        window.addEventListener('vibe:splash_completed', onSplashDone);
+        return () => window.removeEventListener('vibe:splash_completed', onSplashDone);
+      } else {
+        const timer = setTimeout(startTour, AUTO_START_DELAY);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      if (typeof window !== 'undefined') {
+        (window as any).__vibeWalkthroughActive = false;
+      }
     }
   }, [pathname, findElement]);
 
@@ -187,6 +216,9 @@ export default function ProductWalkthrough() {
       });
       setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
       setCurrentStep(0);
+      if (typeof window !== 'undefined') {
+        (window as any).__vibeWalkthroughActive = true;
+      }
       setIsOpen(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -248,8 +280,10 @@ export default function ProductWalkthrough() {
   }, [isOpen, updatePosition]);
 
   const closeTour = () => {
-    if (dontShowAgain && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, '1');
+      (window as any).__vibeWalkthroughActive = false;
+      window.dispatchEvent(new CustomEvent('vibe:walkthrough_completed'));
     }
     setIsOpen(false);
   };
