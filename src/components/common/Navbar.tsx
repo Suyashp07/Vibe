@@ -52,9 +52,10 @@ import { useMobileGestures } from '@/hooks/useMobileGestures';
 
 interface NavbarProps {
   bottomNavOnly?: boolean;
+  hideTopOnMobile?: boolean;
 }
 
-export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
+export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false }: NavbarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, isLoggedIn, isStaff, signOut } = useAuth();
@@ -207,7 +208,9 @@ export default function Navbar({ bottomNavOnly = false }: NavbarProps = {}) {
   return (
     <>
       {!bottomNavOnly && (
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#081426]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10 shadow-xs text-slate-900 dark:text-white transition-colors">
+        <header className={`sticky top-0 z-40 bg-white/95 dark:bg-[#081426]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10 shadow-xs text-slate-900 dark:text-white transition-colors ${
+          hideTopOnMobile ? 'hidden md:block' : ''
+        }`}>
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="flex items-center justify-between h-16 gap-3 sm:gap-6 relative">
             {/* Left: Brand Logo + Location Selector */}
