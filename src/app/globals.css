@@ -593,7 +593,7 @@ html.light .border-white\/20:not(.vibe-reel-card *):not(.dark-dialog *):not(.dar
 }
 
 /* Text Overrides for Light Mode (applied ONLY to regular light content) */
-html.light .text-white:not(button.bg-\[\#08B9F5\]):not(a.bg-\[\#08B9F5\]):not(button.bg-\[\#08B9F5\] *):not(a.bg-\[\#08B9F5\] *):not([class*="bg-[#0038A8]"]):not([class*="bg-[#0038A8]"] *):not([class*="bg-[#173DAA]"]):not([class*="bg-[#173DAA]"] *):not([class*="bg-[#0066F5]"]):not([class*="bg-[#0066F5]"] *):not([class*="bg-blue-6"]):not([class*="bg-blue-6"] *):not([class*="bg-blue-7"]):not([class*="bg-blue-7"] *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not(.preview-card-cover *):not([class*="bg-black"]):not([class*="bg-black"] *):not([class*="bg-slate-9"]):not([class*="bg-slate-9"] *):not([class*="bg-slate-8"]):not([class*="bg-slate-8"] *):not([class*="bg-\[\#0F172A\]"]):not([class*="bg-\[\#0F172A\]"] *):not([class*="bg-neutral-9"]):not([class*="bg-neutral-9"] *):not([class*="bg-neutral-8"]):not([class*="bg-neutral-8"] *):not(.pointer-events-none *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *):not(.explore-city-btn):not(.explore-city-btn *) {color: #0B1B3A !important;
+html.light .text-white:not(button.bg-\[\#08B9F5\]):not(a.bg-\[\#08B9F5\]):not(button.bg-\[\#08B9F5\] *):not(a.bg-\[\#08B9F5\] *):not(.bg-\[\#0038A8\]):not(.bg-\[\#0038A8\] *):not(.bg-\[\#173DAA\]):not(.bg-\[\#173DAA\] *):not(.bg-\[\#0066F5\]):not(.bg-\[\#0066F5\] *):not(.bg-blue-600):not(.bg-blue-600 *):not(.bg-blue-700):not(.bg-blue-700 *):not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.event-cover-overlay *):not(.preview-card-cover *):not([class*="bg-black"]):not([class*="bg-black"] *):not([class*="bg-slate-9"]):not([class*="bg-slate-9"] *):not([class*="bg-slate-8"]):not([class*="bg-slate-8"] *):not(.bg-\[\#0F172A\]):not(.bg-\[\#0F172A\] *):not([class*="bg-neutral-9"]):not([class*="bg-neutral-9"] *):not([class*="bg-neutral-8"]):not([class*="bg-neutral-8"] *):not(.pointer-events-none *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *):not(.explore-city-btn):not(.explore-city-btn *) {color: #0B1B3A !important;
 }
 
 html.light .text-white\/90:not(.vibe-reel-card *):not(.dark-dialog *):not(.dark-canvas *):not(.flashcard-hero-overlay *):not(.event-card-cover *):not(.pwa-install-banner *):not(.vibe-host-btn):not(.vibe-host-btn *):not(.vibe-download-btn):not(.vibe-download-btn *):not(.vibe-join-btn):not(.vibe-join-btn *):not(.vibe-join-text):not(.hero-spotlight-title):not(.hero-spotlight-btn):not(.hero-spotlight-btn *):not(.hero-spotlight-btn-text):not(.category-pill-active):not(.category-pill-active *):not(.feed-active-btn):not(.feed-active-btn *):not(.event-source-badge):not(.event-source-badge *):not(.explore-city-btn):not(.explore-city-btn *) {color: #0B1B3A !important;
@@ -858,10 +858,13 @@ html.light .dark-dialog svg:not([class*="text-"]) {
 }
 
 /* Event Card Details & Surface Overrides in Light Mode */
+html.light .event-card,
 html.light .event-card-body,
+html.light .event-card h3,
 html.light .event-card-body h3,
 html.light .bg-\[\#0D0D10\] h3,
-html.light .bg-\[\#111114\] h3 {color: #0B1B3A !important;
+html.light .bg-\[\#111114\] h3 {
+  color: #07133A !important;
 }
 
 html.light .event-card-body .text-white\/50,
@@ -929,16 +932,14 @@ html.light button.bg-\[\#08B9F5\],
 html.light a.bg-\[\#08B9F5\],
 html.light button.bg-\[\#08B9F5\] *,
 html.light a.bg-\[\#08B9F5\] *,
-html.light [class*="bg-[#0038A8]"],
-html.light [class*="bg-[#0038A8]"] *,
-html.light [class*="bg-[#173DAA]"],
-html.light [class*="bg-[#173DAA]"] *,
-html.light [class*="bg-[#0066F5]"],
-html.light [class*="bg-[#0066F5]"] *,
-html.light [class*="bg-blue-600"],
-html.light [class*="bg-blue-600"] *,
-html.light [class*="bg-blue-700"],
-html.light [class*="bg-blue-700"] *,
+html.light button.bg-blue-600,
+html.light button.bg-blue-600 *,
+html.light a.bg-blue-600,
+html.light a.bg-blue-600 *,
+html.light button.bg-blue-700,
+html.light button.bg-blue-700 *,
+html.light a.bg-blue-700,
+html.light a.bg-blue-700 *,
 html.light .shadow-\[0_0_25px_rgba\(255\,85\,0\,0\.45\)\] {
   color: #FFFFFF !important;
 }

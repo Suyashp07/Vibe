@@ -187,7 +187,7 @@ export default function EventCard({
       </div>
 
       {/* Card Body (Bottom, clean spacing) */}
-      <div className="p-4 flex flex-col justify-between flex-1">
+      <div className="event-card-body p-4 flex flex-col justify-between flex-1">
         <div>
           {/* Row 1: Date & Time in clear blue/slate uppercase */}
           <div className="text-xs font-bold text-[#0038A8] dark:text-[#38bdf8] tracking-wide flex items-center gap-1.5">

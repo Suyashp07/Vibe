@@ -249,7 +249,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                     pathname === '/' || pathname.startsWith('/discover')
                       ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                 >
                   <span>Discover</span>
@@ -265,7 +265,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                     pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
                       ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                 >
                   <span>Instant</span>
@@ -279,7 +279,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                     pathname.startsWith('/bot')
                       ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                 >
                   <span>Bot</span>
@@ -294,7 +294,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                     pathname.startsWith('/dashboard')
                       ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
                   }`}
                   title="Dashboard"
                 >
