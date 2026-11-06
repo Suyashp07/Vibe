@@ -616,14 +616,28 @@ export default function WhatsOnFeed() {
                       <span>IN THE SPOTLIGHT</span>
                     </span>
 
-                    {/* Mobile pagination controls */}
-                    <div className="sm:hidden flex items-center gap-1.5 font-mono text-[11px] font-bold text-white/90">
-                      <span>{String(flashcardIdx + 1).padStart(2, '0')}/{String(prominentEvents.length).padStart(2, '0')}</span>
-                      <div className="flex items-center gap-1">
+                    {/* Mobile carousel controls */}
+                    <div className="sm:hidden flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {prominentEvents.map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setFlashcardIdx(i)}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              flashcardIdx === i
+                                ? 'w-5 bg-white shadow-xs'
+                                : 'w-1.5 bg-white/40 hover:bg-white/70'
+                            }`}
+                            aria-label={`Slide ${i + 1}`}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-1 ml-1">
                         <button
                           type="button"
                           onClick={handlePrevFlashcard}
-                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white active:scale-95 transition-transform"
                           aria-label="Previous"
                         >
                           <ChevronLeft className="w-3.5 h-3.5" />
@@ -631,7 +645,7 @@ export default function WhatsOnFeed() {
                         <button
                           type="button"
                           onClick={handleNextFlashcard}
-                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white active:scale-95 transition-transform"
                           aria-label="Next"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -686,16 +700,31 @@ export default function WhatsOnFeed() {
               </AnimatePresence>
             </div>
 
-            {/* Desktop Pagination Capsule */}
-            <div className="hidden sm:flex absolute bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 z-20 items-center gap-2.5 px-3.5 py-2 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 text-white shadow-lg">
-              <span className="text-[11px] sm:text-xs font-mono font-bold text-white tracking-wider">
-                {String(flashcardIdx + 1).padStart(2, '0')} / {String(prominentEvents.length).padStart(2, '0')}
-              </span>
-              <div className="flex items-center gap-1">
+            {/* Desktop Carousel Indicators & Controls Capsule */}
+            <div className="hidden sm:flex absolute bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 z-20 items-center gap-3 px-3.5 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white shadow-xl">
+              {/* Sleek Animated Slide Indicators */}
+              <div className="flex items-center gap-1.5 px-1">
+                {prominentEvents.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setFlashcardIdx(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      flashcardIdx === i
+                        ? 'w-6 bg-white shadow-xs'
+                        : 'w-1.5 bg-white/40 hover:bg-white/75'
+                    }`}
+                    aria-label={`Go to slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Prev / Next Chevrons */}
+              <div className="flex items-center gap-1 pl-1 border-l border-white/20">
                 <button
                   type="button"
                   onClick={handlePrevFlashcard}
-                  className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                  className="w-7 h-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
                   aria-label="Previous event"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -703,7 +732,7 @@ export default function WhatsOnFeed() {
                 <button
                   type="button"
                   onClick={handleNextFlashcard}
-                  className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                  className="w-7 h-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
                   aria-label="Next event"
                 >
                   <ChevronRight className="w-4 h-4" />
