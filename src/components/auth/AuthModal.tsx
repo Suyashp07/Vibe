@@ -302,7 +302,7 @@ export default function AuthModal({
   }
 
   const inputCls =
-    'w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#08B9F5] dark:focus:border-[#08B9F5] transition-colors placeholder:text-gray-400 dark:placeholder:text-white/30 text-gray-900 dark:text-white';
+    'w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl focus:outline-none focus:border-[#0038A8] dark:focus:border-sky-400 transition-colors placeholder:text-gray-400 dark:placeholder:text-white/30 text-gray-900 dark:text-white';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
@@ -370,14 +370,14 @@ export default function AuthModal({
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="••••"
-                  className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-2.5 bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-[#08B9F5] dark:focus:border-[#08B9F5]"
+                  className="w-full text-center tracking-[0.5em] sm:tracking-[0.6em] text-2xl font-mono font-black py-2.5 bg-white dark:bg-[#111114] border border-[#E2E8F0] dark:border-white/15 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-[#0038A8] dark:focus:border-sky-400"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={otpLoading || otpSuccess || otpCode.trim().length !== 4}
-                className="w-full py-2.5 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 cursor-pointer"
+                className="w-full py-2.5 bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 cursor-pointer"
               >
                 {otpLoading ? (
                   <>
@@ -575,7 +575,7 @@ export default function AuthModal({
               <button
                 type="submit"
                 disabled={emailLoading || googleLoading}
-                className="w-full py-2.5 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 cursor-pointer"
+                className="w-full py-2.5 bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 cursor-pointer"
               >
                 {emailLoading ? (
                   <>

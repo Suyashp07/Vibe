@@ -209,7 +209,7 @@ export default function SavedEventsPage() {
             </p>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0038A8] dark:bg-[#0066F5] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/20 hover:brightness-110 transition cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/20 hover:brightness-110 transition cursor-pointer"
             >
               <Compass className="w-4 h-4" />
               <span>Explore upcoming vibes</span>

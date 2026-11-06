@@ -483,8 +483,8 @@ export default function VibeReelCard({
             type="button"
             onClick={() => setQuickJoinOpen(true)}
             title="Join now"
-            className="vibe-join-btn flex-1 py-3 px-4 rounded-2xl bg-[#0066F5] hover:bg-[#0052cc] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer"
-            style={{ color: "#FFFFFF" }}
+            className="vibe-join-btn flex-1 py-3 px-4 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-blue-900/30 transition-all cursor-pointer"
+            style={{ color: "#FFFFFF", backgroundColor: "#0038A8" }}
           >
             <Zap className="w-4 h-4 text-white shrink-0 fill-white" style={{ color: "#FFFFFF" }} />
             <span className="vibe-join-text text-white font-bold" style={{ color: "#FFFFFF" }}>Join now</span>
@@ -585,7 +585,7 @@ export default function VibeReelCard({
                 setDetailsOpen(false);
                 setQuickJoinOpen(true);
               }}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#08B9F5]/30"
+              className="flex-1 py-3 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-900/30"
               title="Join now"
             >
               <Zap className="w-4 h-4 text-white fill-current" />
@@ -710,7 +710,7 @@ export default function VibeReelCard({
                   type="button"
                   onClick={handlePostComment}
                   disabled={!commentText.trim() || postingComment}
-                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0"
+                  className="w-10 h-10 rounded-full bg-[#0038A8] hover:bg-[#173DAA] disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md shadow-blue-900/30"
                 >
                   {postingComment ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

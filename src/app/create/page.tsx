@@ -242,7 +242,7 @@ export default function CreateEventHubPage() {
 
             {/* Action CTA */}
             <div className="mt-5 pt-4 border-t border-white/10">
-              <div className="w-full py-2.5 px-4 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white font-bold text-xs sm:text-sm flex items-center justify-between transition-colors shadow-[0_0_15px_rgba(8,185,245,0.3)]">
+              <div className="w-full py-2.5 px-4 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white font-bold text-xs sm:text-sm flex items-center justify-between transition-colors shadow-lg shadow-blue-900/30">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 fill-white" />
                   <span>Create with AI</span>

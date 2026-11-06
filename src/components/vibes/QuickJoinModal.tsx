@@ -550,7 +550,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full mt-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:brightness-110 active:scale-[0.98] text-white font-bold text-sm shadow-xl shadow-[#08B9F5]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full mt-2 py-3.5 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] active:scale-[0.98] text-white font-bold text-sm shadow-xl shadow-blue-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  style={{ color: '#FFFFFF', backgroundColor: '#0038A8' }}
                 >
                   {submitting ? (
                     <>
@@ -663,7 +664,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full mt-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:brightness-110 active:scale-[0.98] text-white font-bold text-sm shadow-xl shadow-[#08B9F5]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full mt-2 py-3.5 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] active:scale-[0.98] text-white font-bold text-sm shadow-xl shadow-blue-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  style={{ color: '#FFFFFF', backgroundColor: '#0038A8' }}
                 >
                   {submitting ? (
                     <>
@@ -792,7 +794,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
               <button
                 type="submit"
                 disabled={submitting || (otpToken.trim().length !== 4 && otpToken.trim().length < 6)}
-                className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-[#075CE5]/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                className="w-full mt-4 py-3 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] text-white font-bold text-sm shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
                   <>
@@ -832,7 +834,7 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
             </p>
 
             {passSerial && (
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono text-[#0066F5] dark:text-[#00D5E8] font-bold mb-4">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono text-[#0038A8] dark:text-sky-300 font-bold mb-4">
                 <Ticket className="w-3.5 h-3.5" />
                 <span>Pass: {passSerial}</span>
               </div>
@@ -851,7 +853,8 @@ export default function QuickJoinModal({ event, isOpen, onClose, onSuccess, onAs
                     onViewPass(submittedRsvp);
                   }
                 }}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#08B9F5] to-[#075CE5] hover:brightness-110 active:scale-[0.98] text-white font-black text-sm transition-all cursor-pointer shadow-xl shadow-[#08B9F5]/30 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] active:scale-[0.98] text-white font-black text-sm transition-all cursor-pointer shadow-xl shadow-blue-900/30 flex items-center justify-center gap-2"
+                style={{ color: '#FFFFFF', backgroundColor: '#0038A8' }}
               >
                 <Ticket className="w-4 h-4 fill-white" />
                 <span>View My Digital Pass</span>

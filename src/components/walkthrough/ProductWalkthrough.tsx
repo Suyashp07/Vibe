@@ -408,7 +408,7 @@ export default function ProductWalkthrough() {
                 className="fixed pointer-events-none z-[9992] shadow-[0_0_0_9999px_rgba(4,10,30,0.76),0_0_0_2.5px_#FFFFFF,0_0_25px_rgba(0,102,245,0.8)]"
               >
                 {/* Crisp Glowing Accent Outline */}
-                <div className="absolute -inset-1 rounded-[inherit] border-2 border-[#0066F5] dark:border-[#08B9F5] shadow-[0_0_15px_rgba(0,102,245,0.7)] pointer-events-none" />
+                <div className="absolute -inset-1 rounded-[inherit] border-2 border-[#0038A8] dark:border-sky-400 shadow-[0_0_15px_rgba(0,56,168,0.7)] pointer-events-none" />
               </motion.div>
             )}
 
@@ -498,12 +498,12 @@ export default function ProductWalkthrough() {
                   </button>
 
                   {/* Sparkles Icon in Light Blue Rounded Square */}
-                  <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-[#0066F5]/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center mx-auto mb-3 shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-[#0038A8]/20 text-[#0038A8] dark:text-sky-300 flex items-center justify-center mx-auto mb-3 shadow-xs">
                     <Sparkles className="w-6 h-6 stroke-[2] animate-pulse" />
                   </div>
 
                   {/* Step Counter: 1 / 4 */}
-                  <div className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] tracking-wider mb-1.5">
+                  <div className="text-xs font-bold text-[#0038A8] dark:text-sky-300 tracking-wider mb-1.5">
                     1 / {activeSteps.length}
                   </div>
 
@@ -523,7 +523,7 @@ export default function ProductWalkthrough() {
                   {/* Animated Feature Pillars Preview */}
                   <div className="grid grid-cols-4 gap-1.5 py-3 px-2 bg-slate-50 dark:bg-white/[0.04] rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
                     <div className="flex flex-col items-center gap-1 text-center">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0038A8] dark:text-sky-300 flex items-center justify-center">
                         <Compass className="w-3.5 h-3.5" />
                       </div>
                       <span>Local Vibes</span>
@@ -557,7 +557,7 @@ export default function ProductWalkthrough() {
                           key={idx}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             idx === currentStep
-                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
+                              ? 'w-5 bg-[#0038A8] dark:bg-sky-400'
                               : 'w-1.5 bg-slate-200 dark:bg-white/20'
                           }`}
                         />
@@ -577,9 +577,9 @@ export default function ProductWalkthrough() {
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                        className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-900/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
                         style={{
-                          backgroundColor: '#0066F5',
+                          backgroundColor: '#0038A8',
                           color: '#FFFFFF',
                           WebkitTextFillColor: '#FFFFFF',
                         }}
@@ -597,7 +597,7 @@ export default function ProductWalkthrough() {
                         type="checkbox"
                         checked={dontShowAgain}
                         onChange={(e) => setDontShowAgain(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-slate-300 dark:border-white/20 text-[#0066F5] focus:ring-[#0066F5]"
+                        className="w-3.5 h-3.5 rounded border-slate-300 dark:border-white/20 text-[#0038A8] focus:ring-[#0038A8]"
                       />
                       <span>Don&apos;t show again</span>
                     </label>
@@ -611,10 +611,10 @@ export default function ProductWalkthrough() {
                   {/* Top Row: Icon Badge + Step Counter + Close Button */}
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#EFF6FF] dark:bg-[#0066F5]/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[#EFF6FF] dark:bg-[#0038A8]/20 text-[#0038A8] dark:text-sky-300 flex items-center justify-center shrink-0">
                         <StepIcon className="w-4 h-4 stroke-[2]" />
                       </div>
-                      <span className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] tracking-wider">
+                      <span className="text-xs font-bold text-[#0038A8] dark:text-sky-300 tracking-wider">
                         {currentStep + 1} / {activeSteps.length}
                       </span>
                     </div>
@@ -649,9 +649,9 @@ export default function ProductWalkthrough() {
                         {/* Animated category tap simulation */}
                         <div className="flex items-center gap-2 overflow-x-hidden">
                           <motion.div
-                            animate={{ scale: [1, 1.05, 1], backgroundColor: ['#0066F5', '#0052cc', '#0066F5'] }}
+                            animate={{ scale: [1, 1.05, 1], backgroundColor: ['#0038A8', '#173DAA', '#0038A8'] }}
                             transition={{ duration: 2, repeat: Infinity }}
-                            className="px-3 py-1 rounded-full bg-[#0066F5] text-white text-[11px] font-bold flex items-center gap-1 shrink-0 shadow-xs"
+                            className="px-3 py-1 rounded-full bg-[#0038A8] text-white text-[11px] font-bold flex items-center gap-1 shrink-0 shadow-xs"
                           >
                             <span>🎵 Music</span>
                             <Check className="w-3 h-3 stroke-[3]" />
@@ -690,7 +690,7 @@ export default function ProductWalkthrough() {
                               <p className="text-[9px] text-slate-400 truncate">2 players needed • Starts in 15m</p>
                             </div>
                           </div>
-                          <span className="px-2 py-0.5 rounded-md bg-[#0066F5] text-white text-[9px] font-bold shrink-0">
+                          <span className="px-2 py-0.5 rounded-md bg-[#0038A8] text-white text-[9px] font-bold shrink-0">
                             Join
                           </span>
                         </div>
@@ -703,7 +703,7 @@ export default function ProductWalkthrough() {
                         <div className="space-y-1.5 text-[11px]">
                           {/* User Message Bubble */}
                           <div className="flex justify-end">
-                            <div className="bg-[#0066F5] text-white px-2.5 py-1.5 rounded-2xl rounded-tr-xs max-w-[85%] text-[10px] font-medium shadow-2xs">
+                            <div className="bg-[#0038A8] text-white px-2.5 py-1.5 rounded-2xl rounded-tr-xs max-w-[85%] text-[10px] font-medium shadow-2xs">
                               Find concerts or tech events this week 🎟
                             </div>
                           </div>
@@ -741,7 +741,7 @@ export default function ProductWalkthrough() {
                             <span className="font-semibold block truncate">1. Text Bot</span>
                           </div>
                           <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
-                            <Sparkles className="w-3.5 h-3.5 mx-auto mb-1 text-[#0066F5] dark:text-[#08B9F5]" />
+                            <Sparkles className="w-3.5 h-3.5 mx-auto mb-1 text-[#0038A8] dark:text-sky-300" />
                             <span className="font-semibold block truncate">2. AI Flyer</span>
                           </div>
                           <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
@@ -765,7 +765,7 @@ export default function ProductWalkthrough() {
                           key={idx}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             idx === currentStep
-                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
+                              ? 'w-5 bg-[#0038A8] dark:bg-sky-400'
                               : 'w-1.5 bg-slate-200 dark:bg-white/20'
                           }`}
                         />
@@ -787,9 +787,9 @@ export default function ProductWalkthrough() {
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                        className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-900/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
                         style={{
-                          backgroundColor: '#0066F5',
+                          backgroundColor: '#0038A8',
                           color: '#FFFFFF',
                           WebkitTextFillColor: '#FFFFFF',
                         }}

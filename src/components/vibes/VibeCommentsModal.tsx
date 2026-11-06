@@ -360,7 +360,7 @@ export default function VibeCommentsModal({
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#08B9F5] to-[#00D5E8] hover:opacity-90 text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
+                className="px-3.5 py-2 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-xs font-bold text-white transition-all shadow-md shadow-blue-900/25 active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In / Sign Up</span>
@@ -370,7 +370,7 @@ export default function VibeCommentsModal({
             <div className="px-4 py-3 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#0D0F14] pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0">
               {/* Authenticated Member Tag */}
               <div className="flex items-center gap-1.5 mb-2 px-1">
-                <div className="w-4 h-4 rounded-full bg-[#08B9F5]/20 flex items-center justify-center text-[9px] font-bold text-[#08B9F5]">
+                <div className="w-4 h-4 rounded-full bg-[#0038A8]/15 flex items-center justify-center text-[9px] font-bold text-[#0038A8] dark:text-sky-400">
                   {(currentProfile?.name || 'U')[0].toUpperCase()}
                 </div>
                 <span className="text-[11px] font-medium text-slate-500 dark:text-white/40">
@@ -392,13 +392,13 @@ export default function VibeCommentsModal({
                   placeholder={`What's your take, ${currentProfile?.name?.split(' ')[0] || ''}?`}
                   maxLength={500}
                   rows={1}
-                  className="flex-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 resize-none focus:outline-none focus:border-[#08B9F5]/50 transition-colors"
+                  className="flex-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 resize-none focus:outline-none focus:border-[#0038A8] transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={!commentText.trim() || isSubmitting}
-                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#08B9F5] to-[#00D5E8] hover:opacity-90 disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md"
+                  className="w-10 h-10 rounded-full bg-[#0038A8] hover:bg-[#173DAA] disabled:opacity-40 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md shadow-blue-900/25"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

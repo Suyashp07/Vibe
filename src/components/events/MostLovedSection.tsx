@@ -440,7 +440,7 @@ export default function MostLovedSection({
                   >
                     <Search className={`w-4 h-4 ${activeFiltersCount > 0 ? 'text-white dark:text-[#07133A]' : 'text-slate-700 dark:text-slate-200'}`} />
                     {activeFiltersCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold bg-[#0066F5] text-white flex items-center justify-center shadow-xs">
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold bg-[#0038A8] text-white flex items-center justify-center shadow-xs">
                         {activeFiltersCount}
                       </span>
                     )}
@@ -476,8 +476,8 @@ export default function MostLovedSection({
                       />
                       {isSelected && (
                         <span className="absolute top-2 right-2 flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0066F5] opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0066F5]"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0038A8] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0038A8]"></span>
                         </span>
                       )}
                     </button>
@@ -552,7 +552,7 @@ export default function MostLovedSection({
                 {/* 1. "When" Date Selector */}
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-[#0066F5]" />
+                    <Calendar className="w-4 h-4 text-[#0038A8] dark:text-sky-300" />
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                       When
                     </span>
@@ -582,7 +582,7 @@ export default function MostLovedSection({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-[#0066F5]" />
+                      <Sparkles className="w-4 h-4 text-[#0038A8] dark:text-sky-300" />
                       <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                         Categories {draftCategories.length > 0 && `(${draftCategories.length} selected)`}
                       </span>
@@ -591,7 +591,7 @@ export default function MostLovedSection({
                       <button
                         type="button"
                         onClick={() => setDraftCategories([])}
-                        className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] hover:underline cursor-pointer"
+                        className="text-xs font-bold text-[#0038A8] dark:text-sky-300 hover:underline cursor-pointer"
                       >
                         Clear categories
                       </button>
@@ -608,7 +608,7 @@ export default function MostLovedSection({
                         placeholder="Search categories"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-9 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0066F5]/40 focus:border-[#0066F5] transition-all"
+                        className="w-full pl-10 pr-9 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0038A8]/40 focus:border-[#0038A8] transition-all"
                       />
                       {searchQuery && (
                         <button
@@ -635,8 +635,8 @@ export default function MostLovedSection({
                             onClick={() => handleToggleDraftCategory(cat.id)}
                             className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer group text-left ${
                               isSelected
-                                ? 'border-[#0066F5] bg-blue-50/70 dark:bg-[#0066F5]/15 ring-2 ring-[#0066F5]/30 shadow-sm'
-                                : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E1526] hover:border-[#0066F5]/60 hover:shadow-xs'
+                                ? 'border-[#0038A8] bg-blue-50/70 dark:bg-[#0038A8]/15 ring-2 ring-[#0038A8]/30 shadow-sm'
+                                : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E1526] hover:border-[#0038A8]/60 hover:shadow-xs'
                             }`}
                           >
                             {/* Left Part: Thumbnail / Sparkle Icon + Title */}
@@ -653,15 +653,15 @@ export default function MostLovedSection({
                                 </div>
                               ) : (
                                 <div className="w-10 h-8 rounded-lg flex items-center justify-center shrink-0">
-                                  <Sparkles className="w-5 h-5 text-[#0066F5] dark:text-[#08B9F5]" />
+                                  <Sparkles className="w-5 h-5 text-[#0038A8] dark:text-sky-300" />
                                 </div>
                               )}
 
                               <div className="min-w-0">
                                 <span className={`font-bold text-sm truncate block transition-colors ${
                                   isSelected
-                                    ? 'text-[#0066F5] dark:text-[#08B9F5]'
-                                    : 'text-slate-800 dark:text-slate-100 group-hover:text-[#0066F5] dark:group-hover:text-[#08B9F5]'
+                                    ? 'text-[#0038A8] dark:text-sky-300'
+                                    : 'text-slate-800 dark:text-slate-100 group-hover:text-[#0038A8] dark:group-hover:text-sky-300'
                                 }`}>
                                   {cat.name}
                                 </span>
@@ -676,8 +676,8 @@ export default function MostLovedSection({
                             {/* Right Part: Selection indicator */}
                             <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
                               isSelected
-                                ? 'bg-[#0066F5] text-white shadow-xs'
-                                : 'border border-slate-300 dark:border-white/20 group-hover:border-[#0066F5]'
+                                ? 'bg-[#0038A8] text-white shadow-xs'
+                                : 'border border-slate-300 dark:border-white/20 group-hover:border-[#0038A8]'
                             }`}>
                               {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
@@ -690,7 +690,7 @@ export default function MostLovedSection({
                         <button
                           type="button"
                           onClick={() => setSearchQuery('')}
-                          className="mt-2 text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] underline cursor-pointer"
+                          className="mt-2 text-xs font-bold text-[#0038A8] dark:text-sky-300 underline cursor-pointer"
                         >
                           Clear search
                         </button>
@@ -713,7 +713,7 @@ export default function MostLovedSection({
                 <button
                   type="button"
                   onClick={handleApplyDraft}
-                  className="px-6 sm:px-8 py-2.5 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                  className="px-6 sm:px-8 py-2.5 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Show events
                 </button>

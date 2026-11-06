@@ -87,7 +87,7 @@ export default function VibeDetailsModal({
         {/* Header Bar */}
         <div className="px-5 pt-3 pb-3 flex items-center justify-between border-b border-slate-200 dark:border-white/10 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#08B9F5] text-white flex items-center gap-1 shadow-xs">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#0038A8] text-white flex items-center gap-1 shadow-xs">
               <Info className="w-3 h-3" />
               <span>Event Details</span>
             </span>
@@ -112,7 +112,7 @@ export default function VibeDetailsModal({
         <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 overscroll-contain">
           {/* 1. Host Identity Card (Identical to Right-side tab) */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-sky-50 dark:bg-[#0B254A] text-[#08B9F5] dark:text-[#00D5E8] border border-sky-200/60 dark:border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
+            <div className="w-11 h-11 rounded-full bg-sky-50 dark:bg-[#0B254A] text-[#0038A8] dark:text-sky-300 border border-sky-200/60 dark:border-white/10 flex items-center justify-center font-bold text-sm shrink-0">
               {vibe.host_initials || 'H'}
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function VibeDetailsModal({
 
           {/* 2. Category Tag & Headline (Identical to Right-side tab) */}
           <div>
-            <span className="text-xs font-mono font-bold tracking-wider text-[#08B9F5] uppercase">
+            <span className="text-xs font-mono font-bold tracking-wider text-[#0038A8] dark:text-sky-300 uppercase">
               {vibe.category}
             </span>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-1 leading-tight">
@@ -155,7 +155,7 @@ export default function VibeDetailsModal({
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-[#08B9F5] dark:text-[#00D5E8] hover:underline font-bold shrink-0 flex items-center gap-1"
+                className="text-[11px] text-[#0038A8] dark:text-sky-300 hover:underline font-bold shrink-0 flex items-center gap-1"
               >
                 <span>Maps</span>
                 <ExternalLink className="w-3 h-3" />
@@ -181,14 +181,14 @@ export default function VibeDetailsModal({
                   <Users className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-400" />
                   <span>{vibe.going_count}/{vibe.capacity} going</span>
                 </span>
-                <span className="font-bold text-[#08B9F5] flex items-center gap-1">
-                  <Zap className="w-3 h-3 fill-[#08B9F5]" />
+                <span className="font-bold text-[#0038A8] dark:text-sky-300 flex items-center gap-1">
+                  <Zap className="w-3 h-3 fill-[#0038A8]" />
                   <span>{vibe.spots_left} spots left</span>
                 </span>
               </div>
               <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#08B9F5] rounded-full transition-all duration-500"
+                  className="h-full bg-[#0038A8] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, (vibe.going_count / (vibe.capacity || 1)) * 100)}%`,
                   }}
@@ -220,8 +220,8 @@ export default function VibeDetailsModal({
                 onClose();
                 onJoin(vibe);
               }}
-              className="vibe-join-btn flex-1 py-3 px-3.5 rounded-xl bg-[#0066F5] hover:bg-[#0052cc] active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(8,185,245,0.35)] flex items-center justify-center gap-2 cursor-pointer"
-              style={{ color: '#FFFFFF' }}
+              className="vibe-join-btn flex-1 py-3 px-3.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] active:scale-[0.98] text-xs font-bold text-white transition-all shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 cursor-pointer"
+              style={{ color: '#FFFFFF', backgroundColor: '#0038A8' }}
             >
               <Zap className="w-3.5 h-3.5 fill-white text-white" style={{ color: '#FFFFFF' }} />
               <span className="vibe-join-text font-bold" style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>Join now</span>
@@ -238,7 +238,7 @@ export default function VibeDetailsModal({
             className="py-3 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 border border-slate-200 dark:border-white/15 text-slate-800 hover:text-slate-900 dark:text-white/90 dark:hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md hover:scale-[1.02] active:scale-98 shrink-0"
             title="Connect with host"
           >
-            <MessageCircle className="w-3.5 h-3.5 text-[#08B9F5] dark:text-[#00D5E8]" />
+            <MessageCircle className="w-3.5 h-3.5 text-[#0038A8] dark:text-sky-300" />
             <span>Connect with host</span>
           </button>
 

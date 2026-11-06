@@ -254,7 +254,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 >
                   <span>Discover</span>
                   {(pathname === '/' || pathname.startsWith('/discover')) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-sky-400 inline-block shrink-0" />
                   )}
                 </Link>
 
@@ -284,7 +284,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 >
                   <span>Bot</span>
                   {pathname.startsWith('/bot') && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-sky-400 inline-block shrink-0" />
                   )}
                 </Link>
 
@@ -300,7 +300,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 >
                   <span>Dashboard</span>
                   {pathname.startsWith('/dashboard') && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-sky-400 inline-block shrink-0" />
                   )}
                 </Link>
               </nav>
@@ -312,18 +312,18 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#0066F5] dark:text-[#08B9F5] hover:bg-blue-50 dark:hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#0038A8] dark:text-sky-400 hover:bg-blue-50 dark:hover:bg-white/10 transition-all cursor-pointer active:scale-95"
                 title={`Current city: ${activeCity} - Tap to change`}
                 aria-label={`Change location (${activeCity})`}
               >
-                <MapPin className="w-5 h-5 stroke-[2] text-[#0066F5] dark:text-[#08B9F5]" />
+                <MapPin className="w-5 h-5 stroke-[2] text-[#0038A8] dark:text-sky-400" />
               </button>
 
               {/* Mobile Top Bot Button (replaces black '+' button) */}
               <Link
                 id="vt-bot-mobile"
                 href="/bot"
-                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50/80 dark:bg-white/10 text-[#0066F5] dark:text-[#08B9F5] hover:bg-blue-100 dark:hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shrink-0 border border-blue-100 dark:border-white/10"
+                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50/80 dark:bg-white/10 text-[#0038A8] dark:text-sky-400 hover:bg-blue-100 dark:hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shrink-0 border border-blue-100 dark:border-white/10"
                 title="Create with Bot"
                 aria-label="Create with Bot"
               >
@@ -334,10 +334,10 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-slate-700 dark:text-neutral-200 hover:text-[#0066F5] dark:hover:text-[#08B9F5] hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer text-left group"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-slate-700 dark:text-neutral-200 hover:text-[#0038A8] dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer text-left group"
                 title="Change location"
               >
-                <MapPin className="w-4 h-4 text-[#0066F5] dark:text-[#08B9F5] shrink-0" strokeWidth={2.2} style={{ color: '#0066F5', stroke: '#0066F5' }} />
+                <MapPin className="w-4 h-4 text-[#0038A8] dark:text-sky-400 shrink-0" strokeWidth={2.2} style={{ color: '#0038A8', stroke: '#0038A8' }} />
                 <span className="text-xs sm:text-sm font-medium max-w-[120px] truncate">
                   {activeCity === 'All India' ? 'India' : activeCity}
                 </span>

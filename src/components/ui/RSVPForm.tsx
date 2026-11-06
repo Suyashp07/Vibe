@@ -314,7 +314,7 @@ export default function RSVPForm({
             type="button"
             onClick={() => setShowPassModal(true)}
             className={`w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-white text-xs font-bold shadow-sm hover-lift transition-all cursor-pointer ${
-              isWaitlist ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#08B9F5] hover:bg-[#075CE5] shadow-lg shadow-[#08B9F5]/25'
+              isWaitlist ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#0038A8] hover:bg-[#173DAA] shadow-lg shadow-blue-900/25'
             }`}
           >
             {isWaitlist ? (
@@ -382,7 +382,7 @@ export default function RSVPForm({
           <button
             type="button"
             onClick={handleActivateGuestAccount}
-            className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold transition-all shadow-md shadow-[#08B9F5]/20 cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs font-bold transition-all shadow-md shadow-blue-900/20 cursor-pointer"
           >
             <span>View Digital Pass &amp; Bookings →</span>
           </button>
@@ -495,7 +495,7 @@ export default function RSVPForm({
             <button
               type="submit"
               disabled={isSubmitting || (otpToken.trim().length !== 4 && otpToken.trim().length < 6)}
-              className="flex-1 py-3.5 px-4 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition shadow-lg shadow-[#08B9F5]/25 flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-3.5 px-4 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition shadow-lg shadow-blue-900/25 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -781,7 +781,7 @@ export default function RSVPForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs bg-[#08B9F5] hover:bg-[#075CE5] text-white shadow-lg shadow-[#08B9F5]/25 disabled:opacity-50 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs bg-[#0038A8] hover:bg-[#173DAA] text-white shadow-lg shadow-blue-900/25 disabled:opacity-50 transition-all cursor-pointer"
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">

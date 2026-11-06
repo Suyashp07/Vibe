@@ -213,7 +213,7 @@ export default function EventCard({
           <button
             type="button"
             onClick={handleCardClick}
-            className="event-card-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#08B9F5] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-[#08B9F5] dark:text-slate-200 dark:hover:text-white transition-all duration-200 cursor-pointer"
+            className="event-card-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0038A8] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-[#0038A8] dark:text-slate-200 dark:hover:text-white transition-all duration-200 cursor-pointer"
           >
             <span>View Details</span>
             <ArrowUpRight className="w-3.5 h-3.5" />

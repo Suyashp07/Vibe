@@ -304,14 +304,14 @@ function DashboardInner() {
       <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#070709] text-slate-900 dark:text-[#F3F4F6]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-7 h-7 border-2 border-[#0066F5] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#0038A8] border-t-transparent rounded-full animate-spin" />
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#070709] text-slate-900 dark:text-[#F3F4F6] selection:bg-[#0066F5] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#070709] text-slate-900 dark:text-[#F3F4F6] selection:bg-[#0038A8] selection:text-white transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full space-y-8">
@@ -501,7 +501,7 @@ function DashboardInner() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search your events by name or city..."
-              className="w-full pl-9 pr-8 py-2 rounded-full bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/10 text-xs sm:text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-[#0066F5] transition-colors shadow-2xs"
+              className="w-full pl-9 pr-8 py-2 rounded-full bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/10 text-xs sm:text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-[#0038A8] transition-colors shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -736,7 +736,7 @@ export default function DashboardPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#070709] flex items-center justify-center">
-          <RefreshCw className="w-6 h-6 animate-spin text-[#0066F5]" />
+          <RefreshCw className="w-6 h-6 animate-spin text-[#0038A8] dark:text-sky-400" />
         </div>
       }
     >

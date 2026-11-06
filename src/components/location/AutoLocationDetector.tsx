@@ -243,11 +243,11 @@ export default function AutoLocationDetector() {
       {toastCity && (
         <div className="fixed top-18 sm:top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-3 duration-300 pointer-events-none px-4 w-full max-w-sm flex justify-center">
           <div className="pointer-events-auto bg-white/95 dark:bg-[#07133A]/95 text-slate-900 dark:text-white pl-2.5 pr-3 py-1.5 rounded-full shadow-[0_10px_35px_rgba(0,10,40,0.18)] border border-slate-200/90 dark:border-white/15 backdrop-blur-md flex items-center gap-2 text-xs">
-            <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-white/10 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-white/10 text-[#0038A8] dark:text-sky-300 flex items-center justify-center shrink-0">
               <MapPin className="w-3.5 h-3.5" />
             </div>
             <span className="text-[11px] sm:text-xs font-medium truncate">
-              Browsing events near <span className="font-bold text-[#0066F5] dark:text-[#08B9F5]">{toastCity}</span>
+              Browsing events near <span className="font-bold text-[#0038A8] dark:text-sky-300">{toastCity}</span>
             </span>
             <button
               type="button"

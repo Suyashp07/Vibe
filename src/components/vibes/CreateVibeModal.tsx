@@ -365,7 +365,8 @@ export default function CreateVibeModal({ isOpen, onClose, onCreated }: CreateVi
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full mt-2 py-3 rounded-2xl bg-gradient-to-r from-[#075CE5] to-[#08B9F5] hover:brightness-110 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full mt-2 py-3 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  style={{ color: '#FFFFFF', backgroundColor: '#0038A8' }}
                 >
                   {submitting ? 'Publishing Vibe...' : '⚡ Post to Vibe Instant Stream'}
                 </button>

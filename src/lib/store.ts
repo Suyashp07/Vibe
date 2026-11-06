@@ -424,7 +424,7 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
     organizer_name: 'Indore Sports Club',
     organizer_handle: 'indore_sports',
     organizer_logo: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=150&auto=format&fit=crop&q=80',
-    organizer_brand_color: '#0066F5',
+    organizer_brand_color: '#0038A8',
     slug: 'indore-box-cricket-championship',
     title: 'Indore Box Cricket Championship',
     tagline: 'Under floodlights, 8-over tape ball showdown with top Indore turf squads.',
@@ -436,7 +436,7 @@ export const SAMPLE_TEMPLATE_EVENTS: EventItem[] = [
       font: 'Inter',
       bg_style: 'solid',
       button_style: 'pill',
-      custom_accent: '#0066F5'
+      custom_accent: '#0038A8'
     },
     sections: { speakers: false, agenda: true, gallery: true, faq: true },
     event_type: 'in-person',

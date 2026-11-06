@@ -617,7 +617,7 @@ export default function SingleClickCreateAIPage() {
               type="button"
               onClick={handleSingleClickCreate}
               disabled={isCreating || !hasAnyInput}
-              className="w-full py-3 px-5 rounded-2xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 shadow-lg shadow-[#08B9F5]/25 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-3 px-5 rounded-2xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 shadow-lg shadow-blue-900/30 hover:scale-[1.01] active:scale-[0.99]"
             >
               {isCreating ? (
                 <>

@@ -128,7 +128,7 @@ export default function MomentsWall() {
           type="button"
           onClick={() => scrollByAmount(-340)}
           aria-label="Scroll memories left"
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 dark:bg-[#111318]/95 hover:bg-white text-slate-700 dark:text-slate-200 hover:text-[#0066F5] shadow-md border border-slate-200/90 dark:border-white/10 flex items-center justify-center opacity-0 group-hover/memories:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xs"
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 dark:bg-[#111318]/95 hover:bg-white text-slate-700 dark:text-slate-200 hover:text-[#0038A8] dark:hover:text-sky-300 shadow-md border border-slate-200/90 dark:border-white/10 flex items-center justify-center opacity-0 group-hover/memories:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xs"
         >
           <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
         </button>
@@ -138,7 +138,7 @@ export default function MomentsWall() {
           type="button"
           onClick={() => scrollByAmount(340)}
           aria-label="Scroll memories right"
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 dark:bg-[#111318]/95 hover:bg-white text-slate-700 dark:text-slate-200 hover:text-[#0066F5] shadow-md border border-slate-200/90 dark:border-white/10 flex items-center justify-center opacity-0 group-hover/memories:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xs"
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 dark:bg-[#111318]/95 hover:bg-white text-slate-700 dark:text-slate-200 hover:text-[#0038A8] dark:hover:text-sky-300 shadow-md border border-slate-200/90 dark:border-white/10 flex items-center justify-center opacity-0 group-hover/memories:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xs"
         >
           <ChevronRight className="w-5 h-5 stroke-[2.5]" />
         </button>
@@ -194,7 +194,7 @@ export default function MomentsWall() {
         <div>
           <Link
             href="/vibes"
-            className="inline-flex items-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           >
             <Users className="w-4 h-4 text-white" />
             <span className="text-white">Join the Community</span>
@@ -205,8 +205,8 @@ export default function MomentsWall() {
         {/* Social Proof Counter */}
         <div className="flex items-center gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-4">
           <div className="flex -space-x-1">
-            <span className="w-3.5 h-3.5 rounded-full bg-[#0066F5] border-2 border-white dark:border-black inline-block" />
-            <span className="w-3.5 h-3.5 rounded-full bg-[#08B9F5] border-2 border-white dark:border-black inline-block" />
+            <span className="w-3.5 h-3.5 rounded-full bg-[#0038A8] border-2 border-white dark:border-black inline-block" />
+            <span className="w-3.5 h-3.5 rounded-full bg-[#173DAA] border-2 border-white dark:border-black inline-block" />
             <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-black inline-block" />
           </div>
           <span>Join creators, artists & attendees sharing unforgettable vibes</span>
@@ -281,7 +281,7 @@ function SingleMemoryCard({ card }: { card: MemoryCardItem }) {
           )}
           <Link
             href="/vibes"
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#08B9F5] hover:bg-[#0066F5] text-white text-[11px] font-bold shadow-md transition-all active:scale-95"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-[11px] font-bold shadow-md shadow-blue-900/25 transition-all active:scale-95"
           >
             <span>View in Vibe Instant</span>
             <ArrowRight className="w-3 h-3" />
@@ -346,7 +346,7 @@ function SingleMemoryCard({ card }: { card: MemoryCardItem }) {
         )}
         <Link
           href="/vibes"
-          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#08B9F5] hover:bg-[#0066F5] text-white text-[11px] font-bold shadow-md transition-all active:scale-95"
+          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-[11px] font-bold shadow-md shadow-blue-900/25 transition-all active:scale-95"
         >
           <span>View in Vibe Instant</span>
           <ArrowRight className="w-3 h-3" />

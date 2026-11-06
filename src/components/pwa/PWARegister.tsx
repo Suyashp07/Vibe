@@ -227,7 +227,7 @@ export default function PWARegister() {
               </div>
 
               <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
-                <div className="w-7 h-7 rounded-lg bg-[#08B9F5]/20 text-[#08B9F5] flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-[#0038A8]/20 text-[#0038A8] dark:text-sky-300 flex items-center justify-center shrink-0">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
@@ -239,7 +239,7 @@ export default function PWARegister() {
             <button
               type="button"
               onClick={() => setShowIOSModal(false)}
-              className="w-full py-2.5 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-semibold transition cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs font-semibold transition cursor-pointer"
             >
               Got it
             </button>

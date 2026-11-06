@@ -691,10 +691,10 @@ export default function WhatsOnFeed() {
                   <div className="pt-2 sm:pt-3">
                     <Link
                       href={flashcardLink}
-                      className="hero-spotlight-btn inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                      style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}
+                      className="hero-spotlight-btn inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-xs sm:text-sm font-bold shadow-lg shadow-blue-900/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                      style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", backgroundColor: "#0038A8" }}
                     >
-                      <span className="hero-spotlight-btn-text" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}>Find your spot</span>
+                      <span className="hero-spotlight-btn-text font-bold text-white" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}>Find your spot</span>
                       <ArrowRight className="w-4 h-4 text-white" style={{ color: "#FFFFFF", stroke: "#FFFFFF" }} />
                     </Link>
                   </div>
@@ -779,7 +779,7 @@ export default function WhatsOnFeed() {
                 {/* Date Tag */}
                 {dateFilter !== 'anytime' && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10">
-                    <Calendar className="w-3 h-3 text-[#0066F5]" />
+                    <Calendar className="w-3 h-3 text-[#0038A8] dark:text-sky-300" />
                     <span>{DATE_FILTER_LABELS[dateFilter] || dateFilter}</span>
                     <button
                       type="button"
@@ -799,7 +799,7 @@ export default function WhatsOnFeed() {
                   return (
                     <span
                       key={catId}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-[#0066F5]/20 text-[#0066F5] dark:text-[#38bdf8] border border-blue-200/80 dark:border-[#0066F5]/30"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-[#0038A8]/20 text-[#0038A8] dark:text-[#38bdf8] border border-blue-200/80 dark:border-[#0038A8]/30"
                     >
                       <span>{name}</span>
                       <button
@@ -817,7 +817,7 @@ export default function WhatsOnFeed() {
                 {/* Search Query Tag */}
                 {searchQuery.trim() && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10">
-                    <Search className="w-3 h-3 text-[#0066F5]" />
+                    <Search className="w-3 h-3 text-[#0038A8] dark:text-sky-300" />
                     <span>&quot;{searchQuery}&quot;</span>
                     <button
                       type="button"
@@ -834,7 +834,7 @@ export default function WhatsOnFeed() {
                 <button
                   type="button"
                   onClick={handleResetToAll}
-                  className="text-xs font-semibold text-slate-400 hover:text-[#0066F5] dark:hover:text-white transition-colors cursor-pointer ml-1.5"
+                  className="text-xs font-semibold text-slate-400 hover:text-[#0038A8] dark:hover:text-white transition-colors cursor-pointer ml-1.5"
                 >
                   Clear all
                 </button>
