@@ -258,9 +258,8 @@ export default function MostLovedSection({
       setDraftCategories(selectedCategories);
       setDraftWhen(dateFilter);
       document.body.style.overflow = 'hidden';
-      setTimeout(() => {
-        modalInputRef.current?.focus();
-      }, 50);
+      // Note: Do NOT auto-focus modalInputRef here! Auto-focusing an input on mobile
+      // automatically triggers the virtual software keyboard to slide up and cover half the screen.
     } else {
       document.body.style.overflow = '';
       setSearchQuery('');
@@ -486,7 +485,7 @@ export default function MostLovedSection({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="bg-white dark:bg-[#0B0F19] w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl max-h-[85vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-slate-200/90 dark:border-white/10 overflow-hidden text-slate-900 dark:text-white"
+              className="bg-white dark:bg-[#0B0F19] w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl h-[88dvh] sm:h-auto sm:max-h-[85vh] flex flex-col shadow-2xl border border-slate-200/90 dark:border-white/10 overflow-hidden text-slate-900 dark:text-white"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -519,8 +518,11 @@ export default function MostLovedSection({
                 </button>
               </div>
 
-              {/* Modal Body - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+              {/* Modal Body - Single Unified Scrollable Container */}
+              <div
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6 touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 {/* 1. "When" Date Selector */}
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-1.5">
@@ -570,30 +572,32 @@ export default function MostLovedSection({
                     )}
                   </div>
 
-                  {/* Search Bar Input */}
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      ref={modalInputRef}
-                      type="text"
-                      placeholder="Search categories"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-9 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0066F5]/40 focus:border-[#0066F5] transition-all"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
+                  {/* Search Bar Input - Sticky with backdrop */}
+                  <div className="sticky top-0 z-10 bg-white dark:bg-[#0B0F19] pt-1 pb-1">
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                      <input
+                        ref={modalInputRef}
+                        type="text"
+                        placeholder="Search categories"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-9 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0066F5]/40 focus:border-[#0066F5] transition-all"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Categories 2-Column Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[38vh] overflow-y-auto pr-1 no-scrollbar">
+                  {/* Categories 2-Column Grid (Freely flowing inside single scroll container) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pb-2">
                     {filteredModalCategories.length > 0 ? (
                       filteredModalCategories.map((cat) => {
                         const isSelected = draftCategories.includes(cat.id);
@@ -671,7 +675,7 @@ export default function MostLovedSection({
               </div>
 
               {/* Modal Sticky Footer */}
-              <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-3 bg-white dark:bg-[#0B0F19] shrink-0">
+              <div className="p-4 sm:p-5 pb-[max(1.25rem,env(safe-area-inset-bottom,1.25rem))] border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-3 bg-white dark:bg-[#0B0F19] shrink-0">
                 <button
                   type="button"
                   onClick={handleResetDraft}
