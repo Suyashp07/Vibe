@@ -268,17 +268,6 @@ export default function ProductWalkthrough() {
     }
   };
 
-  const startTourManually = () => {
-    const filtered = ALL_STEPS.filter((s) => {
-      if (!s.target) return true;
-      return findElement(s) !== null;
-    });
-    setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
-    setCurrentStep(0);
-    setIsOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   if (!isMounted || pathname !== '/') return null;
 
   const currentStepData = activeSteps[currentStep] || ALL_STEPS[0];
@@ -339,26 +328,6 @@ export default function ProductWalkthrough() {
 
   return (
     <>
-      {/* Floating Relaunch Capsule Button (Always available on Home page when tour is closed) */}
-      {!isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="fixed z-40 bottom-20 sm:bottom-6 left-4 sm:left-6 select-none"
-        >
-          <button
-            type="button"
-            onClick={startTourManually}
-            className="group flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full bg-slate-900/95 dark:bg-[#081426]/95 hover:bg-[#0038A8] dark:hover:bg-[#0038A8] text-white text-xs font-bold shadow-xl border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
-            title="Take interactive 30s tour of Vibe"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#38BDF8] group-hover:text-white transition-colors" />
-            <span>30s Tour</span>
-          </button>
-        </motion.div>
-      )}
-
       {/* Main Walkthrough Modal & Spotlight Overlay */}
       <AnimatePresence>
         {isOpen && (
