@@ -7,6 +7,7 @@ import {
   Sparkles,
   Compass,
   Zap,
+  Bot,
   Plus,
   ArrowRight,
   ArrowLeft,
@@ -57,6 +58,15 @@ const ALL_STEPS: StepItem[] = [
     icon: Zap,
     title: 'Vibe Instant',
     text: 'Spontaneous meetups happening right now. Just show up.',
+    cta: 'Next →',
+  },
+  {
+    id: 'bot',
+    target: '#vt-bot',
+    fallbackTarget: '#vt-bot-mobile',
+    icon: Bot,
+    title: 'Vibe AI Bot',
+    text: 'Chat on WhatsApp or Telegram to discover vibes, book passes, or host in seconds.',
     cta: 'Next →',
   },
   {
@@ -172,8 +182,10 @@ export default function ProductWalkthrough() {
           const topOffset = el.getBoundingClientRect().top + window.scrollY - (isMobile ? 80 : 130);
           window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
         }
-      } else if (step.id === 'instant' || step.id === 'host') {
+      } else if (step.id === 'instant' || step.id === 'host' || step.id === 'bot') {
         if (!isMobile) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (step.id === 'bot') {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
@@ -342,6 +354,10 @@ export default function ProductWalkthrough() {
                       width = Math.max(width, 58);
                       height = Math.max(height, 58);
                       radius = '9999px';
+                    } else if (currentId === 'bot') {
+                      width = Math.max(width, 48);
+                      height = Math.max(height, 48);
+                      radius = '9999px';
                     } else if (currentId === 'host') {
                       radius = '9999px';
                     }
@@ -388,6 +404,17 @@ export default function ProductWalkthrough() {
 
                 if (isMobile) {
                   const currentId = activeSteps[currentStep]?.id;
+                  if (currentId === 'bot') {
+                    return {
+                      position: 'fixed',
+                      top: `${Math.max(16, targetRect.bottom + 14)}px`,
+                      left: '16px',
+                      right: '16px',
+                      maxWidth: '390px',
+                      margin: '0 auto',
+                      zIndex: 9995,
+                    };
+                  }
                   const bottomPx = currentId === 'instant' || currentId === 'host' ? 78 : 16;
                   return {
                     position: 'fixed',
@@ -459,24 +486,30 @@ export default function ProductWalkthrough() {
                   </p>
 
                   {/* Animated Feature Pillars Preview */}
-                  <div className="grid grid-cols-3 gap-2 py-3 px-2 bg-slate-50 dark:bg-white/[0.04] rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[11px] font-semibold text-slate-700 dark:text-neutral-200">
-                    <div className="flex flex-col items-center gap-1.5 text-center">
-                      <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center">
+                  <div className="grid grid-cols-4 gap-1.5 py-3 px-2 bg-slate-50 dark:bg-white/[0.04] rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center">
                         <Compass className="w-3.5 h-3.5" />
                       </div>
                       <span>Local Vibes</span>
                     </div>
-                    <div className="flex flex-col items-center gap-1.5 text-center">
-                      <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                         <Zap className="w-3.5 h-3.5 fill-current" />
                       </div>
-                      <span>Instant Plans</span>
+                      <span>Instant</span>
                     </div>
-                    <div className="flex flex-col items-center gap-1.5 text-center">
-                      <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <Bot className="w-3.5 h-3.5 stroke-[2]" />
+                      </div>
+                      <span>AI Bot</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                       </div>
-                      <span>1-Min Host</span>
+                      <span>Host</span>
                     </div>
                   </div>
 
@@ -620,6 +653,41 @@ export default function ProductWalkthrough() {
                           <span className="px-2 py-0.5 rounded-md bg-[#0066F5] text-white text-[9px] font-bold shrink-0">
                             Join
                           </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentStepData.id === 'bot' && (
+                      <div className="space-y-2">
+                        {/* Animated Chat Simulation with WhatsApp & Telegram */}
+                        <div className="space-y-1.5 text-[11px]">
+                          {/* User Message Bubble */}
+                          <div className="flex justify-end">
+                            <div className="bg-[#0066F5] text-white px-2.5 py-1.5 rounded-2xl rounded-tr-xs max-w-[85%] text-[10px] font-medium shadow-2xs">
+                              Find concerts or tech events this week 🎟
+                            </div>
+                          </div>
+                          {/* Bot Reply Bubble */}
+                          <div className="flex items-start gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                              <Bot className="w-3 h-3 stroke-[2.2]" />
+                            </div>
+                            <div className="bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded-2xl rounded-tl-xs max-w-[88%] text-[10px]">
+                              <p className="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">Vibe AI Curator</p>
+                              Found 3 events near you! Tap below to get instant passes directly in chat.
+                            </div>
+                          </div>
+                        </div>
+                        {/* Quick Channel Badges */}
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                            <MessageCircle className="w-3 h-3" />
+                            <span>WhatsApp Bot</span>
+                          </div>
+                          <div className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-sky-50 dark:bg-sky-500/15 border border-sky-200 dark:border-sky-500/30 text-sky-700 dark:text-sky-300 text-[10px] font-bold">
+                            <Send className="w-3 h-3" />
+                            <span>Telegram Bot</span>
+                          </div>
                         </div>
                       </div>
                     )}
