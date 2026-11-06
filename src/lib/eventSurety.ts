@@ -386,14 +386,23 @@ export function calculateEventSurety(event: any): EventSuretyReport {
     finalScore = Math.min(finalScore, 65);
   }
 
+  // Check if flagged as duplicate
+  const isDuplicate = Boolean(
+    (event as any).is_duplicate ||
+    event.theme?.is_duplicate ||
+    (event as any).duplicate_matched_title ||
+    event.theme?.duplicate_matched_title
+  );
+
   // Manual admin approval overrides auto-approval check
   const isManuallyApproved =
-    event.approval_status === 'approved' ||
-    event.admin_approved === true ||
-    event.theme?.admin_approved === true;
+    (event.theme?.manual_admin_approval === true) ||
+    (event.approval_status === 'approved' && event.admin_approved === true && (event.theme?.manual_admin_approval === true || !isDuplicate));
 
-  // Auto-approval ONLY allowed if >= 90% AND zero critical failures!
-  const autoApproved = isManuallyApproved || (!hasCriticalFailure && finalScore >= 90);
+  // DUPLICATE GUARD:
+  // Auto-approval is NEVER granted to duplicate events.
+  // Duplicates strictly require explicit manual admin approval!
+  const autoApproved = isManuallyApproved || (!isDuplicate && !hasCriticalFailure && finalScore >= 90);
   const approvalStatus: 'approved' | 'pending' = autoApproved ? 'approved' : 'pending';
 
   let tier: 'High' | 'Moderate' | 'Incomplete';
@@ -424,6 +433,8 @@ export function calculateEventSurety(event: any): EventSuretyReport {
 
   const approvalLabel = autoApproved
     ? `Auto-Approved (${finalScore}% Surety)`
+    : isDuplicate && !isManuallyApproved
+    ? `Requires Admin Approval (Duplicate Match Detected)`
     : hasCriticalFailure
     ? `Requires Admin Approval (${finalScore}% Surety · Missing Critical Details)`
     : `Requires Admin Approval (${finalScore}% Surety)`;

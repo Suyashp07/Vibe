@@ -130,9 +130,14 @@ export default function EventApprovalQueue({
           const isSelected = selectedEvent?.id === event.id;
           const isChecked = selectedIds.has(event.id);
           const duplicate = findDuplicateMatch(event);
+          const isManuallyApproved = Boolean(
+            event.theme?.manual_admin_approval === true ||
+            (event.admin_approved === true && event.theme?.manual_admin_approval === true)
+          );
+          const isDuplicateUnapproved = Boolean(duplicate || event.is_duplicate) && !isManuallyApproved;
           const status = (event.status || '').toLowerCase();
-          const isPending = status === 'draft' || status === 'review';
-          const isLive = status === 'live' || status === 'published';
+          const isPending = status === 'draft' || status === 'review' || isDuplicateUnapproved;
+          const isLive = (status === 'live' || status === 'published') && !isDuplicateUnapproved;
           const isRejected = status === 'cancelled' || status === 'rejected';
 
           const coverImg = event.cover_image_url || event.cover_image || event.image_url;
@@ -241,6 +246,12 @@ export default function EventApprovalQueue({
                       )}
                     </button>
                   </div>
+                )}
+
+                {isDuplicateUnapproved && !isRejected && (
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                    Needs Approval
+                  </span>
                 )}
 
                 {isLive && (

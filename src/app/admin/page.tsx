@@ -76,39 +76,6 @@ export default function AdminDashboardPage() {
     fetchEvents();
   }, []);
 
-  // Compute status counts with 90% Surety Auto-Approval rule and source counts
-  const counts = useMemo(() => {
-    let pending = 0;
-    let autoApproved = 0;
-    let live = 0;
-    let rejected = 0;
-    let vibe = 0;
-    let ingested = 0;
-
-    events.forEach((ev) => {
-      const st = (ev.status || '').toLowerCase();
-      const isDraft = st === 'draft' || st === 'review';
-      const surety = calculateEventSurety(ev);
-
-      if (isDraft || !surety.autoApproved) {
-        pending++;
-      } else {
-        autoApproved++;
-      }
-
-      if (st === 'live' || st === 'published') live++;
-      else if (st === 'cancelled' || st === 'rejected') rejected++;
-
-      if (isIngestedEvent(ev)) {
-        ingested++;
-      } else {
-        vibe++;
-      }
-    });
-
-    return { pending, autoApproved, live, rejected, vibe, ingested, total: events.length };
-  }, [events]);
-
   // Duplicate Finder
   const findDuplicateMatch = (event: AdminEvent): AdminEvent | undefined => {
     return events.find((other) => {
@@ -128,17 +95,68 @@ export default function AdminDashboardPage() {
     });
   };
 
+  // Compute status counts with Duplicate Guard & 90% Surety Auto-Approval rule
+  const counts = useMemo(() => {
+    let pending = 0;
+    let autoApproved = 0;
+    let live = 0;
+    let rejected = 0;
+    let vibe = 0;
+    let ingested = 0;
+
+    events.forEach((ev) => {
+      const st = (ev.status || '').toLowerCase();
+      const isDraft = st === 'draft' || st === 'review';
+      const duplicate = findDuplicateMatch(ev);
+      const isDuplicate = Boolean(duplicate || ev.is_duplicate || ev.theme?.is_duplicate);
+      const isManuallyApproved = Boolean(
+        ev.theme?.manual_admin_approval === true ||
+        (ev.admin_approved === true && ev.theme?.manual_admin_approval === true)
+      );
+      const surety = calculateEventSurety(ev);
+
+      // DUPLICATE GUARD:
+      // A duplicate event is NEVER auto-approved. It strictly needs explicit admin approval.
+      const requiresApproval = isDraft || !surety.autoApproved || (isDuplicate && !isManuallyApproved);
+
+      if (requiresApproval) {
+        pending++;
+      } else {
+        autoApproved++;
+      }
+
+      const isActuallyLive = (st === 'live' || st === 'published') && (!isDuplicate || isManuallyApproved);
+      if (isActuallyLive) live++;
+      else if (st === 'cancelled' || st === 'rejected') rejected++;
+
+      if (isIngestedEvent(ev)) {
+        ingested++;
+      } else {
+        vibe++;
+      }
+    });
+
+    return { pending, autoApproved, live, rejected, vibe, ingested, total: events.length };
+  }, [events]);
+
   // Filtered Events with Status, Source, and Search
   const filteredEvents = useMemo(() => {
     return events
       .filter((ev) => {
         const st = (ev.status || '').toLowerCase();
         const isDraft = st === 'draft' || st === 'review';
+        const duplicate = findDuplicateMatch(ev);
+        const isDuplicate = Boolean(duplicate || ev.is_duplicate || ev.theme?.is_duplicate);
+        const isManuallyApproved = Boolean(
+          ev.theme?.manual_admin_approval === true ||
+          (ev.admin_approved === true && ev.theme?.manual_admin_approval === true)
+        );
         const surety = calculateEventSurety(ev);
+        const requiresApproval = isDraft || !surety.autoApproved || (isDuplicate && !isManuallyApproved);
 
-        if (statusFilter === 'REVIEW') return isDraft || !surety.autoApproved;
-        if (statusFilter === 'AUTO_APPROVED') return !isDraft && surety.autoApproved;
-        if (statusFilter === 'LIVE') return st === 'live' || st === 'published';
+        if (statusFilter === 'REVIEW') return requiresApproval;
+        if (statusFilter === 'AUTO_APPROVED') return !requiresApproval && !isDraft;
+        if (statusFilter === 'LIVE') return (st === 'live' || st === 'published') && (!isDuplicate || isManuallyApproved);
         if (statusFilter === 'REJECTED') return st === 'cancelled' || st === 'rejected';
         return true;
       })
@@ -194,13 +212,19 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: event.id,
-          updates: { status: 'live', is_public: true },
+          updates: {
+            status: 'live',
+            is_public: true,
+            admin_approved: true,
+            approval_status: 'approved',
+            manual_admin_approval: true,
+          },
         }),
       });
       if (!res.ok) throw new Error('Failed to approve event');
       await fetchEvents();
       if (selectedEvent?.id === event.id) {
-        setSelectedEvent((prev) => (prev ? { ...prev, status: 'live', is_public: true } : null));
+        setSelectedEvent((prev) => (prev ? { ...prev, status: 'live', is_public: true, admin_approved: true, approval_status: 'approved' } : null));
       }
     } catch (err: any) {
       alert(`Approval error: ${err.message}`);
@@ -352,7 +376,7 @@ export default function AdminDashboardPage() {
     { id: 'ALL', label: 'All Events', count: counts.total },
     { id: 'LIVE', label: 'Live Published', count: counts.live },
     { id: 'AUTO_APPROVED', label: 'Auto-Approved (≥90%)', count: counts.autoApproved },
-    { id: 'REVIEW', label: 'Needs Approval (<90%)', count: counts.pending, alert: counts.pending > 0 },
+    { id: 'REVIEW', label: 'Needs Approval', count: counts.pending, alert: counts.pending > 0 },
     { id: 'REJECTED', label: 'Rejected', count: counts.rejected },
   ];
 

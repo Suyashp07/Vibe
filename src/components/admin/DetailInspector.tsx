@@ -61,7 +61,12 @@ export default function DetailInspector({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const coverImg = event.cover_image_url || event.cover_image || event.image_url;
-  const isPending = (event.status || '').toLowerCase() === 'draft' || (event.status || '').toLowerCase() === 'review';
+  const isManuallyApproved = Boolean(
+    event.theme?.manual_admin_approval === true ||
+    (event.admin_approved === true && event.theme?.manual_admin_approval === true)
+  );
+  const isDuplicateUnapproved = Boolean(duplicate || event.is_duplicate) && !isManuallyApproved;
+  const isPending = (event.status || '').toLowerCase() === 'draft' || (event.status || '').toLowerCase() === 'review' || isDuplicateUnapproved;
 
   // State for dynamic resolution detection & proxy fallback
   const [imageError, setImageError] = useState(false);
@@ -324,14 +329,26 @@ export default function DetailInspector({
 
       {/* Duplicate Alert Banner */}
       {duplicate && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-800">
+        <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-900 shadow-xs">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">Potential Duplicate Detected</p>
-            <p className="text-[11px] mt-0.5">
-              Matches existing event <span className="font-semibold">&quot;{duplicate.title}&quot;</span> scheduled for{' '}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <p className="font-bold text-amber-900">Duplicate Event Detected</p>
+              {!isManuallyApproved && (
+                <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-full border border-amber-300">
+                  🛡️ Blocked from Public Live View
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-amber-800 mt-1">
+              Matches existing event <span className="font-semibold text-amber-950">&quot;{duplicate.title}&quot;</span> scheduled for{' '}
               {duplicate.date || 'same date'} at {duplicate.venue_name || duplicate.city}.
             </p>
+            {!isManuallyApproved && (
+              <p className="text-[11px] text-amber-900 font-medium mt-1.5 bg-amber-100/70 p-2 rounded-lg border border-amber-200">
+                🔒 <strong>Safety Guard:</strong> Duplicate events do <em>not</em> go live on the website automatically. This event will only be published live after you click <strong>Approve</strong>.
+              </p>
+            )}
           </div>
         </div>
       )}

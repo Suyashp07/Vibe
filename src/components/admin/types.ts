@@ -29,6 +29,14 @@ export interface AdminEvent {
   category?: string;
   slug?: string;
   created_at?: string;
+  is_duplicate?: boolean;
+  duplicate_matched_title?: string;
+  duplicate_matched_id?: string;
+  admin_approved?: boolean;
+  approval_status?: string;
+  confidence_score?: number;
+  missing_aspects?: string[];
+  theme?: Record<string, any>;
   profiles?: {
     id: string;
     name?: string;

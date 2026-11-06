@@ -48,26 +48,48 @@ export async function POST(req: NextRequest) {
     // 2. Duplicate check against existing events
     let isDuplicate = false;
     let duplicateMatchName: string | null = null;
+    let duplicateMatchId: string | null = null;
 
     if (supabase) {
-      const { data: existingEvents } = await supabase
-        .from('events')
-        .select('id, title, start_at, location_name, city')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // 2a. Check by exact external ticket URL
+      const normTicketUrl = url.trim().replace(/\/+$/, '');
+      if (normTicketUrl && normTicketUrl.length > 10) {
+        const { data: byUrl } = await supabase
+          .from('events')
+          .select('id, title, start_at, location_name, city, external_ticket_url')
+          .ilike('external_ticket_url', `%${normTicketUrl}%`)
+          .limit(1)
+          .maybeSingle();
 
-      if (existingEvents) {
-        for (const existing of existingEvents) {
-          const existingDate = existing.start_at ? new Date(existing.start_at).toISOString().split('T')[0] : null;
-          const match = areDuplicates(
-            { name: title, date, venue },
-            { name: existing.title, date: existingDate, venue: existing.location_name || existing.city }
-          );
+        if (byUrl) {
+          isDuplicate = true;
+          duplicateMatchName = byUrl.title;
+          duplicateMatchId = byUrl.id;
+        }
+      }
 
-          if (match) {
-            isDuplicate = true;
-            duplicateMatchName = existing.title;
-            break;
+      // 2b. Check by Title / Date / Venue similarity
+      if (!isDuplicate) {
+        const { data: existingEvents } = await supabase
+          .from('events')
+          .select('id, title, start_at, location_name, city')
+          .order('created_at', { ascending: false })
+          .limit(120);
+
+        if (existingEvents) {
+          for (const existing of existingEvents) {
+            const existingDate = existing.start_at ? new Date(existing.start_at).toISOString().split('T')[0] : null;
+            const match = areDuplicates(
+              { name: title, date, venue },
+              { name: existing.title, date: existingDate, venue: existing.location_name || existing.city }
+            );
+
+            if (match) {
+              isDuplicate = true;
+              duplicateMatchName = existing.title;
+              duplicateMatchId = existing.id;
+              break;
+            }
           }
         }
       }
@@ -101,9 +123,13 @@ export async function POST(req: NextRequest) {
       cover_image_url: extracted.cover_image_url,
       external_ticket_url: url,
       is_external: true,
+      is_duplicate: isDuplicate,
     });
 
-    const isAutoApproved = surety.autoApproved;
+    // CRITICAL DUPLICATE GUARD:
+    // If an event is a duplicate, it NEVER goes live automatically, even with 100% Surety.
+    // It is strictly saved as 'draft' and requires manual admin approval before publishing.
+    const isAutoApproved = !isDuplicate && surety.autoApproved;
 
     const insertPayload = {
       slug: uniqueSlug,
@@ -118,9 +144,15 @@ export async function POST(req: NextRequest) {
         bg_style: 'solid',
         button_style: 'solid',
         confidence_score: surety.score / 100,
-        missing_aspects: surety.missingAspects,
+        missing_aspects: isDuplicate
+          ? [...surety.missingAspects, `Duplicate match detected with "${duplicateMatchName}". Requires explicit admin approval before publishing.`]
+          : surety.missingAspects,
         approval_status: isAutoApproved ? 'approved' : 'pending',
-        admin_approved: isAutoApproved,
+        admin_approved: false, // Never auto-mark admin_approved
+        manual_admin_approval: false,
+        is_duplicate: isDuplicate,
+        duplicate_matched_title: duplicateMatchName,
+        duplicate_matched_id: duplicateMatchId,
       },
       sections: { speakers: false, agenda: false, gallery: false, faq: false },
       event_type: 'in-person',
@@ -138,6 +170,8 @@ export async function POST(req: NextRequest) {
       source_platform: platform,
       external_ticket_url: url,
       external_price_text: extracted.price_text || 'See official site',
+      is_duplicate: isDuplicate,
+      duplicate_matched_title: duplicateMatchName,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

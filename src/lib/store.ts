@@ -1251,9 +1251,26 @@ export const isPublicLiveEvent = (e: any): boolean => {
   const approvalStatus = e.approval_status || e.theme?.approval_status;
   if (approvalStatus === 'pending') return false;
 
-  const isAdminApproved = e.admin_approved === true || e.theme?.admin_approved === true;
+  const isAdminApproved = Boolean(
+    e.admin_approved === true ||
+    e.theme?.admin_approved === true ||
+    e.theme?.manual_admin_approval === true
+  );
+
   const confidenceScore = e.confidence_score ?? e.theme?.confidence_score;
   if (confidenceScore !== undefined && confidenceScore !== null && confidenceScore < 0.9 && !isAdminApproved) {
+    return false;
+  }
+
+  // Strict Duplicate Guard:
+  // Duplicate events NEVER go live by themselves. They strictly require explicit admin approval.
+  const isDuplicateFlagged = Boolean(
+    e.is_duplicate ||
+    e.theme?.is_duplicate ||
+    e.duplicate_matched_title ||
+    e.theme?.duplicate_matched_title
+  );
+  if (isDuplicateFlagged && !isAdminApproved) {
     return false;
   }
 
@@ -1318,9 +1335,40 @@ export const isFlashVibeEvent = (e: any): boolean => {
 /**
  * Returns strictly public, live events for public discovery feeds, hero slider, and category lists.
  * Flash events (specific to Vibe Instant) and private events are 100% excluded.
+ * Duplicate events are strictly filtered out unless explicitly approved by an admin.
  */
 export const getPublicEvents = (): EventItem[] => {
-  return getEvents().filter(e => isPublicLiveEvent(e) && !isFlashVibeEvent(e));
+  const publicEvents = getEvents().filter(e => isPublicLiveEvent(e) && !isFlashVibeEvent(e));
+  
+  // Runtime Deduplication Guard:
+  // Ensure unapproved duplicate events never appear on public feeds simultaneously.
+  const seenSignatures = new Set<string>();
+  const deduplicated: EventItem[] = [];
+
+  for (const ev of publicEvents) {
+    const normTitle = (ev.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24);
+    const dateStr = (ev as any).date || (ev.start_at ? ev.start_at.split('T')[0] : '');
+    const sig = `${normTitle}_${dateStr}`;
+
+    const isAdminApproved = Boolean(
+      ev.admin_approved === true ||
+      (ev as any).theme?.admin_approved === true ||
+      (ev as any).theme?.manual_admin_approval === true
+    );
+
+    if (seenSignatures.has(sig)) {
+      // If already seen and not explicitly approved by an admin, drop from public stream
+      if (isAdminApproved) {
+        deduplicated.push(ev);
+      }
+      continue;
+    }
+
+    seenSignatures.add(sig);
+    deduplicated.push(ev);
+  }
+
+  return deduplicated;
 };
 
 /**

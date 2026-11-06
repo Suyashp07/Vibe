@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyStaffSession } from '@/lib/adminAuth';
 import { logAuditEvent } from '@/lib/audit';
+import { areDuplicates } from '@/lib/aggregation/dedup';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,10 +83,77 @@ export async function GET(req: NextRequest) {
         price_text: e.external_price_text || (priceInr ? `₹${priceInr}` : 'Free Entry'),
         confidence_score: e.confidence_score || e.theme?.confidence_score,
         missing_aspects: e.missing_aspects || e.theme?.missing_aspects,
-        approval_status: e.approval_status || e.theme?.approval_status || ((e.confidence_score || 0) >= 0.9 ? 'approved' : 'pending'),
-        admin_approved: e.admin_approved ?? e.theme?.admin_approved ?? ((e.confidence_score || 0) >= 0.9),
+        approval_status: e.approval_status || e.theme?.approval_status || 'pending',
+        admin_approved: Boolean(e.admin_approved || e.theme?.admin_approved),
       };
     });
+
+    // Duplicate Detection & Unapproved Duplicate Guard:
+    // If an event is a duplicate and has NOT been manually approved by an admin,
+    // it MUST NOT be live or public. Demote it to 'draft' so it requires admin approval.
+    const duplicateNeedsDemotionIds: string[] = [];
+
+    for (let i = 0; i < allEvents.length; i++) {
+      const current = allEvents[i];
+      let duplicateOf: any = null;
+
+      for (let j = 0; j < allEvents.length; j++) {
+        if (i === j) continue;
+        const other = allEvents[j];
+
+        const match = areDuplicates(
+          {
+            name: current.title || current.name || '',
+            date: current.date || (current.start_at ? current.start_at.split('T')[0] : null),
+            venue: current.venue_name || current.location_name || current.city,
+          },
+          {
+            name: other.title || other.name || '',
+            date: other.date || (other.start_at ? other.start_at.split('T')[0] : null),
+            venue: other.venue_name || other.location_name || other.city,
+          }
+        );
+
+        if (match) {
+          duplicateOf = other;
+          break;
+        }
+      }
+
+      if (duplicateOf) {
+        current.is_duplicate = true;
+        current.duplicate_matched_title = duplicateOf.title || duplicateOf.name;
+        current.duplicate_matched_id = duplicateOf.id;
+
+        const isManuallyApproved = Boolean(
+          current.theme?.manual_admin_approval === true ||
+          (current.admin_approved === true && current.theme?.manual_admin_approval === true)
+        );
+
+        if (!isManuallyApproved) {
+          // If unapproved duplicate was erroneously saved as 'live' or 'published', demote to 'draft'
+          const rawStatus = (current.status || '').toLowerCase();
+          if (rawStatus === 'live' || rawStatus === 'published' || current.is_public) {
+            current.status = 'draft';
+            current.is_public = false;
+            current.approval_status = 'pending';
+            current.admin_approved = false;
+            if (current.id) {
+              duplicateNeedsDemotionIds.push(current.id);
+            }
+          }
+        }
+      }
+    }
+
+    // Persist demotion in DB asynchronously to keep database clean
+    if (duplicateNeedsDemotionIds.length > 0) {
+      supabase
+        .from('events')
+        .update({ status: 'draft', is_public: false })
+        .in('id', duplicateNeedsDemotionIds)
+        .then(() => {});
+    }
 
     const drafts = allEvents.filter((e) => e.status === 'draft');
     const published = allEvents.filter((e) => e.status === 'live' || e.status === 'published');
@@ -233,12 +301,19 @@ export async function PATCH(req: NextRequest) {
     if (updates.template !== undefined) sanitizedUpdates.template = updates.template;
     if (updates.theme !== undefined) {
       sanitizedUpdates.theme = updates.theme;
-    } else if (updates.approval_status !== undefined || updates.admin_approved !== undefined || updates.status === 'live') {
+    } else if (
+      updates.approval_status !== undefined ||
+      updates.admin_approved !== undefined ||
+      updates.status === 'live' ||
+      updates.manual_admin_approval !== undefined
+    ) {
       const existingTheme = existing?.theme || {};
+      const isApproving = updates.status === 'live' || updates.approval_status === 'approved';
       sanitizedUpdates.theme = {
         ...existingTheme,
-        approval_status: updates.approval_status || (updates.status === 'live' ? 'approved' : existingTheme.approval_status),
-        admin_approved: updates.admin_approved ?? (updates.status === 'live' ? true : existingTheme.admin_approved),
+        approval_status: updates.approval_status || (isApproving ? 'approved' : existingTheme.approval_status),
+        admin_approved: updates.admin_approved ?? (isApproving ? true : existingTheme.admin_approved),
+        manual_admin_approval: updates.manual_admin_approval ?? (isApproving ? true : existingTheme.manual_admin_approval),
       };
     }
     if (updates.sections !== undefined) sanitizedUpdates.sections = updates.sections;
