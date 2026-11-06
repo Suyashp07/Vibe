@@ -10,6 +10,7 @@ interface BrandLogoProps {
   href?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showSubtitle?: boolean;
+  forceDark?: boolean;
 }
 
 export default function BrandLogo({
@@ -17,6 +18,7 @@ export default function BrandLogo({
   href = '/',
   size = 'md',
   showSubtitle = true,
+  forceDark = false,
 }: BrandLogoProps) {
   const [clickCount, setClickCount] = useState(0);
 
@@ -72,7 +74,7 @@ export default function BrandLogo({
           width={180}
           height={66}
           priority
-          className={`${imgHeightClass} w-auto object-contain dark:hidden`}
+          className={`${imgHeightClass} w-auto object-contain ${forceDark ? 'hidden' : 'dark:hidden'}`}
         />
         <Image
           src="/logo-dark.png"
@@ -80,12 +82,16 @@ export default function BrandLogo({
           width={180}
           height={66}
           priority
-          className={`${imgHeightClass} w-auto object-contain hidden dark:block`}
+          className={`${imgHeightClass} w-auto object-contain ${forceDark ? 'block' : 'hidden dark:block'}`}
         />
       </motion.div>
 
       {showSubtitle && (
-        <span className="font-mono text-[6.5px] sm:text-[7px] font-bold tracking-[0.25em] text-neutral-500 dark:text-white/50 group-hover:text-neutral-900 dark:group-hover:text-white uppercase leading-none pt-1 select-none transition-colors">
+        <span className={`font-mono text-[6.5px] sm:text-[7px] font-bold tracking-[0.25em] ${
+          forceDark
+            ? 'text-white/60 group-hover:text-white'
+            : 'text-neutral-500 dark:text-white/50 group-hover:text-neutral-900 dark:group-hover:text-white'
+        } uppercase leading-none pt-1 select-none transition-colors`}>
           BY SWANIKI
         </span>
       )}
