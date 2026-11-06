@@ -468,7 +468,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                         </Link>
 
                         <Link
-                          href="/profile?tab=saved"
+                          href="/profile/saved"
                           onClick={() => setDropdownOpen(false)}
                           className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
                             isLight

@@ -35,8 +35,8 @@ export default function GlobalToast() {
         message: isWishlisted ? 'Event saved' : 'Event removed from saved',
         detail: eventTitle || undefined,
         type: isWishlisted ? 'saved' : 'removed',
-        actionHref: isWishlisted ? '/profile?tab=saved' : undefined,
-        actionLabel: isWishlisted ? 'View in profile' : undefined,
+        actionHref: isWishlisted ? '/profile/saved' : undefined,
+        actionLabel: isWishlisted ? 'View saved events' : undefined,
       });
 
       timer = setTimeout(() => {
