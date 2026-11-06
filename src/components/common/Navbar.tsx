@@ -460,19 +460,6 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                           <span>Host dashboard</span>
                         </Link>
 
-                        <Link
-                          href="/create"
-                          onClick={() => setDropdownOpen(false)}
-                          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
-                            isLight
-                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
-                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
-                          }`}
-                        >
-                          <Plus className={`w-4 h-4 stroke-[2] ${isLight ? 'text-slate-500' : 'text-neutral-300'}`} />
-                          <span>Create new event</span>
-                        </Link>
-
                         {isStaff && (
                           <Link
                             href={ADMIN_BASE_PATH}
