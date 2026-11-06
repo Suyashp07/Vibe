@@ -365,7 +365,7 @@ export default function MostLovedSection({
 
   return (
     <>
-      <section className="v2-cat-list-section w-full my-6 sm:my-8" aria-labelledby="most-loved-title">
+      <section id="vt-categories" className="v2-cat-list-section w-full my-6 sm:my-8" aria-labelledby="most-loved-title">
         <div className="fold">
           <div className="row-fluid bgstyle-0">
             <div className="container mx-auto px-0">

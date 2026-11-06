@@ -268,6 +268,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
 
               {/* Feature 3: Bot */}
               <Link
+                id="vt-bot"
                 href="/bot"
                 className={`px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer ${
                   pathname.startsWith('/bot')
@@ -309,6 +310,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
 
               {/* Mobile Circular '+' Host Button (Matching Reference Screenshot) */}
               <Link
+                id="vt-host-top-mobile"
                 href="/create"
                 className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#07133A] dark:bg-white text-white dark:text-[#07133A] flex items-center justify-center shadow-xs transition-transform hover:scale-105 active:scale-95 shrink-0"
                 title="Host an event"
