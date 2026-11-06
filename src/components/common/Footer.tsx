@@ -104,7 +104,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
           {/* Column 1: Brand Wordmark + Platform Description + Mission (Takes 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
             <div>
-              <BrandLogo size="md" showSubtitle={false} forceDark={true} />
+              <BrandLogo size="lg" showSubtitle={false} forceDark={true} />
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-md">

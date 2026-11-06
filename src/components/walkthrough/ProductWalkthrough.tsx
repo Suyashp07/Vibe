@@ -332,9 +332,7 @@ export default function ProductWalkthrough() {
         Math.min(cardWidth - 28, targetCenter - actualCardLeft - 7)
       );
 
-      if (currentId === 'bot') {
-        arrowPlacement = 'up';
-      } else if (currentId === 'instant' || currentId === 'host') {
+      if (currentId === 'bot' || currentId === 'instant' || currentId === 'host') {
         arrowPlacement = 'down';
       } else {
         arrowPlacement = 'none';
@@ -474,14 +472,21 @@ export default function ProductWalkthrough() {
                 if (isMobile) {
                   const currentId = activeSteps[currentStep]?.id;
                   if (currentId === 'bot') {
+                    // Floating bot button is fixed near bottom-right (bottom-20 / ~80px)
+                    // Position card cleanly ABOVE the floating bot button
+                    const botBottomOffset = targetRect
+                      ? Math.max(140, Math.round(window.innerHeight - targetRect.top + 14))
+                      : 144;
                     return {
                       position: 'fixed',
-                      top: `${Math.max(16, targetRect ? targetRect.bottom + 14 : 70)}px`,
+                      bottom: `${botBottomOffset}px`,
                       left: '16px',
                       right: '16px',
                       maxWidth: '390px',
                       margin: '0 auto',
                       width: 'calc(100vw - 32px)',
+                      maxHeight: 'calc(100vh - 170px)',
+                      overflowY: 'auto' as const,
                       zIndex: 9995,
                     };
                   }
@@ -495,6 +500,8 @@ export default function ProductWalkthrough() {
                     maxWidth: '390px',
                     margin: '0 auto',
                     width: 'calc(100vw - 32px)',
+                    maxHeight: 'calc(100vh - 120px)',
+                    overflowY: 'auto' as const,
                     zIndex: 9995,
                   };
                 }
