@@ -29,17 +29,27 @@ export default function EventCard({
   const router = useRouter();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // Initialize wishlist status from localStorage
+  // Initialize wishlist status from localStorage and listen to updates
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
-        setIsWishlisted(saved.includes(event.id));
+        setIsWishlisted(saved.includes(event.id) || (event.slug && saved.includes(event.slug)));
       } catch (e) {
         // ignore storage errors
       }
+
+      const handleUpdate = (e: Event) => {
+        const customEvent = e as CustomEvent<{ eventId: string; isWishlisted: boolean }>;
+        if (customEvent.detail && (customEvent.detail.eventId === event.id || customEvent.detail.eventId === event.slug)) {
+          setIsWishlisted(customEvent.detail.isWishlisted);
+        }
+      };
+
+      window.addEventListener('vibe:wishlist-updated', handleUpdate);
+      return () => window.removeEventListener('vibe:wishlist-updated', handleUpdate);
     }
-  }, [event.id]);
+  }, [event.id, event.slug]);
 
   // Wishlist toggle handler
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -49,11 +59,21 @@ export default function EventCard({
     setIsWishlisted(next);
     if (typeof window !== 'undefined') {
       try {
-        const saved = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
+        const saved: string[] = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
         const updated = next
           ? Array.from(new Set([...saved, event.id]))
-          : saved.filter((id: string) => id !== event.id);
+          : saved.filter((id: string) => id !== event.id && id !== event.slug);
         localStorage.setItem('vibe_wishlist', JSON.stringify(updated));
+
+        window.dispatchEvent(
+          new CustomEvent('vibe:wishlist-updated', {
+            detail: {
+              eventId: event.id,
+              eventTitle: event.title,
+              isWishlisted: next,
+            },
+          })
+        );
       } catch (e) {
         // ignore storage errors
       }

@@ -31,6 +31,7 @@ import { ThemeProvider } from '@/components/common/ThemeContext';
 import SplashScreen from '@/components/common/SplashScreen';
 import ScrollResetManager from '@/components/common/ScrollResetManager';
 import PlatformTelemetry from '@/components/common/PlatformTelemetry';
+import GlobalToast from '@/components/common/GlobalToast';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -242,6 +243,7 @@ export default function RootLayout({
           <PWARegister />
           <AutoLocationDetector />
           <PlatformTelemetry />
+          <GlobalToast />
         </ThemeProvider>
       </body>
     </html>

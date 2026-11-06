@@ -35,7 +35,8 @@ import {
   Send,
   ArrowUpRight,
   Sun,
-  Moon
+  Moon,
+  Heart
 } from 'lucide-react';
 import { triggerPWAInstall } from '@/components/pwa/PWARegister';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -71,6 +72,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeCity, setActiveCity] = useState<string>('All India');
   const [confirmedPassCount, setConfirmedPassCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(0);
   const [imageError, setImageError] = useState(false);
 
   const navRef = useRef<HTMLElement | null>(null);
@@ -152,7 +154,17 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
       }
     };
 
+    const updateSavedCount = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
+        setSavedCount(Array.isArray(saved) ? saved.length : 0);
+      } catch {
+        setSavedCount(0);
+      }
+    };
+
     updatePasses();
+    updateSavedCount();
 
     const handleCityChange = () => {
       setActiveCity(getUserCity() || 'All India');
@@ -166,15 +178,23 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
       updatePasses();
     };
 
+    const handleWishlistUpdated = () => {
+      updateSavedCount();
+    };
+
     window.addEventListener('vibe:location_changed', handleCityChange);
     window.addEventListener('vibe:open_location_modal', handleOpenLocationModal);
     window.addEventListener('vibe:rsvp_updated', handlePassesUpdated);
+    window.addEventListener('vibe:wishlist-updated', handleWishlistUpdated);
     window.addEventListener('storage', handlePassesUpdated);
+    window.addEventListener('storage', handleWishlistUpdated);
     return () => {
       window.removeEventListener('vibe:location_changed', handleCityChange);
       window.removeEventListener('vibe:open_location_modal', handleOpenLocationModal);
       window.removeEventListener('vibe:rsvp_updated', handlePassesUpdated);
+      window.removeEventListener('vibe:wishlist-updated', handleWishlistUpdated);
       window.removeEventListener('storage', handlePassesUpdated);
+      window.removeEventListener('storage', handleWishlistUpdated);
     };
   }, [profile?.email]);
 
@@ -443,6 +463,26 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                           {confirmedPassCount > 0 && (
                             <span className="w-5 h-5 rounded-full bg-[#08B9F5] text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
                               {confirmedPassCount}
+                            </span>
+                          )}
+                        </Link>
+
+                        <Link
+                          href="/profile?tab=saved"
+                          onClick={() => setDropdownOpen(false)}
+                          className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Heart className={`w-4 h-4 stroke-[1.8] ${isLight ? 'text-rose-500' : 'text-rose-400'}`} />
+                            <span>Saved events</span>
+                          </div>
+                          {savedCount > 0 && (
+                            <span className="w-5 h-5 rounded-full bg-rose-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
+                              {savedCount}
                             </span>
                           )}
                         </Link>

@@ -24,10 +24,14 @@ import {
   Save,
   AlertTriangle,
   Info,
-  Sparkles
+  Sparkles,
+  Heart,
+  ArrowRight,
+  Compass
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
+import EventCard from '@/components/ui/EventCard';
 import {
   useAuth,
   updateAuthProfile,
@@ -38,6 +42,8 @@ import {
   AuthProfile
 } from '@/lib/auth';
 import { INDIAN_CITIES } from '@/lib/location';
+import { getEvents, syncEventsWithSupabase } from '@/lib/store';
+import { EventItem } from '@/types';
 import AuthModal from '@/components/auth/AuthModal';
 import { uploadAvatarImage } from '@/lib/supabase';
 
@@ -69,7 +75,7 @@ export default function ProfilePage() {
   const { profile, loading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form states (Username / handle and Instagram handle removed per user request)
+  // Form states
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [dob, setDob] = useState('');
@@ -84,12 +90,16 @@ export default function ProfilePage() {
   const [showHomeCity, setShowHomeCity] = useState(false);
 
   // UI state
-  const [activeNav, setActiveNav] = useState<'photo' | 'personal' | 'contact' | 'privacy'>('photo');
+  const [activeNav, setActiveNav] = useState<'photo' | 'personal' | 'contact' | 'saved' | 'privacy'>('photo');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showAvatarPresets, setShowAvatarPresets] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Saved Events state
+  const [savedEvents, setSavedEvents] = useState<EventItem[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
 
   // Erasure Modal State (DPDP Section 12)
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -117,6 +127,58 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
+  // Load Saved Events from localStorage & store
+  const loadSavedEvents = async () => {
+    if (typeof window === 'undefined') return;
+    setLoadingSaved(true);
+    try {
+      const savedIds: string[] = JSON.parse(localStorage.getItem('vibe_wishlist') || '[]');
+      if (!savedIds || savedIds.length === 0) {
+        setSavedEvents([]);
+        setLoadingSaved(false);
+        return;
+      }
+      let all = getEvents();
+      if (!all || all.length === 0) {
+        all = await syncEventsWithSupabase();
+      }
+      const filtered = (all || []).filter(
+        (e) => savedIds.includes(e.id) || (e.slug && savedIds.includes(e.slug))
+      );
+      setSavedEvents(filtered);
+    } catch (err) {
+      console.error('Error loading saved events:', err);
+    } finally {
+      setLoadingSaved(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSavedEvents();
+
+    // Check query param for tab=saved
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'saved') {
+        setActiveNav('saved');
+        setTimeout(() => {
+          scrollToSection('section-saved', 'saved');
+        }, 150);
+      }
+    }
+
+    const handleWishlistUpdated = () => {
+      loadSavedEvents();
+    };
+
+    window.addEventListener('vibe:wishlist-updated', handleWishlistUpdated);
+    window.addEventListener('storage', handleWishlistUpdated);
+    return () => {
+      window.removeEventListener('vibe:wishlist-updated', handleWishlistUpdated);
+      window.removeEventListener('storage', handleWishlistUpdated);
+    };
+  }, []);
+
   // Revert changes
   const handleCancel = () => {
     if (profile) {
@@ -137,7 +199,7 @@ export default function ProfilePage() {
     setErrorMessage('');
   };
 
-  // Upload custom profile photo with automatic canvas optimization and Supabase Storage upload
+  // Upload custom profile photo
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -149,8 +211,6 @@ export default function ProfilePage() {
 
     setErrorMessage('');
 
-    // Attempt direct upload to Supabase Storage first to get a clean public URL (under 90 bytes)
-    // This prevents massive base64 strings in cookies which causes 494 REQUEST_HEADER_TOO_LARGE!
     try {
       const publicUrl = await uploadAvatarImage(file);
       if (publicUrl) {
@@ -221,7 +281,6 @@ export default function ProfilePage() {
     try {
       const cleanAge = age ? parseInt(age, 10) : calculateAge(dob);
 
-      // If user is not yet logged into Supabase, create a local session so their changes are not lost
       let activeProfile = profile;
       if (!activeProfile) {
         const guestId = `guest-${Date.now()}`;
@@ -252,7 +311,6 @@ export default function ProfilePage() {
         city: city.trim() || 'Mumbai',
         phone: phone.trim() || undefined,
         bio: bio.trim() || undefined,
-        // DPDP Act 2023 Consent Audit Trail
         dpdp_consent: true,
         dpdp_consent_at: new Date().toISOString(),
         dpdp_consent_version: 'DPDP-2023-V1.0',
@@ -363,7 +421,7 @@ export default function ProfilePage() {
     }
   };
 
-  const scrollToSection = (id: string, navKey: 'photo' | 'personal' | 'contact' | 'privacy') => {
+  const scrollToSection = (id: string, navKey: 'photo' | 'personal' | 'contact' | 'saved' | 'privacy') => {
     setActiveNav(navKey);
     const el = document.getElementById(id);
     if (el) {
@@ -379,7 +437,7 @@ export default function ProfilePage() {
   ).sort();
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#F3F4F6] flex flex-col font-sans selection:bg-[#08B9F5] selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#060A1C] text-slate-900 dark:text-[#F3F4F6] flex flex-col font-sans transition-colors duration-200 selection:bg-[#0038A8] dark:selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
@@ -387,7 +445,7 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-white/50 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to discover</span>
@@ -395,37 +453,36 @@ export default function ProfilePage() {
         </div>
 
         {/* Hero Title & Subtitle */}
-        <div className="pb-8 border-b border-white/[0.08] mb-8 sm:mb-10 flex items-start justify-between gap-4">
+        <div className="pb-8 border-b border-slate-200 dark:border-white/[0.08] mb-8 sm:mb-10 flex items-start justify-between gap-4">
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40 block">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-white/40 block">
               YOUR VIBE, YOUR WAY
             </span>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white flex items-baseline">
-              Personal profile &amp; privacy<span className="text-[#08B9F5]">.</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white flex items-baseline">
+              Personal profile &amp; privacy<span className="text-[#0038A8] dark:text-[#08B9F5]">.</span>
             </h1>
-            <p className="text-xs sm:text-sm text-white/60 pt-0.5">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-white/60 pt-0.5">
               A little about you. Always in your control.
             </p>
           </div>
 
-          {/* Orange Shield Icon */}
-          <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-2xl bg-[#08B9F5]/10 border border-[#08B9F5]/25 text-[#08B9F5] shrink-0 mt-1">
-            <Shield className="w-6 h-6 text-[#08B9F5]" />
+          <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/25 text-[#0038A8] dark:text-[#08B9F5] shrink-0 mt-1">
+            <Shield className="w-6 h-6 text-[#0038A8] dark:text-[#08B9F5]" />
           </div>
         </div>
 
         {/* Quick Nav Bar (Mobile & Tablet) */}
-        <div className="lg:hidden grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8 pb-4 border-b border-white/[0.08]">
+        <div className="lg:hidden grid grid-cols-2 sm:grid-cols-5 gap-2 mb-8 pb-4 border-b border-slate-200 dark:border-white/[0.08]">
           <button
             type="button"
             onClick={() => scrollToSection('section-photo', 'photo')}
             className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
               activeNav === 'photo'
-                ? 'bg-white/10 text-white border border-white/15'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'bg-white dark:bg-white/10 text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5'
             }`}
           >
-            <Camera className="w-3.5 h-3.5 text-[#08B9F5]" />
+            <Camera className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#08B9F5]" />
             <span>Profile photo</span>
           </button>
 
@@ -434,11 +491,11 @@ export default function ProfilePage() {
             onClick={() => scrollToSection('section-personal', 'personal')}
             className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
               activeNav === 'personal'
-                ? 'bg-white/10 text-white border border-white/15'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'bg-white dark:bg-white/10 text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5'
             }`}
           >
-            <User className="w-3.5 h-3.5 text-[#08B9F5]" />
+            <User className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#08B9F5]" />
             <span>Personal info</span>
           </button>
 
@@ -447,12 +504,25 @@ export default function ProfilePage() {
             onClick={() => scrollToSection('section-contact', 'contact')}
             className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
               activeNav === 'contact'
-                ? 'bg-white/10 text-white border border-white/15'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'bg-white dark:bg-white/10 text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5'
             }`}
           >
-            <Mail className="w-3.5 h-3.5 text-[#08B9F5]" />
+            <Mail className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#08B9F5]" />
             <span>Contact details</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollToSection('section-saved', 'saved')}
+            className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
+              activeNav === 'saved'
+                ? 'bg-white dark:bg-white/10 text-rose-500 dark:text-rose-400 font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5'
+            }`}
+          >
+            <Heart className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 fill-current" />
+            <span>Saved ({savedEvents.length})</span>
           </button>
 
           <button
@@ -460,16 +530,16 @@ export default function ProfilePage() {
             onClick={() => scrollToSection('section-privacy', 'privacy')}
             className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
               activeNav === 'privacy'
-                ? 'bg-white/10 text-white border border-white/15'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'bg-white dark:bg-white/10 text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5'
             }`}
           >
-            <Lock className="w-3.5 h-3.5 text-[#08B9F5]" />
+            <Lock className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#08B9F5]" />
             <span>Privacy</span>
           </button>
         </div>
 
-        {/* Layout: Sidebar Navigation + Main Form */}
+        {/* Layout: Sidebar Navigation + Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Sidebar (Desktop Sticky Navigation) */}
           <aside className="hidden lg:block lg:col-span-3 sticky top-28 space-y-6">
@@ -479,11 +549,11 @@ export default function ProfilePage() {
                 onClick={() => scrollToSection('section-photo', 'photo')}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
                   activeNav === 'photo'
-                    ? 'bg-white/[0.08] text-white font-semibold'
-                    : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white dark:bg-white/[0.08] text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
                 }`}
               >
-                <Camera className="w-4 h-4 text-white/50" />
+                <Camera className="w-4 h-4 text-slate-400 dark:text-white/50" />
                 <span>Profile photo</span>
               </button>
 
@@ -492,11 +562,11 @@ export default function ProfilePage() {
                 onClick={() => scrollToSection('section-personal', 'personal')}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
                   activeNav === 'personal'
-                    ? 'bg-white/[0.08] text-white font-semibold'
-                    : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white dark:bg-white/[0.08] text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
                 }`}
               >
-                <User className="w-4 h-4 text-white/50" />
+                <User className="w-4 h-4 text-slate-400 dark:text-white/50" />
                 <span>Personal information</span>
               </button>
 
@@ -505,12 +575,32 @@ export default function ProfilePage() {
                 onClick={() => scrollToSection('section-contact', 'contact')}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
                   activeNav === 'contact'
-                    ? 'bg-white/[0.08] text-white font-semibold'
-                    : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white dark:bg-white/[0.08] text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
                 }`}
               >
-                <Mail className="w-4 h-4 text-white/50" />
+                <Mail className="w-4 h-4 text-slate-400 dark:text-white/50" />
                 <span>Contact details</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-saved', 'saved')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
+                  activeNav === 'saved'
+                    ? 'bg-white dark:bg-white/[0.08] text-rose-500 dark:text-rose-400 font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Heart className="w-4 h-4 text-rose-500 dark:text-rose-400 fill-current" />
+                  <span>Saved events</span>
+                </div>
+                {savedEvents.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 dark:text-rose-400 font-bold text-[10px]">
+                    {savedEvents.length}
+                  </span>
+                )}
               </button>
 
               <button
@@ -518,20 +608,20 @@ export default function ProfilePage() {
                 onClick={() => scrollToSection('section-privacy', 'privacy')}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
                   activeNav === 'privacy'
-                    ? 'bg-white/[0.08] text-white font-semibold'
-                    : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white dark:bg-white/[0.08] text-[#0038A8] dark:text-white font-bold border border-slate-200 dark:border-white/15 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
                 }`}
               >
-                <Lock className="w-4 h-4 text-white/50" />
+                <Lock className="w-4 h-4 text-slate-400 dark:text-white/50" />
                 <span>Privacy</span>
               </button>
             </nav>
 
-            <div className="pt-6 border-t border-white/[0.08] space-y-2">
-              <Shield className="w-4 h-4 text-[#08B9F5]" />
+            <div className="pt-6 border-t border-slate-200 dark:border-white/[0.08] space-y-2">
+              <Shield className="w-4 h-4 text-[#0038A8] dark:text-[#08B9F5]" />
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-white">Your identity. Your choice.</p>
-                <p className="text-[11px] text-white/50">Only share what feels right.</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Your identity. Your choice.</p>
+                <p className="text-[11px] text-slate-500 dark:text-white/50">Only share what feels right.</p>
               </div>
             </div>
 
@@ -540,7 +630,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Log out</span>
@@ -553,34 +643,34 @@ export default function ProfilePage() {
           <div className="lg:col-span-9 space-y-10 sm:space-y-12">
             {/* Feedback Notifications */}
             {saveSuccess && (
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
                 <span className="font-semibold">Profile and privacy settings saved successfully!</span>
               </div>
             )}
 
             {errorMessage && (
-              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {/* Unauthenticated Prompt */}
             {!loading && !profile && (
-              <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/10 text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-white/50">
+              <div className="p-8 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-center space-y-4 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-500 dark:text-white/50">
                   <User className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
-                  <h2 className="text-base font-bold text-white">Sign in to edit your profile</h2>
-                  <p className="text-xs text-white/50 max-w-sm mx-auto">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Sign in to edit your profile</h2>
+                  <p className="text-xs text-slate-500 dark:text-white/50 max-w-sm mx-auto">
                     Save your personal preferences and sync your identity across events.
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="px-5 py-2 bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md shadow-[#08B9F5]/20"
+                  className="px-5 py-2 bg-[#0038A8] hover:bg-[#173DAA] dark:bg-[#08B9F5] dark:hover:bg-[#075CE5] text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md shadow-blue-500/20"
                 >
                   Sign In to Continue
                 </button>
@@ -590,13 +680,13 @@ export default function ProfilePage() {
             {/* Main Form */}
             <form onSubmit={handleSaveProfile} className="space-y-10 sm:space-y-12">
               {/* 01 Profile Photo */}
-              <section id="section-photo" className="space-y-4">
+              <section id="section-photo" className="space-y-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] shadow-xs">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                    <span className="text-[#08B9F5] font-mono text-xs font-bold">01</span>
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-baseline gap-2">
+                    <span className="text-[#0038A8] dark:text-[#08B9F5] font-mono text-xs font-bold">01</span>
                     <span>Profile photo</span>
                   </h2>
-                  <p className="text-xs text-white/50 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-white/50 mt-0.5">
                     A familiar face makes a real connection.
                   </p>
                 </div>
@@ -604,7 +694,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pt-1">
                   {/* Avatar Circle with Camera badge */}
                   <div className="relative group shrink-0">
-                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden bg-[#241712] border-2 border-white/10 relative flex items-center justify-center shadow-lg">
+                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden bg-slate-100 dark:bg-[#241712] border-2 border-slate-200 dark:border-white/10 relative flex items-center justify-center shadow-md">
                       {avatarUrl ? (
                         <Image
                           src={avatarUrl}
@@ -614,8 +704,8 @@ export default function ProfilePage() {
                           className="object-cover"
                         />
                       ) : (
-                        <span className="text-xl sm:text-2xl font-black text-[#075CE5]">
-                          {initials || <Sparkles className="w-6 h-6 text-[#075CE5]" />}
+                        <span className="text-xl sm:text-2xl font-black text-[#0038A8] dark:text-[#075CE5]">
+                          {initials || <Sparkles className="w-6 h-6 text-[#0038A8] dark:text-[#075CE5]" />}
                         </span>
                       )}
                     </div>
@@ -623,7 +713,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#08B9F5] text-white hover:bg-[#075CE5] transition shadow-md cursor-pointer border-2 border-[#070709]"
+                      className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#0038A8] dark:bg-[#08B9F5] text-white hover:brightness-110 transition shadow-md cursor-pointer border-2 border-white dark:border-[#070709]"
                       title="Upload photo"
                     >
                       <Camera className="w-3 h-3" />
@@ -643,16 +733,16 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-white transition flex items-center gap-2 cursor-pointer border border-white/10"
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-xs font-semibold text-slate-800 dark:text-white transition flex items-center gap-2 cursor-pointer border border-slate-200 dark:border-white/10"
                       >
-                        <Upload className="w-3.5 h-3.5 text-white/70" />
+                        <Upload className="w-3.5 h-3.5 text-slate-600 dark:text-white/70" />
                         <span>Upload photo</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setShowAvatarPresets(!showAvatarPresets)}
-                        className="px-3 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white transition cursor-pointer"
+                        className="px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-white/70 dark:hover:text-white transition cursor-pointer"
                       >
                         Choose preset
                       </button>
@@ -661,7 +751,7 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => setAvatarUrl('')}
-                          className="p-2 rounded-xl text-xs text-white/40 hover:text-red-400 transition cursor-pointer"
+                          className="p-2 rounded-xl text-xs text-slate-400 hover:text-red-500 dark:text-white/40 dark:hover:text-red-400 transition cursor-pointer"
                           title="Remove photo"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -669,7 +759,7 @@ export default function ProfilePage() {
                       )}
                     </div>
 
-                    <p className="text-[11px] text-white/40">
+                    <p className="text-[11px] text-slate-400 dark:text-white/40">
                       JPG, PNG or WebP · Max 5 MB
                     </p>
                   </div>
@@ -677,8 +767,8 @@ export default function ProfilePage() {
 
                 {/* Preset Selector */}
                 {showAvatarPresets && (
-                  <div className="pt-3 border-t border-white/[0.06] space-y-2 animate-in fade-in">
-                    <span className="text-[11px] font-semibold text-white/50">
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/[0.06] space-y-2 animate-in fade-in">
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-white/50">
                       Choose an illustrated preset:
                     </span>
                     <div className="flex items-center gap-3 overflow-x-auto py-1">
@@ -692,8 +782,8 @@ export default function ProfilePage() {
                           }}
                           className={`w-11 h-11 rounded-full overflow-hidden shrink-0 border-2 transition hover:scale-105 cursor-pointer relative ${
                             avatarUrl === preset
-                              ? 'border-[#08B9F5] ring-2 ring-[#08B9F5]/30'
-                              : 'border-white/20 hover:border-white/50'
+                              ? 'border-[#0038A8] dark:border-[#08B9F5] ring-2 ring-blue-500/30'
+                              : 'border-slate-300 dark:border-white/20 hover:border-slate-500 dark:hover:border-white/50'
                           }`}
                         >
                           <Image
@@ -710,28 +800,26 @@ export default function ProfilePage() {
                 )}
               </section>
 
-              <hr className="border-white/[0.08]" />
-
               {/* 02 Personal Information */}
-              <section id="section-personal" className="space-y-4">
+              <section id="section-personal" className="space-y-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] shadow-xs">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                      <span className="text-[#08B9F5] font-mono text-xs font-bold">02</span>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-baseline gap-2">
+                      <span className="text-[#0038A8] dark:text-[#08B9F5] font-mono text-xs font-bold">02</span>
                       <span>Personal information</span>
                     </h2>
-                    <p className="text-xs text-white/50 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-white/50 mt-0.5">
                       The person behind the plans.
                     </p>
                   </div>
-                  <User className="w-4 h-4 text-white/40" />
+                  <User className="w-4 h-4 text-slate-400 dark:text-white/40" />
                 </div>
 
                 <div className="space-y-4 pt-1">
-                  {/* Full Name (Takes full width, Username / handle removed) */}
+                  {/* Full Name */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/80 block">
-                      Full name <span className="text-[#08B9F5]">*</span>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
+                      Full name <span className="text-[#0038A8] dark:text-[#08B9F5]">*</span>
                     </label>
                     <input
                       type="text"
@@ -739,20 +827,20 @@ export default function ProfilePage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Suyash Pandey"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] transition"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#0038A8] dark:focus:border-[#08B9F5] shadow-xs transition"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Gender */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-white/80 block">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
                         Gender
                       </label>
                       <select
                         value={gender}
                         onChange={(e) => setGender(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#08B9F5] transition cursor-pointer"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#0038A8] dark:focus:border-[#08B9F5] shadow-xs transition cursor-pointer"
                       >
                         <option value="male">Male</option>
                         <option value="female">Female</option>
@@ -762,15 +850,15 @@ export default function ProfilePage() {
 
                     {/* Place / Home City */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-white/80 block">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
                         Place / home city
                       </label>
                       <div className="relative">
-                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
                         <select
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-[#141417] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-[#08B9F5] transition cursor-pointer"
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#0038A8] dark:focus:border-[#08B9F5] shadow-xs transition cursor-pointer"
                         >
                           {cityOptions.map((cityName) => (
                             <option key={cityName} value={cityName}>
@@ -786,10 +874,10 @@ export default function ProfilePage() {
                   {/* About You */}
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/80 block">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
                         About you
                       </label>
-                      <span className="text-[11px] text-white/40 font-mono">
+                      <span className="text-[11px] text-slate-400 dark:text-white/40 font-mono">
                         Optional
                       </span>
                     </div>
@@ -799,33 +887,31 @@ export default function ProfilePage() {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Good music, new places, and great company.."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] transition resize-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#0038A8] dark:focus:border-[#08B9F5] shadow-xs transition resize-none"
                     />
                   </div>
                 </div>
               </section>
 
-              <hr className="border-white/[0.08]" />
-
               {/* 03 Contact Details */}
-              <section id="section-contact" className="space-y-4">
+              <section id="section-contact" className="space-y-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] shadow-xs">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                      <span className="text-[#08B9F5] font-mono text-xs font-bold">03</span>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-baseline gap-2">
+                      <span className="text-[#0038A8] dark:text-[#08B9F5] font-mono text-xs font-bold">03</span>
                       <span>Contact details</span>
                     </h2>
-                    <p className="text-xs text-white/50 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-white/50 mt-0.5">
                       Stay connected to the gatherings that matter.
                     </p>
                   </div>
-                  <Lock className="w-4 h-4 text-white/40" />
+                  <Lock className="w-4 h-4 text-slate-400 dark:text-white/40" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   {/* Email address */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/80 block">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
                       Email address
                     </label>
                     <input
@@ -833,17 +919,17 @@ export default function ProfilePage() {
                       readOnly
                       disabled
                       value={profile?.email || 'you@example.com'}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-white/50 cursor-not-allowed"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] text-xs text-slate-500 dark:text-white/50 cursor-not-allowed"
                     />
                   </div>
 
                   {/* Phone number */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/80 block">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
                         Phone number
                       </label>
-                      <span className="text-[11px] text-white/40 font-mono">
+                      <span className="text-[11px] text-slate-400 dark:text-white/40 font-mono">
                         Optional
                       </span>
                     </div>
@@ -852,22 +938,78 @@ export default function ProfilePage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#08B9F5] transition"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-[#0038A8] dark:focus:border-[#08B9F5] shadow-xs transition"
                     />
                   </div>
                 </div>
               </section>
 
-              <hr className="border-white/[0.08]" />
+              {/* 04 Saved Events Feature */}
+              <section id="section-saved" className="space-y-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-baseline gap-2">
+                      <span className="text-rose-500 font-mono text-xs font-bold">04</span>
+                      <span className="flex items-center gap-2">
+                        Saved events
+                        {savedEvents.length > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-xs font-bold">
+                            {savedEvents.length}
+                          </span>
+                        )}
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-white/50 mt-0.5">
+                      Events you&apos;ve bookmarked to attend or keep an eye on.
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
+                    <Heart className="w-4 h-4 fill-current" />
+                  </div>
+                </div>
 
-              {/* 04 Privacy Preferences */}
-              <section id="section-privacy" className="space-y-4">
+                <div className="pt-2">
+                  {loadingSaved ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400 dark:text-white/40">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#0038A8] dark:text-[#08B9F5]" />
+                      <span className="text-xs">Loading your saved events...</span>
+                    </div>
+                  ) : savedEvents.length === 0 ? (
+                    <div className="p-8 sm:p-12 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-center bg-slate-50/50 dark:bg-white/[0.01]">
+                      <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto mb-3">
+                        <Heart className="w-6 h-6 stroke-[1.8]" />
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">No saved events yet</h3>
+                      <p className="text-xs text-slate-500 dark:text-white/50 max-w-sm mx-auto mb-5 leading-relaxed">
+                        When exploring gatherings, concerts, or workshops, tap the heart button on any card to save it here for easy access.
+                      </p>
+                      <Link
+                        href="/"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0038A8] dark:bg-[#0066F5] text-white text-xs font-bold shadow-md shadow-blue-600/20 hover:brightness-110 transition cursor-pointer"
+                      >
+                        <Compass className="w-3.5 h-3.5" />
+                        <span>Discover events</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-2">
+                      {savedEvents.map((ev) => (
+                        <EventCard key={ev.id} event={ev} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* 05 Privacy Preferences */}
+              <section id="section-privacy" className="space-y-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] shadow-xs">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-baseline gap-2">
-                    <span className="text-[#08B9F5] font-mono text-xs font-bold">04</span>
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-baseline gap-2">
+                    <span className="text-[#0038A8] dark:text-[#08B9F5] font-mono text-xs font-bold">05</span>
                     <span>Privacy preferences</span>
                   </h2>
-                  <p className="text-xs text-white/50 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-white/50 mt-0.5">
                     Decide what your community can see.
                   </p>
                 </div>
@@ -876,8 +1018,8 @@ export default function ProfilePage() {
                   {/* Toggle 1: Community Profile */}
                   <div className="flex items-center justify-between gap-4 py-2">
                     <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-white">Community profile</p>
-                      <p className="text-[11px] text-white/50">Show your name, photo, and bio to other guests.</p>
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white">Community profile</p>
+                      <p className="text-[11px] text-slate-500 dark:text-white/50">Show your name, photo, and bio to other guests.</p>
                     </div>
 
                     <button
@@ -886,7 +1028,7 @@ export default function ProfilePage() {
                       aria-checked={communityProfileConsent}
                       onClick={() => setCommunityProfileConsent(!communityProfileConsent)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        communityProfileConsent ? 'bg-[#08B9F5]' : 'bg-white/15'
+                        communityProfileConsent ? 'bg-[#0038A8] dark:bg-[#08B9F5]' : 'bg-slate-200 dark:bg-white/15'
                       }`}
                     >
                       <span
@@ -897,13 +1039,13 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  <hr className="border-white/[0.05]" />
+                  <hr className="border-slate-200 dark:border-white/[0.05]" />
 
                   {/* Toggle 2: Show Home City */}
                   <div className="flex items-center justify-between gap-4 py-2">
                     <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-white">Show home city</p>
-                      <p className="text-[11px] text-white/50">Let people see where you&apos;re based.</p>
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white">Show home city</p>
+                      <p className="text-[11px] text-slate-500 dark:text-white/50">Let people see where you&apos;re based.</p>
                     </div>
 
                     <button
@@ -912,7 +1054,7 @@ export default function ProfilePage() {
                       aria-checked={showHomeCity}
                       onClick={() => setShowHomeCity(!showHomeCity)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        showHomeCity ? 'bg-[#08B9F5]' : 'bg-white/15'
+                        showHomeCity ? 'bg-[#0038A8] dark:bg-[#08B9F5]' : 'bg-slate-200 dark:bg-white/15'
                       }`}
                     >
                       <span
@@ -924,8 +1066,8 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Bottom Notice Banner */}
-                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-white/60 flex items-start gap-2.5 mt-2">
-                    <ShieldCheck className="w-4 h-4 text-[#08B9F5] shrink-0 mt-0.5" />
+                  <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-white/[0.02] border border-blue-200/60 dark:border-white/[0.06] text-xs text-slate-700 dark:text-white/60 flex items-start gap-2.5 mt-2">
+                    <ShieldCheck className="w-4 h-4 text-[#0038A8] dark:text-[#08B9F5] shrink-0 mt-0.5" />
                     <span className="text-[11px] leading-relaxed">
                       Your personal data is encrypted and handled in compliance with India&apos;s DPDP Act 2023. Privacy settings are synchronized securely across your confirmed event passes.
                     </span>
@@ -936,7 +1078,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={handleExportData}
-                      className="inline-flex items-center gap-1.5 text-white/60 hover:text-white transition cursor-pointer text-xs"
+                      className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition cursor-pointer text-xs"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Download my data (JSON)</span>
@@ -949,7 +1091,7 @@ export default function ProfilePage() {
                         setDeleteConfirmationInput('');
                         setShowDeleteModal(true);
                       }}
-                      className="inline-flex items-center gap-1.5 text-red-400/80 hover:text-red-400 transition cursor-pointer text-xs"
+                      className="inline-flex items-center gap-1.5 text-red-500 hover:text-red-600 dark:text-red-400/80 dark:hover:text-red-400 transition cursor-pointer text-xs"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Request data erasure</span>
@@ -959,8 +1101,8 @@ export default function ProfilePage() {
               </section>
 
               {/* Bottom Actions Bar */}
-              <div className="pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span className="text-xs text-white/40 text-center sm:text-left">
+              <div className="pt-6 border-t border-slate-200 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span className="text-xs text-slate-500 dark:text-white/40 text-center sm:text-left">
                   Changes apply to your profile.
                 </span>
 
@@ -968,7 +1110,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-white/70 hover:text-white hover:bg-white/[0.05] transition cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-white/70 dark:hover:text-white dark:hover:bg-white/[0.05] transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -976,7 +1118,7 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="px-5 py-2.5 rounded-xl bg-[#08B9F5] hover:bg-[#075CE5] text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-[#08B9F5]/20 disabled:opacity-50 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] dark:bg-[#08B9F5] dark:hover:bg-[#075CE5] text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
                   >
                     {isSaving ? (
                       <>
@@ -1002,38 +1144,38 @@ export default function ProfilePage() {
       {/* DPDP Section 12 - Account Erasure Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="dark-dialog relative w-full max-w-md bg-[#111114] border border-red-500/30 rounded-2xl p-6 text-white space-y-4 shadow-2xl animate-in zoom-in-95">
+          <div className="dark-dialog relative w-full max-w-md bg-white dark:bg-[#111114] border border-red-500/30 rounded-2xl p-6 text-slate-900 dark:text-white space-y-4 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
+              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 dark:text-red-400 shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="font-bold text-base text-white">Permanently Erase Personal Data</h3>
-                <span className="text-[11px] text-white/50">DPDP Act 2023 (Section 12 Right to Erasure)</span>
+                <h3 className="font-bold text-base text-slate-900 dark:text-white">Permanently Erase Personal Data</h3>
+                <span className="text-[11px] text-slate-500 dark:text-white/50">DPDP Act 2023 (Section 12 Right to Erasure)</span>
               </div>
             </div>
 
-            <p className="text-xs text-white/70 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-white/70 leading-relaxed">
               This action cannot be undone. All personal records and account credentials will be permanently erased.
             </p>
 
             {deleteError && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
                 <span>{deleteError}</span>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-white/80 block">
-                Type <strong className="text-red-400 font-mono">DELETE</strong> to confirm erasure:
+              <label className="text-xs font-semibold text-slate-700 dark:text-white/80 block">
+                Type <strong className="text-red-500 dark:text-red-400 font-mono">DELETE</strong> to confirm erasure:
               </label>
               <input
                 type="text"
                 value={deleteConfirmationInput}
                 onChange={(e) => setDeleteConfirmationInput(e.target.value)}
                 placeholder="DELETE"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-red-500 transition font-mono uppercase"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-black/50 border border-slate-300 dark:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:border-red-500 transition font-mono uppercase"
               />
             </div>
 
@@ -1042,7 +1184,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
                 disabled={isDeletingAccount}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-xs font-semibold text-slate-700 dark:text-white transition cursor-pointer"
               >
                 Cancel
               </button>
