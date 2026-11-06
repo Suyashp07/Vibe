@@ -1373,57 +1373,18 @@ function VibesContent() {
         </button>
       </div>
 
-      {/* Mobile Floating Glass Header (Sits gracefully over the reels without consuming card height) */}
-      <header className="md:hidden absolute top-0 left-0 right-0 z-30 px-3.5 pt-3 pb-6 flex items-center justify-between pointer-events-auto bg-gradient-to-b from-black/85 via-black/40 to-transparent">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="w-8 h-8 rounded-full bg-black/45 hover:bg-black/65 active:scale-95 backdrop-blur-md border border-white/20 flex items-center justify-center text-white transition-all shadow-sm"
-            title="Back to Discover"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="flex items-center gap-1 font-sans">
-            <Zap className="w-4 h-4 text-[#0038A8] fill-[#0038A8]" />
-            <span className="font-extrabold text-sm text-white tracking-tight">Vibe</span>
-            <span className="text-[9px] font-black uppercase bg-[#0038A8] text-white px-1.5 py-0.5 rounded shadow-xs">INSTANT</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* City Selector Pill */}
-          <button
-            type="button"
-            onClick={() => setLocationModalOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/45 hover:bg-black/65 active:scale-95 backdrop-blur-md border border-white/20 text-[11px] font-semibold text-white shadow-sm transition-all"
-            title="Filter by City"
-          >
-            <MapPin className="w-3 h-3 text-[#00D5E8]" />
-            <span className="max-w-[70px] truncate">{activeCity === 'All India' ? 'All Cities' : activeCity}</span>
-            <ChevronDown className="w-3 h-3 text-white/70" />
-          </button>
-
-          {/* Category Filter Pill */}
-          <button
-            type="button"
-            onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/45 hover:bg-black/65 active:scale-95 backdrop-blur-md border border-white/20 text-[11px] font-semibold text-white shadow-sm transition-all"
-            title="Filter Category"
-          >
-            <span className="max-w-[75px] truncate">{selectedFilterLabel}</span>
-            <ChevronDown className="w-3 h-3 text-white/70" />
-          </button>
-
-          {/* Quick Post Button */}
-          <button
-            type="button"
-            onClick={() => setCreateModalOpen(true)}
-            className="w-7 h-7 rounded-full bg-[#0038A8] hover:bg-[#173DAA] active:scale-95 text-white flex items-center justify-center shadow-md transition-all shrink-0"
-            title="Post a Vibe Instant"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-          </button>
-        </div>
+      {/* Mobile Floating Glass Header */}
+      <header className="md:hidden absolute top-0 left-0 right-0 z-30 px-3.5 pt-3 pb-6 flex items-center justify-start pointer-events-auto bg-gradient-to-b from-black/85 via-black/40 to-transparent">
+        {/* Category Filter Pill (All vibes) */}
+        <button
+          type="button"
+          onClick={() => setFilterOpen(true)}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/50 hover:bg-black/70 active:scale-95 backdrop-blur-md border border-white/20 text-xs font-semibold text-white shadow-sm transition-all cursor-pointer"
+          title="Filter Category"
+        >
+          <span>{selectedFilterLabel}</span>
+          <ChevronDown className="w-3.5 h-3.5 text-white/70" />
+        </button>
       </header>
 
       {/* ========================================================= */}
