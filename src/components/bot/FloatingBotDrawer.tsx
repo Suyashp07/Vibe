@@ -74,18 +74,24 @@ export default function FloatingBotDrawer({ defaultOpen = false }: FloatingBotDr
               id="vt-bot"
               type="button"
               onClick={() => setIsOpen(true)}
-              className="group relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-br from-[#0038A8] via-[#0D47A1] to-[#002570] hover:from-[#0044CC] hover:to-[#0038A8] text-white shadow-[0_8px_24px_rgba(0,56,168,0.45)] hover:shadow-[0_12px_32px_rgba(0,56,168,0.6)] border border-white/25 active:scale-90 hover:scale-105 transition-all duration-300 cursor-pointer backdrop-blur-md"
+              className="vibe-floating-bot-btn group relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#0038A8] hover:bg-[#0044CC] text-white shadow-[0_8px_24px_rgba(0,56,168,0.5)] hover:shadow-[0_12px_32px_rgba(0,56,168,0.7)] border-2 border-white/30 active:scale-90 hover:scale-105 transition-all duration-300 cursor-pointer backdrop-blur-md"
               title="Vibe Event Bot"
               aria-label="Vibe Event Bot"
             >
               {/* Subtle ambient ripple ring */}
               <span className="absolute -inset-1 rounded-full bg-[#0038A8]/30 animate-ping pointer-events-none opacity-40 duration-1000" />
 
-              {/* Bot symbol only */}
-              <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white group-hover:rotate-12 transition-transform duration-300 stroke-[2.2]" />
+              {/* Bot symbol: Pure White inside Blue Circle */}
+              <Bot
+                className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:rotate-12 transition-transform duration-300 stroke-[2.5]"
+                style={{
+                  color: '#FFFFFF',
+                  stroke: '#FFFFFF',
+                }}
+              />
 
               {/* Small online green indicator dot */}
-              <span className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#0038A8] shadow-xs" />
+              <span className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white shadow-xs" />
             </button>
           </motion.div>
         )}

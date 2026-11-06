@@ -3123,6 +3123,25 @@ html.dark .district-hero-price {
   color: #F8FAFC !important;
 }
 
+/* ========================================================================= */
+/* VIBE FLOATING BOT BUTTON - GUARANTEED 100% PURE WHITE SYMBOL              */
+/* ========================================================================= */
+.vibe-floating-bot-btn,
+.vibe-floating-bot-btn *,
+.vibe-floating-bot-btn svg,
+html.light .vibe-floating-bot-btn,
+html.light .vibe-floating-bot-btn *,
+html.light .vibe-floating-bot-btn svg,
+html.dark .vibe-floating-bot-btn,
+html.dark .vibe-floating-bot-btn *,
+html.dark .vibe-floating-bot-btn svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: transparent !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+
 
 
 
