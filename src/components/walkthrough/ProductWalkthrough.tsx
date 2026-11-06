@@ -137,6 +137,22 @@ export default function ProductWalkthrough() {
     }
   }, [pathname, findElement]);
 
+  // Support manual tour trigger via event (e.g., clicking "How it works" in navbar)
+  useEffect(() => {
+    const handleStartTour = () => {
+      const filtered = ALL_STEPS.filter((s) => {
+        if (!s.target) return true;
+        return findElement(s) !== null;
+      });
+      setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
+      setCurrentStep(0);
+      setIsOpen(true);
+    };
+
+    window.addEventListener('vibe:start_tour', handleStartTour);
+    return () => window.removeEventListener('vibe:start_tour', handleStartTour);
+  }, [findElement]);
+
   // Handle step change & scrolling target into view
   useEffect(() => {
     if (!isOpen) return;

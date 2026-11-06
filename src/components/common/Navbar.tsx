@@ -213,43 +213,39 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
         <header className={`sticky top-0 z-40 bg-white/95 dark:bg-[#081426]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10 shadow-xs text-slate-900 dark:text-white transition-colors ${
           hideTopOnMobile ? 'hidden md:block' : ''
         }`}>
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-3 sm:gap-6 relative">
             {/* Left: Brand Logo + Desktop Location Selector */}
-            <div className="flex items-center gap-3 sm:gap-6 shrink-0">
+            <div className="flex items-center gap-3 sm:gap-5 shrink-0">
               <BrandLogo />
 
               {/* Desktop Location Selector (Hidden on Mobile) */}
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EDF2F7] dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 transition-colors cursor-pointer text-left group"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EDF2F7] dark:bg-white/10 hover:bg-slate-200/80 dark:hover:bg-white/15 border border-slate-200/80 dark:border-white/10 transition-colors cursor-pointer text-left group"
                 title="Change city location"
               >
-                <div className="w-6 h-6 rounded-full bg-[#08B9F5]/15 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <MapPin className="w-3.5 h-3.5 text-[#0066F5] dark:text-[#08B9F5]" />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white/90 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[90px] sm:max-w-[130px] truncate">
-                    {activeCity}
-                  </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-white/40 group-hover:text-slate-800 dark:group-hover:text-white transition-colors shrink-0" />
-                </div>
+                <MapPin className="w-3.5 h-3.5 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white/90 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[120px] truncate">
+                  {activeCity}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-white/40 group-hover:text-slate-800 dark:group-hover:text-white transition-colors shrink-0" />
               </button>
             </div>
 
-            {/* Center: Refined Navigation Capsule (Desktop Only) */}
+            {/* Center: Refined Navigation Capsule (Desktop Only - Matching vibee-delta Pattern) */}
             <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center p-1 rounded-full bg-[#EDF2F7] dark:bg-white/10 border border-slate-200/80 dark:border-white/10 shadow-xs">
-              {/* Feature 1: Discover */}
+              {/* Feature 1: Home */}
               <Link
                 href="/"
                 className={`px-4 py-1.5 rounded-full text-xs lg:text-sm transition-all flex items-center gap-1.5 text-center cursor-pointer ${
-                  pathname === '/' || pathname.startsWith('/discover')
-                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-bold shadow-xs'
+                  pathname === '/'
+                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-semibold shadow-xs'
                     : 'text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
-                <span>Discover</span>
+                <span>Home</span>
               </Link>
 
               {/* Feature 2: Vibe Instant */}
@@ -258,7 +254,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 href="/vibes"
                 className={`px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer ${
                   pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-bold shadow-xs'
+                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-semibold shadow-xs'
                     : 'text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
@@ -266,27 +262,29 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 <span>Vibe Instant</span>
               </Link>
 
-              {/* Feature 3: Bot */}
-              <Link
+              {/* Feature 3: How it works (triggers tour) */}
+              <button
+                type="button"
                 id="vt-bot"
-                href="/bot"
-                className={`px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer ${
-                  pathname.startsWith('/bot')
-                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-bold shadow-xs'
-                    : 'text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-black/5 dark:hover:bg-white/5'
-                }`}
-                title="Host via WhatsApp / Telegram Bot"
+                onClick={() => {
+                  if (pathname === '/') {
+                    window.dispatchEvent(new CustomEvent('vibe:start_tour'));
+                  } else {
+                    router.push('/?tour=1');
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-black/5 dark:hover:bg-white/5"
+                title="Take a quick 30-second tour of Vibe"
               >
-                <Bot className="w-3.5 h-3.5 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
-                <span>Bot</span>
-              </Link>
+                <span>How it works</span>
+              </button>
 
               {/* Feature 4: Dashboard */}
               <Link
                 href="/dashboard"
                 className={`px-3.5 py-1.5 rounded-full text-xs lg:text-sm transition-all inline-flex items-center gap-1.5 text-center cursor-pointer ${
                   pathname.startsWith('/dashboard')
-                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-bold shadow-xs'
+                    ? 'bg-white dark:bg-[#0D1D35] text-[#0066F5] dark:text-[#08B9F5] font-semibold shadow-xs'
                     : 'text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
                 title="Dashboard"
@@ -319,22 +317,16 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 <Plus className="w-5 h-5 stroke-[2.8]" />
               </Link>
 
-              {/* Desktop Theme Toggle */}
-              <div className="hidden md:block">
-                <ThemeToggle />
-              </div>
-
               {/* Desktop Download App Button */}
               <button
                 type="button"
                 onClick={() => triggerPWAInstall()}
-                className="vibe-download-btn hidden md:inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0066F5] text-[#0066F5] bg-white hover:bg-[#0066F5]/5 dark:bg-transparent dark:border-[#08B9F5] dark:text-[#08B9F5] dark:hover:bg-[#08B9F5]/10 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
-                style={{ color: '#0066F5', borderColor: '#0066F5' }}
+                className="vibe-download-btn hidden md:inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-slate-200 dark:border-white/20 text-[#0066F5] hover:border-[#0066F5] bg-white hover:bg-[#0066F5]/5 dark:bg-transparent dark:text-[#08B9F5] dark:hover:border-[#08B9F5] text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
                 title="Download App"
                 aria-label="Download App"
               >
-                <Download className="w-4 h-4 stroke-[2.2] shrink-0" style={{ color: 'inherit', stroke: 'currentColor' }} />
-                <span className="hidden sm:inline font-semibold" style={{ color: 'inherit' }}>Download App</span>
+                <Download className="w-3.5 h-3.5 stroke-[2.2] shrink-0 text-[#0066F5] dark:text-[#08B9F5]" />
+                <span className="hidden sm:inline font-semibold">Download App</span>
               </button>
 
               {/* Desktop Full Host an Event Button */}
@@ -344,10 +336,10 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   href="/create"
                   className="vibe-host-btn hidden md:inline-flex items-center gap-1.5 px-4 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0"
                   style={{ color: '#FFFFFF', backgroundColor: '#0066F5' }}
-                  title="Host an event"
+                  title="Host an Event"
                 >
                   <Plus className="w-4 h-4 stroke-[2.8] shrink-0" style={{ color: '#FFFFFF', stroke: '#FFFFFF' }} />
-                  <span className="font-bold text-white" style={{ color: '#FFFFFF' }}>Host an event</span>
+                  <span className="font-bold text-white" style={{ color: '#FFFFFF' }}>Host an Event</span>
                 </Link>
               </Magnetic>
 
@@ -542,8 +534,8 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                         </a>
                       </div>
 
-                      {/* Theme Toggle for mobile */}
-                      <div className="md:hidden pt-2 border-t border-slate-100 dark:border-white/[0.08] px-1 pb-1">
+                      {/* Theme Toggle in profile menu */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08] px-1 pb-1">
                         <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-neutral-300">
                           <span className="flex items-center gap-2">
                             <Sun className="w-3.5 h-3.5 text-amber-500 dark:hidden" />
