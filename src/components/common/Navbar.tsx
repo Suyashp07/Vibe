@@ -21,7 +21,6 @@ import {
   Sparkles,
   LayoutDashboard,
   Layers,
-  Bot,
   Music,
   Smile,
   Laptop,
@@ -342,29 +341,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                   <Zap className="w-3.5 h-3.5 fill-[#FF8442] text-[#FF8442] shrink-0" />
                 </Link>
 
-                {/* Feature 3: Bot */}
-                <Link
-                  id="vt-bot"
-                  href="/bot"
-                  onClick={(e) => {
-                    if (pathname === '/') {
-                      e.preventDefault();
-                      window.dispatchEvent(new CustomEvent('vibe:open_bot_drawer'));
-                    }
-                  }}
-                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    pathname.startsWith('/bot')
-                      ? 'text-slate-950 dark:text-white font-semibold'
-                      : 'text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white font-medium'
-                  }`}
-                >
-                  <span>Bot</span>
-                  {pathname.startsWith('/bot') && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0038A8] dark:bg-sky-400 inline-block shrink-0" />
-                  )}
-                </Link>
-
-                {/* Feature 4: Dashboard */}
+                {/* Feature 3: Dashboard */}
                 <Link
                   href="/dashboard"
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
@@ -394,23 +371,6 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               >
                 <MapPin className="w-5 h-5 stroke-[2] text-[#0038A8] dark:text-sky-400" />
               </button>
-
-              {/* Mobile Top Bot Button (replaces black '+' button) */}
-              <Link
-                id="vt-bot-mobile"
-                href="/bot"
-                onClick={(e) => {
-                  if (pathname === '/') {
-                    e.preventDefault();
-                    window.dispatchEvent(new CustomEvent('vibe:open_bot_drawer'));
-                  }
-                }}
-                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50/80 dark:bg-white/10 text-[#0038A8] dark:text-sky-400 hover:bg-blue-100 dark:hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shrink-0 border border-blue-100 dark:border-white/10"
-                title="Create with Bot"
-                aria-label="Create with Bot"
-              >
-                <Bot className="w-5 h-5 stroke-[2]" />
-              </Link>
 
               {/* Desktop Location Selector (Right side, matching screenshot) */}
               <button

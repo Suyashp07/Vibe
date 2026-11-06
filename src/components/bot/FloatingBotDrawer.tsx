@@ -71,6 +71,7 @@ export default function FloatingBotDrawer({ defaultOpen = false }: FloatingBotDr
             className="fixed bottom-20 right-4 sm:bottom-7 sm:right-7 z-40 pointer-events-auto"
           >
             <button
+              id="vt-bot"
               type="button"
               onClick={() => setIsOpen(true)}
               className="group relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-br from-[#0038A8] via-[#0D47A1] to-[#002570] hover:from-[#0044CC] hover:to-[#0038A8] text-white shadow-[0_8px_24px_rgba(0,56,168,0.45)] hover:shadow-[0_12px_32px_rgba(0,56,168,0.6)] border border-white/25 active:scale-90 hover:scale-105 transition-all duration-300 cursor-pointer backdrop-blur-md"
