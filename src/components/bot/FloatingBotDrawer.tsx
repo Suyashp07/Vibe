@@ -15,6 +15,9 @@ export default function FloatingBotDrawer({ defaultOpen = false }: FloatingBotDr
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined' && window.location.search.includes('open_bot=1')) {
+      setIsOpen(true);
+    }
 
     const handleOpen = () => setIsOpen(true);
     const handleClose = () => setIsOpen(false);
@@ -88,43 +91,43 @@ export default function FloatingBotDrawer({ defaultOpen = false }: FloatingBotDr
       </AnimatePresence>
 
       {/* ========================================================================= */}
-      {/* 2. ANIMATED SLIDE-OVER DRAWER (From right part of the screen)             */}
+      {/* 2. COMPACT FLOATING DIALOG (Opens only required content, no wasted space)  */}
       {/* ========================================================================= */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="fixed inset-0 z-50 flex items-center sm:items-end justify-center sm:justify-end p-3 sm:p-6 pointer-events-none">
             {/* Backdrop Blur Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.28, ease: 'easeInOut' }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs cursor-pointer pointer-events-auto"
               aria-hidden="true"
             />
 
-            {/* Slide-over Drawer Sheet (Wide enough for side-by-side content & animation) */}
+            {/* Compact Floating Dialog: ONLY takes required height, cut from top, no wasted bottom space */}
             <motion.aside
-              initial={{ x: '100%', opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '100%', opacity: 0.5 }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
-              className="relative w-full max-w-4xl sm:max-w-3xl lg:max-w-4xl h-full bg-white dark:bg-[#070D1B] border-l border-slate-200 dark:border-white/10 shadow-[0_0_60px_rgba(0,10,30,0.6)] flex flex-col z-10 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 350, mass: 0.7 }}
+              className="relative w-full max-w-2xl sm:max-w-3xl lg:max-w-[760px] h-auto max-h-[88vh] bg-white dark:bg-[#070D1B] rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/15 shadow-[0_20px_60px_rgba(0,10,30,0.55)] flex flex-col z-10 overflow-hidden pointer-events-auto"
               role="dialog"
               aria-modal="true"
               aria-label="Vibe Event Bot"
             >
-              {/* Drawer Top Header */}
-              <div className="shrink-0 px-5 sm:px-7 py-3.5 border-b border-slate-200/90 dark:border-white/10 bg-slate-50/80 dark:bg-[#091224]/90 backdrop-blur-md flex items-center justify-between">
+              {/* Top Header Bar */}
+              <div className="shrink-0 px-5 sm:px-6 py-3 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/90 dark:bg-[#091224]/90 backdrop-blur-md flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#0038A8] to-[#002570] flex items-center justify-center text-white shadow-md border border-white/20">
-                    <Bot className="w-5 h-5 stroke-[2.2]" />
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white dark:border-[#070D1B]" />
+                  <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-[#0038A8] to-[#002570] flex items-center justify-center text-white shadow-sm border border-white/20">
+                    <Bot className="w-4 h-4 stroke-[2.2]" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border-2 border-white dark:border-[#070D1B]" />
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm sm:text-base font-black text-slate-950 dark:text-white tracking-tight">
+                      <h3 className="text-sm font-black text-slate-950 dark:text-white tracking-tight">
                         Vibe Event Bot
                       </h3>
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-400/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
@@ -138,20 +141,20 @@ export default function FloatingBotDrawer({ defaultOpen = false }: FloatingBotDr
                   </div>
                 </div>
 
-                {/* Close Drawer Button */}
+                {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-full bg-slate-200/70 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white flex items-center justify-center transition-colors cursor-pointer"
                   title="Close (Esc)"
-                  aria-label="Close drawer"
+                  aria-label="Close dialog"
                 >
-                  <X className="w-4 h-4 stroke-[2.5]" />
+                  <X className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               </div>
 
-              {/* Drawer Scrollable Content: Side-by-side content and mobile animation */}
-              <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 bot-drawer-view">
+              {/* Scrollable Content (Fit to content height, no wasted bottom space) */}
+              <div className="overflow-y-auto overscroll-contain px-4 sm:px-6 py-3.5 bot-drawer-view">
                 <BotCreateSection />
               </div>
             </motion.aside>
