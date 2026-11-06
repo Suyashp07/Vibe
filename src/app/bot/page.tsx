@@ -9,28 +9,28 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function BotPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#060A1C] text-slate-900 dark:text-[#F3F4F6] font-sans transition-colors duration-200 selection:bg-[#0038A8] dark:selection:bg-[#08B9F5] selection:text-white">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16 w-full">
+      <main className="flex-1 max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-16 w-full overflow-x-hidden">
         {/* Navigation Breadcrumb */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 sm:mb-6 flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Discovery</span>
           </Link>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0066F5]/10 border border-[#0066F5]/25 text-[#08B9F5] text-xs font-medium">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[#0038A8] dark:text-[#08B9F5] text-xs font-medium">
             <Sparkles className="w-3.5 h-3.5" />
             <span>AI Event Curator</span>
           </div>
         </div>
 
         {/* Create an event as easily as sending a text section */}
-        <div className="rounded-2xl border border-white/10 bg-[#0B0D13]/80 backdrop-blur-xl overflow-hidden p-2 sm:p-6 shadow-2xl">
+        <div className="w-full">
           <BotCreateSection />
         </div>
       </main>

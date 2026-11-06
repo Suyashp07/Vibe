@@ -203,7 +203,7 @@ export default function BotCreateSection() {
         <div className="bot-create-left">
           <h2
             className="bot-create-h1"
-            style={{ textTransform: 'none', fontSize: 'clamp(26px, 3.6vw, 42px)', lineHeight: 1.15, maxWidth: '20ch' }}
+            style={{ textTransform: 'none', lineHeight: 1.15 }}
           >
             Create an event as easily as sending a text.
           </h2>

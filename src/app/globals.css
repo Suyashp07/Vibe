@@ -2252,13 +2252,17 @@ html.dark .bot-create-section {
   align-items: center;
   gap: 56px;
   max-width: 1120px;
+  width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .bot-create-left {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
+  width: 100%;
 }
 
 .bot-create-h1 {
@@ -2268,8 +2272,11 @@ html.dark .bot-create-section {
   margin: 0;
   font-family: var(--font-bricolage), 'Bricolage Grotesque', 'Outfit', sans-serif !important;
   font-weight: 800 !important;
+  font-size: clamp(24px, 3.8vw, 42px);
   line-height: 1.15;
   text-transform: none !important;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 html.dark .bot-create-h1 {
@@ -2359,6 +2366,8 @@ html.dark .bot-step-line {
   flex-direction: column;
   gap: 4px;
   padding-top: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .bot-step-title {
@@ -2379,6 +2388,8 @@ html.dark .bot-step-title {
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 html.dark .bot-step-desc {
@@ -2387,7 +2398,8 @@ html.dark .bot-step-desc {
 
 .bot-code-chip {
   color: #07133a;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   background-color: #dbe8ff;
   border: 1px solid #d6e2fa;
   border-radius: 6px;
@@ -2396,7 +2408,7 @@ html.dark .bot-step-desc {
   font-family: SFMono-Regular, Consolas, monospace;
   font-size: 13.5px;
   font-weight: 600;
-  display: inline-block;
+  display: inline;
 }
 
 html.dark .bot-code-chip {
@@ -2490,6 +2502,8 @@ html.dark .bot-muted-note {
   justify-content: center;
   align-items: center;
   gap: 20px;
+  min-width: 0;
+  width: 100%;
 }
 
 .bot-tab-toggle {
@@ -2926,11 +2940,12 @@ html.dark .bot-input-field {
 
 @media (max-width: 900px) {
   .bot-create-section {
-    padding: 56px 5vw;
+    padding: 44px 20px;
+    margin: 16px 0;
   }
   .bot-create-container {
     grid-template-columns: 1fr;
-    gap: 44px;
+    gap: 36px;
   }
   .bot-create-h1,
   .bot-create-subtext {
@@ -2940,24 +2955,76 @@ html.dark .bot-input-field {
 
 @media (max-width: 600px) {
   .bot-create-section {
-    padding: 40px 16px;
+    padding: 24px 14px;
     border-radius: 20px;
+    margin: 8px 0;
+  }
+  .bot-create-h1 {
+    font-size: clamp(22px, 6vw, 28px) !important;
+    line-height: 1.2 !important;
+  }
+  .bot-create-subtext {
+    font-size: 14.5px !important;
+    line-height: 1.5 !important;
+  }
+  .bot-step-item {
+    gap: 12px;
+    padding-bottom: 20px;
+  }
+  .bot-step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+  .bot-step-line {
+    top: 32px;
+  }
+  .bot-step-title {
+    font-size: 16px;
+  }
+  .bot-step-desc {
+    font-size: 13.5px;
+  }
+  .bot-code-chip {
+    white-space: normal;
+    word-break: break-word;
+    display: inline;
+    padding: 2px 6px;
+    font-size: 12.5px;
+    margin: 0 2px;
   }
   .bot-action-buttons {
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
+    gap: 10px;
   }
   .bot-btn {
     width: 100%;
+    padding: 12px 16px;
+    font-size: 14.5px;
+  }
+  .bot-tab-toggle {
+    width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
+    display: flex;
+  }
+  .bot-tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 13px;
   }
   .bot-phone-frame {
-    border-radius: 32px;
+    border-radius: 28px;
     max-width: 100%;
+    width: 100%;
     padding: 8px;
   }
   .bot-phone-screen {
-    border-radius: 24px;
-    height: 480px;
+    border-radius: 22px;
+    height: 440px;
   }
 }
 
