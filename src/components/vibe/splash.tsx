@@ -158,11 +158,13 @@ export function Splash() {
 
     function measure() {
       if (!brand) return;
+      iw = window.innerWidth;
+      ih = window.innerHeight;
       const rect = brand.getBoundingClientRect();
-      bw = rect.width || brand.offsetWidth || Math.min(360, Math.max(220, iw * 0.32));
+      bw = rect.width || brand.offsetWidth || Math.min(340, Math.max(220, iw * 0.72));
       bh = rect.height || brand.offsetHeight || Math.round(bw * (524 / 1034));
-      x0 = (iw - bw) / 2;
-      yL = ih * LY - bh / 2;
+      x0 = Math.round((iw - bw) / 2);
+      yL = Math.round(ih * LY - bh / 2);
     }
 
     function place() {
@@ -946,7 +948,7 @@ export function Splash() {
             font-size: clamp(20px, 5.2vw, 26px);
           }
           .bi {
-            width: clamp(240px, 76vw, 340px);
+            width: min(285px, 76vw);
           }
           .slot b.on {
             animation: wi-mob .26s cubic-bezier(.2, .8, .2, 1) both;
