@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { X, Sparkles, Search, SlidersHorizontal, Check, Calendar } from 'lucide-react';
+import { X, Sparkles, Search, Check, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EventItem } from '@/types';
 
@@ -416,11 +416,11 @@ export default function MostLovedSection({
                     All events
                   </button>
 
-                  {/* "Filters" button with active filters count badge */}
+                  {/* Search Icon button (replaces old Filter button) */}
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer border ${
+                    className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer border hover:scale-105 active:scale-95 ${
                       activeFiltersCount > 0
                         ? 'bg-[#07133A] text-white border-[#07133A] shadow-sm dark:bg-white dark:text-[#07133A] dark:border-white'
                         : 'bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 border-slate-200/90 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
@@ -435,11 +435,12 @@ export default function MostLovedSection({
                           }
                         : undefined
                     }
+                    title="Search categories & events"
+                    aria-label="Search categories & events"
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    <span>Filters</span>
+                    <Search className={`w-4 h-4 ${activeFiltersCount > 0 ? 'text-white dark:text-[#07133A]' : 'text-slate-700 dark:text-slate-200'}`} />
                     {activeFiltersCount > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-[#0066F5] text-white dark:bg-[#0066F5] dark:text-white">
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold bg-[#0066F5] text-white flex items-center justify-center shadow-xs">
                         {activeFiltersCount}
                       </span>
                     )}
