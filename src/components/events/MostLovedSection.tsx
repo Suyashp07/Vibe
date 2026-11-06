@@ -431,7 +431,7 @@ export default function MostLovedSection({
               </div>
 
               {/* Category Items Grid (2 columns on mobile, 5 on desktop) */}
-              <div className="v2-cat-items-wrapper">
+              <div id="vt-categories-grid" className="v2-cat-items-wrapper">
                 {MOST_LOVED_CATEGORIES.map((cat) => {
                   const isSelected = selectedCategories.includes(cat.id);
 

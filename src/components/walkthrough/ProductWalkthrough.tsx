@@ -36,8 +36,8 @@ const ALL_STEPS: StepItem[] = [
   },
   {
     id: 'categories',
-    target: '#vt-categories',
-    fallbackTarget: '.v2-cat-list-section',
+    target: '#vt-categories-grid',
+    fallbackTarget: '#vt-categories',
     icon: Compass,
     title: 'Pick your vibe',
     text: 'Tap a category to see matching events near you.',
@@ -50,15 +50,6 @@ const ALL_STEPS: StepItem[] = [
     icon: Zap,
     title: 'Vibe Instant',
     text: 'Spontaneous meetups happening right now. Just show up.',
-    cta: 'Next →',
-  },
-  {
-    id: 'bot',
-    target: '#vt-bot',
-    fallbackTarget: '#vt-bot-card',
-    icon: Bot,
-    title: 'Create with Bot',
-    text: 'Create your event by chatting with the Vibe Bot on WhatsApp or Telegram.',
     cta: 'Next →',
   },
   {
@@ -158,18 +149,27 @@ export default function ProductWalkthrough() {
     if (!isOpen) return;
 
     const step = activeSteps[currentStep];
-    if (step && step.target) {
-      const el = findElement(step);
-      if (el) {
-        const r = el.getBoundingClientRect();
-        const isInView = r.top >= 80 && r.bottom <= window.innerHeight - 80;
-        if (!isInView) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (step && step.id) {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+      if (step.id === 'categories') {
+        const el = findElement(step);
+        if (el) {
+          const topOffset = el.getBoundingClientRect().top + window.scrollY - (isMobile ? 75 : 120);
+          window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
+        }
+      } else if (step.id === 'host') {
+        // On mobile, host is in the top navbar; scroll smoothly to the very top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (step.id === 'instant') {
+        // On desktop, scroll to top; on mobile, it is fixed in bottom nav
+        if (!isMobile) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
     }
 
-    const timer = setTimeout(updatePosition, 350);
+    const timer = setTimeout(updatePosition, 320);
     return () => clearTimeout(timer);
   }, [isOpen, currentStep, activeSteps, findElement, updatePosition]);
 
@@ -226,6 +226,8 @@ export default function ProductWalkthrough() {
 
   // Calculate Tooltip position relative to viewport
   const getTooltipStyle = (): React.CSSProperties => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
     if (!targetRect || isFirstStep) {
       // Centered Welcome Modal
       return {
@@ -233,6 +235,25 @@ export default function ProductWalkthrough() {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
+        width: 'calc(100vw - 32px)',
+        maxWidth: '380px',
+        zIndex: 9995,
+      };
+    }
+
+    if (isMobile) {
+      // DOCKED FLOATING BOTTOM CARD ON MOBILE
+      const currentId = activeSteps[currentStep]?.id;
+      // If targeting the fixed bottom navigation bar (Vibe Instant), dock card right above it
+      const bottomPx = currentId === 'instant' ? 76 : 16;
+
+      return {
+        position: 'fixed',
+        bottom: `${bottomPx}px`,
+        left: '16px',
+        right: '16px',
+        maxWidth: '380px',
+        margin: '0 auto',
         zIndex: 9995,
       };
     }
@@ -277,14 +298,40 @@ export default function ProductWalkthrough() {
       {targetRect && !isFirstStep && (
         <div
           className="fixed pointer-events-none transition-all duration-300 ease-out z-[9992]"
-          style={{
-            top: `${Math.max(0, targetRect.top - 8)}px`,
-            left: `${Math.max(0, targetRect.left - 8)}px`,
-            width: `${targetRect.width + 16}px`,
-            height: `${targetRect.height + 16}px`,
-            borderRadius: targetRect.height > 60 ? '24px' : '9999px',
-            boxShadow: '0 0 0 9999px rgba(5, 12, 34, 0.72), 0 0 0 2.5px #FFFFFF, 0 0 25px rgba(0, 102, 245, 0.5)',
-          }}
+          style={(() => {
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+            const currentId = activeSteps[currentStep]?.id;
+
+            let top = Math.max(0, targetRect.top - 8);
+            let left = Math.max(0, targetRect.left - 8);
+            let width = targetRect.width + 16;
+            let height = targetRect.height + 16;
+            let radius = '24px';
+
+            if (isMobile) {
+              if (currentId === 'categories') {
+                height = Math.min(height, window.innerHeight * 0.42);
+                radius = '20px';
+              } else if (currentId === 'instant') {
+                width = Math.max(width, 54);
+                height = Math.max(height, 54);
+                radius = '9999px';
+              } else if (currentId === 'host') {
+                radius = '9999px';
+              }
+            } else {
+              radius = targetRect.height > 60 ? '24px' : '9999px';
+            }
+
+            return {
+              top: `${top}px`,
+              left: `${left}px`,
+              width: `${width}px`,
+              height: `${height}px`,
+              borderRadius: radius,
+              boxShadow: '0 0 0 9999px rgba(5, 12, 34, 0.72), 0 0 0 2.5px #FFFFFF, 0 0 25px rgba(0, 102, 245, 0.5)',
+            };
+          })()}
         />
       )}
 
