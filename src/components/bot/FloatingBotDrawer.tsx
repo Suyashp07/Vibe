@@ -143,7 +143,9 @@ export default function FloatingBotDrawer({ defaultOpen = false }: FloatingBotDr
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Message on WhatsApp or Telegram · Live in 60s
+                      Message on{' '}
+                      <span className="text-[#128C7E] dark:text-[#25D366] font-semibold">WhatsApp</span> or{' '}
+                      <span className="text-[#229ED9] dark:text-[#38bdf8] font-semibold">Telegram</span> · Live in 60s
                     </p>
                   </div>
                 </div>

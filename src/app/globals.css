@@ -2467,39 +2467,64 @@ html.dark .bot-code-chip {
   transform: translateY(-1.5px);
 }
 
+/* WhatsApp Official Green Button */
+.bot-btn-whatsapp,
 .bot-btn-primary {
-  background-color: #0038a8;
-  color: #fff !important;
-  border: 2px solid #0038a8;
-  box-shadow: 0 4px 14px -2px rgba(29, 78, 216, 0.35);
+  background: linear-gradient(135deg, #25D366 0%, #1EBE5D 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 14px -2px rgba(37, 211, 102, 0.45), 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
+.bot-btn-whatsapp:hover,
 .bot-btn-primary:hover {
-  background-color: #173daa;
-  border-color: #173daa;
-  box-shadow: 0 8px 18px -3px rgba(29, 78, 216, 0.45);
+  background: linear-gradient(135deg, #28E16D 0%, #1CAE55 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 22px -3px rgba(37, 211, 102, 0.6), 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1.5px);
 }
 
+html.dark .bot-btn-whatsapp,
+html.dark .bot-btn-primary {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 16px -2px rgba(37, 211, 102, 0.38);
+}
+
+html.dark .bot-btn-whatsapp:hover,
+html.dark .bot-btn-primary:hover {
+  background: linear-gradient(135deg, #2ae36e 0%, #159a8b 100%);
+  box-shadow: 0 8px 22px -3px rgba(37, 211, 102, 0.55);
+}
+
+/* Telegram Official Sky-Blue Textured Button */
+.bot-btn-telegram,
 .bot-btn-secondary {
-  color: #0038a8 !important;
-  border: 2px solid #0038a8;
-  background-color: #fff;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.08);
+  background: linear-gradient(135deg, #2AABEE 0%, #229ED9 50%, #1B8DC5 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 14px -2px rgba(34, 158, 217, 0.45), 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
+.bot-btn-telegram:hover,
 .bot-btn-secondary:hover {
-  background-color: #f3f7ff;
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.15);
+  background: linear-gradient(135deg, #33B4F5 0%, #25A4DF 50%, #1E94CF 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 22px -3px rgba(34, 158, 217, 0.6), 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1.5px);
 }
 
+html.dark .bot-btn-telegram,
 html.dark .bot-btn-secondary {
-  color: #5b8cff !important;
-  background-color: transparent;
-  border-color: #5b8cff;
+  background: linear-gradient(135deg, #2AABEE 0%, #1F8FC7 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 16px -2px rgba(34, 158, 217, 0.38);
 }
 
+html.dark .bot-btn-telegram:hover,
 html.dark .bot-btn-secondary:hover {
-  background-color: rgba(91, 140, 255, 0.12);
+  background: linear-gradient(135deg, #33B4F5 0%, #229ED9 100%);
+  box-shadow: 0 8px 22px -3px rgba(34, 158, 217, 0.55);
 }
 
 .bot-icon {
