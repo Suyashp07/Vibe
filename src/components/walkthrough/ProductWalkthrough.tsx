@@ -557,7 +557,7 @@ export default function ProductWalkthrough() {
                           key={idx}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             idx === currentStep
-                              ? 'w-5 bg-[#0038A8] dark:bg-[#0038A8]'
+                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
                               : 'w-1.5 bg-slate-200 dark:bg-white/20'
                           }`}
                         />
@@ -577,10 +577,15 @@ export default function ProductWalkthrough() {
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="px-5 py-2 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+                        className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                        style={{
+                          backgroundColor: '#0066F5',
+                          color: '#FFFFFF',
+                          WebkitTextFillColor: '#FFFFFF',
+                        }}
                       >
-                        <span>Start</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>Start</span>
+                        <ArrowRight className="w-4 h-4 text-white stroke-[2.5]" style={{ color: '#FFFFFF', stroke: '#FFFFFF' }} />
                       </button>
                     </div>
                   </div>
@@ -760,7 +765,7 @@ export default function ProductWalkthrough() {
                           key={idx}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             idx === currentStep
-                              ? 'w-5 bg-[#0038A8] dark:bg-[#0038A8]'
+                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
                               : 'w-1.5 bg-slate-200 dark:bg-white/20'
                           }`}
                         />
@@ -782,12 +787,19 @@ export default function ProductWalkthrough() {
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="px-5 py-2 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+                        className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                        style={{
+                          backgroundColor: '#0066F5',
+                          color: '#FFFFFF',
+                          WebkitTextFillColor: '#FFFFFF',
+                        }}
                       >
-                        <span>{currentStepData.cta}</span>
+                        <span style={{ color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>{currentStepData.cta}</span>
                         {isLastStep ? (
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        ) : null}
+                          <Check className="w-4 h-4 text-white stroke-[2.5]" style={{ color: '#FFFFFF', stroke: '#FFFFFF' }} />
+                        ) : (
+                          <ArrowRight className="w-4 h-4 text-white stroke-[2.5]" style={{ color: '#FFFFFF', stroke: '#FFFFFF' }} />
+                        )}
                       </button>
                     </div>
                   </div>
