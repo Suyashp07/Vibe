@@ -321,8 +321,8 @@ function DashboardInner() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
             {/* Pill Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-500/30 bg-blue-50/70 dark:bg-blue-500/10 text-[11px] font-bold text-[#0066F5] dark:text-[#38BDF8] uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 fill-[#0066F5]/20 stroke-[#0066F5] dark:stroke-[#38BDF8]" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-[11px] font-bold text-[#0038A8] dark:text-[#38BDF8] uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 fill-[#0038A8]/20 stroke-[#0038A8] dark:stroke-[#38BDF8]" />
               <span>YOUR HOST SPACE</span>
             </div>
 
@@ -343,7 +343,7 @@ function DashboardInner() {
               onClick={() => setIsInboxOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
             >
-              <MessageSquare className="w-4 h-4 text-[#0038A8]" />
+              <MessageSquare className="w-4 h-4 text-[#0038A8] dark:text-sky-400" />
               <span>Guest Messages ({displayMetrics.messages})</span>
               {unreadMessagesCount > 0 && (
                 <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -354,10 +354,10 @@ function DashboardInner() {
 
             <Link
               href="/create"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-900/20 hover:scale-[1.02] active:scale-98 cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white !text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-900/20 hover:scale-[1.02] active:scale-98 cursor-pointer"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>New Gathering</span>
+              <Plus className="w-4 h-4 stroke-[2.5] text-white !text-white" />
+              <span className="text-white !text-white">New Gathering</span>
             </Link>
           </div>
         </div>
@@ -453,7 +453,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('upcoming')}
               className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'upcoming'
-                  ? 'bg-[#0038A8] text-white shadow-sm'
+                  ? 'bg-[#0038A8] text-white !text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium'
               }`}
             >
@@ -463,7 +463,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('past')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'past'
-                  ? 'bg-[#0038A8] text-white shadow-sm font-bold'
+                  ? 'bg-[#0038A8] text-white !text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -473,7 +473,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('drafts')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'drafts'
-                  ? 'bg-[#0038A8] text-white shadow-sm font-bold'
+                  ? 'bg-[#0038A8] text-white !text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -587,7 +587,7 @@ function DashboardInner() {
                     <div className="min-w-0 flex-1">
                       {/* Category + Live & Published Badge */}
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-[11px] font-extrabold tracking-wider text-[#0038A8] dark:text-[#38BDF8] uppercase">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black tracking-wider text-[#0038A8] dark:text-sky-300 bg-blue-50 dark:bg-blue-500/15 border border-blue-200/80 dark:border-blue-500/30 uppercase">
                           {category}
                         </span>
                         <span className="text-slate-300 dark:text-slate-600 font-bold">·</span>
@@ -633,7 +633,7 @@ function DashboardInner() {
                           <Users className="w-3.5 h-3.5 text-slate-400" />
                           <span>{joined}/{capacity} joined</span>
                         </div>
-                        <span className="font-bold text-[#0038A8] dark:text-[#38BDF8]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-extrabold text-[#0038A8] dark:text-sky-300 bg-blue-50 dark:bg-blue-500/15 border border-blue-200/80 dark:border-blue-500/30">
                           {spotsLeft} left
                         </span>
                       </div>
@@ -665,20 +665,20 @@ function DashboardInner() {
                       {/* Scan */}
                       <Link
                         href={`/organizer/check-in?eventId=${event.id}`}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EBF5FF] hover:bg-sky-100 border border-[#BAE6FD] text-[#0284C7] text-xs font-bold transition-all shadow-2xs hover:scale-[1.02] active:scale-98"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100/90 border border-blue-200 dark:border-blue-500/30 dark:bg-blue-500/15 text-[#0038A8] dark:text-sky-300 text-xs font-bold transition-all shadow-2xs hover:scale-[1.02] active:scale-98"
                         title="Scan tickets & gate check-in"
                       >
-                        <Scan className="w-3.5 h-3.5 text-[#0284C7]" />
+                        <Scan className="w-3.5 h-3.5 text-[#0038A8] dark:text-sky-300" />
                         <span>Scan ({joined})</span>
                       </Link>
 
                       {/* Dispatch */}
                       <button
                         onClick={() => setBroadcastEvent(originalEv || null)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EBF5FF] hover:bg-sky-100 border border-[#BAE6FD] text-[#0284C7] text-xs font-bold transition-all shadow-2xs hover:scale-[1.02] active:scale-98 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100/90 border border-blue-200 dark:border-blue-500/30 dark:bg-blue-500/15 text-[#0038A8] dark:text-sky-300 text-xs font-bold transition-all shadow-2xs hover:scale-[1.02] active:scale-98 cursor-pointer"
                         title="Send broadcast to guests"
                       >
-                        <Radio className="w-3.5 h-3.5 text-[#0284C7]" />
+                        <Radio className="w-3.5 h-3.5 text-[#0038A8] dark:text-sky-300" />
                         <span>Dispatch</span>
                       </button>
 
