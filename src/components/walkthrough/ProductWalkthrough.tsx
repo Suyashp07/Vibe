@@ -92,8 +92,27 @@ export default function ProductWalkthrough() {
   const [activeSteps, setActiveSteps] = useState<StepItem[]>(ALL_STEPS);
   const [isMounted, setIsMounted] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
-  // Helper to find visible target DOM element
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchEndX - touchStartX.current;
+    if (diffX < -45) {
+      // Swiped left -> next
+      handleNext();
+    } else if (diffX > 45) {
+      // Swiped right -> back
+      handleBack();
+    }
+    touchStartX.current = null;
+  };
+
+  // Helper to find visible target DOM element across Desktop and Mobile
   const findElement = useCallback((step: StepItem): HTMLElement | null => {
     if (!step.target && !step.fallbackTarget) return null;
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -104,8 +123,16 @@ export default function ProductWalkthrough() {
 
     for (const sel of targets) {
       const el = document.querySelector(sel) as HTMLElement | null;
-      if (el && el.offsetParent !== null) {
-        return el;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        // Check element has non-zero size and is visible
+        // (Do NOT use offsetParent !== null because position:fixed elements return offsetParent === null)
+        if (rect.width > 0 && rect.height > 0) {
+          const style = window.getComputedStyle(el);
+          if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+            return el;
+          }
+        }
       }
     }
     return null;
@@ -208,11 +235,13 @@ export default function ProductWalkthrough() {
     };
 
     window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -269,8 +298,23 @@ export default function ProductWalkthrough() {
 
   if (targetRect && !isFirstStep) {
     if (isMobile) {
-      // On mobile: dock card near the bottom, right above bottom nav if targeting instant/host
-      arrowPlacement = 'none';
+      const currentId = activeSteps[currentStep]?.id;
+      const actualCardLeft = typeof window !== 'undefined'
+        ? (window.innerWidth > 422 ? (window.innerWidth - Math.min(390, window.innerWidth - 32)) / 2 : 16)
+        : 16;
+      const targetCenter = targetRect.left + targetRect.width / 2;
+      arrowOffsetLeft = Math.max(
+        20,
+        Math.min(cardWidth - 28, targetCenter - actualCardLeft - 7)
+      );
+
+      if (currentId === 'bot') {
+        arrowPlacement = 'up';
+      } else if (currentId === 'instant' || currentId === 'host') {
+        arrowPlacement = 'down';
+      } else {
+        arrowPlacement = 'none';
+      }
     } else {
       const margin = 18;
       // Prefer positioning below the target
@@ -363,12 +407,20 @@ export default function ProductWalkthrough() {
                     } else if (currentId === 'instant') {
                       width = Math.max(width, 58);
                       height = Math.max(height, 58);
+                      left = targetRect.left + targetRect.width / 2 - width / 2;
+                      top = targetRect.top + targetRect.height / 2 - height / 2;
                       radius = '9999px';
                     } else if (currentId === 'bot') {
                       width = Math.max(width, 48);
                       height = Math.max(height, 48);
+                      left = targetRect.left + targetRect.width / 2 - width / 2;
+                      top = targetRect.top + targetRect.height / 2 - height / 2;
                       radius = '9999px';
                     } else if (currentId === 'host') {
+                      width = Math.max(width, 62);
+                      height = Math.max(height, 62);
+                      left = targetRect.left + targetRect.width / 2 - width / 2;
+                      top = targetRect.top + targetRect.height / 2 - height / 2;
                       radius = '9999px';
                     }
                   } else {
@@ -395,6 +447,8 @@ export default function ProductWalkthrough() {
             <motion.div
               ref={cardRef}
               key={currentStep}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
               initial={{ opacity: 0, scale: 0.94, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 8 }}
@@ -447,12 +501,14 @@ export default function ProductWalkthrough() {
               })()}
               className="relative text-slate-900 dark:text-white"
             >
-              {/* Pointed Triangular Arrow / Caret on Desktop */}
-              {!isMobile && !isFirstStep && arrowPlacement !== 'none' && (
+              {/* Pointed Triangular Arrow / Caret (Desktop & Mobile) */}
+              {!isFirstStep && arrowPlacement !== 'none' && (
                 <div
                   style={{ left: `${arrowOffsetLeft}px` }}
-                  className={`absolute w-3.5 h-3.5 bg-white dark:bg-[#0D1527] border-l border-t border-slate-200/90 dark:border-white/10 transform rotate-45 z-10 ${
-                    arrowPlacement === 'up' ? '-top-2' : '-bottom-2 rotate-[225deg]'
+                  className={`absolute w-3.5 h-3.5 bg-white dark:bg-[#0D1527] z-10 transform rotate-45 ${
+                    arrowPlacement === 'up'
+                      ? '-top-1.5 border-l border-t border-slate-200/90 dark:border-white/10'
+                      : '-bottom-1.5 border-r border-b border-slate-200/90 dark:border-white/10'
                   }`}
                 />
               )}
@@ -461,7 +517,7 @@ export default function ProductWalkthrough() {
                 /* ========================================================================= */
                 /* STEP 1: WELCOME MODAL                                                     */
                 /* ========================================================================= */
-                <div className="bg-white dark:bg-[#0D1527] w-[90vw] max-w-[390px] rounded-3xl p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,10,40,0.5)] border border-slate-200/90 dark:border-white/10 text-center relative mx-auto">
+                <div className="bg-white dark:bg-[#0D1527] w-[90vw] max-w-[390px] rounded-3xl p-5 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,10,40,0.5)] border border-slate-200/90 dark:border-white/10 text-center relative mx-auto">
                   {/* Close Button 'X' */}
                   <button
                     type="button"
@@ -577,7 +633,7 @@ export default function ProductWalkthrough() {
                 /* ========================================================================= */
                 /* STEPS 2 to 4: FEATURE SPOTLIGHT CARDS WITH CLEAR ANIMATIONS               */
                 /* ========================================================================= */
-                <div className="bg-white dark:bg-[#0D1527] rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_-10px_rgba(0,10,40,0.45)] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white relative mx-auto">
+                <div className="bg-white dark:bg-[#0D1527] rounded-3xl p-4 sm:p-6 shadow-[0_20px_50px_-10px_rgba(0,10,40,0.45)] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white relative mx-auto">
                   {/* Top Row: Icon Badge + Step Counter + Close Button */}
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2">
