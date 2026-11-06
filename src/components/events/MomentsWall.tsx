@@ -188,25 +188,10 @@ export default function MomentsWall() {
         </div>
       </div>
 
-      {/* 3. Bottom Auto-scroll info, CTA & Social Stats */}
+      {/* 3. Bottom CTA & Social Stats */}
       <div className="memories-footer-controls flex flex-col items-center justify-center mt-7 relative z-10 px-4">
-        {/* Auto-scroll Status */}
-        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Auto-scrolling slowly · Drag or hover to explore</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setIsPaused((prev) => !prev)}
-            className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer font-semibold flex items-center gap-1"
-          >
-            <span>{isPaused ? '▶ Play' : '⏸ Pause'}</span>
-          </button>
-        </div>
-
         {/* Join the Community Primary Button */}
-        <div className="mt-5">
+        <div>
           <Link
             href="/vibes"
             className="inline-flex items-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
@@ -224,7 +209,7 @@ export default function MomentsWall() {
             <span className="w-3.5 h-3.5 rounded-full bg-[#08B9F5] border-2 border-white dark:border-black inline-block" />
             <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-black inline-block" />
           </div>
-          <span>Join 50,000+ creators, artists & attendees sharing unforgettable vibes</span>
+          <span>Join creators, artists & attendees sharing unforgettable vibes</span>
         </div>
       </div>
     </div>
