@@ -167,7 +167,8 @@ export default function ProductWalkthrough() {
     setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
 
     const isForced = /[?&](tour|walkthrough)=1/.test(window.location.search);
-    const isHidden = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) === '1' : false;
+    const isExplicitlyDisabled = /[?&](no_tour|no_walkthrough|no_splash)=1/.test(window.location.search);
+    const isHidden = isExplicitlyDisabled || (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) === '1' : false);
 
     if (isForced || !isHidden) {
       if (typeof window !== 'undefined') {

@@ -483,6 +483,48 @@ The WhatsApp bridge runs as a persistent Node.js service on Render.
 
 ---
 
+## Event Poster Processing Pipeline & Zero-Crop Display
+
+Vibe ingests events from external platforms (BookMyShow, District, Luma, Unstop) with posters of varying aspect ratios (ultra-wide 2.4:1 banners, square 1:1, vertical 4:5 portraits). To prevent text and artwork cropping:
+
+### 1. Zero-Crop Layout Rules
+- **No Foreground Cropping:** `object-cover` is NEVER used on foreground posters (unless aspect ratio matches container within 10%). Posters are always presented in full with `object-contain`.
+- **Blurred Ambient Backdrop:** A darkened, blurred ambient copy (`scale-125 blur-2xl brightness-50 saturate-125`) fills empty container letterboxing.
+- **No Artwork Overlap:** Text, badges, date/venue, and CTAs sit in dedicated columns or panels outside the poster area.
+- **Desktop (md+):** Two-column grid (`grid-cols-[1fr_1.2fr]`, min-height 520px). Left column hosts event info; right column hosts full poster + controls.
+- **Mobile (<md):** Stacked card with top poster area (aspect ratio clamped between 4:3 and 4:5 so tall posters do not push info off-screen) and solid dark info panel below utilizing darkened dominant color (`#0b1535` fallback).
+- **Uniform Card Grid:** Event cards use a uniform 4:5 ratio with `<PosterImage />` so all cards in the grid have equal height with zero cropping.
+
+### 2. Node + Sharp Ingestion Pipeline
+- **Module:** `src/lib/posters/processPoster.ts`
+- **Idempotency:** SHA-256 hash of `source_url`. Skips redundant downloads if already processed.
+- **Resilience:** 10s timeout, 15 MB streaming limit, MIME type allowlist, custom Referer/User-Agent.
+- **Sharp Processing:** EXIF rotation (`.rotate()`), first-frame extraction for animated GIFs, dominant color extraction (`stats().dominant`).
+- **Variants Generated:**
+  - `hero.webp`: Max 1600px width, quality 80
+  - `card.webp`: Max 640px width, quality 80
+  - `thumb.webp`: Max 320px width, quality 75
+  - `blurDataURL`: 24px wide base64 blur placeholder for instant LCP with zero CLS layout shift.
+
+### 3. Supabase Storage Setup
+- **Bucket:** `event-posters` (Public read, 1-year immutable cache header `cacheControl: 31536000`).
+- **Path Structure:** `{eventId}/{sourceHash}/[hero|card|thumb].webp`
+- **Migration:** [`supabase/migrations/20261106_event_poster_fields.sql`](./supabase/migrations/20261106_event_poster_fields.sql)
+
+### 4. Running the Backfill
+```bash
+# Dry run inspection
+npx tsx scripts/backfill-posters.ts --dry-run
+
+# Process events in batches of 50 with concurrency 4
+npx tsx scripts/backfill-posters.ts --limit 50 --concurrency 4
+
+# Retry previously failed poster URLs
+npx tsx scripts/backfill-posters.ts --retry-failed
+```
+
+---
+
 ## Contributing
 
 ### Branch Naming

@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { MapPin, Calendar, ArrowUpRight, Heart } from 'lucide-react';
 import { EventItem } from '@/types';
 import { formatIST } from '@/lib/store';
+import PosterImage from '@/components/posters/PosterImage';
+import { getPosterSources } from '@/lib/posters/posterSources';
 
 interface EventCardProps {
   event: EventItem;
@@ -140,20 +142,29 @@ export default function EventCard({
     ? `${event.location_name}, ${event.city || 'India'}`
     : event.city || 'India';
 
+  const poster = getPosterSources(event);
+
   return (
     <div
       onClick={handleCardClick}
       data-cursor="view"
       className="event-card group relative rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/10 shadow-[0_10px_25px_-5px_rgba(15,23,42,0.08),0_8px_10px_-6px_rgba(15,23,42,0.05)] hover:shadow-[0_20px_35px_-5px_rgba(15,23,42,0.16),0_10px_15px_-5px_rgba(15,23,42,0.08)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer select-none"
     >
-      {/* Image Thumbnail (Top) - Aspect 16/10 with minimal badges */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-        <Image
-          src={event.cover_image_url}
+      {/* Image Thumbnail (Top) - Fixed Aspect 4/5 with PosterImage (Uniform Height in Grid, Zero Cropping) */}
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 select-none">
+        <PosterImage
+          src={poster.card}
           alt={event.title}
-          fill
+          width={poster.width}
+          height={poster.height}
+          containerRatio={4 / 5}
+          ratio="card"
+          blurDataURL={poster.blur}
+          dominantColor={poster.dominantColor}
+          isLowRes={poster.isLowRes}
+          categoryName={event.category}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          className="w-full h-full"
         />
 
         {/* Top-Left: Ultra-clean Source Pill */}

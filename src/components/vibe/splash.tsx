@@ -58,6 +58,7 @@ export function Splash() {
 
     try {
       const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('no_splash') === '1') return;
       const forceSplash = urlParams.get('splash') === '1' || urlParams.get('debug_splash') === '1';
       if (!forceSplash && sessionStorage.getItem(STORAGE_KEY) === '1') {
         return;

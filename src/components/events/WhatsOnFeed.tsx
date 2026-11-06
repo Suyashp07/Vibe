@@ -17,6 +17,7 @@ import {
   FilterX,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import EventHero from '@/components/events/EventHero';
 import EventCard from '@/components/ui/EventCard';
 import MomentsWall from '@/components/events/MomentsWall';
 import MostLovedSection, {
@@ -431,7 +432,7 @@ export default function WhatsOnFeed() {
     }
   }, [allCategoriesList]);
 
-  // 3 to 4 prominent events for the hero carousel
+  // Prominent events for the hero carousel (prioritizing custom posters & sample test events)
   const prominentEvents = useMemo(() => {
     const valid = eventsWithDistance
       .filter(isPublicLiveEvent)
@@ -440,34 +441,18 @@ export default function WhatsOnFeed() {
       valid.length > 0
         ? valid
         : SAMPLE_TEMPLATE_EVENTS.filter((e) => isPublicLiveEvent(e) && !isEventExpired(e));
-    return pool.slice(0, 4);
+
+    // Prioritize sample events "Illusions of Grandeur" (wide) & "Devanshi Shah" (portrait) for spotlight testing
+    const sampleIds = ['6ec148a7-62d6-497b-bfea-3bc0875946c0', 'f528fadc-bebe-4a5d-9947-b15741efe6d9'];
+    const samples = pool.filter(
+      (e) =>
+        sampleIds.includes(e.id) ||
+        (e.title && (e.title.toLowerCase().includes('grandeur') || e.title.toLowerCase().includes('devanshi')))
+    );
+    const others = pool.filter((e) => !samples.some((s) => s.id === e.id));
+
+    return [...samples, ...others].slice(0, 5);
   }, [eventsWithDistance]);
-
-  const [flashcardIdx, setFlashcardIdx] = useState(0);
-  const [isFlashcardPaused, setIsFlashcardPaused] = useState(false);
-
-  useEffect(() => {
-    if (isFlashcardPaused || prominentEvents.length <= 1) return;
-    const timer = setInterval(() => {
-      setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [isFlashcardPaused, prominentEvents.length]);
-
-  const handlePrevFlashcard = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setFlashcardIdx((prev) => (prev - 1 + prominentEvents.length) % prominentEvents.length);
-  };
-
-  const handleNextFlashcard = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
-  };
-
-  const currentFlashEvent = prominentEvents[flashcardIdx] || prominentEvents[0];
-  const flashcardLink = `/${currentFlashEvent?.slug || ''}`;
 
   // =========================================================================
   // DERIVED FILTERED EVENTS LIST (Single Source of Truth)
@@ -548,200 +533,10 @@ export default function WhatsOnFeed() {
         {/* Main Feed Content (Aligned with 7xl container) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
         {/* ========================================================================= */}
-        {/* 1. SPOTLIGHT HERO BILLBOARD CAROUSEL                                      */}
+        {/* 1. SPOTLIGHT HERO BILLBOARD CAROUSEL (Full Poster, Never Cropped)         */}
         {/* ========================================================================= */}
-        {currentFlashEvent && (
-          <div
-            data-cursor="view"
-            className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-white/10 group min-h-[460px] sm:min-h-[480px] md:h-[500px] lg:h-[520px] bg-[#07133A] touch-pan-y select-none"
-            onMouseEnter={() => setIsFlashcardPaused(true)}
-            onMouseLeave={() => setIsFlashcardPaused(false)}
-          >
-            {/* Seamless Image Crossfade Layer */}
-            <div className="absolute inset-0 overflow-hidden">
-              <AnimatePresence initial={false}>
-                <motion.div
-                  key={currentFlashEvent.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.6, ease: 'easeInOut' }}
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.2}
-                  onDragEnd={(_e, info) => {
-                    if (info.offset.x < -40 || info.velocity.x < -300) {
-                      setFlashcardIdx((prev) => (prev + 1) % prominentEvents.length);
-                    } else if (info.offset.x > 40 || info.velocity.x > 300) {
-                      setFlashcardIdx((prev) => (prev - 1 + prominentEvents.length) % prominentEvents.length);
-                    }
-                  }}
-                  className="absolute inset-0"
-                >
-                  <Image
-                    src={currentFlashEvent.cover_image_url}
-                    alt={currentFlashEvent.title}
-                    fill
-                    unoptimized
-                    priority
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Soft Directional Cinematic Scrim */}
-            <div
-              className="absolute inset-0 pointer-events-none z-10"
-              style={{
-                background:
-                  'radial-gradient(circle at bottom left, rgba(7, 19, 58, 0.72) 0%, rgba(7, 19, 58, 0.30) 42%, rgba(7, 19, 58, 0) 75%)',
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#07133A]/75 via-[#07133A]/30 to-transparent pointer-events-none z-10" />
-
-            {/* Content Group at Bottom-Left */}
-            <div className="flashcard-hero-overlay absolute bottom-0 left-0 p-6 sm:p-8 md:p-10 max-w-xl lg:max-w-2xl z-20 pointer-events-auto">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentFlashEvent.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-3 sm:space-y-3.5"
-                >
-                  {/* Badge Row */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-sm">
-                      <Zap className="w-3 h-3 fill-[#08B9F5] text-[#08B9F5]" />
-                      <span>IN THE SPOTLIGHT</span>
-                    </span>
-
-                    {/* Mobile carousel controls */}
-                    <div className="sm:hidden flex items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        {prominentEvents.map((_, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => setFlashcardIdx(i)}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                              flashcardIdx === i
-                                ? 'w-5 bg-white shadow-xs'
-                                : 'w-1.5 bg-white/40 hover:bg-white/70'
-                            }`}
-                            aria-label={`Slide ${i + 1}`}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-1 ml-1">
-                        <button
-                          type="button"
-                          onClick={handlePrevFlashcard}
-                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white active:scale-95 transition-transform"
-                          aria-label="Previous"
-                        >
-                          <ChevronLeft className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleNextFlashcard}
-                          className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white active:scale-95 transition-transform"
-                          aria-label="Next"
-                        >
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Event Meta: Date & Venue */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-100/90 text-xs sm:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-[#08B9F5] shrink-0" />
-                      <span className="font-semibold uppercase tracking-wide">
-                        {formatSpotlightDate(currentFlashEvent.start_at)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 truncate">
-                      <MapPin className="w-3.5 h-3.5 text-[#08B9F5] shrink-0" />
-                      <span className="truncate">
-                        {currentFlashEvent.location_name || 'Live Venue'}, {currentFlashEvent.city || 'Indore'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <Link
-                    href={flashcardLink}
-                    className="block group/title"
-                  >
-                    <h2 className="hero-spotlight-title font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight tracking-tight line-clamp-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)] group-hover/title:text-[#08B9F5] transition-colors" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}>
-                      {currentFlashEvent.title}
-                    </h2>
-                  </Link>
-
-                  {/* Subtitle / Description */}
-                  <p className="text-slate-100/90 text-sm sm:text-base line-clamp-2 font-normal leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)] max-w-lg">
-                    {currentFlashEvent.tagline || 'Live music. Open skies. A crowd that feels like your people.'}
-                  </p>
-
-                  {/* Action Button */}
-                  <div className="pt-2 sm:pt-3">
-                    <Link
-                      href={flashcardLink}
-                      className="hero-spotlight-btn inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-xs sm:text-sm font-bold shadow-lg shadow-blue-900/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                      style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", backgroundColor: "#0038A8" }}
-                    >
-                      <span className="hero-spotlight-btn-text font-bold text-white" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF" }}>Find your spot</span>
-                      <ArrowRight className="w-4 h-4 text-white" style={{ color: "#FFFFFF", stroke: "#FFFFFF" }} />
-                    </Link>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Desktop Carousel Indicators & Controls Capsule */}
-            <div className="hidden sm:flex absolute bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 z-20 items-center gap-3 px-3.5 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white shadow-xl">
-              {/* Sleek Animated Slide Indicators */}
-              <div className="flex items-center gap-1.5 px-1">
-                {prominentEvents.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setFlashcardIdx(i)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      flashcardIdx === i
-                        ? 'w-6 bg-white shadow-xs'
-                        : 'w-1.5 bg-white/40 hover:bg-white/75'
-                    }`}
-                    aria-label={`Go to slide ${i + 1}`}
-                  />
-                ))}
-              </div>
-
-              {/* Prev / Next Chevrons */}
-              <div className="flex items-center gap-1 pl-1 border-l border-white/20">
-                <button
-                  type="button"
-                  onClick={handlePrevFlashcard}
-                  className="w-7 h-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                  aria-label="Previous event"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextFlashcard}
-                  className="w-7 h-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                  aria-label="Next event"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+        {prominentEvents && prominentEvents.length > 0 && (
+          <EventHero events={prominentEvents} />
         )}
 
         {/* ========================================================================= */}

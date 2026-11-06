@@ -142,8 +142,36 @@ export interface EventItem {
   whatsapp_host_phone?: string;
   vibe_cheers_count?: number;
   flash_tags?: string[];
+  // Supabase Poster Processing Pipeline fields
+  poster_original_url?: string;
+  poster_width?: number;
+  poster_height?: number;
+  poster_aspect_ratio?: number;
+  poster_dominant_color?: string;
+  poster_is_low_res?: boolean;
+  poster_hero_url?: string;
+  poster_card_url?: string;
+  poster_thumb_url?: string;
+  poster_blur_data_url?: string;
+  poster_source_hash?: string;
+  poster_processing_status?: 'pending' | 'processed' | 'failed';
+  poster_processed_at?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface PosterSources {
+  hero: string;
+  card: string;
+  thumb: string;
+  original: string;
+  blur?: string;
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+  dominantColor?: string;
+  isLowRes: boolean;
+  isCustomPoster: boolean;
 }
 
 export interface RSVPItem {

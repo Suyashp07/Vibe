@@ -6,6 +6,7 @@ import {
   getEventbriteEventById,
   mapEventbriteToVibeEvent,
 } from '@/lib/aggregation/eventbrite';
+import { processPoster } from '@/lib/posters/processPoster';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +85,10 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         if (!existing) {
-          await supabase.from('events').insert([ev]);
+          const { data: inserted } = await supabase.from('events').insert([ev]).select('id, cover_image_url').single();
+          if (inserted?.id && inserted?.cover_image_url) {
+            processPoster({ eventId: inserted.id, sourceUrl: inserted.cover_image_url }).catch(() => {});
+          }
         }
       }
     }

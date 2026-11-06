@@ -6,6 +6,7 @@ import { detectPlatform } from '@/lib/aggregation/crawler';
 import { areDuplicates } from '@/lib/aggregation/dedup';
 import { extractEventFromText } from '@/lib/ai/eventExtractor';
 import { calculateEventSurety } from '@/lib/eventSurety';
+import { processPoster } from '@/lib/posters/processPoster';
 
 export const dynamic = 'force-dynamic';
 
@@ -186,6 +187,15 @@ export async function POST(req: NextRequest) {
 
       if (!insertErr && data) {
         savedEvent = data;
+        // Asynchronously process poster variants without blocking response
+        if (savedEvent.id && savedEvent.cover_image_url) {
+          processPoster({
+            eventId: savedEvent.id,
+            sourceUrl: savedEvent.cover_image_url,
+          }).catch((err) => {
+            console.error('[Ingest] Background poster processing warning:', err);
+          });
+        }
       }
     }
 
