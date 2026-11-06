@@ -30,7 +30,6 @@ import {
   Zap,
   X,
   Download,
-  Mail,
   MessageCircle,
   Send,
   ArrowUpRight,
@@ -543,39 +542,6 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                             <span>Admin workstation</span>
                           </Link>
                         )}
-                      </div>
-
-                      {/* CONNECT WITH PLATFORM Section */}
-                      <div className="pt-3 pb-2 px-1">
-                        <p className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isLight ? 'text-slate-400' : 'text-neutral-400'}`}>
-                          CONNECT WITH PLATFORM
-                        </p>
-                      </div>
-
-                      {/* Platform Contact Email */}
-                      <div className="px-0.5 pb-2">
-                        <a
-                          href="mailto:hello@swaniki.com"
-                          onClick={() => setDropdownOpen(false)}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-xs font-semibold group cursor-pointer ${
-                            isLight
-                              ? 'border-blue-200/80 bg-blue-50/70 hover:bg-blue-100/80 hover:border-blue-300 text-slate-900 shadow-xs'
-                              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white'
-                          }`}
-                          title="Email Swaniki Platform"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                              isLight ? 'bg-blue-100 text-[#0038A8]' : 'bg-[#08B9F5]/10 text-[#08B9F5]'
-                            }`}>
-                              <Mail className="w-3.5 h-3.5" />
-                            </div>
-                            <span className="truncate text-xs font-semibold">
-                              hello@swaniki.com
-                            </span>
-                          </div>
-                          <ArrowUpRight className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400 group-hover:text-slate-800' : 'text-neutral-400 group-hover:text-white'} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform`} />
-                        </a>
                       </div>
 
                       {/* Theme Toggle in profile menu */}
