@@ -206,7 +206,7 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Synchronous early capture of beforeinstallprompt so deferredPrompt is never missed */}
+        {/* Synchronous early capture of beforeinstallprompt and immediate ServiceWorker registration */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -225,6 +225,9 @@ export default function RootLayout({
                     window.dispatchEvent(new CustomEvent('vibe:app_installed'));
                   } catch (_) {}
                 });
+                if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                }
               })();
             `,
           }}

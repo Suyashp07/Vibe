@@ -218,6 +218,57 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
 
 
 
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkInstalled = async () => {
+      if (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true
+      ) {
+        setIsAppInstalled(true);
+        return;
+      }
+      if ('getInstalledRelatedApps' in navigator) {
+        try {
+          const apps = await (navigator as any).getInstalledRelatedApps();
+          if (apps && apps.length > 0) setIsAppInstalled(true);
+        } catch (_) {}
+      }
+    };
+    checkInstalled();
+
+    const handleInstalled = () => setIsAppInstalled(true);
+    window.addEventListener('appinstalled', handleInstalled);
+    window.addEventListener('vibe:app_installed', handleInstalled);
+    return () => {
+      window.removeEventListener('appinstalled', handleInstalled);
+      window.removeEventListener('vibe:app_installed', handleInstalled);
+    };
+  }, []);
+
+  const handleDirectInstall = async () => {
+    if (typeof window !== 'undefined') {
+      const prompt = (window as any).__vibe_deferred_prompt;
+      if (prompt && typeof prompt.prompt === 'function') {
+        try {
+          await prompt.prompt();
+          const choice = await prompt.userChoice;
+          if (choice && choice.outcome === 'accepted') {
+            (window as any).__vibe_deferred_prompt = null;
+            setIsAppInstalled(true);
+            window.dispatchEvent(new CustomEvent('vibe:app_installed'));
+          }
+          return;
+        } catch (err) {
+          console.warn('[PWA] Direct prompt error:', err);
+        }
+      }
+    }
+    triggerPWAInstall();
+  };
+
   const isNavActive = (path: string) => {
     if (path === '/') return pathname === '/';
     return pathname.startsWith(path);
@@ -346,10 +397,10 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               {/* Desktop Download App Icon Button */}
               <button
                 type="button"
-                onClick={() => triggerPWAInstall()}
+                onClick={handleDirectInstall}
                 className="vibe-download-btn hidden md:inline-flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center text-slate-700 dark:text-neutral-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer active:scale-95"
-                title="Download App"
-                aria-label="Download App"
+                title={isAppInstalled ? 'Vibe is Installed - Open App' : 'Install Vibe App'}
+                aria-label={isAppInstalled ? 'Vibe is Installed - Open App' : 'Install Vibe App'}
               >
                 <Download className="w-4 h-4 stroke-[2.2] shrink-0 text-slate-700 dark:text-neutral-200" />
               </button>
