@@ -223,26 +223,44 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const checkInstalled = async () => {
-      if (
+      const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
-        (window.navigator as any).standalone === true
-      ) {
+        window.matchMedia('(display-mode: minimal-ui)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://');
+
+      if (isStandalone) {
         setIsAppInstalled(true);
         return;
       }
       if ('getInstalledRelatedApps' in navigator) {
         try {
           const apps = await (navigator as any).getInstalledRelatedApps();
-          if (apps && apps.length > 0) setIsAppInstalled(true);
+          if (apps && apps.length > 0) {
+            setIsAppInstalled(true);
+            return;
+          }
         } catch (_) {}
       }
     };
     checkInstalled();
 
+    const mq = window.matchMedia('(display-mode: standalone)');
+    const handleMQChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setIsAppInstalled(true);
+    };
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', handleMQChange);
+    }
+
     const handleInstalled = () => setIsAppInstalled(true);
     window.addEventListener('appinstalled', handleInstalled);
     window.addEventListener('vibe:app_installed', handleInstalled);
     return () => {
+      if (typeof mq.removeEventListener === 'function') {
+        mq.removeEventListener('change', handleMQChange);
+      }
       window.removeEventListener('appinstalled', handleInstalled);
       window.removeEventListener('vibe:app_installed', handleInstalled);
     };
@@ -406,16 +424,18 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 </span>
               </button>
 
-              {/* Desktop Download App Icon Button */}
-              <button
-                type="button"
-                onClick={handleDirectInstall}
-                className="vibe-download-btn hidden md:inline-flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center text-slate-700 dark:text-neutral-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer active:scale-95"
-                title={isAppInstalled ? 'Vibe is Installed - Open App' : 'Install Vibe App'}
-                aria-label={isAppInstalled ? 'Vibe is Installed - Open App' : 'Install Vibe App'}
-              >
-                <Download className="w-4 h-4 stroke-[2.2] shrink-0 text-slate-700 dark:text-neutral-200" />
-              </button>
+              {/* Desktop Download App Icon Button (Only visible in browser/website, completely hidden inside PWA) */}
+              {!isAppInstalled && (
+                <button
+                  type="button"
+                  onClick={handleDirectInstall}
+                  className="vibe-download-btn hidden md:inline-flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center text-slate-700 dark:text-neutral-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                  title="Install Vibe App"
+                  aria-label="Install Vibe App"
+                >
+                  <Download className="w-4 h-4 stroke-[2.2] shrink-0 text-slate-700 dark:text-neutral-200" />
+                </button>
+              )}
 
               {/* Desktop Full + Host Button */}
               <Magnetic pullFactor={0.35}>

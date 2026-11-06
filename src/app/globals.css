@@ -3081,6 +3081,13 @@ html.dark .bot-input-field {
   margin: 0 auto !important;
 }
 
+/* Automatically hide install buttons whenever running inside PWA / standalone mode */
+@media all and (display-mode: standalone), (display-mode: minimal-ui), (display-mode: fullscreen) {
+  .vibe-download-btn {
+    display: none !important;
+  }
+}
+
 
 
 
