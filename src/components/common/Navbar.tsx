@@ -473,6 +473,26 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                           <span>Create new event</span>
                         </Link>
 
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            if (pathname !== '/') {
+                              router.push('/?tour=1');
+                            } else {
+                              window.dispatchEvent(new CustomEvent('vibe:start_tour'));
+                            }
+                          }}
+                          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer w-full text-left ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
+                        >
+                          <Sparkles className="w-4 h-4 stroke-[1.8] text-[#0066F5] dark:text-[#08B9F5]" />
+                          <span>Take 30s walkthrough</span>
+                        </button>
+
                         {isStaff && (
                           <Link
                             href={ADMIN_BASE_PATH}

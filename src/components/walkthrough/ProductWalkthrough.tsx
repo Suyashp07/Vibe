@@ -2,16 +2,23 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
   Compass,
   Zap,
-  Bot,
   Plus,
   ArrowRight,
   ArrowLeft,
   X,
   Check,
+  MapPin,
+  Ticket,
+  Users,
+  MessageCircle,
+  Send,
+  Calendar,
+  Radio,
 } from 'lucide-react';
 
 interface StepItem {
@@ -59,12 +66,12 @@ const ALL_STEPS: StepItem[] = [
     icon: Plus,
     title: 'Host an event',
     text: 'Create an event in minutes — or straight from WhatsApp or Telegram.',
-    cta: 'Got it',
+    cta: 'Got it 🎉',
   },
 ];
 
 const STORAGE_KEY = 'vibe_walkthrough_hidden';
-const AUTO_START_DELAY = 900;
+const AUTO_START_DELAY = 850;
 
 export default function ProductWalkthrough() {
   const pathname = usePathname();
@@ -73,12 +80,18 @@ export default function ProductWalkthrough() {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [activeSteps, setActiveSteps] = useState<StepItem[]>(ALL_STEPS);
+  const [isMounted, setIsMounted] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Helper to find visible target DOM element
   const findElement = useCallback((step: StepItem): HTMLElement | null => {
     if (!step.target && !step.fallbackTarget) return null;
-    const targets = [step.target, step.fallbackTarget].filter(Boolean) as string[];
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    // Prefer mobile fallback if on small viewport
+    const targets = isMobile
+      ? [step.fallbackTarget, step.target].filter(Boolean) as string[]
+      : [step.target, step.fallbackTarget].filter(Boolean) as string[];
+
     for (const sel of targets) {
       const el = document.querySelector(sel) as HTMLElement | null;
       if (el && el.offsetParent !== null) {
@@ -105,18 +118,18 @@ export default function ProductWalkthrough() {
     setTargetRect(rect);
   }, [isOpen, activeSteps, currentStep, findElement]);
 
-  // Handle tour open check
+  // Handle tour open check on mount / navigation
   useEffect(() => {
+    setIsMounted(true);
     if (pathname !== '/') return;
 
-    // Filter steps based on targets available on current device
     const filtered = ALL_STEPS.filter((s) => {
       if (!s.target) return true;
       return findElement(s) !== null;
     });
     setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
 
-    const isForced = /[?&]tour=1/.test(window.location.search);
+    const isForced = /[?&](tour|walkthrough)=1/.test(window.location.search);
     const isHidden = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) === '1' : false;
 
     if (isForced || !isHidden) {
@@ -128,7 +141,7 @@ export default function ProductWalkthrough() {
     }
   }, [pathname, findElement]);
 
-  // Support manual tour trigger via event (e.g., clicking "How it works" in navbar)
+  // Support manual tour trigger via global event
   useEffect(() => {
     const handleStartTour = () => {
       const filtered = ALL_STEPS.filter((s) => {
@@ -138,6 +151,7 @@ export default function ProductWalkthrough() {
       setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
       setCurrentStep(0);
       setIsOpen(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.addEventListener('vibe:start_tour', handleStartTour);
@@ -155,14 +169,10 @@ export default function ProductWalkthrough() {
       if (step.id === 'categories') {
         const el = findElement(step);
         if (el) {
-          const topOffset = el.getBoundingClientRect().top + window.scrollY - (isMobile ? 75 : 120);
+          const topOffset = el.getBoundingClientRect().top + window.scrollY - (isMobile ? 80 : 130);
           window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
         }
-      } else if (step.id === 'host') {
-        if (!isMobile) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      } else if (step.id === 'instant') {
+      } else if (step.id === 'instant' || step.id === 'host') {
         if (!isMobile) {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -217,300 +227,473 @@ export default function ProductWalkthrough() {
     }
   };
 
-  if (!isOpen || pathname !== '/') return null;
-
-  const currentStepData = activeSteps[currentStep];
-  const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === activeSteps.length - 1;
-  const StepIcon = currentStepData?.icon || Sparkles;
-
-  // Calculate Tooltip position relative to viewport
-  const getTooltipStyle = (): React.CSSProperties => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-    if (!targetRect || isFirstStep) {
-      // Centered Welcome Modal
-      return {
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 'calc(100vw - 32px)',
-        maxWidth: '380px',
-        zIndex: 9995,
-      };
-    }
-
-    if (isMobile) {
-      // DOCKED FLOATING BOTTOM CARD ON MOBILE
-      const currentId = activeSteps[currentStep]?.id;
-      // If targeting the fixed bottom navigation bar (Vibe Instant or Host), dock card right above it
-      const bottomPx = currentId === 'instant' || currentId === 'host' ? 76 : 16;
-
-      return {
-        position: 'fixed',
-        bottom: `${bottomPx}px`,
-        left: '16px',
-        right: '16px',
-        maxWidth: '380px',
-        margin: '0 auto',
-        zIndex: 9995,
-      };
-    }
-
-    const margin = 16;
-    const cardWidth = Math.min(380, window.innerWidth - 32);
-    const cardHeight = cardRef.current ? cardRef.current.offsetHeight : 210;
-
-    let top = targetRect.bottom + margin;
-    // If not enough room below, place above target
-    if (top + cardHeight > window.innerHeight - margin) {
-      top = Math.max(margin, targetRect.top - cardHeight - margin);
-    }
-
-    // Center horizontally on target, clamped within screen margins
-    let left = targetRect.left + targetRect.width / 2 - cardWidth / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - cardWidth - margin));
-
-    return {
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${left}px`,
-      width: `${cardWidth}px`,
-      zIndex: 9995,
-    };
+  const startTourManually = () => {
+    const filtered = ALL_STEPS.filter((s) => {
+      if (!s.target) return true;
+      return findElement(s) !== null;
+    });
+    setActiveSteps(filtered.length > 0 ? filtered : ALL_STEPS);
+    setCurrentStep(0);
+    setIsOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (!isMounted || pathname !== '/') return null;
+
+  const currentStepData = activeSteps[currentStep] || ALL_STEPS[0];
+  const isFirstStep = currentStep === 0;
+  const isLastStep = currentStep === activeSteps.length - 1;
+  const StepIcon = currentStepData.icon || Sparkles;
+
+  // Calculate Tooltip position & caret orientation relative to viewport
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const cardWidth = typeof window !== 'undefined' ? Math.min(390, window.innerWidth - 32) : 380;
+  const cardHeight = cardRef.current ? cardRef.current.offsetHeight : 240;
+
+  let computedTop = 0;
+  let computedLeft = 0;
+  let arrowPlacement: 'up' | 'down' | 'none' = 'none';
+  let arrowOffsetLeft = cardWidth / 2 - 8;
+
+  if (targetRect && !isFirstStep) {
+    if (isMobile) {
+      // On mobile: dock card near the bottom, right above bottom nav if targeting instant/host
+      arrowPlacement = 'none';
+    } else {
+      const margin = 18;
+      // Prefer positioning below the target
+      if (targetRect.bottom + cardHeight + margin < window.innerHeight) {
+        computedTop = targetRect.bottom + margin;
+        arrowPlacement = 'up';
+      } else {
+        // Position above the target
+        computedTop = Math.max(margin, targetRect.top - cardHeight - margin);
+        arrowPlacement = 'down';
+      }
+
+      computedLeft = targetRect.left + targetRect.width / 2 - cardWidth / 2;
+      computedLeft = Math.max(margin, Math.min(computedLeft, window.innerWidth - cardWidth - margin));
+
+      arrowOffsetLeft = Math.max(
+        18,
+        Math.min(cardWidth - 28, targetRect.left + targetRect.width / 2 - computedLeft - 8)
+      );
+    }
+  }
+
   return (
-    <div
-      className="fixed inset-0 z-[9990] select-none font-sans"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="tour-title"
-    >
-      {/* 1. Backdrop Spotlight / Dimming */}
-      <div
-        className="fixed inset-0 bg-[#050C22]/70 backdrop-blur-[2px] transition-opacity duration-300"
-        onClick={closeTour}
-      />
-
-      {/* 2. Spotlight Cutout / Ring around Active Target */}
-      {targetRect && !isFirstStep && (
-        <div
-          className="fixed pointer-events-none transition-all duration-300 ease-out z-[9992]"
-          style={(() => {
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-            const currentId = activeSteps[currentStep]?.id;
-
-            let top = Math.max(0, targetRect.top - 8);
-            let left = Math.max(0, targetRect.left - 8);
-            let width = targetRect.width + 16;
-            let height = targetRect.height + 16;
-            let radius = '24px';
-
-            if (isMobile) {
-              if (currentId === 'categories') {
-                height = Math.min(height, window.innerHeight * 0.42);
-                radius = '20px';
-              } else if (currentId === 'instant') {
-                width = Math.max(width, 54);
-                height = Math.max(height, 54);
-                radius = '9999px';
-              } else if (currentId === 'host') {
-                radius = '9999px';
-              }
-            } else {
-              radius = targetRect.height > 60 ? '24px' : '9999px';
-            }
-
-            return {
-              top: `${top}px`,
-              left: `${left}px`,
-              width: `${width}px`,
-              height: `${height}px`,
-              borderRadius: radius,
-              boxShadow: '0 0 0 9999px rgba(5, 12, 34, 0.72), 0 0 0 2.5px #FFFFFF, 0 0 25px rgba(0, 102, 245, 0.5)',
-            };
-          })()}
-        />
+    <>
+      {/* Floating Relaunch Capsule Button (Always available on Home page when tour is closed) */}
+      {!isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="fixed z-40 bottom-20 sm:bottom-6 left-4 sm:left-6 select-none"
+        >
+          <button
+            type="button"
+            onClick={startTourManually}
+            className="group flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full bg-slate-900/95 dark:bg-[#081426]/95 hover:bg-[#0066F5] dark:hover:bg-[#0066F5] text-white text-xs font-bold shadow-xl border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Take interactive 30s tour of Vibe"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#08B9F5] group-hover:text-white transition-colors" />
+            <span>30s Tour</span>
+          </button>
+        </motion.div>
       )}
 
-      {/* 3. Refined Tour Card Popup */}
-      <div
-        ref={cardRef}
-        style={getTooltipStyle()}
-        className="animate-in fade-in zoom-in-95 duration-200"
-      >
-        {isFirstStep ? (
-          /* ========================================================================= */
-          /* STEP 1: WELCOME MODAL (Exactly matching Screenshot 1)                     */
-          /* ========================================================================= */
-          <div className="bg-white dark:bg-[#0D1527] w-[90vw] max-w-[390px] rounded-3xl p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,10,40,0.5)] border border-slate-200/90 dark:border-white/10 text-center relative text-slate-900 dark:text-white">
-            {/* Close Button 'X' */}
-            <button
-              type="button"
+      {/* Main Walkthrough Modal & Spotlight Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <div
+            className="fixed inset-0 z-[9990] select-none font-sans"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tour-title"
+          >
+            {/* 1. Backdrop Spotlight / Dimming */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 bg-[#050C22]/75 backdrop-blur-[2.5px]"
               onClick={closeTour}
-              aria-label="Close walkthrough"
-              className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            />
 
-            {/* Sparkles Icon in Light Blue Rounded Square */}
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-[#0066F5]/15 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center mx-auto mb-3 shadow-xs">
-              <Sparkles className="w-6 h-6 stroke-[2]" />
-            </div>
+            {/* 2. Animated Spotlight Cutout with Pulsing Ring */}
+            {targetRect && !isFirstStep && (
+              <motion.div
+                initial={false}
+                animate={(() => {
+                  const currentId = activeSteps[currentStep]?.id;
+                  let top = Math.max(0, targetRect.top - 8);
+                  let left = Math.max(0, targetRect.left - 8);
+                  let width = targetRect.width + 16;
+                  let height = targetRect.height + 16;
+                  let radius = '24px';
 
-            {/* Step Counter: 1 / 4 */}
-            <div className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] tracking-wider mb-1.5">
-              1 / {activeSteps.length}
-            </div>
+                  if (isMobile) {
+                    if (currentId === 'categories') {
+                      height = Math.min(height, window.innerHeight * 0.38);
+                      radius = '20px';
+                    } else if (currentId === 'instant') {
+                      width = Math.max(width, 58);
+                      height = Math.max(height, 58);
+                      radius = '9999px';
+                    } else if (currentId === 'host') {
+                      radius = '9999px';
+                    }
+                  } else {
+                    radius = targetRect.height > 60 ? '24px' : '9999px';
+                  }
 
-            {/* Title */}
-            <h2
-              id="tour-title"
-              className="text-xl sm:text-2xl font-black text-[#07133A] dark:text-white tracking-tight mb-2"
-            >
-              {currentStepData.title}
-            </h2>
-
-            {/* One-Line Description */}
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto mb-6">
-              {currentStepData.text}
-            </p>
-
-            {/* Bottom Bar: Stepper Dots on Left + Skip & Start Buttons on Right */}
-            <div className="flex items-center justify-between pt-1">
-              {/* Stepper Dots (Pill for Active) */}
-              <div className="flex items-center gap-1.5">
-                {activeSteps.map((_, idx) => (
-                  <span
-                    key={idx}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      idx === currentStep
-                        ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
-                        : 'w-1.5 bg-slate-200 dark:bg-white/20'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={closeTour}
-                  className="px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer"
-                >
-                  Skip
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-5 py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
-                >
-                  <span>Start</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Don't show again checkbox below footer */}
-            <div className="pt-4 border-t border-slate-100 dark:border-white/5 mt-5">
-              <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={dontShowAgain}
-                  onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-slate-300 dark:border-white/20 text-[#0066F5] focus:ring-[#0066F5]"
-                />
-                <span>Don&apos;t show again</span>
-              </label>
-            </div>
-          </div>
-        ) : (
-          /* ========================================================================= */
-          /* STEPS 2 to 5: SPOTLIGHT CARDS (Matching Screenshots 2, 3, 4, 5)           */
-          /* ========================================================================= */
-          <div className="bg-white dark:bg-[#0D1527] rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_-10px_rgba(0,10,40,0.45)] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white relative">
-            {/* Top Row: Icon Badge + Step Counter + Close Button */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#EFF6FF] dark:bg-[#0066F5]/15 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center shrink-0">
-                  <StepIcon className="w-4 h-4 stroke-[2]" />
-                </div>
-                <span className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] tracking-wider">
-                  {currentStep + 1} / {activeSteps.length}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeTour}
-                aria-label="Close walkthrough"
-                className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                  return {
+                    top,
+                    left,
+                    width,
+                    height,
+                    borderRadius: radius,
+                  };
+                })()}
+                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                className="fixed pointer-events-none z-[9992] shadow-[0_0_0_9999px_rgba(5,12,34,0.76),0_0_0_2.5px_#FFFFFF,0_0_30px_rgba(0,102,245,0.7)]"
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+                {/* Subtle Breathing Animated Pulse Ring */}
+                <div className="absolute -inset-1.5 rounded-[inherit] border-2 border-[#08B9F5]/80 animate-ping opacity-35" />
+              </motion.div>
+            )}
 
-            {/* Title */}
-            <h3
-              id="tour-title"
-              className="text-base sm:text-lg font-black text-[#07133A] dark:text-white tracking-tight mb-1"
+            {/* 3. Refined Tour Card Popup with Dynamic Content & Micro-Animations */}
+            <motion.div
+              ref={cardRef}
+              key={currentStep}
+              initial={{ opacity: 0, scale: 0.94, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 8 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.9, 0.3, 1] }}
+              style={(() => {
+                if (!targetRect || isFirstStep) {
+                  return {
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 'calc(100vw - 32px)',
+                    maxWidth: '390px',
+                    zIndex: 9995,
+                  };
+                }
+
+                if (isMobile) {
+                  const currentId = activeSteps[currentStep]?.id;
+                  const bottomPx = currentId === 'instant' || currentId === 'host' ? 78 : 16;
+                  return {
+                    position: 'fixed',
+                    bottom: `${bottomPx}px`,
+                    left: '16px',
+                    right: '16px',
+                    maxWidth: '390px',
+                    margin: '0 auto',
+                    zIndex: 9995,
+                  };
+                }
+
+                return {
+                  position: 'fixed',
+                  top: `${computedTop}px`,
+                  left: `${computedLeft}px`,
+                  width: `${cardWidth}px`,
+                  zIndex: 9995,
+                };
+              })()}
+              className="relative text-slate-900 dark:text-white"
             >
-              {currentStepData.title}
-            </h3>
+              {/* Pointed Triangular Arrow / Caret on Desktop */}
+              {!isMobile && !isFirstStep && arrowPlacement !== 'none' && (
+                <div
+                  style={{ left: `${arrowOffsetLeft}px` }}
+                  className={`absolute w-3.5 h-3.5 bg-white dark:bg-[#0D1527] border-l border-t border-slate-200/90 dark:border-white/10 transform rotate-45 z-10 ${
+                    arrowPlacement === 'up' ? '-top-2' : '-bottom-2 rotate-[225deg]'
+                  }`}
+                />
+              )}
 
-            {/* Single Line Description */}
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-5">
-              {currentStepData.text}
-            </p>
+              {isFirstStep ? (
+                /* ========================================================================= */
+                /* STEP 1: WELCOME MODAL                                                     */
+                /* ========================================================================= */
+                <div className="bg-white dark:bg-[#0D1527] w-[90vw] max-w-[390px] rounded-3xl p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,10,40,0.5)] border border-slate-200/90 dark:border-white/10 text-center relative mx-auto">
+                  {/* Close Button 'X' */}
+                  <button
+                    type="button"
+                    onClick={closeTour}
+                    aria-label="Close walkthrough"
+                    className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
 
-            {/* Bottom Row: Stepper Dots + Back Arrow Circle + Next/Got it Button */}
-            <div className="flex items-center justify-between pt-1">
-              {/* Stepper Dots (Pill for Active) */}
-              <div className="flex items-center gap-1.5">
-                {activeSteps.map((_, idx) => (
-                  <span
-                    key={idx}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      idx === currentStep
-                        ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
-                        : 'w-1.5 bg-slate-200 dark:bg-white/20'
-                    }`}
-                  />
-                ))}
-              </div>
+                  {/* Sparkles Icon in Light Blue Rounded Square */}
+                  <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-[#0066F5]/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center mx-auto mb-3 shadow-xs">
+                    <Sparkles className="w-6 h-6 stroke-[2] animate-pulse" />
+                  </div>
 
-              {/* Action Buttons: Back Circle + Primary CTA */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  title="Previous step"
-                  aria-label="Previous step"
-                  className="w-8 h-8 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
-                </button>
+                  {/* Step Counter: 1 / 4 */}
+                  <div className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] tracking-wider mb-1.5">
+                    1 / {activeSteps.length}
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-5 py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
-                >
-                  <span>{currentStepData.cta}</span>
-                  {isLastStep ? (
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                  ) : null}
-                </button>
-              </div>
-            </div>
+                  {/* Title */}
+                  <h2
+                    id="tour-title"
+                    className="text-xl sm:text-2xl font-black text-[#07133A] dark:text-white tracking-tight mb-2"
+                  >
+                    {currentStepData.title}
+                  </h2>
+
+                  {/* One-Line Description */}
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto mb-4">
+                    {currentStepData.text}
+                  </p>
+
+                  {/* Animated Feature Pillars Preview */}
+                  <div className="grid grid-cols-3 gap-2 py-3 px-2 bg-slate-50 dark:bg-white/[0.04] rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[11px] font-semibold text-slate-700 dark:text-neutral-200">
+                    <div className="flex flex-col items-center gap-1.5 text-center">
+                      <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center">
+                        <Compass className="w-3.5 h-3.5" />
+                      </div>
+                      <span>Local Vibes</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 text-center">
+                      <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                      </div>
+                      <span>Instant Plans</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 text-center">
+                      <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      </div>
+                      <span>1-Min Host</span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Bar: Stepper Dots + Action Buttons */}
+                  <div className="flex items-center justify-between pt-1">
+                    {/* Stepper Dots */}
+                    <div className="flex items-center gap-1.5">
+                      {activeSteps.map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={`h-1.5 rounded-full transition-all duration-300 ${
+                            idx === currentStep
+                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
+                              : 'w-1.5 bg-slate-200 dark:bg-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={closeTour}
+                        className="px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer"
+                      >
+                        Skip
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className="px-5 py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+                      >
+                        <span>Start</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Don't show again checkbox */}
+                  <div className="pt-3.5 border-t border-slate-100 dark:border-white/5 mt-4">
+                    <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={dontShowAgain}
+                        onChange={(e) => setDontShowAgain(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-slate-300 dark:border-white/20 text-[#0066F5] focus:ring-[#0066F5]"
+                      />
+                      <span>Don&apos;t show again</span>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                /* ========================================================================= */
+                /* STEPS 2 to 4: FEATURE SPOTLIGHT CARDS WITH CLEAR ANIMATIONS               */
+                /* ========================================================================= */
+                <div className="bg-white dark:bg-[#0D1527] rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_-10px_rgba(0,10,40,0.45)] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white relative mx-auto">
+                  {/* Top Row: Icon Badge + Step Counter + Close Button */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#EFF6FF] dark:bg-[#0066F5]/20 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center shrink-0">
+                        <StepIcon className="w-4 h-4 stroke-[2]" />
+                      </div>
+                      <span className="text-xs font-bold text-[#0066F5] dark:text-[#08B9F5] tracking-wider">
+                        {currentStep + 1} / {activeSteps.length}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={closeTour}
+                      aria-label="Close walkthrough"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Title */}
+                  <h3
+                    id="tour-title"
+                    className="text-base sm:text-lg font-black text-[#07133A] dark:text-white tracking-tight mb-1"
+                  >
+                    {currentStepData.title}
+                  </h3>
+
+                  {/* One-Line Description */}
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                    {currentStepData.text}
+                  </p>
+
+                  {/* FEATURE-SPECIFIC MICRO-ANIMATIONS TO SHOW THE WORKING */}
+                  <div className="mb-4 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 overflow-hidden">
+                    {currentStepData.id === 'categories' && (
+                      <div className="space-y-2">
+                        {/* Animated category tap simulation */}
+                        <div className="flex items-center gap-2 overflow-x-hidden">
+                          <motion.div
+                            animate={{ scale: [1, 1.05, 1], backgroundColor: ['#0066F5', '#0052cc', '#0066F5'] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="px-3 py-1 rounded-full bg-[#0066F5] text-white text-[11px] font-bold flex items-center gap-1 shrink-0 shadow-xs"
+                          >
+                            <span>🎵 Music</span>
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          </motion.div>
+                          <div className="px-3 py-1 rounded-full bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-[11px] font-medium shrink-0">
+                            🎉 Parties
+                          </div>
+                          <div className="px-3 py-1 rounded-full bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-[11px] font-medium shrink-0">
+                            🏏 Sports
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Filters all events on the page in 1 tap without page reloads</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentStepData.id === 'instant' && (
+                      <div className="space-y-2">
+                        {/* Animated Live Instant Radar */}
+                        <div className="flex items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-600 dark:text-amber-400">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                            <span>HAPPENING RIGHT NOW</span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-slate-400">0.8 km away</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                              <Zap className="w-3.5 h-3.5 fill-current" />
+                            </div>
+                            <div className="truncate">
+                              <p className="text-[11px] font-bold text-slate-800 dark:text-white truncate">Box Cricket Match</p>
+                              <p className="text-[9px] text-slate-400 truncate">2 players needed • Starts in 15m</p>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-md bg-[#0066F5] text-white text-[9px] font-bold shrink-0">
+                            Join
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentStepData.id === 'host' && (
+                      <div className="space-y-1.5">
+                        {/* Animated 3-step host pipeline */}
+                        <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
+                          <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
+                            <MessageCircle className="w-3.5 h-3.5 mx-auto mb-1 text-emerald-500" />
+                            <span className="font-semibold block truncate">1. Text Bot</span>
+                          </div>
+                          <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
+                            <Sparkles className="w-3.5 h-3.5 mx-auto mb-1 text-[#0066F5] dark:text-[#08B9F5]" />
+                            <span className="font-semibold block truncate">2. AI Flyer</span>
+                          </div>
+                          <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
+                            <Ticket className="w-3.5 h-3.5 mx-auto mb-1 text-purple-500" />
+                            <span className="font-semibold block truncate">3. QR Passes</span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-center text-slate-400 pt-0.5">
+                          List your event in seconds via Web, WhatsApp, or Telegram.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom Row: Stepper Dots + Back Circle + Primary Next / Got it Button */}
+                  <div className="flex items-center justify-between pt-1">
+                    {/* Stepper Dots */}
+                    <div className="flex items-center gap-1.5">
+                      {activeSteps.map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={`h-1.5 rounded-full transition-all duration-300 ${
+                            idx === currentStep
+                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
+                              : 'w-1.5 bg-slate-200 dark:bg-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Action Buttons: Back Circle + Primary CTA */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleBack}
+                        title="Previous step"
+                        aria-label="Previous step"
+                        className="w-8 h-8 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className="px-5 py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+                      >
+                        <span>{currentStepData.cta}</span>
+                        {isLastStep ? (
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        ) : null}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
           </div>
         )}
-      </div>
-    </div>
+      </AnimatePresence>
+    </>
   );
 }
