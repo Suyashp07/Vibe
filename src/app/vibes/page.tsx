@@ -57,149 +57,24 @@ import Navbar from '@/components/common/Navbar';
 import LocationModal from '@/components/location/LocationModal';
 import { isUserUploadedPoster } from '@/lib/posterUtils';
 
-interface VibeInstantItem {
-  id: string;
-  slug: string;
-  title: string;
-  category: string;
-  badge?: string;
-  host_name: string;
-  host_initials: string;
-  host_rating: string;
-  host_vibes_count: number;
-  formatted_date: string;
-  formatted_time: string;
-  formatted_date_time_venue: string;
-  location_name: string;
-  city: string;
-  description: string;
-  going_count: number;
-  capacity?: number;
-  spots_left?: number;
-  has_spots_limit?: boolean;
-  likes_count: number;
-  comments_count: number;
-  cover_image_url: string;
-  originalEvent?: EventItem;
-}
-
-// Curated default vibes strictly matching the design references in Screenshot 1 & 2
-const DEFAULT_VIBES_LIST: VibeInstantItem[] = [
-  {
-    id: 'vibe-coffee-1',
-    slug: 'good-coffee-great-connections',
-    title: 'Good coffee. Great connections.',
-    category: 'TECHNOLOGY',
-    badge: 'Community pick',
-    host_name: 'Swaniki Social',
-    host_initials: 'SS',
-    host_rating: '4.9',
-    host_vibes_count: 12,
-    formatted_date: 'SAT, 17 OCT',
-    formatted_time: '11:00 AM',
-    formatted_date_time_venue: 'SAT, 17 OCT · 11:00 AM · The Studio, Mumbai',
-    location_name: 'The Studio, Mumbai',
-    city: 'Mumbai',
-    description:
-      'A small, easy-going gathering. Come solo or bring a friend — the host will share final details in chat.',
-    going_count: 4,
-    has_spots_limit: false,
-    likes_count: 9,
-    comments_count: 4,
-    cover_image_url:
-      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'vibe-sameera-2',
-    slug: 'sameera-bharadwaj-live',
-    title: 'Sameera Bharadwaj, live',
-    category: 'MUSIC',
-    badge: 'Selling fast',
-    host_name: 'Swaniki Social',
-    host_initials: 'SS',
-    host_rating: '4.9',
-    host_vibes_count: 12,
-    formatted_date: 'THU, 15 OCT',
-    formatted_time: '7:00 PM',
-    formatted_date_time_venue: 'THU, 15 OCT · 7:00 PM · Live Venue, Mumbai',
-    location_name: 'Live Venue, Mumbai',
-    city: 'Mumbai',
-    description:
-      'An intimate live rooftop session under the Mumbai sunset sky. Unfiltered acoustic melodies and good conversations.',
-    going_count: 2,
-    has_spots_limit: false,
-    likes_count: 24,
-    comments_count: 6,
-    cover_image_url:
-      'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'vibe-cricket-3',
-    slug: 'box-cricket-bandra-turf',
-    title: 'Box Cricket Match at Bandra Turf',
-    category: 'SPORTS',
-    badge: 'Community pick',
-    host_name: 'Bandra Strikers',
-    host_initials: 'BS',
-    host_rating: '4.8',
-    host_vibes_count: 9,
-    formatted_date: 'SUN, 18 OCT',
-    formatted_time: '7:00 PM',
-    formatted_date_time_venue: 'SUN, 18 OCT · 7:00 PM · Bandra Turf, Mumbai',
-    location_name: 'Bandra Turf, Mumbai',
-    city: 'Mumbai',
-    description:
-      'Friendly underarm turf match under lights. All gear provided, fresh chai after the final over.',
-    going_count: 8,
-    capacity: 14,
-    spots_left: 6,
-    has_spots_limit: true,
-    likes_count: 18,
-    comments_count: 0,
-    cover_image_url:
-      'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'vibe-founders-4',
-    slug: 'ai-founders-indie-hackers',
-    title: 'AI Founders & Indie Hackers Meetup',
-    category: 'TECHNOLOGY',
-    badge: 'Filling fast',
-    host_name: 'Vibe Tech Guild',
-    host_initials: 'VT',
-    host_rating: '5.0',
-    host_vibes_count: 16,
-    formatted_date: 'SAT, 24 OCT',
-    formatted_time: '5:00 PM',
-    formatted_date_time_venue: 'SAT, 24 OCT · 5:00 PM · Subko Specialty Coffee, Bandra',
-    location_name: 'Subko Specialty Coffee, Bandra',
-    city: 'Mumbai',
-    description:
-      'Casual lightning demos, shipping war stories, and pour-over coffee with fellow indie builders in Bombay.',
-    going_count: 6,
-    has_spots_limit: false,
-    likes_count: 31,
-    comments_count: 0,
-    cover_image_url:
-      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=1200&auto=format&fit=crop&q=80',
-  },
-];
+import { DEFAULT_VIBES_LIST, VibeInstantItem } from '@/lib/defaultVibes';
 
 const ACTIVITY_FILTERS = [
   { id: 'all', label: 'All vibes' },
-  { id: 'tech', label: 'Technology', match: ['technology', 'founders', 'code', 'ai', 'cyber', 'tech'] },
-  { id: 'music', label: 'Live Music', match: ['music', 'acoustic', 'concert', 'live', 'jam'] },
-  { id: 'sports', label: 'Sports & Turf', match: ['sports', 'cricket', 'padel', 'football', 'turf', 'badminton'] },
-  { id: 'social', label: 'Social & Cafes', match: ['coffee', 'chai', 'social', 'cafe', 'milan', 'samaroh', 'meetup'] },
+  { id: 'tech', label: 'Technology', match: ['technology', 'founders', 'code', 'ai', 'cyber', 'tech', 'saas', 'robotics'] },
+  { id: 'music', label: 'Live Music', match: ['music', 'acoustic', 'concert', 'live', 'jam', 'singalong'] },
+  { id: 'sports', label: 'Sports & Turf', match: ['sports', 'cricket', 'padel', 'football', 'turf', 'badminton', 'pickleball', 'trail', 'cycling', 'kayak', 'basketball'] },
+  { id: 'social', label: 'Social & Cafes', match: ['coffee', 'chai', 'social', 'cafe', 'milan', 'samaroh', 'meetup', 'pottery', 'comedy', 'stargazing', 'food', 'walk'] },
 ];
 
 const FILTER_CITIES = [
   { id: 'all', name: 'All Cities' },
-  { id: 'mumbai', name: 'Mumbai' },
   { id: 'pune', name: 'Pune' },
-  { id: 'indore', name: 'Indore' },
-  { id: 'bengaluru', name: 'Bengaluru' },
   { id: 'delhi', name: 'Delhi' },
+  { id: 'bengaluru', name: 'Bengaluru' },
+  { id: 'bhopal', name: 'Bhopal' },
+  { id: 'mumbai', name: 'Mumbai' },
+  { id: 'indore', name: 'Indore' },
 ];
 
 function VibesContent() {
@@ -526,30 +401,36 @@ function VibesContent() {
     });
   }, [storeEvents, allRsvps]);
 
-  // Combine vibes: Strictly prioritize REAL vibes from Supabase/bots!
-  // Only fall back to DEFAULT_VIBES_LIST if zero real vibes exist.
+  // Combine vibes: Merge converted store vibes (user/bot created) and DEFAULT_VIBES_LIST (all 28 curated vibes)
   const allVibes = useMemo<VibeInstantItem[]>(() => {
-    let list: VibeInstantItem[] = [];
-    if (convertedStoreVibes.length > 0) {
-      // Prioritize events matching the user's active/detected city first, then by date / newest
-      const targetCity = (activeCity || '').toLowerCase().trim();
-      list = [...convertedStoreVibes].sort((a, b) => {
-        const aCityMatch = Boolean(targetCity && targetCity !== 'all' && a.city.toLowerCase().includes(targetCity));
-        const bCityMatch = Boolean(targetCity && targetCity !== 'all' && b.city.toLowerCase().includes(targetCity));
-        if (aCityMatch && !bCityMatch) return -1;
-        if (!aCityMatch && bCityMatch) return 1;
+    const seenSlugs = new Set<string>();
+    const seenIds = new Set<string>();
+    const list: VibeInstantItem[] = [];
 
-        const timeA = a.originalEvent?.start_at ? new Date(a.originalEvent.start_at).getTime() : 0;
-        const timeB = b.originalEvent?.start_at ? new Date(b.originalEvent.start_at).getTime() : 0;
-        return timeA - timeB;
-      });
-    } else {
-      list = [...DEFAULT_VIBES_LIST];
+    // Prioritize user-created / bot store events first
+    for (const v of convertedStoreVibes) {
+      const s = (v.slug || '').toLowerCase().trim();
+      const id = v.id.toLowerCase().trim();
+      if (!seenSlugs.has(s) && !seenIds.has(id)) {
+        if (s) seenSlugs.add(s);
+        seenIds.add(id);
+        list.push(v);
+      }
+    }
+
+    // Add all 28 default curated vibes across Pune, Delhi, Bengaluru, Bhopal, Mumbai, Indore
+    for (const v of DEFAULT_VIBES_LIST) {
+      const s = (v.slug || '').toLowerCase().trim();
+      const id = v.id.toLowerCase().trim();
+      if (!seenSlugs.has(s) && !seenIds.has(id)) {
+        if (s) seenSlugs.add(s);
+        seenIds.add(id);
+        list.push(v);
+      }
     }
 
     // Direct Redirect for Bot links (Requirement 5):
     // If targetSlug is provided in URL, prioritize the targeted vibe immediately at index 0.
-    // This allows users opening bot links to see that exact vibe directly with ZERO scroll animation!
     if (targetSlug) {
       const targetLower = targetSlug.toLowerCase().trim();
       const targetIdx = list.findIndex(
@@ -562,7 +443,7 @@ function VibesContent() {
     }
 
     return list;
-  }, [convertedStoreVibes, activeCity, targetSlug]);
+  }, [convertedStoreVibes, targetSlug]);
 
   // If targeted via bot link but not yet in storeEvents, fetch it directly
   useEffect(() => {
@@ -585,24 +466,46 @@ function VibesContent() {
     }
   }, [targetSlug, storeEvents]);
 
-  // Filtered vibes
+  // Filtered vibes: respects activeCity and selectedActivity
   const filteredVibes = useMemo(() => {
-    if (selectedActivity === 'all') return allVibes;
-    const filter = ACTIVITY_FILTERS.find((f) => f.id === selectedActivity);
-    if (!filter || !filter.match) return allVibes;
+    let result = allVibes;
 
-    return allVibes.filter((v) => {
-      const text = `${v.category} ${v.title} ${v.description}`.toLowerCase();
-      return filter.match!.some((m) => text.includes(m));
-    });
-  }, [allVibes, selectedActivity]);
+    // Filter by city if a specific city is selected
+    const targetCity = (activeCity || '').toLowerCase().trim();
+    if (targetCity && targetCity !== 'all' && targetCity !== 'all india' && targetCity !== 'all cities') {
+      const cityMatches = result.filter((v) => v.city.toLowerCase().includes(targetCity));
+      if (cityMatches.length > 0) {
+        result = cityMatches;
+      }
+    }
+
+    // Filter by activity
+    if (selectedActivity !== 'all') {
+      const filter = ACTIVITY_FILTERS.find((f) => f.id === selectedActivity);
+      if (filter && filter.match) {
+        result = result.filter((v) => {
+          const text = `${v.category} ${v.title} ${v.description}`.toLowerCase();
+          return filter.match!.some((m) => text.includes(m));
+        });
+      }
+    }
+
+    return result;
+  }, [allVibes, selectedActivity, activeCity]);
 
   const activeVibes = filteredVibes.length > 0 ? filteredVibes : allVibes;
 
   // Real count of vibes per category matching current city
   const categoryCounts = useMemo(() => {
+    const targetCity = (activeCity || '').toLowerCase().trim();
+    const cityFiltered = (targetCity && targetCity !== 'all' && targetCity !== 'all india' && targetCity !== 'all cities')
+      ? allVibes.filter((v) => v.city.toLowerCase().includes(targetCity))
+      : allVibes;
+
+    const baseList = cityFiltered.length > 0 ? cityFiltered : allVibes;
+
     const counts: Record<string, number> = {
-      all: allVibes.length,
+      all: baseList.length,
     };
     ACTIVITY_FILTERS.forEach((f) => {
       if (f.id === 'all') return;
@@ -610,13 +513,13 @@ function VibesContent() {
         counts[f.id] = 0;
         return;
       }
-      counts[f.id] = allVibes.filter((v) => {
+      counts[f.id] = baseList.filter((v) => {
         const text = `${v.category} ${v.title} ${v.description}`.toLowerCase();
         return f.match!.some((m) => text.includes(m));
       }).length;
     });
     return counts;
-  }, [allVibes]);
+  }, [allVibes, activeCity]);
 
   // Ensure the feed starts strictly at index 0 on initial mount
   useEffect(() => {
