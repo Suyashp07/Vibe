@@ -24,10 +24,10 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#F3F4F6] font-sans selection:bg-[#08B9F5] selection:text-white overflow-x-clip">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2.5 sm:pt-3.5 pb-2 sm:pb-4 w-full">
+      <main className="flex-1 w-full pt-2.5 sm:pt-3.5 pb-2 sm:pb-4">
         <WhatsOnFeed />
       </main>
 

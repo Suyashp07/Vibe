@@ -2024,11 +2024,16 @@ html.dark .event-card:hover {
    EXACT MEMORIES IMAGE WALL (vibee-delta.vercel.app)
    ========================================================================== */
 .memories-wrapper {
-  width: 100%;
-  padding: 44px 0px;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 56px 0px 48px;
   background: linear-gradient(110deg, #F5F3FF 0%, #F9F0F8 30%, #FBECEF 60%, #FFE7E3 100%);
   font-family: inherit;
-  border-radius: 28px;
+  border-radius: 0px !important;
   border-top: 1px solid rgba(244, 114, 182, 0.22);
   border-bottom: 1px solid rgba(244, 114, 182, 0.22);
   border-left: none !important;
@@ -2038,6 +2043,7 @@ html.dark .event-card:hover {
 
 html.dark .memories-wrapper {
   background: linear-gradient(110deg, #131026 0%, #171124 50%, #1A1020 100%);
+  border-radius: 0px !important;
   border-top: 1px solid rgba(244, 114, 182, 0.22);
   border-bottom: 1px solid rgba(244, 114, 182, 0.22);
   border-left: none !important;

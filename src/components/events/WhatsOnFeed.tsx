@@ -544,7 +544,9 @@ export default function WhatsOnFeed() {
         Vibe by Swaniki — Discover Live Events, Cultural Gatherings, Gigs, Sports & Spontaneous Meetups in India
       </h1>
 
-      <div className="w-full space-y-8 sm:space-y-12">
+      <div className="w-full">
+        {/* Main Feed Content (Aligned with 7xl container) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
         {/* ========================================================================= */}
         {/* 1. SPOTLIGHT HERO BILLBOARD CAROUSEL                                      */}
         {/* ========================================================================= */}
@@ -881,8 +883,12 @@ export default function WhatsOnFeed() {
               ))}
             </div>
           )}
+        </div>
 
-          {/* Social Proof / Moments Wall */}
+        </div>
+
+        {/* Social Proof / Moments Wall - Spread Across Whole Page */}
+        <div className="w-full mt-10 sm:mt-16">
           <MomentsWall />
         </div>
       </div>

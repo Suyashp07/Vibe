@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Star, Zap, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Star, Zap, ArrowRight, Users } from 'lucide-react';
 import { MEMORIES_COLUMNS, MemoryCardItem } from '@/data/memoriesWallData';
 
 export default function MomentsWall() {
@@ -13,6 +13,7 @@ export default function MomentsWall() {
   const startXRef = useRef(0);
   const scrollLeftStartRef = useRef(0);
   const [isClient, setIsClient] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -28,7 +29,7 @@ export default function MomentsWall() {
     const speed = 0.75; // Pixels per frame
 
     const step = () => {
-      if (!isHoveredRef.current && !isDraggingRef.current && container) {
+      if (!isHoveredRef.current && !isDraggingRef.current && !isPaused && container) {
         container.scrollLeft += speed;
 
         // Wrap around at the midpoint (since columns are duplicated 2x)
@@ -42,7 +43,7 @@ export default function MomentsWall() {
 
     animId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(animId);
-  }, [isClient]);
+  }, [isClient, isPaused]);
 
   // Mouse drag-to-scroll handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -106,7 +107,7 @@ export default function MomentsWall() {
       >
         {/* Soft Left Edge Gradient Fade */}
         <div
-          className="memories-edge-left pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-36 z-10 rounded-l-[28px] transition-opacity duration-300"
+          className="memories-edge-left pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-36 z-10 transition-opacity duration-300"
           style={{
             background:
               'linear-gradient(to right, #F5F3FF 0%, rgba(245, 243, 255, 0.85) 40%, rgba(245, 243, 255, 0) 100%)',
@@ -115,7 +116,7 @@ export default function MomentsWall() {
 
         {/* Soft Right Edge Gradient Fade */}
         <div
-          className="memories-edge-right pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-36 z-10 rounded-r-[28px] transition-opacity duration-300"
+          className="memories-edge-right pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-36 z-10 transition-opacity duration-300"
           style={{
             background:
               'linear-gradient(to left, #FFE7E3 0%, rgba(255, 231, 227, 0.85) 40%, rgba(255, 231, 227, 0) 100%)',
@@ -184,6 +185,46 @@ export default function MomentsWall() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* 3. Bottom Auto-scroll info, CTA & Social Stats */}
+      <div className="memories-footer-controls flex flex-col items-center justify-center mt-7 relative z-10 px-4">
+        {/* Auto-scroll Status */}
+        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Auto-scrolling slowly · Drag or hover to explore</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsPaused((prev) => !prev)}
+            className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer font-semibold flex items-center gap-1"
+          >
+            <span>{isPaused ? '▶ Play' : '⏸ Pause'}</span>
+          </button>
+        </div>
+
+        {/* Join the Community Primary Button */}
+        <div className="mt-5">
+          <Link
+            href="/vibes"
+            className="inline-flex items-center gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <Users className="w-4 h-4 text-white" />
+            <span className="text-white">Join the Community</span>
+            <ArrowRight className="w-4 h-4 text-white" />
+          </Link>
+        </div>
+
+        {/* Social Proof Counter */}
+        <div className="flex items-center gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-4">
+          <div className="flex -space-x-1">
+            <span className="w-3.5 h-3.5 rounded-full bg-[#0066F5] border-2 border-white dark:border-black inline-block" />
+            <span className="w-3.5 h-3.5 rounded-full bg-[#08B9F5] border-2 border-white dark:border-black inline-block" />
+            <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-black inline-block" />
+          </div>
+          <span>Join 50,000+ creators, artists & attendees sharing unforgettable vibes</span>
         </div>
       </div>
     </div>
