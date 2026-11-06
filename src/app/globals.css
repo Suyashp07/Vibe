@@ -3088,6 +3088,42 @@ html.dark .bot-input-field {
   }
 }
 
+/* ========================================================================= */
+/* DISTRICT-STYLE NATURAL HERO SPOTLIGHT TYPOGRAPHY                         */
+/* Guaranteed 100% Crystal-Clear Contrast in Light & Dark Mode               */
+/* ========================================================================= */
+.district-hero-title {
+  color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+}
+
+html.dark .district-hero-title {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.district-hero-date {
+  color: #475569 !important;
+}
+html.dark .district-hero-date {
+  color: #94A3B8 !important;
+}
+
+.district-hero-venue {
+  color: #1E293B !important;
+}
+html.dark .district-hero-venue {
+  color: #E2E8F0 !important;
+}
+
+.district-hero-price {
+  color: #0F172A !important;
+}
+html.dark .district-hero-price {
+  color: #F8FAFC !important;
+}
+
+
 
 
 
