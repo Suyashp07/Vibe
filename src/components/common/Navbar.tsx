@@ -220,15 +220,15 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               <BrandLogo />
             </div>
 
-            {/* Center: Clean Text Navigation (Discover •, Instant, Bot, Dashboard) */}
-            <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-7 lg:gap-8">
+            {/* Center: Refined Capsule Navigation (Discover •, Instant ⚡, Bot, Dashboard) */}
+            <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 lg:gap-7 px-5 py-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-[#EDF2F7]/70 dark:bg-white/[0.05] backdrop-blur-md shadow-xs">
               {/* Feature 1: Discover */}
               <Link
                 href="/"
-                className={`relative py-1 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                   pathname === '/' || pathname.startsWith('/discover')
                     ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
                 }`}
               >
                 <span>Discover</span>
@@ -237,30 +237,28 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 )}
               </Link>
 
-              {/* Feature 2: Instant */}
+              {/* Feature 2: Instant ⚡ */}
               <Link
                 id="vt-instant"
                 href="/vibes"
-                className={`relative py-1 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                   pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
                     ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
                 }`}
               >
                 <span>Instant</span>
-                {(pathname.startsWith('/vibes') || pathname.startsWith('/vibe')) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
-                )}
+                <Zap className="w-3.5 h-3.5 fill-[#FF8442] text-[#FF8442] shrink-0" />
               </Link>
 
               {/* Feature 3: Bot */}
               <Link
                 id="vt-bot"
                 href="/bot"
-                className={`relative py-1 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                   pathname.startsWith('/bot')
                     ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
                 }`}
               >
                 <span>Bot</span>
@@ -272,10 +270,10 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               {/* Feature 4: Dashboard */}
               <Link
                 href="/dashboard"
-                className={`relative py-1 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                   pathname.startsWith('/dashboard')
                     ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
                 }`}
                 title="Dashboard"
               >
