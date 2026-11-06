@@ -306,7 +306,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
           <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center h-14 sm:h-16 gap-2 sm:gap-4">
             {/* Left Column: Brand Logo (Vibe. by Swaniki) */}
             <div className="flex items-center justify-start shrink-0">
-              <BrandLogo />
+              <BrandLogo size="lg" />
             </div>
 
             {/* Center Column: Perfectly Centered Capsule Navigation (Discover •, Instant ⚡, Bot, Dashboard) */}

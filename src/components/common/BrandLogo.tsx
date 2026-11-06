@@ -28,9 +28,9 @@ export default function BrandLogo({
 
   const imgHeightClass = {
     sm: 'h-7 sm:h-8',
-    md: 'h-9 sm:h-10',
-    lg: 'h-11 sm:h-12',
-    xl: 'h-13 sm:h-15',
+    md: 'h-10 sm:h-11 md:h-12',
+    lg: 'h-11 sm:h-12 md:h-[50px]',
+    xl: 'h-14 sm:h-16',
   }[size];
 
   return (
