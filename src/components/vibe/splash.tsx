@@ -45,6 +45,8 @@ export function Splash() {
   const bgRef = useRef<HTMLDivElement>(null);
   const tagRef = useRef<HTMLDivElement>(null);
   const dustRef = useRef<HTMLDivElement>(null);
+  const darkLogoRef = useRef<HTMLImageElement>(null);
+  const lightLogoRef = useRef<HTMLImageElement>(null);
 
   const timersRef = useRef<NodeJS.Timeout[]>([]);
   const rafRef = useRef<number>(0);
@@ -146,8 +148,9 @@ export function Splash() {
 
     function measure() {
       if (!brand) return;
-      bw = brand.offsetWidth || 280;
-      bh = brand.offsetHeight || 110;
+      const rect = brand.getBoundingClientRect();
+      bw = rect.width || brand.offsetWidth || Math.min(360, Math.max(220, iw * 0.32));
+      bh = rect.height || brand.offsetHeight || Math.round(bw * (292 / 547));
       x0 = (iw - bw) / 2;
       yL = ih * LY - bh / 2;
     }
@@ -256,6 +259,7 @@ export function Splash() {
     function fly() {
       if (!brand) return;
       const navLogo =
+        (document.querySelector('[data-vibe-logo="true"] img:not(.hidden)') as HTMLElement | null) ||
         (document.querySelector('[data-vibe-logo="true"]') as HTMLElement | null) ||
         (document.querySelector('header a[title="Vibe"]') as HTMLElement | null) ||
         (document.querySelector('header') as HTMLElement | null);
@@ -277,10 +281,13 @@ export function Splash() {
         };
       }
 
-      const targetH = Math.max(32, Math.min(50, targetRect.height));
+      const targetH = Math.max(28, Math.min(50, targetRect.height));
       const sc = targetH / bh;
       const dur = reduced() ? 10 : 900;
       const s0 = performance.now();
+      const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+      const lightLogo = lightLogoRef.current;
+      const darkLogo = darkLogoRef.current;
 
       cancelAnimationFrame(frafRef.current);
 
@@ -294,6 +301,14 @@ export function Splash() {
           const curY = yL + (targetRect.top - yL) * py;
           const curScale = 1 + (sc - 1) * px;
           brand.style.transform = `translate3d(${curX}px, ${curY}px, 0) scale(${curScale})`;
+
+          // In light mode, cross-fade to light logo during the flight
+          if (!isDark && lightLogo && darkLogo) {
+            const crossFade = Math.min(1, Math.max(0, (px - 0.2) / 0.5));
+            lightLogo.style.opacity = `${crossFade}`;
+            darkLogo.style.opacity = `${1 - crossFade}`;
+          }
+
           if (p > 0.85) {
             brand.style.opacity = `${Math.max(0, (1 - p) / 0.15)}`;
           }
@@ -338,6 +353,9 @@ export function Splash() {
       stop();
       if (splash) splash.style.display = '';
       if (container) container.className = 'vibe-splash-root';
+      if (brand) brand.style.opacity = '1';
+      if (darkLogoRef.current) darkLogoRef.current.style.opacity = '1';
+      if (lightLogoRef.current) lightLogoRef.current.style.opacity = '0';
       cur = -1;
       setWord(-1);
       rig();
@@ -487,37 +505,34 @@ export function Splash() {
         </div>
       </main>
 
-      {/* Brand Lockup: V mark matching actual logo shape and #0038A8 color */}
+      {/* Brand Lockup: Authentic Vibe logo image matching exact brand asset */}
       <div className="brand" id="brand" ref={brandRef} aria-hidden="true">
         <div className="bi" ref={biRef}>
-          <div className="lg">
-            {/* The V geometry with exact balanced vertex and blue #0038A8 gradient */}
-            <svg className="lv" viewBox="0 0 106 100" aria-hidden="true">
-              <path
-                d="M13 18L54 82"
-                stroke="url(#gv)"
-                strokeWidth="28"
-                strokeLinecap="round"
-                fill="none"
-              />
-              <path
-                d="M54 82L94 9"
-                stroke="url(#gv)"
-                strokeWidth="26"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-            <span className="lb">ibe</span>
-            <i className="ld"></i>
-          </div>
-          <span className="lby">by Swaniki</span>
+          <img
+            src="/logo-dark.png"
+            alt="Vibe by Swaniki"
+            className="splash-brand-logo splash-logo-dark"
+            ref={darkLogoRef}
+            width={547}
+            height={292}
+            loading="eager"
+            decoding="sync"
+          />
+          <img
+            src="/logo.png"
+            alt="Vibe by Swaniki"
+            className="splash-brand-logo splash-logo-light"
+            ref={lightLogoRef}
+            width={547}
+            height={292}
+            loading="eager"
+            decoding="sync"
+            style={{ opacity: 0 }}
+          />
         </div>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&display=swap');
-
         .vibe-splash-root {
           --ink: #eef2ff;
           --teal: #5fe0d6;
@@ -785,69 +800,43 @@ export function Splash() {
 
         /* Brand Lockup (Flies smoothly to navbar) */
         .brand {
-          --u: clamp(80px, 16vw, 150px);
           position: fixed;
           left: 0;
           top: 0;
           z-index: 99999;
           transform-origin: 0 0;
           pointer-events: none;
+          width: max-content;
+          height: max-content;
         }
         .bi {
+          position: relative;
           display: flex;
-          flex-direction: column;
           align-items: center;
+          justify-content: center;
           transform-origin: 50% 100%;
+          width: clamp(230px, 34vw, 380px);
+          aspect-ratio: 547 / 292;
         }
         .p2 .bi {
           animation: hit .8s ease-out;
         }
         @keyframes hit {
-          0% { filter: brightness(1.7) drop-shadow(0 0 26px rgba(0, 56, 168, .9)); }
+          0% { filter: brightness(1.7) drop-shadow(0 0 28px rgba(0, 56, 168, .9)); }
           100% { filter: brightness(1) drop-shadow(0 0 0 rgba(0, 56, 168, 0)); }
         }
-        .lg {
-          display: flex;
-          align-items: flex-end;
-          line-height: 1;
+        .splash-brand-logo {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          pointer-events: none;
+          user-select: none;
+          filter: drop-shadow(0 14px 40px rgba(0, 56, 168, 0.6));
         }
-        .lv {
-          height: var(--u);
-          width: calc(var(--u) * 1.06);
-          overflow: visible;
-          flex: none;
-          filter: drop-shadow(0 4px 16px rgba(0, 56, 168, 0.45));
-        }
-        .lb {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-style: italic;
-          font-weight: 700;
-          font-size: calc(var(--u) * 1.12);
-          line-height: .78;
-          margin-left: calc(var(--u) * -.14);
-          color: #fff;
-          padding-bottom: calc(var(--u) * .02);
-          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-        }
-        .ld {
-          flex: none;
-          width: calc(var(--u) * .14);
-          height: calc(var(--u) * .14);
-          border-radius: 50%;
-          background: #0038A8;
-          margin: 0 0 calc(var(--u) * .07) calc(var(--u) * .04);
-          box-shadow: 0 0 14px rgba(0, 56, 168, 0.85);
-        }
-        .lby {
-          font-family: Outfit, sans-serif;
-          font-size: calc(var(--u) * .27);
-          font-weight: 600;
-          letter-spacing: .34em;
-          color: #0038A8;
-          margin-top: calc(var(--u) * .1);
-          padding-left: .34em;
-          white-space: nowrap;
-          text-shadow: 0 2px 10px rgba(0, 56, 168, 0.3);
+        .splash-logo-light {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
         }
 
         @media (prefers-reduced-motion: reduce) {
