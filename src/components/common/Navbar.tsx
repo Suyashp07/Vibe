@@ -339,8 +339,8 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 <Link
                   id="vt-host"
                   href="/create"
-                  className="vibe-host-btn hidden md:inline-flex items-center gap-1.5 px-4 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0"
-                  style={{ color: '#FFFFFF', backgroundColor: '#0066F5' }}
+                  className="vibe-host-btn hidden md:inline-flex items-center gap-1.5 px-4 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0"
+                  style={{ color: '#FFFFFF', backgroundColor: '#0038A8' }}
                   title="Host an event"
                 >
                   <Plus className="w-4 h-4 stroke-[2.8] shrink-0 text-white" style={{ color: '#FFFFFF', stroke: '#FFFFFF' }} />
@@ -699,10 +699,10 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
         >
           <div className={`w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border-2 center-host-ring ${
             isLight
-              ? 'border-white shadow-[0_4px_16px_rgba(8,185,245,0.35)]'
+              ? 'border-white shadow-[0_4px_16px_rgba(0,56,168,0.35)]'
               : 'border-[#0A0A0A]'
           } ${
-            pathname.startsWith('/create') ? 'bg-gradient-to-tr from-[#08B9F5] to-[#00D5E8] ring-2 ring-[#08B9F5]/50' : 'bg-[#08B9F5]'
+            pathname.startsWith('/create') ? 'bg-gradient-to-tr from-[#0038A8] to-[#173DAA] ring-2 ring-[#0038A8]/50' : 'bg-[#0038A8]'
           }`}>
             <Plus className="w-5 h-5 stroke-[3] text-white" />
           </div>

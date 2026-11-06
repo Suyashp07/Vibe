@@ -1316,7 +1316,13 @@ html.dark .vibe-host-btn svg {
   color: #FFFFFF !important;
   stroke: #FFFFFF !important;
   fill: transparent !important;
-  background-color: #0066F5 !important;
+  background-color: #0038A8 !important;
+}
+
+.vibe-host-btn:hover,
+html.light .vibe-host-btn:hover,
+html.dark .vibe-host-btn:hover {
+  background-color: #173DAA !important;
 }
 
 /* ========================================================================= */

@@ -306,10 +306,10 @@ export default function ProductWalkthrough() {
           <button
             type="button"
             onClick={startTourManually}
-            className="group flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full bg-slate-900/95 dark:bg-[#081426]/95 hover:bg-[#0066F5] dark:hover:bg-[#0066F5] text-white text-xs font-bold shadow-xl border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="group flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full bg-slate-900/95 dark:bg-[#081426]/95 hover:bg-[#0038A8] dark:hover:bg-[#0038A8] text-white text-xs font-bold shadow-xl border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
             title="Take interactive 30s tour of Vibe"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#08B9F5] group-hover:text-white transition-colors" />
+            <Sparkles className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#38BDF8] group-hover:text-white transition-colors" />
             <span>30s Tour</span>
           </button>
         </motion.div>
@@ -532,7 +532,7 @@ export default function ProductWalkthrough() {
                           key={idx}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             idx === currentStep
-                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
+                              ? 'w-5 bg-[#0038A8] dark:bg-[#0038A8]'
                               : 'w-1.5 bg-slate-200 dark:bg-white/20'
                           }`}
                         />
@@ -552,7 +552,7 @@ export default function ProductWalkthrough() {
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="px-5 py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+                        className="px-5 py-2 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
                       >
                         <span>Start</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -735,7 +735,7 @@ export default function ProductWalkthrough() {
                           key={idx}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             idx === currentStep
-                              ? 'w-5 bg-[#0066F5] dark:bg-[#08B9F5]'
+                              ? 'w-5 bg-[#0038A8] dark:bg-[#0038A8]'
                               : 'w-1.5 bg-slate-200 dark:bg-white/20'
                           }`}
                         />
@@ -757,7 +757,7 @@ export default function ProductWalkthrough() {
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="px-5 py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+                        className="px-5 py-2 rounded-full bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
                       >
                         <span>{currentStepData.cta}</span>
                         {isLastStep ? (

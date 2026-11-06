@@ -343,7 +343,7 @@ function DashboardInner() {
               onClick={() => setIsInboxOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
             >
-              <MessageSquare className="w-4 h-4 text-[#0066F5]" />
+              <MessageSquare className="w-4 h-4 text-[#0038A8]" />
               <span>Guest Messages ({displayMetrics.messages})</span>
               {unreadMessagesCount > 0 && (
                 <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -354,7 +354,7 @@ function DashboardInner() {
 
             <Link
               href="/create"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0066F5] hover:bg-[#0055D6] text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-500/20 hover:scale-[1.02] active:scale-98 cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-900/20 hover:scale-[1.02] active:scale-98 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Gathering</span>
@@ -370,7 +370,7 @@ function DashboardInner() {
           <div className="bg-white dark:bg-[#111318] rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Upcoming Events</span>
-              <Calendar className="w-4 h-4 text-[#0066F5]" />
+              <Calendar className="w-4 h-4 text-[#0038A8]" />
             </div>
             <div className="mt-4">
               <div className="text-2xl sm:text-3xl font-black text-[#0A1128] dark:text-white tracking-tight">
@@ -387,7 +387,7 @@ function DashboardInner() {
           <div className="bg-white dark:bg-[#111318] rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">People Joining</span>
-              <Users className="w-4 h-4 text-[#0066F5]" />
+              <Users className="w-4 h-4 text-[#0038A8]" />
             </div>
             <div className="mt-4">
               <div className="text-2xl sm:text-3xl font-black text-[#0A1128] dark:text-white tracking-tight">
@@ -453,7 +453,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('upcoming')}
               className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'upcoming'
-                  ? 'bg-[#0066F5] text-white shadow-sm'
+                  ? 'bg-[#0038A8] text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium'
               }`}
             >
@@ -463,7 +463,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('past')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'past'
-                  ? 'bg-[#0066F5] text-white shadow-sm font-bold'
+                  ? 'bg-[#0038A8] text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -473,7 +473,7 @@ function DashboardInner() {
               onClick={() => setActiveTab('drafts')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'drafts'
-                  ? 'bg-[#0066F5] text-white shadow-sm font-bold'
+                  ? 'bg-[#0038A8] text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -520,7 +520,7 @@ function DashboardInner() {
         <div className="space-y-4">
           {filteredEvents.length === 0 ? (
             <div className="py-16 px-6 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-white dark:bg-[#111318] flex flex-col items-center justify-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[#0066F5]">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center text-[#0038A8]">
                 <Calendar className="w-7 h-7" />
               </div>
               <div className="max-w-md space-y-1">
@@ -544,7 +544,7 @@ function DashboardInner() {
               {!searchQuery && activeTab === 'upcoming' && (
                 <Link
                   href="/create"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0066F5] hover:bg-[#0055D6] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-98 cursor-pointer mt-2"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0038A8] hover:bg-[#173DAA] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-98 cursor-pointer mt-2"
                 >
                   <Plus className="w-4 h-4 stroke-[2.5]" />
                   <span>+ Host an Event</span>
@@ -587,7 +587,7 @@ function DashboardInner() {
                     <div className="min-w-0 flex-1">
                       {/* Category + Live & Published Badge */}
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-[11px] font-extrabold tracking-wider text-[#0066F5] dark:text-[#38BDF8] uppercase">
+                        <span className="text-[11px] font-extrabold tracking-wider text-[#0038A8] dark:text-[#38BDF8] uppercase">
                           {category}
                         </span>
                         <span className="text-slate-300 dark:text-slate-600 font-bold">·</span>
@@ -598,7 +598,7 @@ function DashboardInner() {
 
                       {/* Title */}
                       <Link href={`/${event.slug}`} className="block group">
-                        <h3 className="text-base sm:text-lg font-black text-[#0A1128] dark:text-white group-hover:text-[#0066F5] transition-colors truncate">
+                        <h3 className="text-base sm:text-lg font-black text-[#0A1128] dark:text-white group-hover:text-[#0038A8] transition-colors truncate">
                           {event.title}
                         </h3>
                       </Link>
@@ -633,14 +633,14 @@ function DashboardInner() {
                           <Users className="w-3.5 h-3.5 text-slate-400" />
                           <span>{joined}/{capacity} joined</span>
                         </div>
-                        <span className="font-bold text-[#0066F5] dark:text-[#38BDF8]">
+                        <span className="font-bold text-[#0038A8] dark:text-[#38BDF8]">
                           {spotsLeft} left
                         </span>
                       </div>
                       {/* Progress bar */}
                       <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#0066F5] rounded-full transition-all duration-500"
+                          className="h-full bg-[#0038A8] rounded-full transition-all duration-500"
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
