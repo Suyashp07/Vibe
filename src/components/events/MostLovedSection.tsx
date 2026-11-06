@@ -178,6 +178,7 @@ export const ALL_EXPLORE_CATEGORIES: MostLovedCategory[] = [
     id: 'business',
     name: 'Business & Networking',
     alt: 'Business & Networking',
+    image: '/site-assets/cat-business.webp',
     categoryFilter: 'Social',
     keywords: ['business', 'networking', 'founders', 'startup', 'mixer', 'professional', 'connect', 'investor', 'pitch', 'tech'],
   },
@@ -185,6 +186,7 @@ export const ALL_EXPLORE_CATEGORIES: MostLovedCategory[] = [
     id: 'arts',
     name: 'Arts & Theatre',
     alt: 'Arts & Theatre',
+    image: '/site-assets/cat-arts.webp',
     categoryFilter: 'Arts',
     keywords: ['art', 'theatre', 'drama', 'play', 'acting', 'gallery', 'exhibition', 'sculpture', 'paint'],
   },
@@ -192,6 +194,7 @@ export const ALL_EXPLORE_CATEGORIES: MostLovedCategory[] = [
     id: 'comedy',
     name: 'Comedy',
     alt: 'Comedy',
+    image: '/site-assets/cat-comedy.webp',
     categoryFilter: 'Social',
     keywords: ['comedy', 'standup', 'stand-up', 'comic', 'open mic', 'humour', 'humor', 'jokes', 'laugh'],
   },
@@ -199,6 +202,7 @@ export const ALL_EXPLORE_CATEGORIES: MostLovedCategory[] = [
     id: 'wellness',
     name: 'Health & Wellness',
     alt: 'Health & Wellness',
+    image: '/site-assets/cat-wellness.webp',
     categoryFilter: 'Sports',
     keywords: ['health', 'wellness', 'mindfulness', 'meditation', 'healing', 'mental health', 'breathwork', 'wellness'],
   },
@@ -206,6 +210,7 @@ export const ALL_EXPLORE_CATEGORIES: MostLovedCategory[] = [
     id: 'yoga',
     name: 'Yoga',
     alt: 'Yoga',
+    image: '/site-assets/cat-yoga.webp',
     categoryFilter: 'Sports',
     keywords: ['yoga', 'asana', 'pranayama', 'stretch', 'flow', 'vinyasa', 'morning yoga'],
   },
@@ -213,6 +218,7 @@ export const ALL_EXPLORE_CATEGORIES: MostLovedCategory[] = [
     id: 'tech',
     name: 'Tech & Startups',
     alt: 'Tech & Startups',
+    image: '/site-assets/cat-tech.webp',
     categoryFilter: 'Technology',
     keywords: ['tech', 'startup', 'ai', 'hacker', 'software', 'developer', 'code', 'founder', 'build', 'web3', 'saas'],
   },
@@ -252,21 +258,32 @@ export default function MostLovedSection({
   const [draftWhen, setDraftWhen] = useState<string>(dateFilter);
   const modalInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync draft state when modal opens
+  // Sync draft state when modal opens & strictly lock background scroll
   useEffect(() => {
     if (isModalOpen) {
       setDraftCategories(selectedCategories);
       setDraftWhen(dateFilter);
+
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalBodyOverscroll = document.body.style.overscrollBehavior;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+      const originalHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+
+      // Lock background scrolling completely on window, html, and body
       document.body.style.overflow = 'hidden';
-      // Note: Do NOT auto-focus modalInputRef here! Auto-focusing an input on mobile
-      // automatically triggers the virtual software keyboard to slide up and cover half the screen.
+      document.body.style.overscrollBehavior = 'contain';
+      document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.overscrollBehavior = 'contain';
+
+      return () => {
+        document.body.style.overflow = originalBodyOverflow;
+        document.body.style.overscrollBehavior = originalBodyOverscroll;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        document.documentElement.style.overscrollBehavior = originalHtmlOverscroll;
+      };
     } else {
-      document.body.style.overflow = '';
       setSearchQuery('');
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isModalOpen, selectedCategories, dateFilter]);
 
   // Close modal on Escape key
@@ -477,16 +494,23 @@ export default function MostLovedSection({
       <AnimatePresence>
         {isModalOpen && (
           <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs overscroll-contain"
             onClick={() => setIsModalOpen(false)}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => {
+              if (e.target === e.currentTarget) {
+                e.preventDefault();
+              }
+            }}
           >
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="bg-white dark:bg-[#0B0F19] w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl h-[88dvh] sm:h-auto sm:max-h-[85vh] flex flex-col shadow-2xl border border-slate-200/90 dark:border-white/10 overflow-hidden text-slate-900 dark:text-white"
+              className="bg-white dark:bg-[#0B0F19] w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl h-[88dvh] sm:h-[84vh] max-h-[88dvh] sm:max-h-[84vh] flex flex-col shadow-2xl border border-slate-200/90 dark:border-white/10 overflow-hidden text-slate-900 dark:text-white overscroll-contain"
               onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="filters-modal-title"
@@ -521,7 +545,8 @@ export default function MostLovedSection({
               {/* Modal Body - Single Unified Scrollable Container */}
               <div
                 className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6 touch-pan-y"
-                style={{ WebkitOverflowScrolling: 'touch' }}
+                style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+                onWheel={(e) => e.stopPropagation()}
               >
                 {/* 1. "When" Date Selector */}
                 <div className="space-y-2.5">
