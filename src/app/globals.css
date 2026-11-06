@@ -2252,7 +2252,7 @@ html.dark .v2-cat-item.v2-cat-item-active {
   background: linear-gradient(180deg, #fdfdfd 0%, #f4f8fe 100%);
   box-sizing: border-box;
   width: 100%;
-  color: #07133a;
+  color: #07133a !important;
   padding: 64px 4vw;
   font-family: inherit;
   position: relative;
@@ -2263,8 +2263,8 @@ html.dark .v2-cat-item.v2-cat-item-active {
 }
 
 html.dark .bot-create-section {
-  color: #f8fafc;
-  background: linear-gradient(180deg, #0a1430 0%, #070e22 100%);
+  color: #f8fafc !important;
+  background: linear-gradient(180deg, #0a1430 0%, #070e22 100%) !important;
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -2289,7 +2289,7 @@ html.dark .bot-create-section {
 
 .bot-create-h1 {
   letter-spacing: -0.025em;
-  color: #07133a;
+  color: #07133a !important;
   max-width: 20ch;
   margin: 0;
   font-family: var(--font-bricolage), 'Bricolage Grotesque', 'Outfit', sans-serif !important;
@@ -2302,11 +2302,11 @@ html.dark .bot-create-section {
 }
 
 html.dark .bot-create-h1 {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .bot-create-subtext {
-  color: #4b5d86;
+  color: #334155 !important;
   max-width: 48ch;
   margin: 0;
   font-size: clamp(16px, 1.8vw, 18px);
@@ -2314,7 +2314,7 @@ html.dark .bot-create-h1 {
 }
 
 html.dark .bot-create-subtext {
-  color: #94a3b8;
+  color: #94a3b8 !important;
 }
 
 .bot-steps-list {
@@ -2393,7 +2393,7 @@ html.dark .bot-step-line {
 }
 
 .bot-step-title {
-  color: #07133a;
+  color: #07133a !important;
   margin: 0;
   font-family: var(--font-bricolage), 'Bricolage Grotesque', sans-serif !important;
   font-size: 18px;
@@ -2402,11 +2402,11 @@ html.dark .bot-step-line {
 }
 
 html.dark .bot-step-title {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .bot-step-desc {
-  color: #4b5d86;
+  color: #334155 !important;
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
@@ -2415,7 +2415,7 @@ html.dark .bot-step-title {
 }
 
 html.dark .bot-step-desc {
-  color: #94a3b8;
+  color: #94a3b8 !important;
 }
 
 .bot-code-chip {

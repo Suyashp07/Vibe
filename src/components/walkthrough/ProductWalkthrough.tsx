@@ -460,11 +460,12 @@ export default function ProductWalkthrough() {
                 if (!targetRect || isFirstStep) {
                   return {
                     position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
+                    inset: 0,
+                    margin: 'auto',
                     width: 'calc(100vw - 32px)',
                     maxWidth: '390px',
+                    height: 'fit-content',
+                    maxHeight: 'calc(100vh - 32px)',
                     zIndex: 9995,
                   };
                 }
@@ -474,15 +475,17 @@ export default function ProductWalkthrough() {
                   if (currentId === 'bot') {
                     return {
                       position: 'fixed',
-                      top: `${Math.max(16, targetRect.bottom + 14)}px`,
+                      top: `${Math.max(16, targetRect ? targetRect.bottom + 14 : 70)}px`,
                       left: '16px',
                       right: '16px',
                       maxWidth: '390px',
                       margin: '0 auto',
+                      width: 'calc(100vw - 32px)',
                       zIndex: 9995,
                     };
                   }
-                  const bottomPx = currentId === 'instant' || currentId === 'host' ? 78 : 16;
+                  // Mobile bottom navigation bar sits at bottom (~64-70px), clear it cleanly
+                  const bottomPx = currentId === 'instant' || currentId === 'host' ? 82 : 78;
                   return {
                     position: 'fixed',
                     bottom: `${bottomPx}px`,
@@ -490,6 +493,7 @@ export default function ProductWalkthrough() {
                     right: '16px',
                     maxWidth: '390px',
                     margin: '0 auto',
+                    width: 'calc(100vw - 32px)',
                     zIndex: 9995,
                   };
                 }
@@ -520,7 +524,7 @@ export default function ProductWalkthrough() {
                 /* ========================================================================= */
                 /* STEP 1: WELCOME MODAL                                                     */
                 /* ========================================================================= */
-                <div className="bg-white dark:bg-[#0D1527] w-[90vw] max-w-[390px] rounded-3xl p-5 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,10,40,0.5)] border border-slate-200/90 dark:border-white/10 text-center relative mx-auto">
+                <div className="bg-white dark:bg-[#0D1527] w-full max-w-[390px] rounded-3xl p-5 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,10,40,0.5)] border border-slate-200/90 dark:border-white/10 text-center relative mx-auto">
                   {/* Close Button 'X' */}
                   <button
                     type="button"
@@ -641,7 +645,7 @@ export default function ProductWalkthrough() {
                 /* ========================================================================= */
                 /* STEPS 2 to 4: FEATURE SPOTLIGHT CARDS WITH CLEAR ANIMATIONS               */
                 /* ========================================================================= */
-                <div className="bg-white dark:bg-[#0D1527] rounded-3xl p-4 sm:p-6 shadow-[0_20px_50px_-10px_rgba(0,10,40,0.45)] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white relative mx-auto">
+                <div className="bg-white dark:bg-[#0D1527] w-full max-w-[390px] rounded-3xl p-4 sm:p-6 shadow-[0_20px_50px_-10px_rgba(0,10,40,0.45)] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white relative mx-auto">
                   {/* Top Row: Icon Badge + Step Counter + Close Button */}
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2">
