@@ -106,6 +106,7 @@ export function Splash() {
     let yL = 0;
     let cur = -1;
     let TI = 1;
+    const isMobile = iw < 768;
 
     function sm(x: number) {
       x = Math.max(0, Math.min(1, x));
@@ -129,24 +130,29 @@ export function Splash() {
       let d = '';
       bs = [];
 
-      OX.forEach((f, i) => {
-        const ox = iw * f;
-        const wd = Math.max(150, iw * 0.17);
-        h += `<div class="beam${i % 2 ? ' w' : ''}" style="left:${ox - wd / 2}px;top:0;width:${wd}px;height:${base}px"></div>`;
-        bs.push({ ox, oy: 0, base, A: AMP[i], ph: PH[i], k: K[i], i, a: null, el: null });
-      });
+      if (!isMobile) {
+        OX.forEach((f, i) => {
+          const ox = iw * f;
+          const wd = Math.max(150, iw * 0.17);
+          h += `<div class="beam${i % 2 ? ' w' : ''}" style="left:${ox - wd / 2}px;top:0;width:${wd}px;height:${base}px"></div>`;
+          bs.push({ ox, oy: 0, base, A: AMP[i], ph: PH[i], k: K[i], i, a: null, el: null });
+        });
 
-      bm.innerHTML = h;
-      const children = bm.children;
-      bs.forEach((b, i) => {
-        b.el = children[i] as HTMLElement;
-      });
+        bm.innerHTML = h;
+        const children = bm.children;
+        bs.forEach((b, i) => {
+          b.el = children[i] as HTMLElement;
+        });
 
-      for (let i = 0; i < 20; i++) {
-        const s = 1.5 + Math.random() * 2;
-        d += `<i style="left:${28 + Math.random() * 44}%;top:${18 + Math.random() * 55}%;width:${s}px;height:${s}px;--dx:${(Math.random() - 0.5) * 60}px;--dur:${5 + Math.random() * 5}s;--dl:-${Math.random() * 8}s"></i>`;
+        for (let i = 0; i < 20; i++) {
+          const s = 1.5 + Math.random() * 2;
+          d += `<i style="left:${28 + Math.random() * 44}%;top:${18 + Math.random() * 55}%;width:${s}px;height:${s}px;--dx:${(Math.random() - 0.5) * 60}px;--dur:${5 + Math.random() * 5}s;--dl:-${Math.random() * 8}s"></i>`;
+        }
+        dust.innerHTML = d;
+      } else {
+        bm.innerHTML = '';
+        dust.innerHTML = '';
       }
-      dust.innerHTML = d;
       container?.style.setProperty('--ly', `${ih * LY}px`);
     }
 
@@ -154,7 +160,7 @@ export function Splash() {
       if (!brand) return;
       const rect = brand.getBoundingClientRect();
       bw = rect.width || brand.offsetWidth || Math.min(360, Math.max(220, iw * 0.32));
-      bh = rect.height || brand.offsetHeight || Math.round(bw * (292 / 547));
+      bh = rect.height || brand.offsetHeight || Math.round(bw * (524 / 1034));
       x0 = (iw - bw) / 2;
       yL = ih * LY - bh / 2;
     }
@@ -218,17 +224,21 @@ export function Splash() {
       brand.style.transform = `translate3d(${x0}px, ${s[0]}px, 0)`;
       bi.style.transform = `scale(${s[1]}, ${s[2]})`;
 
-      bs.forEach((b) => {
-        if (!b.el) return;
-        const aim = (-Math.atan2(cx - b.ox, cy - b.oy) * 180) / Math.PI + b.A * sc * Math.sin(w * t + b.ph);
-        if (b.a === null) b.a = aim;
-        b.a += ((((aim - b.a + 540) % 360) - 180) * b.k);
-        const L = Math.max(60, Math.hypot(cx - b.ox, cy - b.oy) * 1.3);
-        b.el.style.transform = `rotate(${b.a}deg) scaleY(${L / b.base})`;
-        b.el.style.opacity = `${Math.min(1, Math.max(0, (t - 0.25 - b.i * 0.1) / 0.35))}`;
-      });
+      if (isMobile) {
+        bg.style.transform = `translate3d(0, ${sh}px, 0)`;
+      } else {
+        bs.forEach((b) => {
+          if (!b.el) return;
+          const aim = (-Math.atan2(cx - b.ox, cy - b.oy) * 180) / Math.PI + b.A * sc * Math.sin(w * t + b.ph);
+          if (b.a === null) b.a = aim;
+          b.a += ((((aim - b.a + 540) % 360) - 180) * b.k);
+          const L = Math.max(60, Math.hypot(cx - b.ox, cy - b.oy) * 1.3);
+          b.el.style.transform = `rotate(${b.a}deg) scaleY(${L / b.base})`;
+          b.el.style.opacity = `${Math.min(1, Math.max(0, (t - 0.25 - b.i * 0.1) / 0.35))}`;
+        });
 
-      bg.style.transform = `translate3d(0, ${sh}px, 0) scale(${1 + 0.04 * sm(t / 4)})`;
+        bg.style.transform = `translate3d(0, ${sh}px, 0) scale(${1 + 0.04 * sm(t / 4)})`;
+      }
 
       if (!container?.classList.contains('p4')) {
         rafRef.current = requestAnimationFrame(frame);
@@ -259,9 +269,28 @@ export function Splash() {
       frafRef.current = 0;
     }
 
-    // Curved flight to the navbar logo
+    // Curved flight to the navbar logo on desktop, or smooth compositor fade on mobile
     function fly() {
       if (!brand) return;
+
+      if (isMobile) {
+        // Silky smooth GPU compositor exit on mobile
+        document.body.style.removeProperty('overflow');
+        container?.classList.add('mobile-launching');
+        at(380, () => {
+          if (splash) splash.style.display = 'none';
+          setMounted(false);
+          try {
+            sessionStorage.setItem(STORAGE_KEY, '1');
+          } catch (e) {}
+          if (typeof window !== 'undefined') {
+            (window as any).__vibeSplashActive = false;
+            window.dispatchEvent(new CustomEvent('vibe:splash_completed'));
+          }
+        });
+        return;
+      }
+
       const navLogo =
         (document.querySelector('[data-vibe-logo="true"] img:not(.hidden)') as HTMLElement | null) ||
         (document.querySelector('[data-vibe-logo="true"]') as HTMLElement | null) ||
@@ -343,6 +372,8 @@ export function Splash() {
       if (launchedRef.current) return;
       launchedRef.current = true;
       cancelAnimationFrame(rafRef.current);
+      // Immediately restore body scrolling so touch & scroll are instantly interactive
+      document.body.style.removeProperty('overflow');
       if (bi) bi.style.transform = '';
       if (brand) brand.style.transform = `translate3d(${x0}px, ${yL}px, 0)`;
       container?.classList.add('p4');
@@ -377,6 +408,14 @@ export function Splash() {
         return;
       }
 
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      if (urlParams?.get('splash_freeze') === '1') {
+        container?.classList.add('p1', 'p2');
+        if (brand) brand.style.transform = `translate3d(${x0}px, ${yL}px, 0)`;
+        setWord(6);
+        return;
+      }
+
       void container?.offsetWidth;
       t0 = performance.now();
       rafRef.current = requestAnimationFrame(frame);
@@ -388,18 +427,34 @@ export function Splash() {
         container?.classList.add('p2');
       });
 
-      for (let k = 0; k < WORDS.length; k++) {
-        ((kIdx) => {
-          at(ws + kIdx * 330, () => {
-            setWord(kIdx);
-          });
-        })(k);
-      }
+      if (isMobile) {
+        // Fast, punchy, fluid sequence on mobile (total ~1.3s so mobile opening never hangs)
+        // 1 = fest, 6 = event
+        at(ws, () => {
+          setWord(1);
+        });
+        at(ws + 280, () => {
+          setWord(6);
+        });
+        at(ws + 280 + 380, () => {
+          setWord(-1);
+          launch();
+        });
+      } else {
+        // Full theatrical word cycling on desktop
+        for (let k = 0; k < WORDS.length; k++) {
+          ((kIdx) => {
+            at(ws + kIdx * 330, () => {
+              setWord(kIdx);
+            });
+          })(k);
+        }
 
-      at(ws + (WORDS.length - 1) * 330 + 700, () => {
-        setWord(-1);
-        launch();
-      });
+        at(ws + (WORDS.length - 1) * 330 + 700, () => {
+          setWord(-1);
+          launch();
+        });
+      }
     }
 
     const handleResize = () => {
@@ -519,13 +574,14 @@ export function Splash() {
       {/* Brand Lockup: Authentic Vibe logo image matching exact brand asset */}
       <div className="brand" id="brand" ref={brandRef} aria-hidden="true">
         <div className="bi" ref={biRef}>
+          <div className="splash-logo-glow" />
           <img
             src="/logo-dark.png"
             alt="Vibe by Swaniki"
             className="splash-brand-logo splash-logo-dark"
             ref={darkLogoRef}
-            width={547}
-            height={292}
+            width={1034}
+            height={524}
             loading="eager"
             decoding="sync"
           />
@@ -534,8 +590,8 @@ export function Splash() {
             alt="Vibe by Swaniki"
             className="splash-brand-logo splash-logo-light"
             ref={lightLogoRef}
-            width={547}
-            height={292}
+            width={1034}
+            height={524}
             loading="eager"
             decoding="sync"
             style={{ opacity: 0 }}
@@ -827,14 +883,25 @@ export function Splash() {
           justify-content: center;
           transform-origin: 50% 100%;
           width: clamp(230px, 34vw, 380px);
-          aspect-ratio: 547 / 292;
+          aspect-ratio: 1034 / 524;
         }
-        .p2 .bi {
-          animation: hit .8s ease-out;
+        .splash-logo-glow {
+          position: absolute;
+          inset: -15%;
+          border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(0, 56, 168, 0.75) 0%, rgba(0, 56, 168, 0.28) 45%, transparent 72%);
+          pointer-events: none;
+          z-index: -1;
+          opacity: 0.85;
+          filter: blur(22px);
+          transform: translateZ(0);
         }
-        @keyframes hit {
-          0% { filter: brightness(1.7) drop-shadow(0 0 28px rgba(0, 56, 168, .9)); }
-          100% { filter: brightness(1) drop-shadow(0 0 0 rgba(0, 56, 168, 0)); }
+        .p2 .splash-logo-glow {
+          animation: glowPulse .85s ease-out;
+        }
+        @keyframes glowPulse {
+          0% { transform: scale(1.3) translateZ(0); opacity: 1; }
+          100% { transform: scale(1) translateZ(0); opacity: 0.85; }
         }
         .splash-brand-logo {
           width: 100%;
@@ -842,12 +909,59 @@ export function Splash() {
           object-fit: contain;
           pointer-events: none;
           user-select: none;
-          filter: drop-shadow(0 14px 40px rgba(0, 56, 168, 0.6));
+          image-rendering: -webkit-optimize-contrast;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+          will-change: transform, opacity;
         }
         .splash-logo-light {
           position: absolute;
           inset: 0;
           pointer-events: none;
+        }
+
+        .mobile-launching #splash {
+          opacity: 0 !important;
+          transform: scale(1.04) !important;
+          transition: opacity .35s ease-out, transform .35s ease-out !important;
+          pointer-events: none !important;
+        }
+        .mobile-launching .brand {
+          opacity: 0 !important;
+          transform: translate3d(var(--x0, 0), calc(var(--yL, 0) - 18px), 0) scale(.92) !important;
+          transition: opacity .32s ease-out, transform .32s cubic-bezier(.16, 1, .3, 1) !important;
+          pointer-events: none !important;
+        }
+
+        @media (max-width: 768px) {
+          #bm, .lamp, #dust, .tile, .bloom, .flare {
+            display: none !important;
+          }
+          .pool {
+            width: 90vw;
+            height: 12vh;
+            filter: blur(14px);
+          }
+          #tag {
+            font-size: clamp(20px, 5.2vw, 26px);
+          }
+          .bi {
+            width: clamp(240px, 76vw, 340px);
+          }
+          .slot b.on {
+            animation: wi-mob .26s cubic-bezier(.2, .8, .2, 1) both;
+          }
+          .slot b.out {
+            animation: wo-mob .18s ease-in both;
+          }
+        }
+        @keyframes wi-mob {
+          from { opacity: 0; transform: translateY(60%) scale(.96); }
+          to { opacity: 1; transform: none; }
+        }
+        @keyframes wo-mob {
+          from { opacity: 1; transform: none; }
+          to { opacity: 0; transform: translateY(-60%); }
         }
 
         @media (prefers-reduced-motion: reduce) {
