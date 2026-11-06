@@ -33,7 +33,9 @@ import {
   Download,
   MessageCircle,
   Send,
-  ArrowUpRight
+  ArrowUpRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { triggerPWAInstall } from '@/components/pwa/PWARegister';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -212,16 +214,16 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
           hideTopOnMobile ? 'hidden md:block' : ''
         }`}>
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <div className="flex items-center justify-between h-16 gap-3 sm:gap-6 relative">
-            {/* Left: Brand Logo + Location Selector */}
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-3 sm:gap-6 relative">
+            {/* Left: Brand Logo + Desktop Location Selector */}
             <div className="flex items-center gap-3 sm:gap-6 shrink-0">
               <BrandLogo />
 
-              {/* Location Selector (Matching reference image: Orange Pin + City dropdown) */}
+              {/* Desktop Location Selector (Hidden on Mobile) */}
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EDF2F7] dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 transition-colors cursor-pointer text-left group"
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EDF2F7] dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 transition-colors cursor-pointer text-left group"
                 title="Change city location"
               >
                 <div className="w-6 h-6 rounded-full bg-[#08B9F5]/15 text-[#0066F5] dark:text-[#08B9F5] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -236,7 +238,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               </button>
             </div>
 
-            {/* Center: Refined Navigation Capsule matching reference image */}
+            {/* Center: Refined Navigation Capsule (Desktop Only) */}
             <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center p-1 rounded-full bg-[#EDF2F7] dark:bg-white/10 border border-slate-200/80 dark:border-white/10 shadow-xs">
               {/* Feature 1: Discover */}
               <Link
@@ -292,16 +294,39 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               </Link>
             </nav>
 
-            {/* Right: Theme Toggle (left of Download) + Download App + Host an Event + Profile */}
+            {/* Right: Actions */}
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              {/* Theme Toggle (positioned to the left of the Download button as requested) */}
-              <ThemeToggle />
+              {/* Mobile Standalone Blue Location Pin (Matching Reference Screenshot) */}
+              <button
+                type="button"
+                onClick={() => setLocationModalOpen(true)}
+                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#0066F5] dark:text-[#08B9F5] hover:bg-blue-50 dark:hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                title={`Current city: ${activeCity} - Tap to change`}
+                aria-label={`Change location (${activeCity})`}
+              >
+                <MapPin className="w-5 h-5 stroke-[2] text-[#0066F5] dark:text-[#08B9F5]" />
+              </button>
 
-              {/* Download App Button matching reference image with vibrant blue text */}
+              {/* Mobile Circular '+' Host Button (Matching Reference Screenshot) */}
+              <Link
+                href="/create"
+                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#07133A] dark:bg-white text-white dark:text-[#07133A] flex items-center justify-center shadow-xs transition-transform hover:scale-105 active:scale-95 shrink-0"
+                title="Host an event"
+                aria-label="Host an event"
+              >
+                <Plus className="w-5 h-5 stroke-[2.8]" />
+              </Link>
+
+              {/* Desktop Theme Toggle */}
+              <div className="hidden md:block">
+                <ThemeToggle />
+              </div>
+
+              {/* Desktop Download App Button */}
               <button
                 type="button"
                 onClick={() => triggerPWAInstall()}
-                className="vibe-download-btn inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0066F5] text-[#0066F5] bg-white hover:bg-[#0066F5]/5 dark:bg-transparent dark:border-[#08B9F5] dark:text-[#08B9F5] dark:hover:bg-[#08B9F5]/10 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+                className="vibe-download-btn hidden md:inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0066F5] text-[#0066F5] bg-white hover:bg-[#0066F5]/5 dark:bg-transparent dark:border-[#08B9F5] dark:text-[#08B9F5] dark:hover:bg-[#08B9F5]/10 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
                 style={{ color: '#0066F5', borderColor: '#0066F5' }}
                 title="Download App"
                 aria-label="Download App"
@@ -310,12 +335,12 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 <span className="hidden sm:inline font-semibold" style={{ color: 'inherit' }}>Download App</span>
               </button>
 
-              {/* Host an Event Button matching reference image with pure white text */}
+              {/* Desktop Full Host an Event Button */}
               <Magnetic pullFactor={0.35}>
                 <Link
                   id="vt-host"
                   href="/create"
-                  className="vibe-host-btn inline-flex items-center gap-1.5 px-4 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0"
+                  className="vibe-host-btn hidden md:inline-flex items-center gap-1.5 px-4 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-[#0066F5] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0"
                   style={{ color: '#FFFFFF', backgroundColor: '#0066F5' }}
                   title="Host an event"
                 >
@@ -515,6 +540,18 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                         </a>
                       </div>
 
+                      {/* Theme Toggle for mobile */}
+                      <div className="md:hidden pt-2 border-t border-slate-100 dark:border-white/[0.08] px-1 pb-1">
+                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-neutral-300">
+                          <span className="flex items-center gap-2">
+                            <Sun className="w-3.5 h-3.5 text-amber-500 dark:hidden" />
+                            <Moon className="w-3.5 h-3.5 text-sky-400 hidden dark:block" />
+                            <span>Theme Mode</span>
+                          </span>
+                          <ThemeToggle />
+                        </div>
+                      </div>
+
                       {/* Sign out */}
                       <div className={`pt-2 border-t px-0.5 ${isLight ? 'border-slate-100' : 'border-white/[0.08]'}`}>
                         <button
@@ -543,10 +580,11 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                     setAuthModalMode('signin');
                     setAuthModalOpen(true);
                   }}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-200 dark:border-white/15 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-600 dark:text-neutral-300 flex items-center justify-center transition-colors cursor-pointer shrink-0" 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-200 dark:border-white/20 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-xs active:scale-95" 
                   title="Sign In"
+                  aria-label="Sign In or View Profile"
                 >
-                  <User className="w-4 h-4" />
+                  <User className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2] text-slate-700 dark:text-white" />
                 </button>
               )}
             </div>
