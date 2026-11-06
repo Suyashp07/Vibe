@@ -213,79 +213,81 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
         <header className={`sticky top-0 z-40 bg-white/95 dark:bg-[#081426]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10 shadow-xs text-slate-900 dark:text-white transition-colors ${
           hideTopOnMobile ? 'hidden md:block' : ''
         }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16 gap-4 relative">
-            {/* Left: Brand Logo (Vibe. by Swaniki) */}
-            <div className="flex items-center shrink-0">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center h-14 sm:h-16 gap-2 sm:gap-4">
+            {/* Left Column: Brand Logo (Vibe. by Swaniki) */}
+            <div className="flex items-center justify-start shrink-0">
               <BrandLogo />
             </div>
 
-            {/* Center: Refined Capsule Navigation (Discover •, Instant ⚡, Bot, Dashboard) */}
-            <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 lg:gap-7 px-5 py-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-[#EDF2F7]/70 dark:bg-white/[0.05] backdrop-blur-md shadow-xs">
-              {/* Feature 1: Discover */}
-              <Link
-                href="/"
-                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  pathname === '/' || pathname.startsWith('/discover')
-                    ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
-                }`}
-              >
-                <span>Discover</span>
-                {(pathname === '/' || pathname.startsWith('/discover')) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
-                )}
-              </Link>
+            {/* Center Column: Perfectly Centered Capsule Navigation (Discover •, Instant ⚡, Bot, Dashboard) */}
+            <div className="hidden md:flex items-center justify-center">
+              <nav className="inline-flex items-center gap-4 lg:gap-6 px-4 lg:px-5 py-1.5 rounded-full border border-slate-200/90 dark:border-white/10 bg-[#EDF2F7]/80 dark:bg-white/[0.05] backdrop-blur-md shadow-2xs">
+                {/* Feature 1: Discover */}
+                <Link
+                  href="/"
+                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    pathname === '/' || pathname.startsWith('/discover')
+                      ? 'text-slate-950 dark:text-white font-semibold'
+                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                  }`}
+                >
+                  <span>Discover</span>
+                  {(pathname === '/' || pathname.startsWith('/discover')) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
+                  )}
+                </Link>
 
-              {/* Feature 2: Instant ⚡ */}
-              <Link
-                id="vt-instant"
-                href="/vibes"
-                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
-                    ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
-                }`}
-              >
-                <span>Instant</span>
-                <Zap className="w-3.5 h-3.5 fill-[#FF8442] text-[#FF8442] shrink-0" />
-              </Link>
+                {/* Feature 2: Instant ⚡ */}
+                <Link
+                  id="vt-instant"
+                  href="/vibes"
+                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    pathname.startsWith('/vibes') || pathname.startsWith('/vibe')
+                      ? 'text-slate-950 dark:text-white font-semibold'
+                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                  }`}
+                >
+                  <span>Instant</span>
+                  <Zap className="w-3.5 h-3.5 fill-[#FF8442] text-[#FF8442] shrink-0" />
+                </Link>
 
-              {/* Feature 3: Bot */}
-              <Link
-                id="vt-bot"
-                href="/bot"
-                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  pathname.startsWith('/bot')
-                    ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
-                }`}
-              >
-                <span>Bot</span>
-                {pathname.startsWith('/bot') && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
-                )}
-              </Link>
+                {/* Feature 3: Bot */}
+                <Link
+                  id="vt-bot"
+                  href="/bot"
+                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    pathname.startsWith('/bot')
+                      ? 'text-slate-950 dark:text-white font-semibold'
+                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                  }`}
+                >
+                  <span>Bot</span>
+                  {pathname.startsWith('/bot') && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
+                  )}
+                </Link>
 
-              {/* Feature 4: Dashboard */}
-              <Link
-                href="/dashboard"
-                className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  pathname.startsWith('/dashboard')
-                    ? 'text-slate-950 dark:text-white font-semibold'
-                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
-                }`}
-                title="Dashboard"
-              >
-                <span>Dashboard</span>
-                {pathname.startsWith('/dashboard') && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
-                )}
-              </Link>
-            </nav>
+                {/* Feature 4: Dashboard */}
+                <Link
+                  href="/dashboard"
+                  className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    pathname.startsWith('/dashboard')
+                      ? 'text-slate-950 dark:text-white font-semibold'
+                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white font-medium'
+                  }`}
+                  title="Dashboard"
+                >
+                  <span>Dashboard</span>
+                  {pathname.startsWith('/dashboard') && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0066F5] dark:bg-[#08B9F5] inline-block shrink-0" />
+                  )}
+                </Link>
+              </nav>
+            </div>
 
-            {/* Right: Actions (Location, Download icon, + Host, Profile) */}
-            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            {/* Right Column: Actions (Location, Download icon, + Host, Profile) */}
+            <div className="flex items-center justify-end gap-2.5 sm:gap-3 shrink-0">
               {/* Mobile Standalone Blue Location Pin */}
               <button
                 type="button"
@@ -312,10 +314,10 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-slate-700 dark:text-neutral-300 hover:text-[#0066F5] dark:hover:text-[#08B9F5] hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer text-left group"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-slate-700 dark:text-neutral-200 hover:text-[#0066F5] dark:hover:text-[#08B9F5] hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer text-left group"
                 title="Change location"
               >
-                <MapPin className="w-4 h-4 text-[#0066F5] dark:text-[#08B9F5] shrink-0" />
+                <MapPin className="w-4 h-4 text-[#0066F5] dark:text-[#08B9F5] shrink-0" strokeWidth={2.2} style={{ color: '#0066F5', stroke: '#0066F5' }} />
                 <span className="text-xs sm:text-sm font-medium max-w-[120px] truncate">
                   {activeCity === 'All India' ? 'India' : activeCity}
                 </span>
