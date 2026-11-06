@@ -327,6 +327,12 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                 <Link
                   id="vt-bot"
                   href="/bot"
+                  onClick={(e) => {
+                    if (pathname === '/') {
+                      e.preventDefault();
+                      window.dispatchEvent(new CustomEvent('vibe:open_bot_drawer'));
+                    }
+                  }}
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
                     pathname.startsWith('/bot')
                       ? 'text-slate-950 dark:text-white font-semibold'
@@ -374,6 +380,12 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
               <Link
                 id="vt-bot-mobile"
                 href="/bot"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent('vibe:open_bot_drawer'));
+                  }
+                }}
                 className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50/80 dark:bg-white/10 text-[#0038A8] dark:text-sky-400 hover:bg-blue-100 dark:hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shrink-0 border border-blue-100 dark:border-white/10"
                 title="Create with Bot"
                 aria-label="Create with Bot"

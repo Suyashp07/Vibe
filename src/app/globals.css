@@ -3051,5 +3051,36 @@ html.dark .bot-input-field {
   }
 }
 
+/* Slide-over Drawer Overrides for Bot Create Section */
+.bot-drawer-view .bot-create-section {
+  padding: 12px 6px !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.bot-drawer-view .bot-create-container {
+  grid-template-columns: 1fr !important;
+  gap: 28px !important;
+}
+
+.bot-drawer-view .bot-create-h1 {
+  font-size: 24px !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.bot-drawer-view .bot-create-subtext {
+  font-size: 13.5px !important;
+  margin-top: 6px !important;
+}
+
+.bot-drawer-view .bot-phone-frame {
+  max-width: 330px !important;
+  margin: 0 auto !important;
+}
+
+
 
 

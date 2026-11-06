@@ -8,6 +8,7 @@ import Footer from '@/components/common/Footer';
 import WhatsOnFeed from '@/components/events/WhatsOnFeed';
 import { CallbackHandler } from '@/components/auth/CallbackHandler';
 import ProductWalkthrough from '@/components/walkthrough/ProductWalkthrough';
+import FloatingBotDrawer from '@/components/bot/FloatingBotDrawer';
 
 function LandingPageContent() {
   const searchParams = useSearchParams();
@@ -35,6 +36,9 @@ function LandingPageContent() {
 
       {/* Product Walkthrough Spotlight Tour */}
       <ProductWalkthrough />
+
+      {/* Floating Vibe AI Bot Button & Animated Slide-over Drawer */}
+      <FloatingBotDrawer />
     </div>
   );
 }
