@@ -111,7 +111,7 @@ export default function EventCard({
 
     if (isFree) {
       return (
-        <span className="font-extrabold text-base text-[#07133A] dark:text-white">
+        <span className="font-bold text-[14.5px] sm:text-[15px] text-[#07133A] dark:text-white">
           Free
         </span>
       );
@@ -122,11 +122,11 @@ export default function EventCard({
 
     return (
       <div className="flex items-baseline gap-1">
-        <span className="font-extrabold text-base text-[#07133A] dark:text-white">
+        <span className="font-bold text-[14.5px] sm:text-[15px] text-[#07133A] dark:text-white">
           {cleanAmount}
         </span>
         {hasOnwards && (
-          <span className="text-xs font-normal text-slate-400">
+          <span className="text-[11px] font-normal text-slate-400">
             onwards
           </span>
         )}
@@ -147,10 +147,10 @@ export default function EventCard({
 
   // Dynamic Aspect Ratio: adaptively matches the poster's actual dimensions
   const dynamicRatio = detectedRatio || poster.aspectRatio || (
-    event.source_platform === 'bookmyshow' || poster.card?.includes('bmscdn.com') ? (16 / 9) : (16 / 9)
+    event.source_platform === 'bookmyshow' || poster.card?.includes('bmscdn.com') ? (16 / 11) : (16 / 11)
   );
-  // Clamped between 0.75 (portrait) and 2.0 (wide banner) to ensure visual elegance
-  const clampedRatio = Math.max(0.75, Math.min(2.0, dynamicRatio));
+  // Clamped between 0.75 (portrait) and 1.48 (landscape) to give event posters more vertical space and visual prominence
+  const clampedRatio = Math.max(0.75, Math.min(1.48, dynamicRatio));
 
   return (
     <div
@@ -180,7 +180,7 @@ export default function EventCard({
             }
           }}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          className="w-full h-full"
+          className="w-full h-full group-hover:scale-[1.03] transition-transform duration-500 ease-out"
         />
 
         {/* Top-Left: Ultra-clean Source Pill */}
@@ -214,33 +214,33 @@ export default function EventCard({
       </div>
 
       {/* Card Body (Bottom, clean spacing) */}
-      <div className="event-card-body p-4 flex flex-col justify-between flex-1">
+      <div className="event-card-body p-3.5 sm:p-4 flex flex-col justify-between flex-1">
         <div>
           {/* Row 1: Date & Time in clear blue/slate uppercase */}
-          <div className="text-xs font-bold text-[#0038A8] dark:text-[#38bdf8] tracking-wide flex items-center gap-1.5">
+          <div className="text-[11px] sm:text-xs font-bold text-[#0038A8] dark:text-[#38bdf8] tracking-wide flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#38bdf8] shrink-0" />
             <span className="truncate">{formattedDate}</span>
           </div>
 
           {/* Row 2: Event Title */}
-          <h3 className="font-bold text-lg text-[#07133A] dark:text-white leading-snug line-clamp-2 mt-1 mb-1.5 group-hover:text-[#0038A8] dark:group-hover:text-[#38bdf8] transition-colors">
+          <h3 className="font-bold text-[14.5px] sm:text-[15px] text-[#07133A] dark:text-white leading-snug line-clamp-2 mt-1 mb-1.5 group-hover:text-[#0038A8] dark:group-hover:text-[#38bdf8] transition-colors">
             {event.title}
           </h3>
 
           {/* Row 3: Venue & City */}
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 line-clamp-1 mb-3">
+          <div className="text-[11.5px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 line-clamp-1 mb-2.5">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="truncate">{locationDisplay}</span>
           </div>
         </div>
 
         {/* Row 4: Footer Row with Price & View Details Button */}
-        <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between mt-auto">
+        <div className="pt-2.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between mt-auto">
           {renderPrice()}
           <button
             type="button"
             onClick={handleCardClick}
-            className="event-card-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0038A8] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-[#0038A8] dark:text-slate-200 dark:hover:text-white transition-all duration-200 cursor-pointer"
+            className="event-card-btn inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0038A8] text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-[#0038A8] dark:text-slate-200 dark:hover:text-white transition-all duration-200 cursor-pointer"
           >
             <span>View Details</span>
             <ArrowUpRight className="w-3.5 h-3.5" />

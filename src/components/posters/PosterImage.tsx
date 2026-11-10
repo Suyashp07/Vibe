@@ -79,13 +79,13 @@ export default function PosterImage({
     else if (ratio === 'thumb') targetRatio = 1; // 1.0
   }
 
-  // Near-match optimization: if poster ratio is within 10% of container ratio,
+  // Near-match optimization: if poster ratio is within 22% of container ratio,
   // cropping is visually negligible, so object-cover looks pristine.
   // Otherwise, strictly object-contain with blurred backdrop to prevent ANY text cut-off!
   const isNearMatch = Boolean(
     targetRatio &&
     posterRatio &&
-    Math.abs(posterRatio - targetRatio) / targetRatio <= 0.10
+    Math.abs(posterRatio - targetRatio) / targetRatio <= 0.22
   );
 
   const isTransparent = src.toLowerCase().endsWith('.png');
@@ -119,7 +119,7 @@ export default function PosterImage({
       {/* ===================================================================== */}
       {/* LAYER 2: FOREGROUND POSTER (Full artwork, NEVER cropped)              */}
       {/* ===================================================================== */}
-      <div className="relative w-full h-full flex items-center justify-center p-1 sm:p-2">
+      <div className={`relative w-full h-full flex items-center justify-center ${isNearMatch ? 'p-0' : 'p-1 sm:p-2'}`}>
         {/* Subtle dark base panel for transparent PNGs */}
         {isTransparent && (
           <div className="absolute inset-2 rounded-2xl bg-black/40 backdrop-blur-xs pointer-events-none" />
