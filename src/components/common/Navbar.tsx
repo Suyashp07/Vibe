@@ -546,6 +546,33 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
                           )}
                         </Link>
 
+                        {/* Product Walkthrough Re-launch Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            if (pathname === '/') {
+                              window.dispatchEvent(new CustomEvent('vibe:start_tour'));
+                            } else {
+                              router.push('/?walkthrough=1');
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors text-sm font-medium cursor-pointer text-left ${
+                            isLight
+                              ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                              : 'text-neutral-200 hover:text-white hover:bg-white/[0.06]'
+                          }`}
+                          title="Start interactive product walkthrough"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Sparkles className="w-4 h-4 stroke-[1.8] text-[#0038A8] dark:text-sky-400" />
+                            <span>Walkthrough tour</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-[#0038A8]/10 dark:bg-sky-400/10 text-[#0038A8] dark:text-sky-300 text-[10px] font-bold">
+                            Tour
+                          </span>
+                        </button>
+
                         {isStaff && (
                           <Link
                             href={ADMIN_BASE_PATH}

@@ -449,6 +449,16 @@ export default function ProfilePage() {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to discover</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => router.push('/?walkthrough=1')}
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full bg-[#0038A8]/10 hover:bg-[#0038A8]/20 dark:bg-white/10 dark:hover:bg-white/20 text-[#0038A8] dark:text-sky-300 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
+            title="Take a quick tour of Vibe"
+          >
+            <Sparkles className="w-3.5 h-3.5 stroke-[2.2]" />
+            <span>Product Walkthrough</span>
+          </button>
         </div>
 
         {/* Hero Title & Subtitle */}
@@ -531,6 +541,15 @@ export default function ProfilePage() {
             <Lock className="w-3.5 h-3.5 text-[#0038A8] dark:text-[#08B9F5]" />
             <span>Privacy</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => router.push('/?walkthrough=1')}
+            className="flex items-center gap-2 p-2.5 rounded-xl text-xs font-medium text-[#0038A8] dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-white/5 transition cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 stroke-[2.2]" />
+            <span>Walkthrough</span>
+          </button>
         </div>
 
         {/* Layout: Sidebar Navigation + Main Content */}
@@ -603,6 +622,20 @@ export default function ProfilePage() {
               >
                 <Lock className="w-4 h-4 text-slate-400 dark:text-white/50" />
                 <span>Privacy</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push('/?walkthrough=1')}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#0038A8] dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-white/[0.04] transition cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-4 h-4 stroke-[2]" />
+                  <span>Product walkthrough</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-[#0038A8]/10 dark:bg-sky-400/10 text-[#0038A8] dark:text-sky-300 font-bold text-[10px]">
+                  Tour
+                </span>
               </button>
             </nav>
 
