@@ -100,12 +100,12 @@ export function Splash() {
     let t0 = 0;
     let bw = 0;
     let bh = 0;
-    let iw = window.innerWidth;
-    let ih = window.innerHeight;
+    let iw = typeof window !== 'undefined' ? window.innerWidth : 390;
+    let ih = typeof window !== 'undefined' ? window.innerHeight : 844;
     let x0 = 0;
     let yL = 0;
     let cur = -1;
-    let TI = 1;
+    let TI = 0.45;
     const isMobile = iw < 768;
 
     function sm(x: number) {
@@ -165,30 +165,39 @@ export function Splash() {
       bh = rect.height || brand.offsetHeight || Math.round(bw * (524 / 1034));
       x0 = Math.round((iw - bw) / 2);
       yL = Math.round(ih * LY - bh / 2);
+
+      // Keep CSS variables strictly synchronized with measured dimensions
+      container?.style.setProperty('--x0', `${x0}px`);
+      container?.style.setProperty('--yL', `${yL}px`);
+      container?.style.setProperty('--bw', `${bw}px`);
+      container?.style.setProperty('--bh', `${bh}px`);
+      brand.style.setProperty('--x0', `${x0}px`);
+      brand.style.setProperty('--yL', `${yL}px`);
     }
 
     function place() {
       if (!brand || !tag) return;
       brand.style.transform = `translate3d(${x0}px, ${-bh - 60}px, 0)`;
-      tag.style.top = `${ih * LY + bh / 2 + 22}px`;
+      tag.style.top = `${ih * LY + bh / 2 + (isMobile ? 18 : 22)}px`;
     }
 
     // Gravity + bounce physics with damped spring squash & stretch
     function sim() {
-      const g = ih * 7.5;
-      const vmax = ih * 3.2;
+      const g = ih * (isMobile ? 8.2 : 7.5);
+      const vmax = ih * 3.4;
       const dt = 1 / HZ;
       let y = -bh - 60;
       let v = 0;
-      const n = Math.ceil(2.8 * HZ);
+      const n = Math.ceil((isMobile ? 1.8 : 2.8) * HZ);
       let sq = 0;
       let sv = 0;
       let landed = false;
+      const startDelay = isMobile ? 0.06 : TD; // Swift immediate entrance on mobile, no dead waiting
       TAB = [];
 
       for (let i = 0; i < n; i++) {
         const t = i * dt;
-        if (t >= TD) {
+        if (t >= startDelay) {
           v = Math.min(v + g * dt, vmax);
           y += v * dt;
           if (y >= yL) {
@@ -279,8 +288,15 @@ export function Splash() {
         // Silky smooth GPU compositor exit on mobile
         document.body.style.removeProperty('overflow');
         container?.classList.add('mobile-launching');
+
+        // Smoothly float up and dissolve with GPU acceleration
+        brand.style.transition = 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease-out';
+        brand.style.transform = `translate3d(${x0}px, ${yL - 18}px, 0) scale(0.92)`;
+        brand.style.opacity = '0';
+
         at(380, () => {
           if (splash) splash.style.display = 'none';
+          document.body.style.removeProperty('overflow');
           setMounted(false);
           try {
             sessionStorage.setItem(STORAGE_KEY, '1');
@@ -394,7 +410,10 @@ export function Splash() {
       stop();
       if (splash) splash.style.display = '';
       if (container) container.className = 'vibe-splash-root';
-      if (brand) brand.style.opacity = '1';
+      if (brand) {
+        brand.style.opacity = '1';
+        brand.style.transition = '';
+      }
       if (darkLogoRef.current) darkLogoRef.current.style.opacity = '1';
       if (lightLogoRef.current) lightLogoRef.current.style.opacity = '0';
       cur = -1;
@@ -424,22 +443,21 @@ export function Splash() {
       container?.classList.add('p1');
 
       const ms = TI * 1000;
-      const ws = ms + 250;
+      const ws = ms + (isMobile ? 180 : 250);
       at(ms, () => {
         container?.classList.add('p2');
       });
 
       if (isMobile) {
-        // Fast, punchy, fluid sequence on mobile (total ~1.3s so mobile opening never hangs)
+        // Fast, punchy, fluid sequence on mobile (total ~1.2s so mobile opening never hangs)
         // 1 = fest, 6 = event
         at(ws, () => {
           setWord(1);
         });
-        at(ws + 280, () => {
+        at(ws + 260, () => {
           setWord(6);
         });
-        at(ws + 280 + 380, () => {
-          setWord(-1);
+        at(ws + 260 + 360, () => {
           launch();
         });
       } else {
@@ -460,6 +478,13 @@ export function Splash() {
     }
 
     const handleResize = () => {
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      if (urlParams?.get('splash_freeze') === '1') {
+        measure();
+        if (brand) brand.style.transform = `translate3d(${x0}px, ${yL}px, 0)`;
+        return;
+      }
+
       if (container?.classList.contains('p4')) {
         iw = window.innerWidth;
         ih = window.innerHeight;
@@ -479,14 +504,20 @@ export function Splash() {
     };
 
     splash.addEventListener('click', skip);
+    splash.addEventListener('touchstart', skip, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('resize', handleResize);
 
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(run);
-    } else {
-      run();
-    }
+    // Run animation immediately without stalling for font downloads
+    run();
+
+    // Safety watchdog: mobile splash NEVER traps the user or hangs
+    const safetyTimer = setTimeout(() => {
+      if (!launchedRef.current) {
+        launch();
+      }
+    }, isMobile ? 2600 : 5500);
+    timersRef.current.push(safetyTimer);
 
     return () => {
       stop();
@@ -495,6 +526,7 @@ export function Splash() {
         (window as any).__vibeSplashActive = false;
       }
       splash.removeEventListener('click', skip);
+      splash.removeEventListener('touchstart', skip);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', handleResize);
     };
@@ -618,11 +650,15 @@ export function Splash() {
         #splash {
           position: fixed;
           inset: 0;
+          height: 100vh;
+          height: 100dvh;
           z-index: 99998;
           overflow: hidden;
           cursor: pointer;
           background: #050816;
           transition: opacity .8s .25s;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
         }
         .p4 #splash {
           opacity: 0;
@@ -924,14 +960,14 @@ export function Splash() {
 
         .mobile-launching #splash {
           opacity: 0 !important;
-          transform: scale(1.04) !important;
+          transform: scale(1.03) !important;
           transition: opacity .35s ease-out, transform .35s ease-out !important;
           pointer-events: none !important;
         }
         .mobile-launching .brand {
           opacity: 0 !important;
           transform: translate3d(var(--x0, 0), calc(var(--yL, 0) - 18px), 0) scale(.92) !important;
-          transition: opacity .32s ease-out, transform .32s cubic-bezier(.16, 1, .3, 1) !important;
+          transition: opacity .35s ease-out, transform .35s cubic-bezier(.16, 1, .3, 1) !important;
           pointer-events: none !important;
         }
 
@@ -945,10 +981,12 @@ export function Splash() {
             filter: blur(14px);
           }
           #tag {
-            font-size: clamp(20px, 5.2vw, 26px);
+            font-size: clamp(17px, 4.8vw, 24px);
+            white-space: nowrap;
           }
           .bi {
-            width: min(285px, 76vw);
+            width: min(290px, 78vw);
+            transform: translateZ(0);
           }
           .slot b.on {
             animation: wi-mob .26s cubic-bezier(.2, .8, .2, 1) both;
