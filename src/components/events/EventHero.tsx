@@ -123,9 +123,9 @@ export default function EventHero({ events, autoAdvanceInterval = 6500 }: EventH
       )}
 
       {/* ========================================================================= */}
-      {/* SLIDE CONTENT CONTAINER (Left text + Right floating poster)               */}
+      {/* SLIDE CONTENT CONTAINER (Left compact text + Right grand poster)           */}
       {/* ========================================================================= */}
-      <div className="relative z-10 w-full px-4 sm:px-14 lg:px-20 pt-6 sm:pt-12 pb-5 sm:pb-6">
+      <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 pt-5 sm:pt-8 pb-4 sm:pb-5">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentEvent.id}
