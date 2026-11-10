@@ -20,6 +20,7 @@ import {
   Send,
   Calendar,
   Radio,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface StepItem {
@@ -58,6 +59,15 @@ const ALL_STEPS: StepItem[] = [
     icon: Zap,
     title: 'Vibe Instant',
     text: 'Spontaneous meetups happening right now. Just show up.',
+    cta: 'Next →',
+  },
+  {
+    id: 'dashboard',
+    target: '#vt-dashboard',
+    fallbackTarget: '#vt-dashboard-mobile',
+    icon: LayoutDashboard,
+    title: 'Host Dashboard',
+    text: 'Track live RSVPs, revenue, guest passes, and QR check-ins in real time.',
     cta: 'Next →',
   },
   {
@@ -412,6 +422,12 @@ export default function ProductWalkthrough() {
                       left = targetRect.left + targetRect.width / 2 - width / 2;
                       top = targetRect.top + targetRect.height / 2 - height / 2;
                       radius = '9999px';
+                    } else if (currentId === 'dashboard') {
+                      width = Math.max(width, 58);
+                      height = Math.max(height, 58);
+                      left = targetRect.left + targetRect.width / 2 - width / 2;
+                      top = targetRect.top + targetRect.height / 2 - height / 2;
+                      radius = '9999px';
                     } else if (currentId === 'bot') {
                       width = Math.max(width, 48);
                       height = Math.max(height, 48);
@@ -491,7 +507,7 @@ export default function ProductWalkthrough() {
                     };
                   }
                   // Mobile bottom navigation bar sits at bottom (~64-70px), clear it cleanly
-                  const bottomPx = currentId === 'instant' || currentId === 'host' ? 82 : 78;
+                  const bottomPx = currentId === 'instant' || currentId === 'dashboard' || currentId === 'host' ? 82 : 78;
                   return {
                     position: 'fixed',
                     bottom: `${bottomPx}px`,
@@ -567,30 +583,36 @@ export default function ProductWalkthrough() {
                   </p>
 
                   {/* Animated Feature Pillars Preview */}
-                  <div className="grid grid-cols-4 gap-1.5 py-3 px-2 bg-slate-50 dark:bg-white/[0.04] rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
+                  <div className="grid grid-cols-5 gap-1 py-3 px-1.5 bg-slate-50 dark:bg-white/[0.04] rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[9.5px] sm:text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
                     <div className="flex flex-col items-center gap-1 text-center">
                       <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0038A8] dark:text-sky-300 flex items-center justify-center">
                         <Compass className="w-3.5 h-3.5" />
                       </div>
-                      <span>Local Vibes</span>
+                      <span className="truncate">Vibes</span>
                     </div>
                     <div className="flex flex-col items-center gap-1 text-center">
                       <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                         <Zap className="w-3.5 h-3.5 fill-current" />
                       </div>
-                      <span>Instant</span>
+                      <span className="truncate">Instant</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="truncate">Dashboard</span>
                     </div>
                     <div className="flex flex-col items-center gap-1 text-center">
                       <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                         <Bot className="w-3.5 h-3.5 stroke-[2]" />
                       </div>
-                      <span>AI Bot</span>
+                      <span className="truncate">AI Bot</span>
                     </div>
                     <div className="flex flex-col items-center gap-1 text-center">
                       <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                       </div>
-                      <span>Host</span>
+                      <span className="truncate">Host</span>
                     </div>
                   </div>
 
@@ -738,6 +760,45 @@ export default function ProductWalkthrough() {
                           </div>
                           <span className="px-2 py-0.5 rounded-md bg-[#0038A8] text-white text-[9px] font-bold shrink-0">
                             Join
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentStepData.id === 'dashboard' && (
+                      <div className="space-y-2">
+                        {/* Live Host Metrics preview */}
+                        <div className="flex items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5 font-bold text-[#0038A8] dark:text-sky-300">
+                            <span className="w-2 h-2 rounded-full bg-[#0038A8] dark:bg-sky-400 animate-pulse" />
+                            <span>LIVE HOST OVERVIEW</span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">92% Checked-in</span>
+                        </div>
+                        {/* Mini Dashboard KPI Grid */}
+                        <div className="grid grid-cols-3 gap-1.5 text-center">
+                          <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
+                            <div className="text-[9px] text-slate-400 font-medium">Total RSVPs</div>
+                            <div className="text-xs font-black text-slate-900 dark:text-white">64 / 75</div>
+                          </div>
+                          <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
+                            <div className="text-[9px] text-slate-400 font-medium">Gross Passes</div>
+                            <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">₹42,800</div>
+                          </div>
+                          <div className="p-1.5 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10">
+                            <div className="text-[9px] text-slate-400 font-medium">QR Scanner</div>
+                            <div className="text-xs font-black text-[#0038A8] dark:text-sky-400">Ready ⚡</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-white/10 border border-slate-200/80 dark:border-white/10 text-[10px]">
+                          <div className="flex items-center gap-2 truncate">
+                            <div className="w-5 h-5 rounded-md bg-blue-500/15 text-[#0038A8] dark:text-sky-300 flex items-center justify-center shrink-0">
+                              <LayoutDashboard className="w-3 h-3" />
+                            </div>
+                            <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">Indie Music Fest • Mumbai</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[9px] font-bold shrink-0">
+                            Live
                           </span>
                         </div>
                       </div>

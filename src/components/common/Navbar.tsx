@@ -353,6 +353,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
 
                 {/* Feature 3: Dashboard */}
                 <Link
+                  id="vt-dashboard"
                   href="/dashboard"
                   className={`relative py-1 text-sm transition-colors cursor-pointer flex items-center ${
                     pathname.startsWith('/dashboard')
@@ -721,6 +722,7 @@ export default function Navbar({ bottomNavOnly = false, hideTopOnMobile = false 
 
         {/* 4. Host Dashboard Tab */}
         <Link
+          id="vt-dashboard-mobile"
           href="/dashboard"
           className={`relative flex flex-col items-center gap-1 py-1 px-2.5 transition-colors ${
             pathname.startsWith('/dashboard')
